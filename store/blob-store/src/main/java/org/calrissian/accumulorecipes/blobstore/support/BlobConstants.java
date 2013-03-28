@@ -1,4 +1,4 @@
-package org.calrissian.recipes.accumulo.blobstore.support;
+package org.calrissian.accumulorecipes.blobstore.support;
 
 
 public class BlobConstants {

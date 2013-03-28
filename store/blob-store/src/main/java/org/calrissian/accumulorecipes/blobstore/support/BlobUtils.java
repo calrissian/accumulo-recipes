@@ -1,4 +1,4 @@
-package org.calrissian.recipes.accumulo.blobstore.support;
+package org.calrissian.accumulorecipes.blobstore.support;
 
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;

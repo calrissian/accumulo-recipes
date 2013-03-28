@@ -1,4 +1,4 @@
-package org.calrissian.recipes.accumulo.blobstore.impl;
+package org.calrissian.accumulorecipes.blobstore.impl;
 
 import mango.types.TypeNormalizer;
 import mango.types.exception.TypeNormalizationException;
@@ -10,9 +10,9 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.calrissian.recipes.accumulo.blobstore.BlobStore;
-import org.calrissian.recipes.accumulo.blobstore.support.AccumuloBlobInputStream;
-import org.calrissian.recipes.accumulo.blobstore.support.BlobConstants;
+import org.calrissian.accumulorecipes.blobstore.BlobStore;
+import org.calrissian.accumulorecipes.blobstore.support.AccumuloBlobInputStream;
+import org.calrissian.accumulorecipes.blobstore.support.BlobConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

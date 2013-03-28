@@ -1,4 +1,4 @@
-package org.calrissian.blobstore.impl;
+package org.calrissian.accumulorecipes.blobstore.impl;
 
 
 import org.apache.accumulo.core.client.*;
@@ -6,11 +6,11 @@ import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.recipes.accumulo.blobstore.BlobStore;
-import org.calrissian.recipes.accumulo.blobstore.impl.AccumuloBlobStore;
-import org.calrissian.recipes.accumulo.blobstore.support.AccumuloBlobInputStream;
-import org.calrissian.recipes.accumulo.blobstore.support.BlobConstants;
-import org.calrissian.recipes.accumulo.blobstore.support.BlobUtils;
+import org.calrissian.accumulorecipes.blobstore.BlobStore;
+import org.calrissian.accumulorecipes.blobstore.impl.AccumuloBlobStore;
+import org.calrissian.accumulorecipes.blobstore.support.AccumuloBlobInputStream;
+import org.calrissian.accumulorecipes.blobstore.support.BlobConstants;
+import org.calrissian.accumulorecipes.blobstore.support.BlobUtils;
 import org.junit.Before;
 import org.junit.Test;
 

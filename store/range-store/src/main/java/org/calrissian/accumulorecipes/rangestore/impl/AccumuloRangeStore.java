@@ -1,4 +1,4 @@
-package org.calrissian.recipes.accumulo.rangestore.impl;
+package org.calrissian.accumulorecipes.rangestore.impl;
 
 import mango.types.exception.TypeNormalizationException;
 import mango.types.normalizers.LongNormalizer;
@@ -10,7 +10,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
-import org.calrissian.recipes.accumulo.rangestore.RangeStore;
+import org.calrissian.accumulorecipes.rangestore.RangeStore;
 
 import java.util.Collection;
 import java.util.Iterator;

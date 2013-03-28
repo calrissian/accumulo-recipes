@@ -1,7 +1,7 @@
-package org.calrissian.recipes.accumulo.blobstore;
+package org.calrissian.accumulorecipes.blobstore;
 
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.recipes.accumulo.blobstore.support.HeaderInputStream;
+import org.calrissian.accumulorecipes.blobstore.support.HeaderInputStream;
 
 import java.io.InputStream;
 import java.util.Map;

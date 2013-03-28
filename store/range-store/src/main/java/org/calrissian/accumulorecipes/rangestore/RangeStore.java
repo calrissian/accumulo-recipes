@@ -1,4 +1,4 @@
-package org.calrissian.recipes.accumulo.rangestore;
+package org.calrissian.accumulorecipes.rangestore;
 
 
 import mango.types.range.ValueRange;
