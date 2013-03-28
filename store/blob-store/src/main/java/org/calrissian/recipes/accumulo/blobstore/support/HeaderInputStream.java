@@ -1,4 +1,4 @@
-package org.calrissian.recipes.blobstore.support;
+package org.calrissian.recipes.accumulo.blobstore.support;
 
 import java.io.InputStream;
 import java.util.HashMap;

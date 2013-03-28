@@ -1,8 +1,7 @@
-package org.calrissian.recipes.blobstore.support;
+package org.calrissian.recipes.accumulo.blobstore.support;
 
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.recipes.blobstore.support.HeaderInputStream;
 
 import java.io.IOException;
 import java.util.Iterator;
