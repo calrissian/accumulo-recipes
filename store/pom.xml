@@ -14,7 +14,8 @@
     <packaging>pom</packaging>
 
     <modules>
-	<module>range-store</module>
+    	<module>range-store</module>
+        <module>blob-store</module>
 
     </modules>
 

@@ -13,7 +13,11 @@
     <properties>
 
         <accumulo.version>1.4.1</accumulo.version>
+        <commons.codec.version>1.7</commons.codec.version>
         <hadoop.version>0.20.2</hadoop.version>
+        <junit.version>4.8.1</junit.version>
+        <mango.version>1.0.3-SNAPSHOT</mango.version>
+        <slf4j.version>1.6.4</slf4j.version>
         <zookeeper.version>3.3.5</zookeeper.version>
 
     </properties>
@@ -65,13 +69,26 @@
                 <version>${hadoop.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons.codec.version}</version>
+            </dependency>
+
             <!-- Junit -->
             
-	    <dependency>
+    	    <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <!-- Mango -->
+            <dependency>
+                <groupId>mango</groupId>
+                <artifactId>mango-types</artifactId>
+                <version>${mango.version}</version>
             </dependency>
 
         </dependencies>
