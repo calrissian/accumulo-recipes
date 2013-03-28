@@ -1,8 +1,8 @@
 package org.calrissian.accumulorecipes.blobstore.impl;
 
-import mango.types.TypeNormalizer;
-import mango.types.exception.TypeNormalizationException;
-import mango.types.normalizers.IntegerNormalizer;
+import org.calrissian.mango.types.TypeNormalizer;
+import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.mango.types.normalizers.IntegerNormalizer;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;

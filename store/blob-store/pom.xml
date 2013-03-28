@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-	<groupId>org.calrissian.recipes</groupId>
+	<groupId>org.calrissian.accumulorecipes</groupId>
 	<artifactId>store</artifactId>
 	<version>0.1-SNAPSHOT</version>
     </parent>
@@ -17,7 +17,7 @@
 
         <!-- Mango -->
         <dependency>
-            <groupId>mango</groupId>
+            <groupId>org.calrissian.mango</groupId>
             <artifactId>mango-types</artifactId>
         </dependency>
 

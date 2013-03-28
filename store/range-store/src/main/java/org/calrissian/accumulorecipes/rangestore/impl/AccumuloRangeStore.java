@@ -1,8 +1,8 @@
 package org.calrissian.accumulorecipes.rangestore.impl;
 
-import mango.types.exception.TypeNormalizationException;
-import mango.types.normalizers.LongNormalizer;
-import mango.types.range.ValueRange;
+import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.mango.types.normalizers.LongNormalizer;
+import org.calrissian.mango.types.range.ValueRange;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;

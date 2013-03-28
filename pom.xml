@@ -3,8 +3,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.calrissian.recipes</groupId>
-    <artifactId>parent</artifactId>
+    <groupId>org.calrissian.accumulorecipes</groupId>
+    <artifactId>accumulorecipes-parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -85,7 +85,7 @@
 
             <!-- Mango -->
             <dependency>
-                <groupId>mango</groupId>
+                <groupId>org.calrissian.mango</groupId>
                 <artifactId>mango-types</artifactId>
                 <version>${mango.version}</version>
             </dependency>
