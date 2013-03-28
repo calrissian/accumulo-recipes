@@ -5,14 +5,12 @@
 
     <parent>
 	<groupId>org.calrissian.recipes</groupId>
-	<artifactId>parent</artifactId>
+	<artifactId>store</artifactId>
 	<version>0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.calrissian.recipes</groupId>
-    <artifactId>recipes-common</artifactId>
-   <packaging>jar</packaging>
 
-    <name>Accumulo Recipes - Common</name>
+    <artifactId>range-store</artifactId>
+    <packaging>jar</packaging>
 
 </project>
