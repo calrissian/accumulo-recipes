@@ -8,6 +8,8 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 
 import java.io.IOException;
 
+import static org.calrissian.accumulorecipes.eventstore.support.Constants.DELIM;
+
 public class EventIterator extends WrappingIterator {
 
     protected SortedKeyValueIterator<Key,Value> sourceItr;
@@ -24,7 +26,10 @@ public class EventIterator extends WrappingIterator {
 
         if(hasTop()) {
 
-            return IteratorUtils.retrieveFullEvent(getTopKey(), sourceItr);
+            Key topKey = getTopKey();
+            String eventuUUID = topKey.getColumnFamily().toString().split(DELIM)[1];
+            Value event = IteratorUtils.retrieveFullEvent(eventuUUID, topKey, sourceItr);
+            return event;
         }
 
         return new Value("".getBytes());

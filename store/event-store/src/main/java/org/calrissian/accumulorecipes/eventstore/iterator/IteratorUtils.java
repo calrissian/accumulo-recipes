@@ -20,11 +20,9 @@ import static org.calrissian.accumulorecipes.eventstore.support.Constants.SHARD_
 
 public class IteratorUtils {
 
-    public static Value retrieveFullEvent(Key topKey, SortedKeyValueIterator<Key,Value> sourceItr) {
+    public static Value retrieveFullEvent(String eventUUID, Key topKey, SortedKeyValueIterator<Key,Value> sourceItr) {
 
         Key key = topKey;
-
-        String eventUUID = key.getColumnQualifier().toString();
 
         Key startRangeKey = new Key(key.getRow(), new Text(SHARD_PREFIX_F +
                 DELIM +

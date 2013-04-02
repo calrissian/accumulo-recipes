@@ -33,6 +33,25 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
+    public void testGet() throws Exception {
+
+        Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        event.put(new Tuple("key1", "val1", ""));
+        event.put(new Tuple("key2", "val2", ""));
+
+        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        event2.put(new Tuple("key1", "val1", ""));
+        event2.put(new Tuple("key2", "val2", ""));
+
+        store.put(Collections.singleton(event));
+        store.put(Collections.singleton(event2));
+
+        Event actualEvent = store.get(event.getId(), new Authorizations());
+
+        assertEquals(actualEvent, event);
+    }
+
+    @Test
     public void testQuery_AndQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
         Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());

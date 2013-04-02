@@ -1,18 +1,22 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.domain.Event;
+import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.Constants;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.Shard;
 import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
 import org.calrissian.commons.domain.Tuple;
+import org.calrissian.commons.serialization.ObjectMapperContext;
 import org.calrissian.criteria.domain.Node;
 import org.calrissian.mango.collect.CloseableIterator;
 import org.calrissian.mango.types.TypeContext;
@@ -21,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
@@ -127,6 +133,42 @@ public class AccumuloEventStore implements EventStore {
 
     @Override
     public Event get(String uuid, Authorizations auths) {
+
+        Scanner scanner = null;
+        try {
+
+            scanner = connector.createScanner(indexTable, auths);
+            scanner.setRange(new Range(uuid, uuid + DELIM_END));
+
+            Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
+
+            if(itr.hasNext()) {
+
+                Map.Entry<Key,Value> entry = itr.next();
+                String shardId = entry.getKey().getColumnFamily().toString();
+
+                Scanner eventScanner = connector.createScanner(shardTable, auths);
+                eventScanner.setRange(new Range(shardId));
+                eventScanner.fetchColumnFamily(new Text(SHARD_PREFIX_F + DELIM + uuid));
+
+                IteratorSetting iteratorSetting = new IteratorSetting(16, "eventIterator", EventIterator.class);
+                eventScanner.addScanIterator(iteratorSetting);
+
+                itr = eventScanner.iterator();
+
+                if(itr.hasNext()) {
+                    Map.Entry<Key,Value> event = itr.next();
+
+                    return ObjectMapperContext.getInstance().getObjectMapper()
+                            .readValue(new String(event.getValue().get()), Event.class);
+                }
+
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         return null;
     }
 
