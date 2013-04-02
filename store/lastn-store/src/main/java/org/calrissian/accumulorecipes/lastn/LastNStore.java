@@ -5,6 +5,11 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 
 import java.util.Iterator;
 
+/**
+ * The LastN store is a version-based eviction mechanism- meaning that it will only keep around the last N versions of
+ * an indexed set of attributes but it will maintain cell-level security of those attributes. This is useful in news
+ * feeds and places where it's important to know the 'most recent' history of something.
+ */
 public interface LastNStore {
 
     /**

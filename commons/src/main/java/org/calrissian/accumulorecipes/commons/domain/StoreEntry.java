@@ -7,7 +7,8 @@ import java.util.Collection;
 import java.util.UUID;
 
 /**
- * A store entry acts as a useful common business object for representing different types of models.
+ * A store entry acts as a useful common business object for representing different types of models. An optional time
+ * dimension can be set directly or left untouched (defaulting in current time).
  */
 public class StoreEntry {
 
@@ -16,11 +17,18 @@ public class StoreEntry {
 
     protected Collection<Tuple> tuples;
 
+    /**
+     * New store entry with random UUID and timestamp defaulted to current time
+     */
     public StoreEntry() {
         this.id = UUID.randomUUID().toString();
         this.timestamp = System.currentTimeMillis();
     }
 
+    /**
+     * New store entry with ID. Timestamp defaults to current time.
+     * @param id
+     */
     public StoreEntry(String id) {
         this.id = id;
         this.timestamp = System.currentTimeMillis();
@@ -28,6 +36,11 @@ public class StoreEntry {
         this.tuples = new ArrayList<Tuple>();
     }
 
+    /**
+     * New store entry with ID and a timestamp
+     * @param id
+     * @param timestamp
+     */
     public StoreEntry(String id, long timestamp) {
         this.id = id;
         this.timestamp = timestamp;
@@ -35,6 +48,10 @@ public class StoreEntry {
         this.tuples = new ArrayList<Tuple>();
     }
 
+    /**
+     * Put multiple tuples at the same time
+     * @param tuples
+     */
     public void putAll(Collection<Tuple> tuples) {
 
         if(tuples != null) {
@@ -42,18 +59,66 @@ public class StoreEntry {
         }
     }
 
+    /**
+     * Put a single tuple
+     * @param tuple
+     */
     public void put(Tuple tuple) {
         this.tuples.add(tuple);
     }
 
+    /**
+     * Used for single valued tuples. Returns the first tuple with the specified key
+     * @param key
+     * @return null if tuple with key does not exist
+     */
+    public Tuple get(String key) {
+
+        for(Tuple tuple : tuples) {
+            if(tuple.getKey().equals(key)) {
+                return tuple;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Used for multi-valued tuples. Returns all tuples with the specified key
+     * @param key
+     * @return empty collection if no tuples with key exist
+     */
+    public Collection<Tuple> getAll(String key) {
+        Collection<Tuple> retTuples = new ArrayList<Tuple>();
+        for(Tuple tuple : tuples) {
+            if(tuple.getKey().equals(key)) {
+                retTuples.add(tuple);
+            }
+        }
+
+        return retTuples;
+    }
+
+    /**
+     * Accessor for Id
+     * @return
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Accessor for timestamp
+     * @return
+     */
     public long getTimestamp() {
         return timestamp;
     }
 
+    /**
+     * Accessor for tuples
+     * @return
+     */
     public Collection<Tuple> getTuples() {
         return tuples;
     }

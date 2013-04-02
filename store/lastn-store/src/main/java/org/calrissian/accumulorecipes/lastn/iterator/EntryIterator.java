@@ -20,6 +20,10 @@ import java.util.Collection;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 
+/**
+ * An iterator to return StoreEntry objects serialized to JSON so that grouping can be done server side instead of
+ * client side.
+ */
 public class EntryIterator extends WrappingIterator {
 
     protected SortedKeyValueIterator<Key,Value> sourceItr;
@@ -31,6 +35,11 @@ public class EntryIterator extends WrappingIterator {
         sourceItr = source.deepCopy(env);
     }
 
+    /**
+     * For each index row in the lastN store, grab the associated tuples (further down in the tablet) and construct
+     * the entry to be returned.
+     * @return
+     */
     @Override
     public Value getTopValue() {
 

@@ -13,6 +13,10 @@ import java.util.Map;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 
+/**
+ * A cleanup filtering iterator to get rid of tuples that should not exist after the versioning iterator evicts an
+ * index. NOTE: This iterator needs to run after the versioning iterator and should run on all scopes (majc,minc,scan).
+ */
 public class IndexEntryFilteringIterator extends Filter {
     protected HashSet<String> uuidSet = null;
     protected String currentIndex = null;
@@ -35,6 +39,13 @@ public class IndexEntryFilteringIterator extends Filter {
     }
 
 
+    /**
+     * Makes sure only those rows with an index row are kept around. The versioning iterator should have run already
+     * and evicted older index rows.
+     * @param key
+     * @param value
+     * @return
+     */
     @Override
     public boolean accept(Key key, Value value) {
 

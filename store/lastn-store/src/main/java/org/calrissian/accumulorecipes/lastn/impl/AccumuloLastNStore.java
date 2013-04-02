@@ -25,6 +25,12 @@ import java.util.Iterator;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 
+/**
+ * Accumulo implementation of the LastN Store. This will try to create and configure the necessary table and properties
+ * if the necessary permissions have been granted. NOTE: If the tables need to be created manually, be sure to set the
+ * maxVersions property for all scopes of the versioning iterator to your N value. Also, add the IndexEntryFilteringIterator
+ * at priority 40.
+ */
 public class AccumuloLastNStore implements LastNStore {
 
     protected static final IteratorSetting EVENT_FILTER_SETTING =
@@ -43,11 +49,21 @@ public class AccumuloLastNStore implements LastNStore {
 
     protected final TypeContext typeContext = TypeContext.getInstance();
 
+    /**
+     * Uses the default maxVersions
+     * @param connector
+     */
     public AccumuloLastNStore(Connector connector) {
         this.connector = connector;
         init();
     }
 
+    /**
+     * Sets the maxVersions. NOTE: You don't need to call this constructor if you have already configured the table
+     * on your system
+     * @param connector
+     * @param maxVersions
+     */
     public AccumuloLastNStore(Connector connector, int maxVersions) {
         this.connector = connector;
         this.maxVersions = maxVersions;
@@ -65,6 +81,12 @@ public class AccumuloLastNStore implements LastNStore {
         }
     }
 
+    /**
+     * A convenience to create the tables (if they can be created).
+     * @throws AccumuloException
+     * @throws AccumuloSecurityException
+     * @throws TableExistsException
+     */
     private void initTable() throws AccumuloException, AccumuloSecurityException, TableExistsException {
         TableOperations tops = connector.tableOperations();
         if (!tops.exists(tableName)) {
@@ -91,6 +113,11 @@ public class AccumuloLastNStore implements LastNStore {
     }
 
 
+    /**
+     * Add the index which will be managed by the versioning iterator and the data rows to scan from the index
+     * @param index
+     * @param entry
+     */
     @Override
     public void put(String index, StoreEntry entry) {
 
@@ -120,6 +147,12 @@ public class AccumuloLastNStore implements LastNStore {
         }
     }
 
+    /**
+     * Pull back the last N entries. EntryIterator will group entry tuples into a single object on the server side.
+     * @param index
+     * @param auths
+     * @return
+     */
     @Override
     public Iterator<StoreEntry> get(String index, Authorizations auths) {
 
@@ -142,40 +175,76 @@ public class AccumuloLastNStore implements LastNStore {
         return null;
     }
 
+    /**
+     * Free up threads from the batch writer.
+     * @throws Exception
+     */
     @Override
     public void shutdown() throws Exception {
 
         batchWriter.close();
     }
 
+    /**
+     * Accessor for the table name
+     * @return
+     */
     public String getTableName() {
         return tableName;
     }
 
+    /**
+     * Mutator for the table name
+     * @param tableName
+     */
     public void setTableName(String tableName) {
         this.tableName = tableName;
     }
 
+    /**
+     * Access for max memory to be used in the batch writer
+     * @return
+     */
     public Long getMaxMemory() {
         return maxMemory;
     }
 
+    /**
+     * Mutator for the max memory to be used in the batch writer
+     * @param maxMemory
+     */
     public void setMaxMemory(Long maxMemory) {
         this.maxMemory = maxMemory;
     }
 
+    /**
+     * Accessor for the number of threads to be used in the batch writer
+     * @return
+     */
     public Integer getNumThreads() {
         return numThreads;
     }
 
+    /**
+     * Mutator for the number of threads to be used in the batch wrtier
+     * @param numThreads
+     */
     public void setNumThreads(Integer numThreads) {
         this.numThreads = numThreads;
     }
 
+    /**
+     * Accessor for the max latency to be used in the batch writer
+     * @return
+     */
     public Long getMaxLatency() {
         return maxLatency;
     }
 
+    /**
+     * Mutator for the max latency to be used in the batch writer
+     * @param maxLatency
+     */
     public void setMaxLatency(Long maxLatency) {
         this.maxLatency = maxLatency;
     }
