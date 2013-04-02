@@ -142,6 +142,12 @@ public class AccumuloLastNStore implements LastNStore {
         return null;
     }
 
+    @Override
+    public void shutdown() throws Exception {
+
+        batchWriter.close();
+    }
+
     public String getTableName() {
         return tableName;
     }

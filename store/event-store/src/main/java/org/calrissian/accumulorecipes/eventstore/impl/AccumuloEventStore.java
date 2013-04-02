@@ -30,6 +30,10 @@ import java.util.Map;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
+/**
+ * The Accumulo implementation of the EventStore which uses deterministic sharding to distribute ingest/queries over
+ * the cloud to speed them up.
+ */
 public class AccumuloEventStore implements EventStore {
 
     Logger logger = LoggerFactory.getLogger(AccumuloEventStore.class);
@@ -63,6 +67,13 @@ public class AccumuloEventStore implements EventStore {
         }
     }
 
+    /**
+     * Create tables if they don't exist and create the batch writers which will be used for the entire instance.
+     * @throws TableExistsException
+     * @throws AccumuloException
+     * @throws AccumuloSecurityException
+     * @throws TableNotFoundException
+     */
     protected void initialize() throws TableExistsException, AccumuloException, AccumuloSecurityException, TableNotFoundException {
         if(!connector.tableOperations().exists(indexTable)) {
             connector.tableOperations().create(indexTable);
@@ -75,6 +86,12 @@ public class AccumuloEventStore implements EventStore {
         shardWriter = connector.createBatchWriter(shardTable, maxMemory, maxLatency, numThreads);
     }
 
+    /**
+     * Events get put into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
+     * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
+     * @param events
+     * @throws Exception
+     */
     @Override
     public void put(Collection<StoreEntry> events) throws Exception {
 

@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
+/**
+ * A store entry acts as a useful common business object for representing different types of models.
+ */
 public class StoreEntry {
 
     protected final String id;

@@ -22,4 +22,9 @@ public interface LastNStore {
      * @return
      */
     Iterator<StoreEntry> get(String index, Authorizations auths);
+
+    /**
+     * Clean up and release any resources being held
+     */
+    void shutdown() throws Exception;
 }
