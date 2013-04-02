@@ -57,7 +57,7 @@ public class AccumuloLastNStore implements LastNStore {
     protected void init() {
         try {
             this.batchWriter = connector.createBatchWriter(tableName, maxMemory, maxLatency, numThreads);
-            initTable(maxVersions);
+            initTable();
         }
 
         catch(Exception e) {
@@ -65,7 +65,7 @@ public class AccumuloLastNStore implements LastNStore {
         }
     }
 
-    private void initTable(int maxVersions) throws AccumuloException, AccumuloSecurityException, TableExistsException {
+    private void initTable() throws AccumuloException, AccumuloSecurityException, TableExistsException {
         TableOperations tops = connector.tableOperations();
         if (!tops.exists(tableName)) {
             tops.create(tableName);

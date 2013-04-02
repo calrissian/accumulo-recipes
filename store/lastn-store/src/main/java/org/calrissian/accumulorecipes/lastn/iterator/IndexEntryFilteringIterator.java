@@ -25,6 +25,17 @@ public class IndexEntryFilteringIterator extends Filter {
     }
 
     @Override
+    public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
+        IndexEntryFilteringIterator copy = (IndexEntryFilteringIterator) super.deepCopy(env);
+        copy.currentIndex = currentIndex;
+        copy.previousEvent = previousEvent;
+        copy.uuidSet = new HashSet<String>(uuidSet);
+
+        return copy;
+    }
+
+
+    @Override
     public boolean accept(Key key, Value value) {
 
         try {
