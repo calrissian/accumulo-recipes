@@ -6,13 +6,12 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.commons.serialization.ObjectMapperContext;
-import org.calrissian.mango.collect.CloseableIterator;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
-public class LastNIterator implements CloseableIterator<StoreEntry> {
+public class LastNIterator implements Iterator<StoreEntry> {
 
     protected Scanner scanner;
     protected Iterator<Map.Entry<Key,Value>>  iterator;
@@ -20,20 +19,6 @@ public class LastNIterator implements CloseableIterator<StoreEntry> {
     public LastNIterator(Scanner scanner) {
         this.scanner = scanner;
         this.iterator = scanner.iterator();
-    }
-
-    @Override
-    public void closeQuietly() {
-    }
-
-    @Override
-    public void close() throws IOException {
-
-    }
-
-    @Override
-    public Iterator<StoreEntry> iterator() {
-        return new LastNIterator(scanner);
     }
 
     @Override

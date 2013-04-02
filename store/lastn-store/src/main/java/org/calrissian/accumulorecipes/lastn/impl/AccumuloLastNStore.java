@@ -1,6 +1,5 @@
 package org.calrissian.accumulorecipes.lastn.impl;
 
-
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.data.Mutation;
@@ -16,12 +15,12 @@ import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
 import org.calrissian.accumulorecipes.lastn.support.LastNIterator;
 import org.calrissian.commons.domain.Tuple;
-import org.calrissian.mango.collect.CloseableIterator;
 import org.calrissian.mango.types.TypeContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Iterator;
 
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
@@ -122,7 +121,7 @@ public class AccumuloLastNStore implements LastNStore {
     }
 
     @Override
-    public CloseableIterator<StoreEntry> get(String index, Authorizations auths) {
+    public Iterator<StoreEntry> get(String index, Authorizations auths) {
 
         try {
             Scanner scanner = connector.createScanner(tableName, auths);
