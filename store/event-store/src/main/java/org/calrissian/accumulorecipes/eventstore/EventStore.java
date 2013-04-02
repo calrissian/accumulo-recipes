@@ -1,7 +1,7 @@
 package org.calrissian.accumulorecipes.eventstore;
 
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.common.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.criteria.domain.Node;
 import org.calrissian.mango.collect.CloseableIterator;
 

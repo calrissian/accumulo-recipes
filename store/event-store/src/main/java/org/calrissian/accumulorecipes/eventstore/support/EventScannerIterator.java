@@ -3,7 +3,7 @@ package org.calrissian.accumulorecipes.eventstore.support;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.common.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.commons.serialization.ObjectMapperContext;
 import org.calrissian.mango.collect.CloseableIterator;
 

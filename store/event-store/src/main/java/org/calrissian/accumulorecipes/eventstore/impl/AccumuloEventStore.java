@@ -8,7 +8,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.common.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.Constants;

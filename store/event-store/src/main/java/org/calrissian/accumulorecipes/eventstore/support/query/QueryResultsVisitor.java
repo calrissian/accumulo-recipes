@@ -2,7 +2,7 @@ package org.calrissian.accumulorecipes.eventstore.support.query;
 
 import com.google.common.collect.Lists;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.common.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoOrNotEqualsValidator;

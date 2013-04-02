@@ -10,7 +10,7 @@ import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.common.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;

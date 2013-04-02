@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.common.domain;
+package org.calrissian.accumulorecipes.commons.domain;
 
 import org.calrissian.commons.domain.Tuple;
 
