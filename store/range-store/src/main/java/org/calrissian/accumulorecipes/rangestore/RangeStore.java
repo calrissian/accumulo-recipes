@@ -12,11 +12,22 @@ import java.util.Iterator;
  */
 public interface RangeStore {
 
-    void initialize();
-
+    /**
+     * Inserts a collection of ranges into the store.
+     * @param ranges
+     */
     void insert(Collection<ValueRange<Long>> ranges);
 
+    /**
+     * Given a range, queries for any ranges that overlap
+     * @param range
+     * @param auths
+     * @return
+     */
     Iterator<ValueRange<Long>> query(ValueRange<Long> range, Authorizations auths);
 
+    /**
+     * Releases any resources being held
+     */
     void shutdown();
 }
