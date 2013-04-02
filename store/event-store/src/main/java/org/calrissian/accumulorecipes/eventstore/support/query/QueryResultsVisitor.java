@@ -2,7 +2,7 @@ package org.calrissian.accumulorecipes.eventstore.support.query;
 
 import com.google.common.collect.Lists;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.eventstore.domain.Event;
+import org.calrissian.accumulorecipes.common.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoOrNotEqualsValidator;
@@ -30,7 +30,7 @@ public class QueryResultsVisitor implements NodeVisitor {
 
     protected Date start, end;
     protected Authorizations auths;
-    protected CloseableIterator<Event> iterator;
+    protected CloseableIterator<StoreEntry> iterator;
     private QueryNodeHelper queryHelper;
 
     public QueryResultsVisitor(Node query, QueryNodeHelper queryHelper, Date start, Date end, Authorizations auths) {
@@ -80,10 +80,10 @@ public class QueryResultsVisitor implements NodeVisitor {
 
     protected void populateIterator(Node node) throws IOException {
         if (node instanceof AndNode) {
-            CloseableIterator<Event> query = andResultsIterator((AndNode) node);
+            CloseableIterator<StoreEntry> query = andResultsIterator((AndNode) node);
             if (iterator != null) {
                 //assume OR
-                iterator = new ConcatCloseableIterator<Event>(Lists.newArrayList(query, iterator));
+                iterator = new ConcatCloseableIterator<StoreEntry>(Lists.newArrayList(query, iterator));
             } else {
                 iterator = query;
             }
@@ -92,10 +92,10 @@ public class QueryResultsVisitor implements NodeVisitor {
                 populateIterator(child);
             }
         } else if (node instanceof Leaf) {
-            CloseableIterator<Event> query = leafResultsIterator((Leaf) node);
+            CloseableIterator<StoreEntry> query = leafResultsIterator((Leaf) node);
             if (iterator != null) {
                 //assume OR
-                iterator = new ConcatCloseableIterator<Event>(Lists.newArrayList(query, iterator));
+                iterator = new ConcatCloseableIterator<StoreEntry>(Lists.newArrayList(query, iterator));
             } else {
                 iterator = query;
             }
@@ -106,11 +106,11 @@ public class QueryResultsVisitor implements NodeVisitor {
     public void visit(Leaf node) {
     }
 
-    public CloseableIterator<Event> getResults() {
+    public CloseableIterator<StoreEntry> getResults() {
         return iterator;
     }
 
-    protected CloseableIterator<Event> andResultsIterator(AndNode andNode) throws IOException {
+    protected CloseableIterator<StoreEntry> andResultsIterator(AndNode andNode) throws IOException {
         try {
             return queryHelper.queryAndNode(start, end, andNode, auths);
         } catch (Exception e) {
@@ -118,7 +118,7 @@ public class QueryResultsVisitor implements NodeVisitor {
         }
     }
 
-    protected CloseableIterator<Event> leafResultsIterator(Leaf node) throws IOException {
+    protected CloseableIterator<StoreEntry> leafResultsIterator(Leaf node) throws IOException {
         try {
             return queryHelper.querySingleLeaf(start, end, node, auths);
         } catch (Exception e) {

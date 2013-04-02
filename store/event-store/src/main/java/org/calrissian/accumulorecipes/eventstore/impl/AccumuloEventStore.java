@@ -8,8 +8,8 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.common.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
-import org.calrissian.accumulorecipes.eventstore.domain.Event;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.Constants;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
@@ -76,9 +76,9 @@ public class AccumuloEventStore implements EventStore {
     }
 
     @Override
-    public void put(Collection<Event> events) throws Exception {
+    public void put(Collection<StoreEntry> events) throws Exception {
 
-        for(Event event : events) {
+        for(StoreEntry event : events) {
 
             String shardId = shard.buildShard(event.getTimestamp(), event.getId());
             Mutation shardMutation = new Mutation(shardId);
@@ -127,12 +127,12 @@ public class AccumuloEventStore implements EventStore {
     }
 
     @Override
-    public CloseableIterator<Event> query(Date start, Date end, Node node, Authorizations auths) {
+    public CloseableIterator<StoreEntry> query(Date start, Date end, Node node, Authorizations auths) {
         return new QueryResultsVisitor(node, queryHelper, start, end, auths).getResults();
     }
 
     @Override
-    public Event get(String uuid, Authorizations auths) {
+    public StoreEntry get(String uuid, Authorizations auths) {
 
         Scanner scanner = null;
         try {
@@ -160,7 +160,7 @@ public class AccumuloEventStore implements EventStore {
                     Map.Entry<Key,Value> event = itr.next();
 
                     return ObjectMapperContext.getInstance().getObjectMapper()
-                            .readValue(new String(event.getValue().get()), Event.class);
+                            .readValue(new String(event.getValue().get()), StoreEntry.class);
                 }
 
             }

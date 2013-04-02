@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.eventstore.domain;
+package org.calrissian.accumulorecipes.common.domain;
 
 import org.calrissian.commons.domain.Tuple;
 
@@ -6,19 +6,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
-public class Event {
+public class StoreEntry {
 
     protected final String id;
     protected final long timestamp;
 
     protected Collection<Tuple> tuples;
 
-    public Event() {
+    public StoreEntry() {
         this.id = UUID.randomUUID().toString();
         this.timestamp = System.currentTimeMillis();
     }
 
-    public Event(String id, long timestamp) {
+    public StoreEntry(String id, long timestamp) {
         this.id = id;
         this.timestamp = timestamp;
 
@@ -51,9 +51,9 @@ public class Event {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Event)) return false;
+        if (!(o instanceof StoreEntry)) return false;
 
-        Event event = (Event) o;
+        StoreEntry event = (StoreEntry) o;
 
         if (timestamp != event.timestamp) return false;
         if (id != null ? !id.equals(event.id) : event.id != null) return false;
@@ -72,7 +72,7 @@ public class Event {
 
     @Override
     public String toString() {
-        return "Event{" +
+        return "StoreEntry{" +
                 "id='" + id + '\'' +
                 ", timestamp=" + timestamp +
                 ", tuples=" + tuples +

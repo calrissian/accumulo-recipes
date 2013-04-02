@@ -3,11 +3,13 @@ package org.calrissian.accumulorecipes.eventstore.support;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.common.domain.StoreEntry;
 import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
-import org.calrissian.accumulorecipes.eventstore.domain.Event;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIntersectingIterator;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.AndSingleDepthOnlyValidator;
@@ -19,6 +21,8 @@ import org.calrissian.mango.types.TypeContext;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
@@ -38,7 +42,7 @@ public class QueryNodeHelper {
         this.shard = shard;
     }
 
-    public CloseableIterator<Event> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)
+    public CloseableIterator<StoreEntry> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)
             throws Exception {
 
         BatchScanner scanner = connector.createBatchScanner(shardTable, auths, numThreads);
@@ -66,17 +70,25 @@ public class QueryNodeHelper {
 
         scanner.setRanges(Collections.singleton(new Range(range[0], range[1] + DELIM_END)));
 
+        Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
+
+        System.out.println("HAS NEXT: " + itr.hasNext());
+        for(Map.Entry<Key,Value> entry : scanner) {
+
+            System.out.println("VAL: " + new String(entry.getValue().get()));
+        }
+
         return new EventScannerIterator(scanner);
     }
 
 
-    public CloseableIterator<Event> querySingleLeaf(Date start, Date stop, Leaf query, Authorizations auths) throws Exception {
+    public CloseableIterator<StoreEntry> querySingleLeaf(Date start, Date stop, Leaf query, Authorizations auths) throws Exception {
 
         BatchScanner scanner = connector.createBatchScanner(shardTable, auths, numThreads);
 
         String[] range = shard.getRange(start,  stop);
 
-        IteratorSetting setting = new IteratorSetting(20, "timeLimit", TimeLimitingFilter.class);
+        IteratorSetting setting = new IteratorSetting(15, "timeLimit", TimeLimitingFilter.class);
         TimeLimitingFilter.setCurrentTime(setting, stop.getTime());
         TimeLimitingFilter.setTTL(setting, stop.getTime() - start.getTime());
         scanner.addScanIterator(setting);

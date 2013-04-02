@@ -6,7 +6,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.eventstore.domain.Event;
+import org.calrissian.accumulorecipes.common.domain.StoreEntry;
 import org.calrissian.commons.domain.Tuple;
 import org.calrissian.commons.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
@@ -14,9 +14,7 @@ import org.calrissian.mango.types.TypeContext;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.calrissian.accumulorecipes.eventstore.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.eventstore.support.Constants.DELIM_END;
-import static org.calrissian.accumulorecipes.eventstore.support.Constants.SHARD_PREFIX_F;
+import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
 public class IteratorUtils {
 
@@ -33,6 +31,7 @@ public class IteratorUtils {
 
         Range eventRange = new Range(startRangeKey, stopRangeKey);
 
+        System.out.println(eventUUID);
 
         long timestamp = 0;
 
@@ -65,17 +64,16 @@ public class IteratorUtils {
                 }
             }
 
-            Event event = new Event(eventUUID, timestamp);
+            StoreEntry event = new StoreEntry(eventUUID, timestamp);
 
             if(tuples.size() > 0) {
                 event.putAll(tuples);
-                return new Value(ObjectMapperContext.getInstance().getObjectMapper().writeValueAsBytes(event));
             }
+
+            return new Value(ObjectMapperContext.getInstance().getObjectMapper().writeValueAsBytes(event));
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        return new Value("".getBytes());
     }
 }

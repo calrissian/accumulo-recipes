@@ -27,6 +27,8 @@ public class EventIntersectingIterator extends IntersectingIterator {
 
             Key topKey = getTopKey();
             String eventUUID = topKey.getColumnQualifier().toString();
+
+            System.out.println("UUID:" + eventUUID);
             Value event = IteratorUtils.retrieveFullEvent(eventUUID, topKey, sourceItr);
             return event;
         }

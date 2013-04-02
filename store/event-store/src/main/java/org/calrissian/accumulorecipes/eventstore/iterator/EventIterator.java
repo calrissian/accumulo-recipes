@@ -9,6 +9,7 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import java.io.IOException;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.eventstore.support.Constants.SHARD_PREFIX_B;
 
 public class EventIterator extends WrappingIterator {
 
@@ -27,7 +28,19 @@ public class EventIterator extends WrappingIterator {
         if(hasTop()) {
 
             Key topKey = getTopKey();
-            String eventuUUID = topKey.getColumnFamily().toString().split(DELIM)[1];
+
+            String colFam = topKey.getColumnFamily().toString();
+            String eventuUUID = null;
+
+            if(colFam.startsWith(SHARD_PREFIX_B)) {
+                eventuUUID = topKey.getColumnQualifier().toString();
+            }
+
+            else {
+                eventuUUID = colFam.split(DELIM)[1];
+
+            }
+
             Value event = IteratorUtils.retrieveFullEvent(eventuUUID, topKey, sourceItr);
             return event;
         }

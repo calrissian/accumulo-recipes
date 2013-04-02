@@ -16,6 +16,7 @@
     <modules>
         <module>blob-store</module>
         <module>event-store</module>
+        <module>lastn-store</module>
         <module>range-store</module>
     </modules>
 

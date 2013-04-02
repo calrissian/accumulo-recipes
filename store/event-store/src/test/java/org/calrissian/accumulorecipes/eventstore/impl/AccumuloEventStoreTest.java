@@ -1,33 +1,32 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.eventstore.domain.Event;
+import org.calrissian.accumulorecipes.common.domain.StoreEntry;
 import org.calrissian.commons.domain.Tuple;
 import org.calrissian.criteria.builder.QueryBuilder;
 import org.calrissian.criteria.domain.Node;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloEventStoreTest {
 
     AccumuloEventStore store;
+    Connector conn;
 
     @Before
     public void setUp() throws AccumuloException, AccumuloSecurityException {
 
         MockInstance instance =  new MockInstance();
-        Connector conn  = instance.getConnector("username", "password".getBytes());
+        conn  = instance.getConnector("username", "password".getBytes());
 
         store = new AccumuloEventStore(conn);
     }
@@ -35,18 +34,18 @@ public class AccumuloEventStoreTest {
     @Test
     public void testGet() throws Exception {
 
-        Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event.put(new Tuple("key1", "val1", ""));
         event.put(new Tuple("key2", "val2", ""));
 
-        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key2", "val2", ""));
 
         store.put(Collections.singleton(event));
         store.put(Collections.singleton(event2));
 
-        Event actualEvent = store.get(event.getId(), new Authorizations());
+        StoreEntry actualEvent = store.get(event.getId(), new Authorizations());
 
         assertEquals(actualEvent, event);
     }
@@ -54,11 +53,11 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_AndQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
-        Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event.put(new Tuple("key1", "val1", ""));
         event.put(new Tuple("key2", "val2", ""));
 
-        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key2", "val2", ""));
 
@@ -67,10 +66,10 @@ public class AccumuloEventStoreTest {
 
         Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
 
-        Iterator<Event> itr = store.query(new Date(System.currentTimeMillis() - 5000),
+        Iterator<StoreEntry> itr = store.query(new Date(System.currentTimeMillis() - 5000),
                 new Date(System.currentTimeMillis()), query, new Authorizations());
 
-        Event actualEvent = itr.next();
+        StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
             assertEquals(actualEvent, event);
         }
@@ -92,11 +91,11 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_OrQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
-        Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event.put(new Tuple("key1", "val1", ""));
         event.put(new Tuple("key2", "val2", ""));
 
-        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key3", "val3", ""));
 
@@ -105,36 +104,36 @@ public class AccumuloEventStoreTest {
 
         Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").endStatement().build();
 
-        Iterator<Event> itr = store.query(new Date(System.currentTimeMillis() - 5000),
+        Iterator<StoreEntry> itr = store.query(new Date(System.currentTimeMillis() - 5000),
                 new Date(System.currentTimeMillis()), query, new Authorizations());
 
-        Event actualEvent = itr.next();
+        StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(event, actualEvent);
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(event2, actualEvent);
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(event, actualEvent);
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(event2, actualEvent);
         }
     }
 
     @Test
     public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
-        Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event.put(new Tuple("key1", "val1", ""));
         event.put(new Tuple("key2", "val2", ""));
 
-        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key3", "val3", ""));
 
@@ -143,25 +142,37 @@ public class AccumuloEventStoreTest {
 
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
-        Iterator<Event> itr = store.query(new Date(System.currentTimeMillis() - 5000),
+        Iterator<StoreEntry> itr = store.query(new Date(System.currentTimeMillis() - 5000),
                 new Date(System.currentTimeMillis()), query, new Authorizations());
 
-        Event actualEvent = itr.next();
+
+        printTable();
+
+        StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(event, actualEvent);
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(event2, actualEvent);
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(event, actualEvent);
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(event2, actualEvent);
         }
     }
+
+    protected void printTable() throws TableNotFoundException {
+
+        Scanner scanner = conn.createScanner(store.getShardTable(), new Authorizations());
+        for(Map.Entry<Key,Value> entry : scanner) {
+            System.out.println(entry + "- " + new String(entry.getValue().get()));
+        }
+    }
+
 }

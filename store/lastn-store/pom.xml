@@ -4,21 +4,32 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-	<groupId>org.calrissian.accumulorecipes</groupId>
-	<artifactId>accumulorecipes-parent</artifactId>
-	<version>0.1-SNAPSHOT</version>
+        <groupId>org.calrissian.accumulorecipes</groupId>
+        <artifactId>store</artifactId>
+        <version>0.1-SNAPSHOT</version>
     </parent>
 
 
-    <artifactId>commons</artifactId>
+    <artifactId>lastn-store</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
+
+        <!-- Accumulo Recipes -->
+        <dependency>
+            <groupId>org.calrissian.accumulorecipes</groupId>
+            <artifactId>commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Mango -->
         <dependency>
             <groupId>org.calrissian.mango</groupId>
             <artifactId>mango-types</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.calrissian.mango</groupId>
+            <artifactId>mango-collect</artifactId>
         </dependency>
 
         <!-- JUNIT -->
@@ -54,6 +65,7 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>
+
 
     </dependencies>
 
