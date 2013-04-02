@@ -9,15 +9,18 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.domain.Event;
 import org.calrissian.accumulorecipes.eventstore.support.Constants;
+import org.calrissian.accumulorecipes.eventstore.support.NodeQueryHelper;
 import org.calrissian.accumulorecipes.eventstore.support.Shard;
+import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
 import org.calrissian.commons.domain.Tuple;
 import org.calrissian.criteria.domain.Node;
-import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterator;
 import org.calrissian.mango.types.TypeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Date;
 
 public class AccumuloEventStore implements EventStore {
 
@@ -35,6 +38,8 @@ public class AccumuloEventStore implements EventStore {
     protected String indexTable = "eventStore_index";
     protected String shardTable = "eventStore_shard";
 
+    protected NodeQueryHelper queryHelper;
+
     public static final String SHARD_PREFIX_B = "b";    // backwards index (key/value:uuid)
     public static final String SHARD_PREFIX_F = "f";    // forwards index (uuid:key/value)
     public static final String SHARD_PREFIX_V = "v";    // value index    (value:key/uuid)
@@ -48,6 +53,7 @@ public class AccumuloEventStore implements EventStore {
 
     public AccumuloEventStore(Connector connector) {
         this.connector = connector;
+        this.queryHelper = new NodeQueryHelper(connector, shardTable, numThreads, shard, DELIM_END);
 
         try {
             initialize();
@@ -120,8 +126,20 @@ public class AccumuloEventStore implements EventStore {
     }
 
     @Override
-    public CloseableIterable<Event> query(Node node, Authorizations auths) {
+    public CloseableIterator<Event> query(Date start, Date end, Node node, Authorizations auths) {
+        return new QueryResultsVisitor(node, queryHelper, start, end, auths).getResults();
+    }
+
+    @Override
+    public Event get(String uuid, Authorizations auths) {
         return null;
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+
+        shardWriter.close();
+        indexWriter.close();
     }
 
     public void setMaxMemory(Long maxMemory) {

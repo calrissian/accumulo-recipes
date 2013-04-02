@@ -22,7 +22,13 @@ public class Shard {
     public String buildShard(long timestamp) {
 
         Date date = new Date(timestamp);
-        return String.format("%s%s_%d", new SimpleDateFormat(dateFormat).format(date), delimiter, numPartitions);
+        return String.format("%s%s%d", new SimpleDateFormat(dateFormat).format(date), delimiter, numPartitions);
+    }
+
+    public String[] getRange(Date start, Date end) {
+
+        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+        return new String[] { sdf.format(start), sdf.format(end)};
     }
 
     public Integer getNumPartitions() {
