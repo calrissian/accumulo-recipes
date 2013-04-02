@@ -12,13 +12,20 @@ import java.util.UUID;
 public class StoreEntry {
 
     protected final String id;
-    protected final long timestamp;
+    protected final long timestamp; // in Millis
 
     protected Collection<Tuple> tuples;
 
     public StoreEntry() {
         this.id = UUID.randomUUID().toString();
         this.timestamp = System.currentTimeMillis();
+    }
+
+    public StoreEntry(String id) {
+        this.id = id;
+        this.timestamp = System.currentTimeMillis();
+
+        this.tuples = new ArrayList<Tuple>();
     }
 
     public StoreEntry(String id, long timestamp) {
