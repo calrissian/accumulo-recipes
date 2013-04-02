@@ -3,7 +3,7 @@ package org.calrissian.accumulorecipes.eventstore.support.query;
 import com.google.common.collect.Lists;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.eventstore.domain.Event;
-import org.calrissian.accumulorecipes.eventstore.support.NodeQueryHelper;
+import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoOrNotEqualsValidator;
 import org.calrissian.criteria.domain.*;
@@ -31,9 +31,9 @@ public class QueryResultsVisitor implements NodeVisitor {
     protected Date start, end;
     protected Authorizations auths;
     protected CloseableIterator<Event> iterator;
-    private NodeQueryHelper queryHelper;
+    private QueryNodeHelper queryHelper;
 
-    public QueryResultsVisitor(Node query, NodeQueryHelper queryHelper, Date start, Date end, Authorizations auths) {
+    public QueryResultsVisitor(Node query, QueryNodeHelper queryHelper, Date start, Date end, Authorizations auths) {
         this.queryHelper = queryHelper;
         this.start = start;
         this.end = end;
@@ -62,7 +62,6 @@ public class QueryResultsVisitor implements NodeVisitor {
     @Override
     public void end(ParentNode node) {
         try {
-            //depth first
             if (parentContainsOnlyLeaves(node)) {
                 Node n = node;
                 //trim and(eq) to eq
@@ -72,7 +71,6 @@ public class QueryResultsVisitor implements NodeVisitor {
                         n = child;
                     }
                 }
-                //find and(leaf children)
                 populateIterator(n);
             }
         } catch (Exception e) {
@@ -122,7 +120,7 @@ public class QueryResultsVisitor implements NodeVisitor {
 
     protected CloseableIterator<Event> leafResultsIterator(Leaf node) throws IOException {
         try {
-            return queryHelper.queryLeaf(start, end, node, auths);
+            return queryHelper.querySingleLeaf(start, end, node, auths);
         } catch (Exception e) {
             throw new IOException(e);
         }

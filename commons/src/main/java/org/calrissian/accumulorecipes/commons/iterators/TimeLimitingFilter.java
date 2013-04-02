@@ -47,11 +47,11 @@ public class TimeLimitingFilter extends Filter {
         super.init(source, options, env);
         threshold = -1;
         if (options == null)
-            throw new IllegalArgumentException(TTL + " must be set for LimitingAgeOffFilter");
+            throw new IllegalArgumentException(TTL + " must be set for TimeLimitingFilter");
 
         String ttl = options.get(TTL);
         if (ttl == null)
-            throw new IllegalArgumentException(TTL + " must be set for LimitingAgeOffFilter");
+            throw new IllegalArgumentException(TTL + " must be set for TimelimitingFilter");
 
         threshold = Long.parseLong(ttl);
 

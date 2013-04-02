@@ -9,7 +9,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.domain.Event;
 import org.calrissian.accumulorecipes.eventstore.support.Constants;
-import org.calrissian.accumulorecipes.eventstore.support.NodeQueryHelper;
+import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.Shard;
 import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
 import org.calrissian.commons.domain.Tuple;
@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Date;
+
+import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
 public class AccumuloEventStore implements EventStore {
 
@@ -38,14 +40,7 @@ public class AccumuloEventStore implements EventStore {
     protected String indexTable = "eventStore_index";
     protected String shardTable = "eventStore_shard";
 
-    protected NodeQueryHelper queryHelper;
-
-    public static final String SHARD_PREFIX_B = "b";    // backwards index (key/value:uuid)
-    public static final String SHARD_PREFIX_F = "f";    // forwards index (uuid:key/value)
-    public static final String SHARD_PREFIX_V = "v";    // value index    (value:key/uuid)
-
-    public static final String DELIM = "\u0000";
-    public static final String DELIM_END = "\uffff";
+    protected QueryNodeHelper queryHelper;
 
     protected final Shard shard = new Shard(Constants.DEFAULT_PARTITION_SIZE);
 
@@ -53,7 +48,7 @@ public class AccumuloEventStore implements EventStore {
 
     public AccumuloEventStore(Connector connector) {
         this.connector = connector;
-        this.queryHelper = new NodeQueryHelper(connector, shardTable, numThreads, shard, DELIM_END);
+        this.queryHelper = new QueryNodeHelper(connector, shardTable, numThreads, shard);
 
         try {
             initialize();
@@ -79,7 +74,7 @@ public class AccumuloEventStore implements EventStore {
 
         for(Event event : events) {
 
-            String shardId = shard.buildShard(event.getTimestamp());
+            String shardId = shard.buildShard(event.getTimestamp(), event.getId());
             Mutation shardMutation = new Mutation(shardId);
 
             if(event.getTuples() != null) {

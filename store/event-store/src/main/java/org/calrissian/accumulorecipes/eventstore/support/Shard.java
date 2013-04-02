@@ -19,15 +19,18 @@ public class Shard {
         this.numPartitions = numPartitions;
     }
 
-    public String buildShard(long timestamp) {
+    public String buildShard(long timestamp, String uuid) {
 
+        int partitionWidth = String.valueOf(numPartitions).length();
         Date date = new Date(timestamp);
-        return String.format("%s%s%d", new SimpleDateFormat(dateFormat).format(date), delimiter, numPartitions);
+        return String.format("%s%s%0" + partitionWidth + "d", new SimpleDateFormat(dateFormat).format(date),
+                delimiter, (Math.abs(uuid.hashCode()) % numPartitions));
     }
 
     public String[] getRange(Date start, Date end) {
 
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+
         return new String[] { sdf.format(start), sdf.format(end)};
     }
 

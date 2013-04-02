@@ -4,6 +4,7 @@ import org.calrissian.commons.domain.Tuple;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 
 public class Event {
 
@@ -11,6 +12,11 @@ public class Event {
     protected final long timestamp;
 
     protected Collection<Tuple> tuples;
+
+    public Event() {
+        this.id = UUID.randomUUID().toString();
+        this.timestamp = System.currentTimeMillis();
+    }
 
     public Event(String id, long timestamp) {
         this.id = id;

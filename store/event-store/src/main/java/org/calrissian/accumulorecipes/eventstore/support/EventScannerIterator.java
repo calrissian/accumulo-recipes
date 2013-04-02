@@ -41,15 +41,18 @@ public class EventScannerIterator implements CloseableIterator<Event> {
 
     @Override
     public boolean hasNext() {
-        return iterator().hasNext();
+
+        return iterator.hasNext();
     }
 
     @Override
     public Event next() {
+
         try {
+            String nextEvent = new String(iterator.next().getValue().get());
             return ObjectMapperContext.getInstance().getObjectMapper()
-                    .readValue(new String(iterator.next().getValue().get()), Event.class);
-        } catch (IOException e) {
+                    .readValue(nextEvent, Event.class);
+        } catch (Exception e) {
 
             throw new RuntimeException(e);
         }

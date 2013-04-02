@@ -1,75 +1,148 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
-
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.user.IntersectingIterator;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.eventstore.domain.Event;
-import org.calrissian.accumulorecipes.eventstore.support.EventIterator;
 import org.calrissian.commons.domain.Tuple;
-import org.calrissian.commons.serialization.ObjectMapperContext;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.criteria.builder.QueryBuilder;
+import org.calrissian.criteria.domain.Node;
 import org.junit.Test;
+import org.junit.Before;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
 
 public class AccumuloEventStoreTest {
 
+    AccumuloEventStore store;
+
+    @Before
+    public void setUp() throws AccumuloException, AccumuloSecurityException {
+
+        MockInstance instance =  new MockInstance();
+        Connector conn  = instance.getConnector("username", "password".getBytes());
+
+        store = new AccumuloEventStore(conn);
+    }
+
     @Test
-    public void test() throws Exception, AccumuloException, AccumuloSecurityException {
+    public void testQuery_AndQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
         Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
         event.put(new Tuple("key1", "val1", ""));
         event.put(new Tuple("key2", "val2", ""));
 
-        MockInstance instance = new MockInstance();
-        Connector conn = instance.getConnector("username", "password".getBytes());
+        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        event2.put(new Tuple("key1", "val1", ""));
+        event2.put(new Tuple("key2", "val2", ""));
 
-        AccumuloEventStore store = new AccumuloEventStore(conn);
         store.put(Collections.singleton(event));
+        store.put(Collections.singleton(event2));
 
-        System.out.println(ObjectMapperContext.getInstance().getObjectMapper().writeValueAsString(event));
+        Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
 
+        Iterator<Event> itr = store.query(new Date(System.currentTimeMillis() - 5000),
+                new Date(System.currentTimeMillis()), query, new Authorizations());
 
-
-
-
-        Scanner scanner = conn.createScanner("eventStore_shard", new Authorizations());
-
-        Map<String, Object> fields = new HashMap<String, Object>();
-        fields.put("key1", "val1");
-        fields.put("key2", "val2");
-
-
-        IteratorSetting intersectingIterator = new IteratorSetting(16, "ii", EventIterator.class);
-        Text[] columns = new Text[2];
-
-        columns[0] = new Text(AccumuloEventStore.SHARD_PREFIX_B + AccumuloEventStore.DELIM + "key1" +
-                              AccumuloEventStore.DELIM + TypeContext.getInstance().getAliasForType("val1") +
-                              AccumuloEventStore.DELIM + "val1");
-
-        columns[1] = new Text(AccumuloEventStore.SHARD_PREFIX_B + AccumuloEventStore.DELIM + "key2" +
-                AccumuloEventStore.DELIM + TypeContext.getInstance().getAliasForType("val2") +
-                AccumuloEventStore.DELIM + "val2");
-
-        IntersectingIterator.setColumnFamilies(intersectingIterator, columns);
-
-        scanner.addScanIterator(intersectingIterator);
-        for(Map.Entry<Key,Value> entry : scanner) {
-
-            System.out.println("DOC: " + new String(entry.getValue().get()));
+        Event actualEvent = itr.next();
+        if(actualEvent.getId().equals(event.getId())) {
+            assertEquals(actualEvent, event);
         }
 
-        Scanner scanner2 = conn.createScanner("eventStore_index", new Authorizations());
-        for(Map.Entry<Key, Value> entry : scanner2) {
-            System.out.println(entry);
+        else {
+            assertEquals(actualEvent, event2);
+        }
+
+        actualEvent = itr.next();
+        if(actualEvent.getId().equals(event.getId())) {
+            assertEquals(actualEvent, event);
+        }
+
+        else {
+            assertEquals(actualEvent, event2);
+        }
+    }
+
+    @Test
+    public void testQuery_OrQuery() throws Exception, AccumuloException, AccumuloSecurityException {
+
+        Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        event.put(new Tuple("key1", "val1", ""));
+        event.put(new Tuple("key2", "val2", ""));
+
+        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        event2.put(new Tuple("key1", "val1", ""));
+        event2.put(new Tuple("key3", "val3", ""));
+
+        store.put(Collections.singleton(event));
+        store.put(Collections.singleton(event2));
+
+        Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").endStatement().build();
+
+        Iterator<Event> itr = store.query(new Date(System.currentTimeMillis() - 5000),
+                new Date(System.currentTimeMillis()), query, new Authorizations());
+
+        Event actualEvent = itr.next();
+        if(actualEvent.getId().equals(event.getId())) {
+            assertEquals(actualEvent, event);
+        }
+
+        else {
+            assertEquals(actualEvent, event2);
+        }
+
+        actualEvent = itr.next();
+        if(actualEvent.getId().equals(event.getId())) {
+            assertEquals(actualEvent, event);
+        }
+
+        else {
+            assertEquals(actualEvent, event2);
+        }
+    }
+
+    @Test
+    public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
+
+        Event event = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        event.put(new Tuple("key1", "val1", ""));
+        event.put(new Tuple("key2", "val2", ""));
+
+        Event event2 = new Event(UUID.randomUUID().toString(), System.currentTimeMillis());
+        event2.put(new Tuple("key1", "val1", ""));
+        event2.put(new Tuple("key3", "val3", ""));
+
+        store.put(Collections.singleton(event));
+        store.put(Collections.singleton(event2));
+
+        Node query = new QueryBuilder().eq("key1", "val1").build();
+
+        Iterator<Event> itr = store.query(new Date(System.currentTimeMillis() - 5000),
+                new Date(System.currentTimeMillis()), query, new Authorizations());
+
+        Event actualEvent = itr.next();
+        if(actualEvent.getId().equals(event.getId())) {
+            assertEquals(actualEvent, event);
+        }
+
+        else {
+            assertEquals(actualEvent, event2);
+        }
+
+        actualEvent = itr.next();
+        if(actualEvent.getId().equals(event.getId())) {
+            assertEquals(actualEvent, event);
+        }
+
+        else {
+            assertEquals(actualEvent, event2);
         }
     }
 }
