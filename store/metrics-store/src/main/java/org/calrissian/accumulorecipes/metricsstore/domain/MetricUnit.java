@@ -23,54 +23,48 @@ public class MetricUnit {
     private String type;
     private String name;
 
+    private String visibility;
+
     private MetricType metricType;
 
-    public MetricUnit(long timestamp, String group, String type, String name, MetricType metricType) {
+    private Long metric;
+
+    public MetricUnit(long timestamp, String group, String type, String name, String visibility, MetricType metricType, Long metric) {
         this.timestamp = timestamp;
         this.group = group;
         this.type = type;
         this.name = name;
+        this.visibility = visibility;
         this.metricType = metricType;
+        this.metric = metric;
     }
 
     public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
     public String getGroup() {
         return group;
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public String getVisibility() {
+        return visibility;
     }
 
     public MetricType getMetricType() {
         return metricType;
     }
 
-    public void setMetricType(MetricType metricType) {
-        this.metricType = metricType;
+    public Long getMetric() {
+        return metric;
     }
 
     @Override
@@ -82,9 +76,11 @@ public class MetricUnit {
 
         if (timestamp != that.timestamp) return false;
         if (group != null ? !group.equals(that.group) : that.group != null) return false;
+        if (metric != null ? !metric.equals(that.metric) : that.metric != null) return false;
         if (metricType != that.metricType) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        if (visibility != null ? !visibility.equals(that.visibility) : that.visibility != null) return false;
 
         return true;
     }
@@ -95,18 +91,22 @@ public class MetricUnit {
         result = 31 * result + (group != null ? group.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (visibility != null ? visibility.hashCode() : 0);
         result = 31 * result + (metricType != null ? metricType.hashCode() : 0);
+        result = 31 * result + (metric != null ? metric.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "MetricUnit{" +
-                "timestamp=" + timestamp +
-                ", group='" + group + '\'' +
-                ", type='" + type + '\'' +
-                ", name='" + name + '\'' +
+                "metric=" + metric +
                 ", metricType=" + metricType +
+                ", visibility='" + visibility + '\'' +
+                ", name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", group='" + group + '\'' +
+                ", timestamp=" + timestamp +
                 '}';
     }
 }

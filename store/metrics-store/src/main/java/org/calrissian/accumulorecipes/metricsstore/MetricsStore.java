@@ -16,8 +16,9 @@
  */
 package org.calrissian.accumulorecipes.metricsstore;
 
-
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.MetricType;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
 
 import java.util.Collection;
@@ -29,10 +30,28 @@ import java.util.Iterator;
  */
 public interface MetricsStore {
 
-    Iterator<MetricUnit> query(Date start, Date end, String group, String type, String name, String metricType,
-                               Authorizations auths);
+    /**
+     * Query the metrics store for a given metric for a given time range
+     * @param start
+     * @param end
+     * @param group
+     * @param type
+     * @param name
+     * @param metricType
+     * @param auths
+     * @return
+     */
+    Iterator<MetricUnit> query(Date start, Date end, String group, String type, String name, MetricType metricType,
+                               MetricTimeUnit metricTimeUnit, Authorizations auths);
 
+    /**
+     * Put a collection of metric units into the metrics store
+     * @param metrics
+     */
     void put(Collection<MetricUnit> metrics);
 
+    /**
+     * Free up resources upon shutdown
+     */
     void shutdown();
 }
