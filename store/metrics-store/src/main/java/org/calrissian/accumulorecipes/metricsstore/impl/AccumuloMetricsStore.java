@@ -60,7 +60,6 @@ public class AccumuloMetricsStore implements MetricsStore {
     protected Integer numThreads = 3;
     protected Long maxLatency = 10000L;
 
-
     Connector connector;
     BatchWriter writer;
 
@@ -104,31 +103,13 @@ public class AccumuloMetricsStore implements MetricsStore {
         }
     }
 
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
     @Override
     public Iterator<MetricUnit> query(Date start, Date end, String group, String type, String name, MetricType metricType,
                                       MetricTimeUnit timeUnit, Authorizations auths) {
 
         try {
 
-            String shortTimeUnit = M;
-            switch(timeUnit) {
-                case DAYS:
-                    shortTimeUnit = D;
-                    break;
-                case HOURS:
-                    shortTimeUnit = H;
-                    break;
-                case MONTHS:
-                    shortTimeUnit = M;
-            }
+            String shortTimeUnit = parseTimeUnit(timeUnit);
 
             Scanner scanner = connector.createScanner(tableName, auths);
 
@@ -192,6 +173,22 @@ public class AccumuloMetricsStore implements MetricsStore {
         }
     }
 
+    private String parseTimeUnit(MetricTimeUnit timeUnit) {
+        String shortTimeUnit = M;
+        switch(timeUnit) {
+            case DAYS:
+                shortTimeUnit = D;
+                break;
+            case HOURS:
+                shortTimeUnit = H;
+                break;
+            case MONTHS:
+                shortTimeUnit = M;
+        }
+
+        return shortTimeUnit;
+    }
+
     @Override
     public void shutdown() {
 
@@ -222,4 +219,11 @@ public class AccumuloMetricsStore implements MetricsStore {
     }
 
 
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
 }
