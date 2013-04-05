@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright (C) 2013 The Calrissian Authors
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,12 +17,10 @@ package org.calrissian.accumulorecipes.metricsstore;
 
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricType;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 
 /**
  * A metrics store allows the storage of numerically quantified
@@ -41,7 +38,7 @@ public interface MetricsStore {
      * @param auths
      * @return
      */
-    Iterator<MetricUnit> query(Date start, Date end, String group, String type, String name, MetricType metricType,
+    Iterable<MetricUnit> query(Date start, Date end, String group, String type, String name, String metricType,
                                MetricTimeUnit metricTimeUnit, Authorizations auths);
 
     /**

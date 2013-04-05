@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright (C) 2013 The Calrissian Authors
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.calrissian.accumulorecipes.metricsstore.domain;
 
 public class MetricUnit {
@@ -25,17 +25,14 @@ public class MetricUnit {
 
     private String visibility;
 
-    private MetricType metricType;
+    private Metric metric;
 
-    private Long metric;
-
-    public MetricUnit(long timestamp, String group, String type, String name, String visibility, MetricType metricType, Long metric) {
+    public MetricUnit(long timestamp, String group, String type, String name, String visibility, Metric metric) {
         this.timestamp = timestamp;
         this.group = group;
         this.type = type;
         this.name = name;
         this.visibility = visibility;
-        this.metricType = metricType;
         this.metric = metric;
     }
 
@@ -59,11 +56,8 @@ public class MetricUnit {
         return visibility;
     }
 
-    public MetricType getMetricType() {
-        return metricType;
-    }
 
-    public Long getMetric() {
+    public Metric getMetric() {
         return metric;
     }
 
@@ -77,7 +71,6 @@ public class MetricUnit {
         if (timestamp != that.timestamp) return false;
         if (group != null ? !group.equals(that.group) : that.group != null) return false;
         if (metric != null ? !metric.equals(that.metric) : that.metric != null) return false;
-        if (metricType != that.metricType) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         if (visibility != null ? !visibility.equals(that.visibility) : that.visibility != null) return false;
@@ -92,7 +85,6 @@ public class MetricUnit {
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (visibility != null ? visibility.hashCode() : 0);
-        result = 31 * result + (metricType != null ? metricType.hashCode() : 0);
         result = 31 * result + (metric != null ? metric.hashCode() : 0);
         return result;
     }
@@ -101,7 +93,6 @@ public class MetricUnit {
     public String toString() {
         return "MetricUnit{" +
                 "metric=" + metric +
-                ", metricType=" + metricType +
                 ", visibility='" + visibility + '\'' +
                 ", name='" + name + '\'' +
                 ", type='" + type + '\'' +

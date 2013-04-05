@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright (C) 2013 The Calrissian Authors
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,20 +22,20 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorUtil;
-import org.apache.accumulo.core.iterators.LongCombiner;
-import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.metricsstore.MetricsContext;
 import org.calrissian.accumulorecipes.metricsstore.MetricsStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricType;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
+import org.calrissian.accumulorecipes.metricsstore.normalizer.MetricNormalizer;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricsIterator;
 import org.calrissian.accumulorecipes.metricsstore.support.TimestampUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -77,7 +76,7 @@ public class AccumuloMetricsStore implements MetricsStore {
         }
     }
 
-    private void createTable() throws TableExistsException, AccumuloException, AccumuloSecurityException, TableNotFoundException {
+    public void createTable() throws TableExistsException, AccumuloException, AccumuloSecurityException, TableNotFoundException {
 
         if(!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);
@@ -89,22 +88,37 @@ public class AccumuloMetricsStore implements MetricsStore {
 
             EnumSet<IteratorUtil.IteratorScope> scope = EnumSet.copyOf(scopes);
 
+            int priority = 5;
+            for(MetricNormalizer normalizer : MetricsContext.getInstance().normalizers()) {
 
-            IteratorSetting setting = new IteratorSetting(5, "combiner", SummingCombiner.class);
-            SummingCombiner.setColumns(setting,
-                    Lists.newArrayList(
-                            new IteratorSetting.Column(MetricType.COUNTER.name() + DELIM + M),
-                            new IteratorSetting.Column(MetricType.COUNTER.name() + DELIM + H),
-                            new IteratorSetting.Column(MetricType.COUNTER.name() + DELIM + D),
-                            new IteratorSetting.Column(MetricType.COUNTER.name() + DELIM + MO)
-                    ));
-            SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
-            connector.tableOperations().attachIterator(tableName, setting, scope);
+                IteratorSetting setting = new IteratorSetting(priority, normalizer.name(), normalizer.combinerClass());
+
+                Method method = null;
+                try {
+
+                    method = normalizer.combinerClass().getMethod("setColumns", IteratorSetting.class, List.class);
+                    List<IteratorSetting.Column> columns = Lists.newArrayList(
+                            new IteratorSetting.Column(normalizer.name() + DELIM + M),
+                            new IteratorSetting.Column(normalizer.name() + DELIM + H),
+                            new IteratorSetting.Column(normalizer.name() + DELIM + D),
+                            new IteratorSetting.Column(normalizer.name() + DELIM + MO)
+                    );
+
+                    normalizer.setSpecificIteratorOptions(setting);
+
+                    method.invoke(null, setting, columns);
+                    connector.tableOperations().attachIterator(tableName, setting, scope);
+                    priority++;
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
     @Override
-    public Iterator<MetricUnit> query(Date start, Date end, String group, String type, String name, MetricType metricType,
+    public Iterable<MetricUnit> query(Date start, Date end, String group, String type, String name, String metricType,
                                       MetricTimeUnit timeUnit, Authorizations auths) {
 
         try {
@@ -117,7 +131,7 @@ public class AccumuloMetricsStore implements MetricsStore {
             Long startRid = TimestampUtils.truncatedReverseTimestamp(end.getTime(), timeUnit);
 
             scanner.setRange(new Range(group + DELIM + startRid, group + DELIM + stopRid));
-            scanner.fetchColumn(new Text(metricType.name() + DELIM + shortTimeUnit), new Text(type + DELIM + name));
+            scanner.fetchColumn(new Text(metricType + DELIM + shortTimeUnit), new Text(type + DELIM + name));
 
             return new MetricsIterator(scanner, metricType, timeUnit);
 
@@ -133,33 +147,35 @@ public class AccumuloMetricsStore implements MetricsStore {
         try {
             for(MetricUnit metricUnit : metrics) {
 
-
                 String group = metricUnit.getGroup();
                 String type = metricUnit.getType();
                 String name = metricUnit.getName();
 
                 Long timestamp = metricUnit.getTimestamp();
 
-                Value value = new Value(metricUnit.getMetric().toString().getBytes());
+                MetricNormalizer normalizer = MetricsContext.getInstance()
+                        .getNormalizer(metricUnit.getMetric().getClass());
+
+                Value value = normalizer.getValue(metricUnit.getMetric());
 
                 Long mTs = TimestampUtils.truncatedReverseTimestamp(timestamp, MetricTimeUnit.MINUTES);
                 Mutation m = new Mutation(group + DELIM + mTs);
-                m.put(new Text(metricUnit.getMetricType().name() + DELIM + M),
+                m.put(new Text(normalizer.name() + DELIM + M),
                         new Text(type + DELIM + name), new ColumnVisibility(metricUnit.getVisibility()), timestamp, value);
 
                 Long hTs = TimestampUtils.truncatedReverseTimestamp(timestamp, MetricTimeUnit.HOURS);
                 Mutation h = new Mutation(group + DELIM + hTs);
-                h.put(new Text(metricUnit.getMetricType().toString() + DELIM + H),
+                h.put(new Text(normalizer.name() + DELIM + H),
                         new Text(type + DELIM + name), new ColumnVisibility(metricUnit.getVisibility()), timestamp, value);
 
                 Long dTs = TimestampUtils.truncatedReverseTimestamp(timestamp, MetricTimeUnit.DAYS);
                 Mutation d = new Mutation(group + DELIM + dTs);
-                d.put(new Text(metricUnit.getMetricType().toString() + DELIM + D),
+                d.put(new Text(normalizer.name() + DELIM + D),
                         new Text(type + DELIM + name), new ColumnVisibility(metricUnit.getVisibility()), timestamp, value);
 
                 Long moTs = TimestampUtils.truncatedReverseTimestamp(timestamp, MetricTimeUnit.MONTHS);
                 Mutation mo = new Mutation(metricUnit.getGroup() + DELIM + moTs);
-                mo.put(new Text(metricUnit.getMetricType().toString() + DELIM + MO),
+                mo.put(new Text(normalizer.name() + DELIM + MO),
                         new Text(type + DELIM + name), new ColumnVisibility(metricUnit.getVisibility()), timestamp, value);
 
                 writer.addMutations(Arrays.asList(new Mutation[]{m, d, h, mo}));
@@ -169,6 +185,7 @@ public class AccumuloMetricsStore implements MetricsStore {
 
         } catch(Exception e) {
 
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

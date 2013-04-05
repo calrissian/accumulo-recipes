@@ -21,15 +21,17 @@ import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.metricsstore.MetricsContext;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricType;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.impl.CounterMetric;
+import org.calrissian.accumulorecipes.metricsstore.domain.impl.StatsMetric;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Map;
 
 public class AccumuloMetricsStoreTest {
@@ -47,22 +49,47 @@ public class AccumuloMetricsStoreTest {
     }
 
     @Test
-    public void testPutAndQuery() throws TableNotFoundException {
+    public void testPutAndQueryForCounterMetric() throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
 
-        MetricUnit unit = new MetricUnit(System.currentTimeMillis(), "group", "type", "name", "",
-                MetricType.COUNTER, 5l);
+        Metric metric = new CounterMetric(5l);
+
+        MetricUnit unit = new MetricUnit(System.currentTimeMillis(), "group", "type", "name", "", metric);
 
         store.put(Collections.singleton(unit));
         store.put(Collections.singleton(unit));
 
-        Iterator<MetricUnit> itr = store.query(new Date(System.currentTimeMillis() - 500000),
+        Iterable<MetricUnit> itr = store.query(new Date(System.currentTimeMillis() - 500000),
                 new Date(System.currentTimeMillis()), "group", "type", "name",
-                MetricType.COUNTER, MetricTimeUnit.DAYS, new Authorizations());
+                MetricsContext.getInstance().getNormalizer(metric.getClass()).name(),
+                MetricTimeUnit.DAYS, new Authorizations());
 
-        while(itr.hasNext()) {
-            System.out.println(itr.next());
+        for(MetricUnit result : itr) {
+            System.out.println(result);
         }
     }
+
+    @Test
+    public void testPutAndQueryForStatsMetric() throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
+
+        Metric metric = new StatsMetric(5l, 5l, 5l, 5l);
+        Metric metric2 = new StatsMetric(1l, 3l, 5l, 9l);
+
+        MetricUnit unit = new MetricUnit(System.currentTimeMillis(), "group", "type", "name", "", metric);
+        MetricUnit unit2 = new MetricUnit(System.currentTimeMillis(), "group", "type", "name", "", metric2);
+
+        store.put(Collections.singleton(unit));
+        store.put(Collections.singleton(unit2));
+
+        Iterable<MetricUnit> itr = store.query(new Date(System.currentTimeMillis() - 500000),
+                new Date(System.currentTimeMillis()), "group", "type", "name",
+                MetricsContext.getInstance().getNormalizer(metric.getClass()).name(),
+                MetricTimeUnit.DAYS, new Authorizations());
+
+        for(MetricUnit result : itr) {
+            System.out.println(result);
+        }
+    }
+
 
 
     protected void printTable() throws TableNotFoundException {
