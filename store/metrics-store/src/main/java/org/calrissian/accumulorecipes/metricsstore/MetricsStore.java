@@ -15,12 +15,14 @@
  */
 package org.calrissian.accumulorecipes.metricsstore;
 
+import com.google.common.base.Function;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 
 /**
  * A metrics store allows the storage of numerically quantified
@@ -51,4 +53,8 @@ public interface MetricsStore {
      * Free up resources upon shutdown
      */
     void shutdown();
+
+    Iterable<MetricUnit> query(Date start, Date end, String group, String type, String name, String metricType,
+                               MetricTimeUnit timeUnit, Class<? extends Function<Iterator<byte[]>, byte[]>> functionClass,
+                               Authorizations auths);
 }

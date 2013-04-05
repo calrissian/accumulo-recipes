@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.metricsstore.impl;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
@@ -29,6 +30,7 @@ import org.calrissian.accumulorecipes.metricsstore.MetricsContext;
 import org.calrissian.accumulorecipes.metricsstore.MetricsStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
+import org.calrissian.accumulorecipes.metricsstore.iterator.FunctionCombiner;
 import org.calrissian.accumulorecipes.metricsstore.normalizer.MetricNormalizer;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricsIterator;
 import org.calrissian.accumulorecipes.metricsstore.support.TimestampUtils;
@@ -121,11 +123,24 @@ public class AccumuloMetricsStore implements MetricsStore {
     public Iterable<MetricUnit> query(Date start, Date end, String group, String type, String name, String metricType,
                                       MetricTimeUnit timeUnit, Authorizations auths) {
 
+        return query(start, end, group, type, name, metricType, timeUnit, null, auths);
+    }
+
+    @Override
+    public Iterable<MetricUnit> query(Date start, Date end, String group, String type, String name, String metricType,
+                                      MetricTimeUnit timeUnit, Class<? extends Function<Iterator<byte[]>, byte[]>> functionClass, Authorizations auths) {
         try {
 
             String shortTimeUnit = parseTimeUnit(timeUnit);
 
             Scanner scanner = connector.createScanner(tableName, auths);
+
+            if(functionClass != null) {
+                IteratorSetting setting = new IteratorSetting(30, "functionCombiner", FunctionCombiner.class);
+                FunctionCombiner.setFunctionClass(setting, functionClass);
+
+                scanner.addScanIterator(setting);
+            }
 
             Long stopRid = TimestampUtils.truncatedReverseTimestamp(start.getTime(), timeUnit);
             Long startRid = TimestampUtils.truncatedReverseTimestamp(end.getTime(), timeUnit);
@@ -138,8 +153,7 @@ public class AccumuloMetricsStore implements MetricsStore {
         } catch (TableNotFoundException e) {
 
             throw new RuntimeException(e);
-        }
-    }
+        }    }
 
     @Override
     public void put(Collection<MetricUnit> metrics) {
