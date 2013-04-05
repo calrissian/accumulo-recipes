@@ -9,8 +9,7 @@
         <version>0.1-SNAPSHOT</version>
     </parent>
 
-
-    <artifactId>event-store</artifactId>
+    <artifactId>metrics-store</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -25,19 +24,10 @@
         <!-- Mango -->
         <dependency>
             <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-types</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-criteria</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.calrissian.mango</groupId>
             <artifactId>mango-collect</artifactId>
         </dependency>
 
         <!-- JUNIT -->
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -45,7 +35,6 @@
         </dependency>
 
         <!-- Hadoop / CB -->
-
         <dependency>
             <groupId>org.apache.accumulo</groupId>
             <artifactId>accumulo-core</artifactId>
