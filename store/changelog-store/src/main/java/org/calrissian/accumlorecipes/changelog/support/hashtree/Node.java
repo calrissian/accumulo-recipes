@@ -1,22 +1,12 @@
 package org.calrissian.accumlorecipes.changelog.support.hashtree;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * A node in a merkle tree representing a hash
  */
-public interface Node {
-
-    /**
-     * Accessor for the parent whose hash will include this node
-     * @return
-     */
-    Node getParent();
-
-    /**
-     * Mutation function to set parent of current node
-     */
-    void setParent(Node node);
+public interface Node extends Serializable {
 
     /**
      * Accessor for the children that this Node's hash is comprised of

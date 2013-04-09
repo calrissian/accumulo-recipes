@@ -26,6 +26,12 @@
             <groupId>org.calrissian.mango</groupId>
             <artifactId>mango-collect</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.calrissian.mango</groupId>
+            <artifactId>mango-commons</artifactId>
+            <version>${mango.version}</version>
+        </dependency>
+
 
         <!-- JUNIT -->
         <dependency>
@@ -52,6 +58,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.esotericsoftware.kryo</groupId>
+            <artifactId>kryo</artifactId>
+            <version>2.20</version>
         </dependency>
 
 

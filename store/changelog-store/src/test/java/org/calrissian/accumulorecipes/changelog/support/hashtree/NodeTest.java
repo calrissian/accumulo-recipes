@@ -1,44 +1,72 @@
 package org.calrissian.accumulorecipes.changelog.support.hashtree;
 
-import org.calrissian.accumlorecipes.changelog.support.HashUtils;
-import org.calrissian.accumlorecipes.changelog.support.hashtree.Leaf;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.*;
 import org.calrissian.accumlorecipes.changelog.support.hashtree.MerkleTree;
+import org.codehaus.jackson.JsonGenerationException;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class NodeTest {
 
     @Test
-    public void testNodeHashes() throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public void testNodeHashes() throws NoSuchAlgorithmException, IOException, JsonGenerationException, ClassNotFoundException {
 
         MockLeaf leaf1 = new MockLeaf("4");
         MockLeaf leaf2 = new MockLeaf("2");
         MockLeaf leaf3 = new MockLeaf("8");
+        MockLeaf leaf4 = new MockLeaf("99");
+        MockLeaf leaf5 = new MockLeaf("77");
+        MockLeaf leaf6 = new MockLeaf("56");
+        MockLeaf leaf7 = new MockLeaf("9");
+        MockLeaf leaf8 = new MockLeaf("0");
 
-        List<MockLeaf> leaves = Arrays.asList(new MockLeaf[]{ leaf1, leaf2, leaf3});
+        List<MockLeaf> leaves = Arrays.asList(new MockLeaf[]{leaf1, leaf2, leaf8, leaf7, leaf4});
 
-        MerkleTree tree = new MerkleTree(leaves);
+        MerkleTree<MockLeaf> tree = new MerkleTree<MockLeaf>(leaves, 4);
 
-        System.out.println(tree.getTopHash());
-        System.out.println(HashUtils.hashString("1\u00002\u0000"));
+        List<MockLeaf> leaves2 = Arrays.asList(new MockLeaf[]{ leaf4, leaf5, leaf6, leaf7, leaf8});
+
+        MerkleTree<MockLeaf> tree2 = new MerkleTree<MockLeaf>(leaves2, 4);
+
+        System.out.println("DIFFS 1 on 2: " + tree.diff(tree2));
+        System.out.println("DIFFS 2 on 1: " + tree2.diff(tree));
+
+        System.out.println("TREE 1: " + tree.getTopHash());
+        System.out.println("TREE 2: " + tree2.getTopHash());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(tree);
+        oos.flush();
+        oos.close();
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        ObjectInputStream ois = new ObjectInputStream(bais);
+
+        MerkleTree<MockLeaf> newTree = (MerkleTree<MockLeaf>) ois.readObject();
+
+        System.out.println(newTree);
+
+        Kryo kryo = new Kryo();
+
+        ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
+        Output output = new Output(new GZIPOutputStream(baos2));
+        kryo.writeObject(output, tree);
+        output.close();
+
+        System.out.println(new String(baos2.toByteArray()));
+
+        Input input = new Input(new GZIPInputStream(new ByteArrayInputStream(baos2.toByteArray())));
+        MerkleTree someObject = kryo.readObject(input, MerkleTree.class);
+        input.close();
+
+        System.out.println(someObject.equals(tree));
     }
-
-    private class MockLeaf extends Leaf {
-
-        public MockLeaf(String hash) {
-            super(hash);
-        }
-
-        @Override
-        public int compareTo(Object o) {
-
-            MockLeaf obj = (MockLeaf)o;
-            return hash.compareTo(obj.hash);
-        }
-    }
-
 }
