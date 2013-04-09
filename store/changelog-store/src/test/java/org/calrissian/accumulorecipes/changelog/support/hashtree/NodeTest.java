@@ -2,7 +2,8 @@ package org.calrissian.accumulorecipes.changelog.support.hashtree;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.*;
-import org.calrissian.accumlorecipes.changelog.support.hashtree.MerkleTree;
+import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
+import org.calrissian.mango.hash.tree.MerkleTree;
 import org.codehaus.jackson.JsonGenerationException;
 import org.junit.Test;
 
@@ -38,8 +39,8 @@ public class NodeTest {
         System.out.println("DIFFS 1 on 2: " + tree.diff(tree2));
         System.out.println("DIFFS 2 on 1: " + tree2.diff(tree));
 
-        System.out.println("TREE 1: " + tree.getTopHash());
-        System.out.println("TREE 2: " + tree2.getTopHash());
+        System.out.println("TREE 1: " + tree);
+        System.out.println("TREE 2: " + tree2);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -68,5 +69,13 @@ public class NodeTest {
         input.close();
 
         System.out.println(someObject.equals(tree));
+
+        BucketHashLeaf tbl1 = new BucketHashLeaf(System.currentTimeMillis());
+        BucketHashLeaf tbl5 = new BucketHashLeaf(System.currentTimeMillis() - 5000);
+        BucketHashLeaf tbl6 = new BucketHashLeaf(System.currentTimeMillis() - 10000);
+
+        MerkleTree<BucketHashLeaf> mt = new MerkleTree<BucketHashLeaf>(Arrays.asList(new BucketHashLeaf[]{tbl1,  tbl5,  tbl6}));
+
+        System.out.println(mt);
     }
 }

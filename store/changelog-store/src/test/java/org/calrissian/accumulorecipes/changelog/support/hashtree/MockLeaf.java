@@ -1,8 +1,8 @@
 package org.calrissian.accumulorecipes.changelog.support.hashtree;
 
-import org.calrissian.accumlorecipes.changelog.support.hashtree.Leaf;
+import org.calrissian.mango.hash.tree.HashLeaf;
 
-public class MockLeaf extends Leaf {
+public class MockLeaf extends HashLeaf {
 
     public MockLeaf() {
         super();

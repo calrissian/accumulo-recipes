@@ -25,10 +25,17 @@
         <dependency>
             <groupId>org.calrissian.mango</groupId>
             <artifactId>mango-collect</artifactId>
+            <version>${mango.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.calrissian.mango</groupId>
             <artifactId>mango-commons</artifactId>
+            <version>${mango.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.calrissian.mango</groupId>
+            <artifactId>mango-hash</artifactId>
             <version>${mango.version}</version>
         </dependency>
 
