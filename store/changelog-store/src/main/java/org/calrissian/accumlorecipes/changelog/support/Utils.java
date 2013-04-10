@@ -9,7 +9,6 @@ import org.calrissian.mango.types.exception.TypeNormalizationException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static org.calrissian.accumlorecipes.changelog.support.Constants.DELIM;
 
@@ -47,24 +46,20 @@ public class Utils {
     }
 
 
-    public static Long truncatedReverseTimestamp(long timestamp, TimeUnit timeUnit) {
+    /**
+     * Defaults to 15 mins.
+     * @param timestamp
+     * @return
+     */
+    public static Long truncatedReverseTimestamp(long timestamp, BucketSize bucketSize) {
+
+        timestamp = (timestamp / bucketSize.getMs()) * bucketSize.getMs();
 
         String minutes = new SimpleDateFormat(DATE_FORMAT).format(new Date(timestamp));
         Long l = Long.parseLong(minutes);
 
-        switch (timeUnit) {
-            case MINUTES:
-                l  = (l / 1000) * 1000;
-                break;
-            case HOURS:
-                l = (l / 10000000) * 10000000;
-                break;
-            case DAYS:
-                l =  (l / 1000000000) * 1000000000;
-        }
-
-
         return MAX_TIME - l;
+
     }
 
     public static Long reverseTimestampToNormalTime(long timestamp) {

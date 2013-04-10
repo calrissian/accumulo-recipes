@@ -40,16 +40,16 @@ public class AccumuloChangelogStoreTest {
     public void test() throws TableNotFoundException, IOException {
 
         StoreEntry entry = createStoreEntry("1", System.currentTimeMillis());
-        StoreEntry entry2 = createStoreEntry("2", 0);
-        StoreEntry entry3 = createStoreEntry("3", 50000000);
-        StoreEntry entry4 = createStoreEntry("4", 50000000);
-        StoreEntry entry5 = createStoreEntry("5", 500000);
+        StoreEntry entry2 = createStoreEntry("2", System.currentTimeMillis() - 900000);
+        StoreEntry entry3 = createStoreEntry("3", System.currentTimeMillis() - 50000000);
+        StoreEntry entry4 = createStoreEntry("4", System.currentTimeMillis());
+        StoreEntry entry5 = createStoreEntry("5", System.currentTimeMillis() - 900000);
 
         store.put(Arrays.asList(new StoreEntry[] { entry, entry2, entry3, entry4, entry5 }));
 
         printTable();
 
-        MerkleTree mt = store.getChangeTree(new Date(0), new Date(System.currentTimeMillis()));
+        MerkleTree mt = store.getChangeTree(new Date(System.currentTimeMillis() - (store.getBucketSize().getMs() * 8)), new Date(System.currentTimeMillis()));
 
         /**
          * Now would be the time you'd pull the merkle tree from the foreign host and diff the remote with the local
@@ -64,7 +64,7 @@ public class AccumuloChangelogStoreTest {
          *
          * Let's assume that the bucket with timestamp 0 was different and we want to re-transmit just that bucket
          */
-        for(StoreEntry actualEntry : store.getChanges(Collections.singleton(new Date(0)))) {
+        for(StoreEntry actualEntry : store.getChanges(Collections.singleton(new Date(System.currentTimeMillis())))) {
             System.out.println(actualEntry);
         }
     }
@@ -86,5 +86,4 @@ public class AccumuloChangelogStoreTest {
 
         return entry;
     }
-
 }
