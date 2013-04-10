@@ -37,6 +37,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.*;
 
+/**
+ * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent
+ * between different connected multicloud environments.
+ */
 public class AccumuloChangelogStore implements ChangelogStore {
 
     protected Long maxMemory = 100000L;
@@ -80,6 +84,10 @@ public class AccumuloChangelogStore implements ChangelogStore {
         }
     }
 
+    /**
+     * Puts a set of changes into buckets of the store.
+     * @param changes
+     */
     @Override
     public void put(Collection<StoreEntry> changes) {
 
@@ -104,6 +112,12 @@ public class AccumuloChangelogStore implements ChangelogStore {
         }
     }
 
+    /**
+     * Returns a Merkle Tree rollup representing the buckets of the given time range.
+     * @param start
+     * @param stop
+     * @return
+     */
     @Override
     public MerkleTree getChangeTree(Date start, Date stop) {
 
@@ -166,6 +180,11 @@ public class AccumuloChangelogStore implements ChangelogStore {
         }
     }
 
+    /**
+     * Gets the actual change objects that live inside of the specified buckets
+     * @param buckets dates representing time increments (i.e. 15 minutes)
+     * @return
+     */
     @Override
     public CloseableIterator<StoreEntry> getChanges(Collection<Date> buckets) {
 

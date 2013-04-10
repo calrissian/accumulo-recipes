@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumlorecipes.changelog.iterator;
 
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -23,6 +24,7 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.commons.serialization.ObjectMapperContext;
@@ -40,14 +42,16 @@ public class BucketHashIterator extends WrappingIterator {
 
     ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
 
-    String currentBucket;
-    List<String> hashes;
+    protected  String currentBucket;
+    protected List<String> hashes;
 
     protected Key retKey;
     protected Value val;
 
     @Override
-    public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
+    public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env)
+            throws IOException {
+
         super.init(source, options, env);
         hashes = new ArrayList<String>();
     }
@@ -116,5 +120,10 @@ public class BucketHashIterator extends WrappingIterator {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    public static void setBucketSize(IteratorSetting is, BucketSize bucketSize) {
+        is.addOption("bucketSize", bucketSize.name());
     }
 }

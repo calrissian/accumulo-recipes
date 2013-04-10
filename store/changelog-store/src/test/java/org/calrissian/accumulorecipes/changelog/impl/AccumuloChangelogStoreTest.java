@@ -57,7 +57,9 @@ public class AccumuloChangelogStoreTest {
     @Test
     public void test() throws TableNotFoundException, IOException {
 
-        MerkleTree mt = store.getChangeTree(new Date(System.currentTimeMillis() - (store.getBucketSize().getMs() * 15)), new Date(System.currentTimeMillis()));
+        MerkleTree mt = store.getChangeTree(
+                new Date(System.currentTimeMillis() - (store.getBucketSize().getMs() * 15)),
+                new Date(System.currentTimeMillis()));
 
         System.out.println("MERKLE: " + mt);
 
@@ -71,7 +73,9 @@ public class AccumuloChangelogStoreTest {
 
         printTable();
 
-        MerkleTree mt2 = store.getChangeTree(new Date(System.currentTimeMillis() - (store.getBucketSize().getMs() * 15)), new Date(System.currentTimeMillis()));
+        MerkleTree mt2 = store.getChangeTree(
+                new Date(System.currentTimeMillis() - (store.getBucketSize().getMs() * 15)),
+                new Date(System.currentTimeMillis()));
 
         /**
          * Now would be the time you'd pull the merkle tree from the foreign host and diff the remote with the local
