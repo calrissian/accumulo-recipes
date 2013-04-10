@@ -47,6 +47,8 @@ public class AccumuloChangelogStoreTest {
 
         store.put(Arrays.asList(new StoreEntry[] { entry, entry2, entry3, entry4, entry5 }));
 
+        printTable();
+
         MerkleTree mt = store.getChangeTree(new Date(0), new Date(System.currentTimeMillis()));
 
         /**
