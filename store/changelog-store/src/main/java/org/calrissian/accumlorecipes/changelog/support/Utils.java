@@ -6,6 +6,7 @@ import org.calrissian.mango.hash.support.HashUtils;
 import org.calrissian.mango.types.TypeContext;
 import org.calrissian.mango.types.exception.TypeNormalizationException;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -16,10 +17,9 @@ public class Utils {
 
     static TypeContext context = TypeContext.getInstance();
 
-    public static final Long MAX_MINUTE = 999999999999l;
-    public static final Long MAX_SECOND = 99999999999999l;
-    public static final String MINUTE_FORMAT = "yyyyMMddHHmm";
-    public static final String SECOND_FORMAT = "yyyyMMddHHmmss";
+    public static final Long MAX_TIME = 999999999999999999l;
+    public static final String DATE_FORMAT = "yyyyMMddHHmmssSSS";
+
 
 
     /**
@@ -48,30 +48,42 @@ public class Utils {
 
 
     public static Long truncatedReverseTimestamp(long timestamp, TimeUnit timeUnit) {
-        String minutes = new SimpleDateFormat(MINUTE_FORMAT).format(new Date(timestamp));
+
+        String minutes = new SimpleDateFormat(DATE_FORMAT).format(new Date(timestamp));
         Long l = Long.parseLong(minutes);
-        long revTs = MAX_MINUTE - l;
+
         switch (timeUnit) {
             case MINUTES:
-                return revTs;
+                l  = (l / 1000) * 1000;
+                break;
             case HOURS:
-                return revTs / 100;
+                l = (l / 10000000) * 10000000;
+                break;
             case DAYS:
-                return revTs / 10000;
+                l =  (l / 1000000000) * 1000000000;
         }
 
-        throw new IllegalArgumentException("Unsupported time unit");
+
+        return MAX_TIME - l;
+    }
+
+    public static Long reverseTimestampToNormalTime(long timestamp) {
+
+        Long convert = MAX_TIME - timestamp;
+        try {
+            return new SimpleDateFormat(DATE_FORMAT).parse(Long.toString(convert)).getTime();
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static Long reverseTimestamp(long timestamp) {
-        String seconds = new SimpleDateFormat(SECOND_FORMAT).format(new Date(timestamp));
+        String seconds = new SimpleDateFormat(DATE_FORMAT).format(new Date(timestamp));
         Long l = Long.parseLong(seconds);
-        long revTs = MAX_SECOND - l;
+        long revTs = MAX_TIME - l;
 
         return revTs;
     }
-
-
 
     public static String tupleToString(Tuple tuple) {
 
@@ -82,6 +94,4 @@ public class Utils {
             throw new RuntimeException(e);
         }
     }
-
-
 }

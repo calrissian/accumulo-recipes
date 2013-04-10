@@ -19,6 +19,4 @@ public class MockLeaf extends HashLeaf {
         MockLeaf obj = (MockLeaf)o;
         return hash.compareTo(obj.hash);
     }
-
-
 }

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static org.calrissian.mango.hash.support.HashUtils.hashString;
 
 public class BucketHashIterator extends WrappingIterator {
 
@@ -26,8 +27,6 @@ public class BucketHashIterator extends WrappingIterator {
 
     String currentBucket;
     List<String> hashes;
-
-    protected Key topKey;
 
     protected Key retKey;
     protected Value val;
@@ -75,7 +74,7 @@ public class BucketHashIterator extends WrappingIterator {
 
             while(super.hasTop()) {
 
-                topKey = super.getTopKey();
+                Key topKey = super.getTopKey();
                 Value value = super.getTopValue();
 
                 if(currentBucket == null) {
@@ -94,12 +93,12 @@ public class BucketHashIterator extends WrappingIterator {
             }
 
             if(hashes.size() > 0) {
-                val = new Value(objectMapper.writeValueAsBytes(hashes));
+
+                val = new Value(hashString(objectMapper.writeValueAsString(hashes)).getBytes());
                 retKey = new Key(new Text(nowBucket));
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
