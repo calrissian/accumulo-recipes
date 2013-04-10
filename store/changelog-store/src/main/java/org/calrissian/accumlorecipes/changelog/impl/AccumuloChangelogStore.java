@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumlorecipes.changelog.impl;
 
 import org.apache.accumulo.core.client.*;
@@ -32,6 +47,8 @@ public class AccumuloChangelogStore implements ChangelogStore {
     protected Connector connector;
     protected BatchWriter writer;
 
+    protected int merkleAry = 4;    // default the merkle to a quad tree
+
     protected BucketSize bucketSize = BucketSize.HALF_HOUR; // default to a medium sized bucket
 
     ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
@@ -39,31 +56,28 @@ public class AccumuloChangelogStore implements ChangelogStore {
     public AccumuloChangelogStore(Connector connector) {
         this.connector = connector;
 
-        try {
-            init(tableName);
-        } catch(Exception e) {
-            throw new RuntimeException("Failed to create changelog table");
-        }
+        init();
     }
 
     public AccumuloChangelogStore(Connector connector, String tableName) {
         this.connector = connector;
         this.tableName = tableName;
 
+        init();
+    }
+
+    private void init() {
+
         try {
-            init(tableName);
+            if(!connector.tableOperations().exists(tableName)) {
+                connector.tableOperations().create(tableName);
+            }
+
+            writer = connector.createBatchWriter(tableName, maxMemory, maxLatency, numThreads);
+
         } catch(Exception e) {
             throw new RuntimeException("Failed to create changelog table");
         }
-    }
-
-    private void init(String tableName) throws TableExistsException, AccumuloException, AccumuloSecurityException, TableNotFoundException {
-
-        if(!connector.tableOperations().exists(tableName)) {
-            connector.tableOperations().create(tableName);
-        }
-
-        writer = connector.createBatchWriter(tableName, maxMemory, maxLatency, numThreads);
     }
 
     @Override
@@ -107,8 +121,14 @@ public class AccumuloChangelogStore implements ChangelogStore {
             List<BucketHashLeaf> leafList = new ArrayList<BucketHashLeaf>();
             Long prevTs = Utils.reverseTimestampToNormalTime(Long.parseLong(endRange));
 
+            int count = 0;
             for(Map.Entry<Key,Value> entry : scanner) {
                 Long ts = Utils.reverseTimestampToNormalTime(Long.parseLong(entry.getKey().getRow().toString()));
+
+
+                if(count == 0 && prevTs - ts > bucketSize.getMs()) {
+                    leafList.add(new BucketHashLeaf("", prevTs));
+                }
 
                 /**
                  * It's a little ridiculous that a merkle tree has to guarantee the same number of leaves.
@@ -120,20 +140,26 @@ public class AccumuloChangelogStore implements ChangelogStore {
                     prevTs -= bucketSize.getMs();
                 }
 
-                leafList.add(new BucketHashLeaf(new String(entry.getValue().get()),
-                        ts));
-
+                leafList.add(new BucketHashLeaf(new String(entry.getValue().get()), ts));
                 prevTs = ts;
+                count++;
             }
 
             Long startTs = Utils.reverseTimestampToNormalTime(Long.parseLong(startRange));
 
-            while(prevTs - startTs > bucketSize.getMs()) {
+            /**
+             * If we didn't have a single bucket returned from the Scanner, we need to prime the leafs.
+             */
+            if(count == 0) {
+                leafList.add(new BucketHashLeaf("", prevTs));
+            }
+
+            while(prevTs - startTs >= bucketSize.getMs()) {
                 leafList.add(new BucketHashLeaf("", prevTs - bucketSize.getMs()));
                 prevTs -= bucketSize.getMs();
             }
 
-            return new MerkleTree(leafList, 4);
+            return new MerkleTree(leafList, merkleAry);
 
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
@@ -195,5 +221,13 @@ public class AccumuloChangelogStore implements ChangelogStore {
 
     public BucketSize getBucketSize() {
         return bucketSize;
+    }
+
+    public int getMerkleAry() {
+        return merkleAry;
+    }
+
+    public void setMerkleAry(int merkleAry) {
+        this.merkleAry = merkleAry;
     }
 }
