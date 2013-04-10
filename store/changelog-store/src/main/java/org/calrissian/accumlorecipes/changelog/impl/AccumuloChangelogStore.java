@@ -4,16 +4,18 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.ChangelogStore;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.iterator.BucketHashIterator;
+import org.calrissian.accumlorecipes.changelog.support.EntryIterator;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.commons.serialization.ObjectMapperContext;
-import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterator;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -37,8 +39,7 @@ public class AccumuloChangelogStore implements ChangelogStore{
         this.connector = connector;
 
         try {
-            createTable();
-            writer = connector.createBatchWriter(tableName, maxMemory, maxLatency, numThreads);
+            init(tableName);
         }
 
         catch(Exception e) {
@@ -46,11 +47,26 @@ public class AccumuloChangelogStore implements ChangelogStore{
         }
     }
 
-    private void createTable() throws TableExistsException, AccumuloException, AccumuloSecurityException {
+    public AccumuloChangelogStore(Connector connector, String tableName) {
+        this.connector = connector;
+
+        try {
+            init(tableName);
+        }
+
+        catch(Exception e) {
+            throw new RuntimeException("Failed to create changelog table");
+        }
+
+    }
+
+    private void init(String tableName) throws TableExistsException, AccumuloException, AccumuloSecurityException, TableNotFoundException {
 
         if(!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);
         }
+
+        writer = connector.createBatchWriter(tableName, maxMemory, maxLatency, numThreads);
     }
 
     @Override
@@ -102,7 +118,24 @@ public class AccumuloChangelogStore implements ChangelogStore{
     }
 
     @Override
-    public CloseableIterable<StoreEntry> getChanges(Collection<Date> buckets) {
+    public CloseableIterator<StoreEntry> getChanges(Collection<Date> buckets) {
+
+        try {
+            final BatchScanner scanner = connector.createBatchScanner(tableName, new Authorizations(), numThreads);
+
+            List<Range> ranges = new ArrayList<Range>();
+            for(Date date : buckets) {
+
+                ranges.add(new Range(String.format("%d", Utils.truncatedReverseTimestamp(date.getTime(), HOURS))));
+            }
+
+            scanner.setRanges(ranges);
+
+            return new EntryIterator(scanner);
+
+        } catch (TableNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         return null;
     }
 

@@ -1,6 +1,7 @@
 package org.calrissian.accumlorecipes.changelog;
 
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.collect.CloseableIterator;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.calrissian.mango.collect.CloseableIterable;
 
@@ -31,8 +32,9 @@ public interface ChangelogStore {
     /**
      * Get changesets living inside of the given buckets
      *
+     *
      * @param buckets dates representing time increments (i.e. 15 minutes)
      * @return
      */
-    CloseableIterable<StoreEntry> getChanges(Collection<Date> buckets);
+    CloseableIterator<StoreEntry> getChanges(Collection<Date> buckets);
 }

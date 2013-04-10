@@ -9,11 +9,14 @@ import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.commons.domain.Tuple;
 import org.calrissian.commons.serialization.ObjectMapperContext;
+import org.calrissian.mango.hash.tree.MerkleTree;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
@@ -21,6 +24,8 @@ public class AccumuloChangelogStoreTest {
 
     Connector connector;
     AccumuloChangelogStore store;
+
+    ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
 
     @Before
     public void setUp() throws AccumuloException, AccumuloSecurityException {
@@ -34,7 +39,6 @@ public class AccumuloChangelogStoreTest {
     @Test
     public void test() throws TableNotFoundException, IOException {
 
-        System.out.println("CURRENT TIME: " + new Date(System.currentTimeMillis()));
         StoreEntry entry = createStoreEntry("1", System.currentTimeMillis());
         StoreEntry entry2 = createStoreEntry("2", 0);
         StoreEntry entry3 = createStoreEntry("3", 50000000);
@@ -43,9 +47,24 @@ public class AccumuloChangelogStoreTest {
 
         store.put(Arrays.asList(new StoreEntry[] { entry, entry2, entry3, entry4, entry5 }));
 
-        System.out.println(
-                ObjectMapperContext.getInstance().getObjectMapper().writeValueAsString(
-                        store.getChangeTree(new Date(0), new Date(System.currentTimeMillis()))));
+        MerkleTree mt = store.getChangeTree(new Date(0), new Date(System.currentTimeMillis()));
+
+        /**
+         * Now would be the time you'd pull the merkle tree from the foreign host and diff the remote with the local
+         * (in that direction) to find out which leaves on the remote host differ from the leaves in the local host.
+         */
+        System.out.println("MERKLE: " + mt);
+
+        /**
+         * This call to "getChanges()" would be done with the result of diffing the two local merkle tree against
+         * the merkle trees of foreign hosts and getting the "buckets" that differ. One the buckets that differ are
+         * known, we just need to transmit the data in those buckets.
+         *
+         * Let's assume that the bucket with timestamp 0 was different and we want to re-transmit just that bucket
+         */
+        for(StoreEntry actualEntry : store.getChanges(Collections.singleton(new Date(0)))) {
+            System.out.println(actualEntry);
+        }
     }
 
     protected void printTable() throws TableNotFoundException, IOException {
