@@ -53,7 +53,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
 
     protected int merkleAry = 4;    // default the merkle to a quad tree
 
-    protected BucketSize bucketSize = BucketSize.ONE_HOUR; // default to a medium sized bucket
+    protected BucketSize bucketSize = BucketSize.FIVE_MINS; // default to a medium sized bucket
 
     ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
 
@@ -195,7 +195,6 @@ public class AccumuloChangelogStore implements ChangelogStore {
             for(Date date : buckets) {
 
                 Range range = new Range(String.format("%d", Utils.truncatedReverseTimestamp(date.getTime(), bucketSize)));
-                System.out.println("RANGE: " + range);
                 ranges.add(range);
             }
 
