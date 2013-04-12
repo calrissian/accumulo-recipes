@@ -53,7 +53,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
 
     protected int merkleAry = 4;    // default the merkle to a quad tree
 
-    protected BucketSize bucketSize = BucketSize.HALF_HOUR; // default to a medium sized bucket
+    protected BucketSize bucketSize = BucketSize.ONE_HOUR; // default to a medium sized bucket
 
     ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
 
@@ -140,7 +140,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
                 Long ts = Utils.reverseTimestampToNormalTime(Long.parseLong(entry.getKey().getRow().toString()));
 
 
-                if(count == 0 && prevTs - ts > bucketSize.getMs()) {
+                if(count == 0 && (prevTs - ts > bucketSize.getMs() || ts > prevTs)) {
                     leafList.add(new BucketHashLeaf("", prevTs));
                 }
 
@@ -194,7 +194,9 @@ public class AccumuloChangelogStore implements ChangelogStore {
             List<Range> ranges = new ArrayList<Range>();
             for(Date date : buckets) {
 
-                ranges.add(new Range(String.format("%d", Utils.truncatedReverseTimestamp(date.getTime(), bucketSize))));
+                Range range = new Range(String.format("%d", Utils.truncatedReverseTimestamp(date.getTime(), bucketSize)));
+                System.out.println("RANGE: " + range);
+                ranges.add(range);
             }
 
             scanner.setRanges(ranges);

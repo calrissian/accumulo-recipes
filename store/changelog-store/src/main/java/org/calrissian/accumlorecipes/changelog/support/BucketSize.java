@@ -17,13 +17,12 @@ package org.calrissian.accumlorecipes.changelog.support;
 
 public enum BucketSize {
 
-    ONE_MIN(60000),
-    FIVE_MINS(300000),
-    TEN_MINS(600000),
-    FIFTEEN_MINS(900000),
-    HALF_HOUR(900000 * 2),
-    ONE_HOUR(900000 * 4),
-    DAY(900000 * 4 * 24);
+    FIVE_MINS(5 * 1000 * 60),
+    TEN_MINS(10 * 1000 * 60),
+    FIFTEEN_MINS(15 * 1000 * 60),
+    HALF_HOUR(30 * 1000 * 60),
+    ONE_HOUR(60 * 1000 * 60),
+    DAY(60 * 1000 * 60 * 24);
 
     private long ms;
     private BucketSize(long ms) {

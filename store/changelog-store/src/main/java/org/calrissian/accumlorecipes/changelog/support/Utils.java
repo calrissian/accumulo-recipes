@@ -68,7 +68,7 @@ public class Utils {
      */
     public static Long truncatedReverseTimestamp(long timestamp, BucketSize bucketSize) {
 
-        timestamp = (timestamp / bucketSize.getMs()) * bucketSize.getMs();
+        timestamp = timestamp - (timestamp % bucketSize.getMs());
 
         String minutes = new SimpleDateFormat(DATE_FORMAT).format(new Date(timestamp));
         Long l = Long.parseLong(minutes);

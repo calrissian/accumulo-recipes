@@ -16,12 +16,13 @@
 package org.calrissian.accumulorecipes.changelog.impl;
 
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
-import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.commons.domain.Tuple;
 import org.calrissian.commons.serialization.ObjectMapperContext;
@@ -31,10 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -58,8 +56,8 @@ public class AccumuloChangelogStoreTest {
     public void test() throws TableNotFoundException, IOException {
 
         MerkleTree mt = store.getChangeTree(
-                new Date(System.currentTimeMillis() - (store.getBucketSize().getMs() * 15)),
-                new Date(System.currentTimeMillis()));
+                new Date(System.currentTimeMillis() - 50000),
+                new Date(System.currentTimeMillis() + 50000));
 
         System.out.println("MERKLE: " + mt);
 
@@ -67,15 +65,15 @@ public class AccumuloChangelogStoreTest {
         StoreEntry entry2 = createStoreEntry("2", System.currentTimeMillis() - 900000);
         StoreEntry entry3 = createStoreEntry("3", System.currentTimeMillis() - 50000000);
         StoreEntry entry4 = createStoreEntry("4", System.currentTimeMillis());
-        StoreEntry entry5 = createStoreEntry("5", System.currentTimeMillis() - BucketSize.HALF_HOUR.getMs() * 8);
+        StoreEntry entry5 = createStoreEntry("5", System.currentTimeMillis() + 5000000);
 
         store.put(Arrays.asList(new StoreEntry[] { entry, entry2, entry3, entry4, entry5 }));
 
         printTable();
 
         MerkleTree mt2 = store.getChangeTree(
-                new Date(System.currentTimeMillis() - (store.getBucketSize().getMs() * 15)),
-                new Date(System.currentTimeMillis()));
+                new Date(System.currentTimeMillis() - 50000),
+                new Date(System.currentTimeMillis() + 50000));
 
         /**
          * Now would be the time you'd pull the merkle tree from the foreign host and diff the remote with the local
@@ -84,8 +82,15 @@ public class AccumuloChangelogStoreTest {
         System.out.println("MERKLE: " + mt2);
 
         assertEquals(mt.getNumLeaves(), mt2.getNumLeaves());
+        assertEquals(mt.getDimensions(), mt2.getDimensions());
 
-        System.out.println("DIFFS: " + mt2.diff(mt));
+        System.out.println(mt.getNumLeaves() + " " + mt2.getNumLeaves());
+        System.out.println(mt.getDimensions() + " " + mt2.getDimensions());
+
+        List<BucketHashLeaf> diffLeaves = mt2.diff(mt);
+        System.out.println("DIFFS: " + diffLeaves);
+
+        printTable();
 
         /**
          * This call to "getChanges()" would be done with the result of diffing the two local merkle tree against
@@ -94,7 +99,13 @@ public class AccumuloChangelogStoreTest {
          *
          * Let's assume that the bucket with timestamp 0 was different and we want to re-transmit just that bucket
          */
-        for(StoreEntry actualEntry : store.getChanges(Collections.singleton(new Date(System.currentTimeMillis())))) {
+        List<Date> dates = new ArrayList<Date>();
+        for(BucketHashLeaf hashLeaf : diffLeaves) {
+            dates.add(new Date(hashLeaf.getTimestamp()));
+        }
+
+
+        for(StoreEntry actualEntry : store.getChanges(dates)) {
             System.out.println(actualEntry);
         }
     }
@@ -108,6 +119,7 @@ public class AccumuloChangelogStoreTest {
             System.out.println(entry);
         }
     }
+
 
     private StoreEntry createStoreEntry(String uuid , long timestamp) {
         StoreEntry entry = new StoreEntry(uuid, timestamp);
