@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.eventstore;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.criteria.domain.Node;
-import org.calrissian.mango.collect.CloseableIterator;
+import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Collection;
 import java.util.Date;
@@ -49,7 +49,7 @@ public interface EventStore {
      * @param auths
      * @return
      */
-    CloseableIterator<StoreEntry> query(Date start, Date end, Node node, Authorizations auths);
+    CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Authorizations auths);
 
     /**
      * Get a specific StoreEntry with the given ID

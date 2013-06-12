@@ -31,7 +31,7 @@ public class BucketRollupIterator extends WrappingIterator {
 
     @Override
     public boolean hasTop() {
-        return super.hasTop();    //To change body of overridden methods use File | Settings | File Templates.
+        return super.hasTop();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class BucketRollupIterator extends WrappingIterator {
 
     @Override
     public Value getTopValue() {
-        return super.getTopValue();    //To change body of overridden methods use File | Settings | File Templates.
+        return super.getTopValue();
     }
 
     public static void setBucketSize(IteratorSetting is, BucketSize bucketSize) {

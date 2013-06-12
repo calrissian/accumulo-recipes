@@ -31,7 +31,7 @@ import org.calrissian.accumulorecipes.eventstore.support.query.validators.AndSin
 import org.calrissian.criteria.domain.AndNode;
 import org.calrissian.criteria.domain.EqualsLeaf;
 import org.calrissian.criteria.domain.Leaf;
-import org.calrissian.mango.collect.CloseableIterator;
+import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.types.TypeContext;
 
 import java.util.Collections;
@@ -40,6 +40,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class QueryNodeHelper {
 
@@ -57,7 +59,7 @@ public class QueryNodeHelper {
         this.shard = shard;
     }
 
-    public CloseableIterator<StoreEntry> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)
+    public CloseableIterable<StoreEntry> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)
             throws Exception {
 
         BatchScanner scanner = connector.createBatchScanner(shardTable, auths, numThreads);
@@ -93,11 +95,11 @@ public class QueryNodeHelper {
             System.out.println("VAL: " + new String(entry.getValue().get()));
         }
 
-        return new EventScannerIterator(scanner);
+        return transform(wrap(scanner), new EventScannerTransform());
     }
 
 
-    public CloseableIterator<StoreEntry> querySingleLeaf(Date start, Date stop, Leaf query, Authorizations auths) throws Exception {
+    public CloseableIterable<StoreEntry> querySingleLeaf(Date start, Date stop, Leaf query, Authorizations auths) throws Exception {
 
         BatchScanner scanner = connector.createBatchScanner(shardTable, auths, numThreads);
 
@@ -116,8 +118,8 @@ public class QueryNodeHelper {
                 IteratorSetting iteratorSetting = new IteratorSetting(16, "eventIterator", EventIterator.class);
                 scanner.addScanIterator(iteratorSetting);
                 scanner.fetchColumnFamily(new Text(SHARD_PREFIX_B + DELIM + equalsLeaf.getKey() +
-                                          DELIM + typeContext.getAliasForType(equalsLeaf.getValue()) +
-                                          DELIM + typeContext.normalize(equalsLeaf.getValue())));
+                        DELIM + typeContext.getAliasForType(equalsLeaf.getValue()) +
+                        DELIM + typeContext.normalize(equalsLeaf.getValue())));
             } else {
                 throw new IllegalArgumentException("The query " + query + " was not supported");
             }
@@ -128,6 +130,6 @@ public class QueryNodeHelper {
 
         scanner.setRanges(Collections.singleton(new Range(range[0], range[1] + DELIM_END)));
 
-        return new EventScannerIterator(scanner);
+        return transform(wrap(scanner), new EventScannerTransform());
     }
 }
