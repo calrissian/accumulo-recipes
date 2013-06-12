@@ -33,7 +33,7 @@ import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisit
 import org.calrissian.commons.domain.Tuple;
 import org.calrissian.commons.serialization.ObjectMapperContext;
 import org.calrissian.criteria.domain.Node;
-import org.calrissian.mango.collect.CloseableIterator;
+import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.types.TypeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +122,7 @@ public class AccumuloEventStore implements EventStore {
                     // forward mutation
                     shardMutation.put(new Text(SHARD_PREFIX_F + DELIM + event.getId()),
                             new Text(tuple.getKey() + DELIM + typeContext.getAliasForType(tuple.getValue()) + DELIM +
-                                     typeContext.normalize(tuple.getValue())),
+                                    typeContext.normalize(tuple.getValue())),
                             new ColumnVisibility(tuple.getVisibility()),
                             event.getTimestamp(),
                             new Value("".getBytes()));
@@ -159,7 +159,7 @@ public class AccumuloEventStore implements EventStore {
     }
 
     @Override
-    public CloseableIterator<StoreEntry> query(Date start, Date end, Node node, Authorizations auths) {
+    public CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Authorizations auths) {
         return new QueryResultsVisitor(node, queryHelper, start, end, auths).getResults();
     }
 

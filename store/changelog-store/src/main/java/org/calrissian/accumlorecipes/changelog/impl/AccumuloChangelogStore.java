@@ -27,15 +27,18 @@ import org.calrissian.accumlorecipes.changelog.ChangelogStore;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.iterator.BucketHashIterator;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
-import org.calrissian.accumlorecipes.changelog.support.EntryIterator;
+import org.calrissian.accumlorecipes.changelog.support.EntryTransform;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.commons.serialization.ObjectMapperContext;
-import org.calrissian.mango.collect.CloseableIterator;
+import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.*;
+
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 /**
  * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent
@@ -186,7 +189,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
      * @return
      */
     @Override
-    public CloseableIterator<StoreEntry> getChanges(Collection<Date> buckets) {
+    public CloseableIterable<StoreEntry> getChanges(Collection<Date> buckets) {
 
         try {
             final BatchScanner scanner = connector.createBatchScanner(tableName, new Authorizations(), numThreads);
@@ -200,7 +203,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
 
             scanner.setRanges(ranges);
 
-            return new EntryIterator(scanner);
+            return transform(wrap(scanner), new EntryTransform());
 
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);

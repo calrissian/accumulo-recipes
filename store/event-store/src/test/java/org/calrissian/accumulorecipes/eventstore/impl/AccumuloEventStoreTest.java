@@ -67,7 +67,7 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
 
         Iterator<StoreEntry> itr = store.query(new Date(System.currentTimeMillis() - 5000),
-                new Date(System.currentTimeMillis()), query, new Authorizations());
+                new Date(System.currentTimeMillis()), query, new Authorizations()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
@@ -105,7 +105,7 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").endStatement().build();
 
         Iterator<StoreEntry> itr = store.query(new Date(System.currentTimeMillis() - 5000),
-                new Date(System.currentTimeMillis()), query, new Authorizations());
+                new Date(System.currentTimeMillis()), query, new Authorizations()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
@@ -143,7 +143,7 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
         Iterator<StoreEntry> itr = store.query(new Date(System.currentTimeMillis() - 5000),
-                new Date(System.currentTimeMillis()), query, new Authorizations());
+                new Date(System.currentTimeMillis()), query, new Authorizations()).iterator();
 
 
         printTable();
