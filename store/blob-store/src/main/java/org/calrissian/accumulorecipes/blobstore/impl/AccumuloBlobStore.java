@@ -16,9 +16,6 @@
  */
 package org.calrissian.accumulorecipes.blobstore.impl;
 
-import org.calrissian.mango.types.TypeNormalizer;
-import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.normalizers.IntegerNormalizer;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -26,196 +23,251 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.BlobStore;
-import org.calrissian.accumulorecipes.blobstore.support.AccumuloBlobInputStream;
-import org.calrissian.accumulorecipes.blobstore.support.BlobConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.calrissian.accumulorecipes.blobstore.support.AbstractBufferedInputStream;
+import org.calrissian.accumulorecipes.blobstore.support.AbstractBufferedOutputStream;
+import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.exception.TypeNormalizationException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
+
+import static org.apache.commons.lang.StringUtils.defaultString;
+import static org.apache.commons.lang.Validate.*;
 
 /**
  * An accumulo representation of the blob store. For purposes of simplicity, current implementation only stores data
- * that can be loaded into a byte array in memory- the interface has been coded to InputStream to allow future
+ * that can be loaded into a byte array in memory- the interface uses standard Streams to allow future
  * implementations to partition large blobs over several different rows that can be streamed from Accumulo.
  *
  * Row format is as follows:
  *
- * RowId:               md5 hash of blob
- * Column Family:       sequence #
- * Column Qualifier:    dataType
+ * RowId:               key\u0000type
+ * Column Family:       DATA
+ * Column Qualifier:    sequence#
  * Value:               byte[]
  *
  */
-public class AccumuloBlobStore implements BlobStore<AccumuloBlobInputStream> {
+public class AccumuloBlobStore implements BlobStore {
 
-    public static Logger logger = LoggerFactory.getLogger(AccumuloBlobStore.class);
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
+    private static final String DEFAULT_TABLE_NAME = "blobstore";
+    private static final TypeContext NORMALIZER = TypeContext.getInstance();
+    private static final String DATA_CF = "DATA";
 
-    private String tableName = BlobConstants.DEFAULT_TABLE_NAME;
+    protected final Connector connector;
+    protected final String tableName;
+    protected final int bufferSize;
 
-    private Connector connector;
-    private BatchWriter writer;
+    public AccumuloBlobStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_BUFFER_SIZE);
+    }
 
-    public AccumuloBlobStore(Connector connector) {
+    public AccumuloBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+        this(connector, tableName, DEFAULT_BUFFER_SIZE);
+    }
+
+    public AccumuloBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+        this(connector, DEFAULT_TABLE_NAME, bufferSize);
+    }
+
+    public AccumuloBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+        notNull(connector, "Invalid connector");
+        notEmpty(tableName, "The table name must not be empty");
+        isTrue(bufferSize > 0, "The buffer size must be greater than 0");
 
         this.connector = connector;
+        this.tableName = tableName;
+        this.bufferSize = bufferSize;
 
         if(!connector.tableOperations().exists(tableName)) {
             createTable();
         }
-
-        try {
-            this.writer = connector.createBatchWriter(tableName, 1000000L, 100L, 10);
-        } catch (TableNotFoundException e) {
-            logger.error("There was error creating batch writer for " + tableName);
-        }
-    }
-
-    private void createTable() {
-
-        try {
-            connector.tableOperations().create(tableName);
-        } catch (Exception e) {
-            logger.error("There was an error creating table " + tableName + ". exception= " + e.getMessage());
-        }
     }
 
     /**
-     * Places a blob in the blob store.
-     * @param blob an input stream containing the bytes to place in the store
-     * @param dataType what do the bytes represent? (i.e. image-jpeg, image-png, pcap, etc...)
+     * Encapsulates logic for creating the table if it does not exist
+     * @throws TableExistsException
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
      */
-    @Override
-    public String put(final InputStream blob, String dataType, long timestamp, String visibility) {
-
-        return put(blob, dataType, timestamp, visibility, null);
-    }
-
-    @Override
-    public String put(InputStream blob, String type, long timestamp, String visibility, Map<String, String> headers) {
-
-        String hash = UUID.randomUUID().toString();
-
-        put(hash, blob, type, timestamp, visibility, headers);
-
-        return hash;
+    protected void createTable() throws TableExistsException, AccumuloSecurityException, AccumuloException {
+        connector.tableOperations().create(tableName);
     }
 
     /**
-     * This method can be dangerous as Accumulo creates it's splits and maps tablet based on the "key"- thus this value
-     * should be as random as possible to promote parallel queries.
+     * Helper method to generate the rowID for the data mutations.
      * @param key
-     * @param blob
+     * @param type
+     * @return
+     */
+    protected static String generateRowId(String key, String type) {
+        return defaultString(key) + "\u0000" + defaultString(type);
+    }
+
+    /**
+     * Helper method that will see if there is any data in the store for the given key and type.
+     *
+     * This method uses the Accumulo user's auths and not the auths passed in from a caller.  The reason
+     * for this is that a caller may not have the auths required to view the data, but allowing them
+     * to store data with that key and type would corrupt the data that is already there.
+     *
+     * The side effect of this is that any warning to the caller about data existing exposes the fact
+     * that there is data there they may not be able to see.  For this reason, keys and types should not
+     * contain any protected information.  The secrecy of the data however will not be leaked from the API.
+     *
+     * @param key
+     * @param type
+     * @return
+     */
+    protected boolean checkExists(String key, String type) {
+        String rowId = generateRowId(key, type);
+
+        try {
+            //Scan entire range and see if there is any data.
+            Scanner scanner = connector.createScanner(tableName, connector.securityOperations().getUserAuthorizations(connector.whoami()));
+            scanner.setRange(new Range(rowId));
+            scanner.setBatchSize(1);
+            return scanner.iterator().hasNext();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Helper method to generate a mutation for each chunk of data that is being stored.
+     * @param key
+     * @param type
+     * @param data
+     * @param sequenceNum
+     * @param timestamp
+     * @param visibility
+     * @return
+     * @throws TypeNormalizationException
+     */
+    protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) throws TypeNormalizationException {
+
+        Mutation mutation = new Mutation(generateRowId(key, type));
+        mutation.put(DATA_CF, NORMALIZER.normalize(sequenceNum), visibility, timestamp, new Value(data));
+
+        return mutation;
+    }
+
+    /**
+     * Helper method to generate an {@link OutputStream} for storing data into Accumulo.
+     * @param writer
+     * @param key
      * @param type
      * @param timestamp
      * @param visibility
-     */
-    @Override
-    public void put(String key, InputStream blob, String type, long timestamp, String visibility) {
-
-        put(key, blob, type, timestamp, visibility, null);
-
-    }
-
-    @Override
-    public void put(String key, InputStream blob, String type, long timestamp, String visibility, Map<String, String> headers) {
-
-        byte[] bytes = new byte[BlobConstants.MAX_PARTITION_BYTES];
-        int sequenceNumber = 0;
-
-        try {
-
-            if(headers != null) {
-
-                Mutation headerMutation = new Mutation(key);
-
-                for(Map.Entry<String,String> entry : headers.entrySet()) {
-
-                    headerMutation.put(type, "\u0000" + entry.getKey() + "\u0000" + entry.getValue(),
-                            new ColumnVisibility(visibility), timestamp, new Value("".getBytes()));
-                }
-
-                writer.addMutation(headerMutation);
-            }
-
-            Mutation m = null;
-
-            int numbytes;
-            while((numbytes = blob.read(bytes)) > 0) {
-
-                m = new Mutation(key);
-
-                String sequence = new IntegerNormalizer().normalize(sequenceNumber);
-
-                m.put(type, sequence, new ColumnVisibility(visibility), timestamp, new Value(Arrays.copyOfRange(bytes, 0, numbytes)));
-
-                sequenceNumber++;
-                writer.addMutation(m);
-            }
-
-            writer.flush();
-
-        } catch (IOException e) {
-            logger.error("There was an exception reading from input stream: " + e.getMessage());
-        } catch (TypeNormalizationException e) {
-            e.printStackTrace();
-        } catch (MutationsRejectedException e) {
-            logger.error("There was an exception trying to add the sequence number: " + sequenceNumber);
-        }    }
-
-    /**
-     * Retrieves a blob from the blob store
-     * @param key
-     * @param dataType
      * @return
      */
-    @Override
-    public AccumuloBlobInputStream get(String key, String dataType, Authorizations auths) {
+    protected OutputStream generateWriteStream(final BatchWriter writer, final String key, final String type, final long timestamp, String visibility) {
 
-        try {
-            Scanner scanner = connector.createScanner(tableName, auths);
+        final ColumnVisibility colVis = new ColumnVisibility(defaultString(visibility));
 
-            TypeNormalizer normalizer = new IntegerNormalizer();
-
-            Range range = new Range(
-                    new Key(key, dataType, "\u0000"),
-                    new Key(key, dataType, normalizer.normalize(Integer.MAX_VALUE))
-            );
-
-            scanner.setRange(range);
-            final Iterator iterator = scanner.iterator();
-
-            if(iterator.hasNext()) {
-                return new AccumuloBlobInputStream(iterator);
+        return new AbstractBufferedOutputStream(bufferSize) {
+            int sequenceNum = 0;
+            @Override
+            protected void writeBuffer(byte[] buf) throws IOException {
+                if (buf.length == 0)
+                    return;
+                sequenceNum++;
+                try {
+                    writer.addMutation(generateMutation(key, type, buf, sequenceNum, timestamp, colVis));
+                } catch (Exception e) {
+                    throw new IOException(e);
+                }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            @Override
+            public void flush() throws IOException {
+                super.flush();
+                try {
+                    writer.flush();
+                } catch (MutationsRejectedException e) {
+                    throw new IOException(e);
+                }
+            }
 
-        return null;
+            @Override
+            public void close() throws IOException {
+                super.close();
+                try {
+                    writer.close();
+                } catch (MutationsRejectedException e) {
+                    throw new IOException(e);
+                }
+            }
+        };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void shutdown() {
+    public OutputStream store(String key, String type, long timestamp, String visibility) {
+        //Use of table user's auths instead of callers auths means information is leaked about
+        //key and type.  Therefore they should now contain protected information, or this check
+        //can not be done.
+        isTrue(!checkExists(key, type), String.format("Data with %s type and %s key already exists.", type, key));
 
         try {
-            writer.close();
-        } catch (MutationsRejectedException e) {
-            logger.error("An error occurred closing the batch writer");
+
+            BatchWriter writer = this.connector.createBatchWriter(tableName, bufferSize * 100, 100, 2);
+
+            return generateWriteStream(writer, key, type, timestamp, visibility);
+
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public String getTableName() {
-        return tableName;
-    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InputStream get(String key, String type, Authorizations auths) {
+        notNull(auths, "Null authorizations");
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
+        try {
+            String rowId = generateRowId(key, type);
+            //Scan for a range including only the data
+            Scanner scanner = connector.createScanner(tableName, auths);
+            scanner.setRange(new Range(
+                    new Key(rowId, DATA_CF, NORMALIZER.normalize(0)),
+                    new Key(rowId, DATA_CF, NORMALIZER.normalize(Integer.MAX_VALUE))
+            ));
+            scanner.fetchColumnFamily(new Text(DATA_CF));
+
+            final Iterator<Map.Entry<Key,Value>> iterator = scanner.iterator();
+
+            //Create an input stream that will read the values from the iterator.
+            return new AbstractBufferedInputStream() {
+                @Override
+                protected boolean isEOF() {
+                    return !iterator.hasNext();
+                }
+
+                @Override
+                protected byte[] getNextBuffer() throws IOException {
+                    if (iterator.hasNext())
+                        return iterator.next().getValue().get();
+
+                    return null;
+                }
+            };
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.blobstore.impl;
+package org.calrissian.accumulorecipes.blobstore.impl.ext;
 
 
 import org.apache.accumulo.core.client.AccumuloException;
@@ -6,6 +6,7 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.blobstore.ext.impl.ExtendedAccumuloBlobStore;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.junit.Test;
@@ -14,6 +15,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -21,10 +24,9 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
-public class AccumuloBlobStoreTest {
+public class ExtendedAccumuloBlobStoreTest {
 
     private static final int CHUNK_SIZE = 16; //small chunk size for testing
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -37,13 +39,14 @@ public class AccumuloBlobStoreTest {
     @Test
     public void testSaveAndQuerySingleChunkStream() throws Exception {
         byte[] testBlob = buildTestBlob(CHUNK_SIZE);
-        AccumuloBlobStore blobStore = new AccumuloBlobStore(getConnector(), CHUNK_SIZE);
+        ExtendedAccumuloBlobStore blobStore = new ExtendedAccumuloBlobStore(getConnector(), CHUNK_SIZE);
 
 
         OutputStream storageStream = blobStore.store("test", "1", currentTimeMillis(), "");
         storageStream.write(testBlob);
         storageStream.close();
 
+        assertEquals(CHUNK_SIZE, blobStore.blobSize("test", "1", new Authorizations()));
 
         byte[] actual = new byte[testBlob.length];
         InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
@@ -56,13 +59,14 @@ public class AccumuloBlobStoreTest {
     @Test
     public void testSaveAndQueryMultiChunkStream() throws Exception {
         byte[] testBlob = buildTestBlob(CHUNK_SIZE * 2);
-        AccumuloBlobStore blobStore = new AccumuloBlobStore(getConnector(), CHUNK_SIZE);
+        ExtendedAccumuloBlobStore blobStore = new ExtendedAccumuloBlobStore(getConnector(), CHUNK_SIZE);
 
 
         OutputStream storageStream = blobStore.store("test", "1", currentTimeMillis(), "");
         storageStream.write(testBlob);
         storageStream.close();
 
+        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Authorizations()));
 
         byte[] actual = new byte[testBlob.length];
         InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
@@ -74,7 +78,7 @@ public class AccumuloBlobStoreTest {
 
     @Test
     public void testSaveAndQueryComplex() throws Exception {
-        AccumuloBlobStore blobStore = new AccumuloBlobStore(getConnector(), CHUNK_SIZE);
+        ExtendedAccumuloBlobStore blobStore = new ExtendedAccumuloBlobStore(getConnector(), CHUNK_SIZE);
 
         Collection<String> testValues = new ArrayList<String>(10);
         for (int i = 0; i < CHUNK_SIZE; i++)
@@ -92,6 +96,36 @@ public class AccumuloBlobStoreTest {
         assertThat(actualValues, is(equalTo(testValues)));
     }
 
+    @Test
+    public void testSaveAndQueryMultiChunkStreamWithProps() throws Exception {
+        byte[] testBlob = buildTestBlob(CHUNK_SIZE * 2);
+        ExtendedAccumuloBlobStore blobStore = new ExtendedAccumuloBlobStore(getConnector(), CHUNK_SIZE);
+
+        Map<String, String> testProps = new LinkedHashMap<String, String>(2);
+        testProps.put("value1", "one");
+        testProps.put("testing", "blah");
+
+        OutputStream storageStream = blobStore.store("test", "1", testProps, currentTimeMillis(), "");
+        storageStream.write(testBlob);
+        storageStream.close();
+
+        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Authorizations()));
+
+        byte[] actual = new byte[testBlob.length];
+        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        retrievalStream.read(actual);
+        retrievalStream.close();
+
+        assertArrayEquals(testBlob, actual);
+
+        //now test props
+        Map<String, String> retrievedProps = blobStore.getProperties("test", "1", new Authorizations());
+        assertEquals(testProps.size() ,retrievedProps.size());
+
+        assertThat(retrievedProps, is(equalTo(testProps)));
+
+    }
+
     private byte[] buildTestBlob(int size) {
 
         byte[] testBlob = new byte[size];
@@ -102,5 +136,4 @@ public class AccumuloBlobStoreTest {
 
         return testBlob;
     }
-
 }
