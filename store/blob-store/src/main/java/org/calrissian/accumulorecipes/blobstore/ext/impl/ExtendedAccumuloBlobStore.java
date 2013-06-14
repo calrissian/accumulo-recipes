@@ -188,10 +188,11 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
         //key and type.  Therefore they should now contain protected information, or this check
         //can not be done.
         isTrue(!checkExists(key, type), String.format("Data with %s type and %s key already exists.", type, key));
+
         try {
 
             ColumnVisibility colVis = new ColumnVisibility(defaultString(visibility));
-            BatchWriter writer = this.connector.createBatchWriter(tableName, bufferSize * 100, 100, 2);
+            BatchWriter writer = getWriter();
 
             //If there are properties write these first
             if (properties != null && !properties.isEmpty()) {
