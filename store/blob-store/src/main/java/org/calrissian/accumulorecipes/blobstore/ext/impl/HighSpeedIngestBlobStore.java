@@ -4,8 +4,8 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Mutation;
 
 /**
- * This is an implementation of the blob store uses a single large batch mainWriter to the blob store.
- * This allows for a larger amount of data to be written at once, but by using a single mainWriter there
+ * This is an implementation of the blob store using a single large batch writer to the blob store.
+ * This allows for a larger amount of data to be written at once, but by using a single writer there
  * is the possibility that data from several storage streams could be intermingled during a write.  This
  * means data flushed from one stream will actually flush data for all streams that are currently opened.
  * In most instances this should not be a problem as the data will be written anyway.
