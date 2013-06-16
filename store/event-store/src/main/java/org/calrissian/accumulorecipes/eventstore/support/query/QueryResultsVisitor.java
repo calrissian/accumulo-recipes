@@ -21,21 +21,21 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoOrNotEqualsValidator;
-import org.calrissian.criteria.domain.*;
-import org.calrissian.criteria.visitor.CollapseParentClauseVisitor;
-import org.calrissian.criteria.visitor.EmptyParentCollapseVisitor;
-import org.calrissian.criteria.visitor.NodeVisitor;
-import org.calrissian.criteria.visitor.SingleClauseCollapseVisitor;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.visitor.CollapseParentClauseVisitor;
+import org.calrissian.mango.criteria.visitor.EmptyParentCollapseVisitor;
+import org.calrissian.mango.criteria.visitor.NodeVisitor;
+import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Date;
 
-import static org.calrissian.criteria.utils.NodeUtils.isLeaf;
-import static org.calrissian.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
 import static org.calrissian.mango.collect.CloseableIterables.chain;
+import static org.calrissian.mango.criteria.utils.NodeUtils.isLeaf;
+import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
 
 /**
  * Visit query to validate and transform to perform the query against the swift event service.

@@ -18,10 +18,13 @@ package org.calrissian.accumulorecipes.metricsstore;
 
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.normalizer.CounterMetricNormalizer;
-import org.calrissian.accumulorecipes.metricsstore.normalizer.StatsMetricNormalizer;
 import org.calrissian.accumulorecipes.metricsstore.normalizer.MetricNormalizer;
+import org.calrissian.accumulorecipes.metricsstore.normalizer.StatsMetricNormalizer;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MetricsContext {
 

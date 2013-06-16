@@ -17,9 +17,9 @@ package org.calrissian.accumulorecipes.eventstore.support.query.validators;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import org.calrissian.criteria.domain.*;
-import org.calrissian.criteria.utils.NodeUtils;
-import org.calrissian.criteria.visitor.NodeVisitor;
+import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.utils.NodeUtils;
+import org.calrissian.mango.criteria.visitor.NodeVisitor;
 
 import java.util.Collection;
 

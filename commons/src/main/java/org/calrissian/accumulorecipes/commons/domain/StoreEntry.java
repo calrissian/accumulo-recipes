@@ -16,7 +16,8 @@
  */
 package org.calrissian.accumulorecipes.commons.domain;
 
-import org.calrissian.commons.domain.Tuple;
+
+import org.calrissian.mango.domain.Tuple;
 
 import java.util.ArrayList;
 import java.util.Collection;

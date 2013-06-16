@@ -30,9 +30,9 @@ import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumlorecipes.changelog.support.EntryTransform;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.serialization.ObjectMapperContext;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.*;

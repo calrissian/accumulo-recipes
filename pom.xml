@@ -95,17 +95,7 @@
             <!-- Mango -->
             <dependency>
                 <groupId>org.calrissian.mango</groupId>
-                <artifactId>mango-types</artifactId>
-                <version>${mango.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.calrissian.mango</groupId>
-                <artifactId>mango-criteria</artifactId>
-                <version>${mango.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.calrissian.mango</groupId>
-                <artifactId>mango-collect</artifactId>
+                <artifactId>mango-core</artifactId>
                 <version>${mango.version}</version>
             </dependency>
 

@@ -29,7 +29,7 @@ import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
 import org.calrissian.accumulorecipes.lastn.support.LastNIterator;
-import org.calrissian.commons.domain.Tuple;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeContext;
 
 import java.util.ArrayList;

@@ -23,7 +23,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.lastn.support.LastNIterator;
-import org.calrissian.commons.domain.Tuple;
+import org.calrissian.mango.domain.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 

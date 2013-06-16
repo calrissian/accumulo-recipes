@@ -15,11 +15,11 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support.query.validators;
 
-import org.calrissian.criteria.domain.AndNode;
-import org.calrissian.criteria.domain.Leaf;
-import org.calrissian.criteria.domain.OrNode;
-import org.calrissian.criteria.domain.ParentNode;
-import org.calrissian.criteria.visitor.NodeVisitor;
+import org.calrissian.mango.criteria.domain.AndNode;
+import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.OrNode;
+import org.calrissian.mango.criteria.domain.ParentNode;
+import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

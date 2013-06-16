@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumlorecipes.changelog.support;
 
-import org.calrissian.commons.domain.Tuple;
+import org.calrissian.mango.domain.Tuple;
 
 import java.util.Comparator;
 
