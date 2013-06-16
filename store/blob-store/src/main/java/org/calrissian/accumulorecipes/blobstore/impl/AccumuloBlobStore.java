@@ -100,6 +100,15 @@ public class AccumuloBlobStore implements BlobStore {
     }
 
     /**
+     * Returns a new batch writer for the table.
+     * @return
+     * @throws TableNotFoundException
+     */
+    protected BatchWriter getWriter() throws TableNotFoundException {
+        return this.connector.createBatchWriter(tableName, bufferSize * 100, 100, 2);
+    }
+
+    /**
      * Helper method to generate the rowID for the data mutations.
      * @param key
      * @param type
@@ -118,7 +127,8 @@ public class AccumuloBlobStore implements BlobStore {
      *
      * The side effect of this is that any warning to the caller about data existing exposes the fact
      * that there is data there they may not be able to see.  For this reason, keys and types should not
-     * contain any protected information.  The secrecy of the data however will not be leaked from the API.
+     * contain any protected information.  The data however will not be leaked from the API, but that
+     * due to actual data being returned to a client, this is not exactly secure.
      *
      * @param key
      * @param type
@@ -219,9 +229,7 @@ public class AccumuloBlobStore implements BlobStore {
 
         try {
 
-            BatchWriter writer = this.connector.createBatchWriter(tableName, bufferSize * 100, 100, 2);
-
-            return generateWriteStream(writer, key, type, timestamp, visibility);
+            return generateWriteStream(getWriter(), key, type, timestamp, visibility);
 
         } catch (RuntimeException e) {
             throw e;
@@ -270,4 +278,5 @@ public class AccumuloBlobStore implements BlobStore {
             throw new RuntimeException(e);
         }
     }
+
 }

@@ -1,3 +1,19 @@
+/*
+* Licensed to the Apache Software Foundation (ASF) under one or more
+* contributor license agreements. See the NOTICE file distributed with
+* this work for additional information regarding copyright ownership.
+* The ASF licenses this file to You under the Apache License, Version 2.0
+* (the "License"); you may not use this file except in compliance with
+* the License. You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.calrissian.accumulorecipes.blobstore.ext.impl;
 
 
@@ -188,10 +204,11 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
         //key and type.  Therefore they should now contain protected information, or this check
         //can not be done.
         isTrue(!checkExists(key, type), String.format("Data with %s type and %s key already exists.", type, key));
+
         try {
 
             ColumnVisibility colVis = new ColumnVisibility(defaultString(visibility));
-            BatchWriter writer = this.connector.createBatchWriter(tableName, bufferSize * 100, 100, 2);
+            BatchWriter writer = getWriter();
 
             //If there are properties write these first
             if (properties != null && !properties.isEmpty()) {

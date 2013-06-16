@@ -44,7 +44,7 @@ public interface ExtendedBlobStore extends BlobStore {
     Map<String, String> getProperties(String key, String type, Authorizations auths);
 
     /**
-     * Provides an {@link java.io.OutputStream} to allow storage of the data into the underlying store.
+     * Provides an {@link java.io.OutputStream} to allow storage of the data into the store along with some properties.
      * @param key
      * @param type
      * @param visibility
