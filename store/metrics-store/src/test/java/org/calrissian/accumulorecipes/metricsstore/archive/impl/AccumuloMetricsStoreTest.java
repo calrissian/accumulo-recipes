@@ -14,19 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.impl;
+package org.calrissian.accumulorecipes.metricsstore.archive.impl;
 
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.metricsstore.MetricsContext;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
+import org.calrissian.accumulorecipes.metricsstore.archive.MetricsContext;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.impl.CounterMetric;
-import org.calrissian.accumulorecipes.metricsstore.domain.impl.StatsMetric;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.MetricUnit;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.impl.CounterMetric;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.impl.StatsMetric;
 import org.junit.Before;
 import org.junit.Test;
 

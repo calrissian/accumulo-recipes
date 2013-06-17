@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.calrissian.accumulorecipes.metricsstore.domain;
+package org.calrissian.accumulorecipes.metricsstore.archive.domain;
 
 
 public enum MetricType {

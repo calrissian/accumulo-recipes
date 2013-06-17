@@ -16,6 +16,7 @@
         <commons.codec.version>1.7</commons.codec.version>
         <commons.math3.version>3.0</commons.math3.version>
         <hadoop.version>0.20.2</hadoop.version>
+        <joda.time.version>2.2</joda.time.version>
         <junit.version>4.11</junit.version>
         <mango.version>1.0.3-SNAPSHOT</mango.version>
         <slf4j.version>1.6.4</slf4j.version>
@@ -99,6 +100,11 @@
                 <version>${mango.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda.time.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

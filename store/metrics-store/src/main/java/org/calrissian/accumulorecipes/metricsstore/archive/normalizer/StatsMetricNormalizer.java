@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.normalizer;
+package org.calrissian.accumulorecipes.metricsstore.archive.normalizer;
 
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Combiner;
-import org.calrissian.accumulorecipes.metricsstore.domain.impl.StatsMetric;
-import org.calrissian.accumulorecipes.metricsstore.iterator.StatsCombiner;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.impl.StatsMetric;
+import org.calrissian.accumulorecipes.metricsstore.ext.iterator.StatsCombiner;
 
 public class StatsMetricNormalizer implements MetricNormalizer<StatsMetric> {
 

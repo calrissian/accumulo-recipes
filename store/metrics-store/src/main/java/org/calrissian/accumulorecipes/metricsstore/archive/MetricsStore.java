@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore;
+package org.calrissian.accumulorecipes.metricsstore.archive;
 
 import com.google.common.base.Function;
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.MetricUnit;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
 
 import java.util.Collection;
 import java.util.Date;

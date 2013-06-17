@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.domain.impl;
+package org.calrissian.accumulorecipes.metricsstore.archive.domain.impl;
 
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.Metric;
 
 public class StatsMetric implements Metric {
 

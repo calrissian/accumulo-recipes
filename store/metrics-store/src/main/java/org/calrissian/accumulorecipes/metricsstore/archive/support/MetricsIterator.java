@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.support;
+package org.calrissian.accumulorecipes.metricsstore.archive.support;
 
 
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IterationInterruptedException;
-import org.calrissian.accumulorecipes.metricsstore.MetricsContext;
+import org.calrissian.accumulorecipes.metricsstore.archive.MetricsContext;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.MetricUnit;
+import org.calrissian.accumulorecipes.metricsstore.archive.normalizer.MetricNormalizer;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
-import org.calrissian.accumulorecipes.metricsstore.normalizer.MetricNormalizer;
 
 import java.util.Iterator;
 import java.util.Map;
 
-import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricsStore.DELIM;
+import static org.calrissian.accumulorecipes.metricsstore.archive.impl.AccumuloMetricsStore.DELIM;
 
 public class MetricsIterator implements Iterator<MetricUnit>, Iterable<MetricUnit> {
 

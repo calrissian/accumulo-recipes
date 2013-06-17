@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.normalizer;
+package org.calrissian.accumulorecipes.metricsstore.archive.normalizer;
 
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Combiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
-import org.calrissian.accumulorecipes.metricsstore.domain.impl.CounterMetric;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.impl.CounterMetric;
 
 public class CounterMetricNormalizer implements MetricNormalizer<CounterMetric> {
 

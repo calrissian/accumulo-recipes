@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore;
+package org.calrissian.accumulorecipes.metricsstore.archive;
 
 
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
-import org.calrissian.accumulorecipes.metricsstore.normalizer.CounterMetricNormalizer;
-import org.calrissian.accumulorecipes.metricsstore.normalizer.MetricNormalizer;
-import org.calrissian.accumulorecipes.metricsstore.normalizer.StatsMetricNormalizer;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.Metric;
+import org.calrissian.accumulorecipes.metricsstore.archive.normalizer.CounterMetricNormalizer;
+import org.calrissian.accumulorecipes.metricsstore.archive.normalizer.MetricNormalizer;
+import org.calrissian.accumulorecipes.metricsstore.archive.normalizer.StatsMetricNormalizer;
 
 import java.util.Arrays;
 import java.util.Collection;
