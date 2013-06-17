@@ -249,10 +249,7 @@ public class AccumuloBlobStore implements BlobStore {
             String rowId = generateRowId(key, type);
             //Scan for a range including only the data
             Scanner scanner = connector.createScanner(tableName, auths);
-            scanner.setRange(new Range(
-                    new Key(rowId, DATA_CF, NORMALIZER.normalize(0)),
-                    new Key(rowId, DATA_CF, NORMALIZER.normalize(Integer.MAX_VALUE))
-            ));
+            scanner.setRange(Range.exact(rowId, DATA_CF));
             scanner.fetchColumnFamily(new Text(DATA_CF));
 
             final Iterator<Map.Entry<Key,Value>> iterator = scanner.iterator();

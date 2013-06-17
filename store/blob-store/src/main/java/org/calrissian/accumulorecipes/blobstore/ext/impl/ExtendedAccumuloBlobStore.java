@@ -132,13 +132,9 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
         notNull(auths, "Null authorizations");
 
         try {
-            String rowId = generateRowId(key, type);
             //Scan over the range for the key, but only include the size column family
             Scanner scanner = connector.createScanner(tableName, auths);
-            scanner.setRange(new Range(
-                    new Key(rowId, SIZE_CF),
-                    new Key(rowId, SIZE_CF + "\u0000")
-            ));
+            scanner.setRange(Range.exact(generateRowId(key, type), SIZE_CF));
             scanner.fetchColumnFamily(new Text(SIZE_CF));
             scanner.setBatchSize(1);
 
@@ -163,13 +159,9 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
         notNull(auths, "Null authorizations");
 
         try {
-            String rowId = generateRowId(key, type);
-            //Scan for a range including only the data
+            //Scan over the range for the key, but only include the property column family
             Scanner scanner = connector.createScanner(tableName, auths);
-            scanner.setRange(new Range(
-                    new Key(rowId, PROP_CF, "\u0000"),
-                    new Key(rowId, PROP_CF, "\uFFFF")
-            ));
+            scanner.setRange(Range.exact(generateRowId(key, type), PROP_CF));
             scanner.fetchColumnFamily(new Text(PROP_CF));
 
             Iterator<Entry<Key,Value>> iterator = scanner.iterator();
