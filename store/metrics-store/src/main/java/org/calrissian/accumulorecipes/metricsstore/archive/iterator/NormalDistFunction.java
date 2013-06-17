@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.metricsstore.iterator;
+package org.calrissian.accumulorecipes.metricsstore.archive.iterator;
 
 import com.google.common.base.Function;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.iterator;
+package org.calrissian.accumulorecipes.metricsstore.ext.iterator;
 
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
@@ -25,6 +25,10 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+
+import static java.lang.Long.parseLong;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  * This combiner calculates the max, min, sum, and count of long integers represented as strings in values. It stores the result in a comma-separated value of
@@ -50,17 +54,17 @@ public class StatsCombiner extends Combiner {
             String stats[] = iter.next().toString().split(",");
 
             if (stats.length == 1) {
-                long val = Long.parseLong(stats[0], radix);
-                min = Math.min(val, min);
-                max = Math.max(val, max);
+                long val = parseLong(stats[0], radix);
+                min = min(val, min);
+                max = max(val, max);
                 sum += val;
                 count += 1;
             } else {
 
-                long actualCount = Long.parseLong(stats[2]);
+                long actualCount = parseLong(stats[2]);
 
-                min = Math.min(Long.parseLong(stats[0], radix), min);
-                max = Math.max(Long.parseLong(stats[1], radix), max);
+                min = min(parseLong(stats[0], radix), min);
+                max = max(parseLong(stats[1], radix), max);
 
                 if(actualCount < min) {
                     min = actualCount;
@@ -70,8 +74,8 @@ public class StatsCombiner extends Combiner {
                     max = actualCount;
                 }
 
-                sum += Long.parseLong(stats[2], radix);
-                count += Long.parseLong(stats[3], radix);
+                sum += parseLong(stats[2], radix);
+                count += parseLong(stats[3], radix);
             }
         }
 

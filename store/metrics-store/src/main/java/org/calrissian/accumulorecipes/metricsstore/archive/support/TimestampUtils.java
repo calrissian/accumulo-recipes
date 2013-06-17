@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.support;
+package org.calrissian.accumulorecipes.metricsstore.archive.support;
 
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 

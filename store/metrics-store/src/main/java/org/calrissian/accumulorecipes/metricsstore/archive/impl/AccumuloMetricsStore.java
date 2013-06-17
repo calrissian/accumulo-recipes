@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.impl;
+package org.calrissian.accumulorecipes.metricsstore.archive.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -26,14 +26,14 @@ import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.metricsstore.MetricsContext;
-import org.calrissian.accumulorecipes.metricsstore.MetricsStore;
+import org.calrissian.accumulorecipes.metricsstore.archive.MetricsContext;
+import org.calrissian.accumulorecipes.metricsstore.archive.MetricsStore;
+import org.calrissian.accumulorecipes.metricsstore.archive.domain.MetricUnit;
+import org.calrissian.accumulorecipes.metricsstore.archive.iterator.FunctionCombiner;
+import org.calrissian.accumulorecipes.metricsstore.archive.normalizer.MetricNormalizer;
+import org.calrissian.accumulorecipes.metricsstore.archive.support.MetricsIterator;
+import org.calrissian.accumulorecipes.metricsstore.archive.support.TimestampUtils;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricUnit;
-import org.calrissian.accumulorecipes.metricsstore.iterator.FunctionCombiner;
-import org.calrissian.accumulorecipes.metricsstore.normalizer.MetricNormalizer;
-import org.calrissian.accumulorecipes.metricsstore.support.MetricsIterator;
-import org.calrissian.accumulorecipes.metricsstore.support.TimestampUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

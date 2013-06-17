@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.exception;
+package org.calrissian.accumulorecipes.metricsstore.archive.exception;
 
 public class InvalidMetricException extends Exception {
     public InvalidMetricException() {

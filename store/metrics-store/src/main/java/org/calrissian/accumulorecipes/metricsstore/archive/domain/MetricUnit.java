@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.calrissian.accumulorecipes.metricsstore.domain;
+package org.calrissian.accumulorecipes.metricsstore.archive.domain;
 
 public class MetricUnit {
 
@@ -25,9 +25,9 @@ public class MetricUnit {
 
     private String visibility;
 
-    private Metric metric;
+    private org.calrissian.accumulorecipes.metricsstore.archive.domain.Metric metric;
 
-    public MetricUnit(long timestamp, String group, String type, String name, String visibility, Metric metric) {
+    public MetricUnit(long timestamp, String group, String type, String name, String visibility, org.calrissian.accumulorecipes.metricsstore.archive.domain.Metric metric) {
         this.timestamp = timestamp;
         this.group = group;
         this.type = type;
@@ -57,7 +57,7 @@ public class MetricUnit {
     }
 
 
-    public Metric getMetric() {
+    public org.calrissian.accumulorecipes.metricsstore.archive.domain.Metric getMetric() {
         return metric;
     }
 
