@@ -7,7 +7,9 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
+import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
@@ -42,7 +44,7 @@ import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.
  * group\u0000revTS     'DAYS'              type\u0000name      value
  * group\u0000revTS     'MONTHS'            type\u0000name      value
  *
- * The table is configured to use a Stats combiner against each of the columns specified.
+ * The table is configured to use a SummingCombiner against each of the columns specified.
  */
 public class AccumuloMetricStore implements MetricStore {
 
@@ -102,13 +104,14 @@ public class AccumuloMetricStore implements MetricStore {
      * @throws TableNotFoundException
      */
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        //Set up the default summing combiner with a priority of 30
+        //Set up the default SummingCombiner with a priority of 10
         List<Column> columns = new ArrayList<Column>();
         for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
             columns.add(new Column(timeUnit.toString()));
 
-        IteratorSetting setting  = new IteratorSetting(30, "stats", StatsCombiner.class);
-        StatsCombiner.setColumns(setting, columns);
+        IteratorSetting setting  = new IteratorSetting(10, "stats", SummingCombiner.class);
+        SummingCombiner.setColumns(setting, columns);
+        SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
     }
 
@@ -123,7 +126,7 @@ public class AccumuloMetricStore implements MetricStore {
      * @param auths
      * @return
      */
-    protected Iterable<Entry<Key, Value>> queryInternal(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Collection<String> auths) {
+    protected Iterable<Entry<Key, Value>> queryInternal(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
@@ -136,7 +139,7 @@ public class AccumuloMetricStore implements MetricStore {
 
             //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
             //timestamp.  Which is used to provide the latest results first.
-            Scanner scanner = connector.createScanner(tableName, new Authorizations(auths.toArray(new String[auths.size()])));
+            Scanner scanner = connector.createScanner(tableName, auths);
             scanner.setRange(new Range(
                     combine(group, generateTimestamp(end.getTime(), timeUnit)),
                     combine(group, generateTimestamp(start.getTime(), timeUnit))
@@ -158,7 +161,7 @@ public class AccumuloMetricStore implements MetricStore {
 
                 //No need to apply a filter if there is no regex to apply.
                 if (cqRegex != null) {
-                    IteratorSetting regexIterator = new IteratorSetting(50, "regex", RegExFilter.class);
+                    IteratorSetting regexIterator = new IteratorSetting(15, "regex", RegExFilter.class);
                     RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
                     scanner.addScanIterator(regexIterator);
                 }
@@ -224,7 +227,7 @@ public class AccumuloMetricStore implements MetricStore {
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Collection<String> auths) {
+    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
 
         return transform(
                 queryInternal(start, end, group, type, name, timeUnit, auths),

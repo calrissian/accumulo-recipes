@@ -2,7 +2,7 @@ package org.calrissian.accumulorecipes.metricsstore.ext.domain;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class MetricStats {
+public class Stats {
     private final long timestamp;
     private final String group;
     private final String type;
@@ -14,8 +14,8 @@ public class MetricStats {
     private final long count;
 
 
-    public MetricStats(long timestamp, String group, String type, String name, String visibility,
-                       long min, long max, long sum, long count) {
+    public Stats(long timestamp, String group, String type, String name, String visibility,
+                 long min, long max, long sum, long count) {
         checkNotNull(group);
         checkNotNull(type);
         checkNotNull(name);
@@ -71,9 +71,9 @@ public class MetricStats {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof MetricStats)) return false;
+        if (!(o instanceof Stats)) return false;
 
-        MetricStats that = (MetricStats) o;
+        Stats that = (Stats) o;
 
         if (count != that.count) return false;
         if (max != that.max) return false;
@@ -104,7 +104,7 @@ public class MetricStats {
 
     @Override
     public String toString() {
-        return "MetricStats{" +
+        return "Stats{" +
                 "timestamp=" + timestamp +
                 ", group='" + group + '\'' +
                 ", type='" + type + '\'' +

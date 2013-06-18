@@ -1,10 +1,10 @@
 package org.calrissian.accumulorecipes.metricsstore;
 
 
+import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 
-import java.util.Collection;
 import java.util.Date;
 
 public interface MetricStore {
@@ -27,6 +27,6 @@ public interface MetricStore {
      * @return
      */
     Iterable<Metric> query(Date start, Date end, String group, String type, String name,
-                                MetricTimeUnit timeUnit, Collection<String> auths);
+                           MetricTimeUnit timeUnit, Authorizations auths);
 
 }

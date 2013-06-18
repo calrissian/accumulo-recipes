@@ -5,15 +5,15 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.StatsMetricStore;
-import org.calrissian.accumulorecipes.metricsstore.ext.domain.MetricStats;
+import org.calrissian.accumulorecipes.metricsstore.ext.domain.Stats;
 import org.calrissian.accumulorecipes.metricsstore.ext.iterator.StatsCombiner;
 import org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -37,11 +37,11 @@ import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.
  * group\u0000revTS     'DAYS'              type\u0000name      value
  * group\u0000revTS     'MONTHS'            type\u0000name      value
  *
- * The table is configured to use a Stats combiner against each of the columns specified.
+ * The table is configured to use a StatsCombiner against each of the columns specified.
  */
 public class AccumuloStatsMetricStore extends AccumuloMetricStore implements StatsMetricStore {
 
-    private static final String DEFAULT_TABLE_NAME = "stats-metrics";
+    private static final String DEFAULT_TABLE_NAME = "stats_metrics";
 
     public AccumuloStatsMetricStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         super(connector, DEFAULT_TABLE_NAME);
@@ -53,12 +53,12 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
 
     @Override
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        //Set up the default summing iterator with a priority of 30
+        //Set up the default StatsCombiner
         List<Column> columns = new ArrayList<Column>();
         for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
             columns.add(new Column(timeUnit.toString()));
 
-        IteratorSetting setting  = new IteratorSetting(30, "stats", StatsCombiner.class);
+        IteratorSetting setting  = new IteratorSetting(10, "stats", StatsCombiner.class);
         StatsCombiner.setColumns(setting, columns);
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
     }
@@ -67,12 +67,12 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Collection<String> auths) {
+    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
         return transform(
                 queryStats(start, end, group, type, name, timeUnit, auths),
-                new Function<MetricStats, Metric>() {
+                new Function<Stats, Metric>() {
                     @Override
-                    public Metric apply(MetricStats stat) {
+                    public Metric apply(Stats stat) {
                         return new Metric(
                                 stat.getTimestamp(),
                                 stat.getGroup(),
@@ -90,7 +90,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
      * {@inheritDoc}
      */
     @Override
-    public Iterable<MetricStats> queryStats(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Collection<String> auths) {
+    public Iterable<Stats> queryStats(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
 
         return transform(
                 queryInternal(start, end, group, type, name, timeUnit, auths),
@@ -102,7 +102,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
      * Utility class to help provide the transform logic to go from the Entry<Key, Value> from accumulo to the Metric
      * objects that are returned from this service.
      */
-    private static class MetricStatsTransform implements Function<Entry<Key, Value>, MetricStats> {
+    private static class MetricStatsTransform implements Function<Entry<Key, Value>, Stats> {
         MetricTimeUnit timeUnit;
 
         private MetricStatsTransform(MetricTimeUnit timeUnit) {
@@ -110,13 +110,13 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
         }
 
         @Override
-        public MetricStats apply(Entry<Key, Value> entry) {
+        public Stats apply(Entry<Key, Value> entry) {
 
             String row[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), DELIM);
             String colQ[] = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), DELIM);
             String value[] = splitPreserveAllTokens(entry.getValue().toString(), ",");
 
-            return new MetricStats(
+            return new Stats(
                     revertTimestamp(row[1], timeUnit),
                     row[0],
                     colQ[0],
