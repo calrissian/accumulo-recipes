@@ -1,33 +1,32 @@
 package org.calrissian.accumulorecipes.rangestore;
 
 
+import com.google.common.collect.Range;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.mango.types.range.ValueRange;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
- * A range store is a 1-dimensional NoSQL key/value version of the common range tree data structure.
+ * A range store is a 1-dimensional NoSQL key/value version of the common interval tree data structure.
  */
 public interface RangeStore {
 
     /**
-     * Inserts a collection of ranges into the store.
+     * Inserts ranges into the store.
      * @param ranges
      */
-    void insert(Collection<ValueRange<Long>> ranges);
+    void save(Iterable<Range<Long>> ranges);
 
     /**
-     * Given a range, queries for any ranges that overlap
+     * Deletes ranges from the store.
+     * @param ranges
+     */
+    void delete(Iterable<Range<Long>> ranges);
+
+    /**
+     * Queries for any ranges that intersect, overlap, or are contained by the given range.
      * @param range
      * @param auths
      * @return
      */
-    Iterator<ValueRange<Long>> query(ValueRange<Long> range, Authorizations auths);
+    Iterable<Range<Long>> query(Range<Long> range, Authorizations auths);
 
-    /**
-     * Releases any resources being held
-     */
-    void shutdown();
 }
