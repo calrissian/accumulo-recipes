@@ -28,6 +28,7 @@ import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.generateTimestamp;
 
@@ -46,14 +47,12 @@ import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.
  */
 public class AccumuloMetricStore implements MetricStore {
 
-    private static final String DEFAULT_TABLE_NAME = "metrics";
-
     private final Connector connector;
     private final String tableName;
     private final BatchWriter metricWriter;
 
     public AccumuloMetricStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        this(connector, DEFAULT_TABLE_NAME);
+        this(connector, "metrics");
     }
 
     public AccumuloMetricStore(Connector connector, String tableName) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
@@ -63,7 +62,11 @@ public class AccumuloMetricStore implements MetricStore {
         this.connector = connector;
         this.tableName = tableName;
 
-        createTable(this.connector);
+        if(!connector.tableOperations().exists(this.tableName)) {
+            //Create table without versioning iterator.
+            connector.tableOperations().create(this.tableName, false);
+            configureTable(connector, this.tableName);
+        }
 
         this.metricWriter = this.connector.createBatchWriter(tableName, 100000, 100, 10);
     }
@@ -75,25 +78,6 @@ public class AccumuloMetricStore implements MetricStore {
     }
 
     /**
-     * Utility method to create the table if it does not exist.
-     * @param connector
-     * @throws org.apache.accumulo.core.client.TableExistsException
-     * @throws org.apache.accumulo.core.client.AccumuloSecurityException
-     * @throws org.apache.accumulo.core.client.AccumuloException
-     * @throws org.apache.accumulo.core.client.TableNotFoundException
-     */
-    private void createTable(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-
-        if(!connector.tableOperations().exists(this.tableName)) {
-            //Create table without versioning iterator.
-            connector.tableOperations().create(tableName, false);
-
-            configureTable(connector, tableName);
-        }
-
-    }
-
-    /**
      * Utility method to update the correct iterators to the table.
      * @param connector
      * @throws AccumuloSecurityException
@@ -101,12 +85,12 @@ public class AccumuloMetricStore implements MetricStore {
      * @throws TableNotFoundException
      */
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        //Set up the default SummingCombiner with a priority of 10
+        //Set up the default SummingCombiner
         List<Column> columns = new ArrayList<Column>();
         for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
             columns.add(new Column(timeUnit.toString()));
 
-        IteratorSetting setting  = new IteratorSetting(10, "stats", SummingCombiner.class);
+        IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
         SummingCombiner.setColumns(setting, columns);
         SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
@@ -120,7 +104,7 @@ public class AccumuloMetricStore implements MetricStore {
         try {
 
             //fix null values
-            group = (group == null ? "" : group);
+            group = defaultString(group);
             timeUnit = (timeUnit == null ? MetricTimeUnit.MINUTES : timeUnit);
 
             //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
@@ -147,13 +131,12 @@ public class AccumuloMetricStore implements MetricStore {
 
                 //No need to apply a filter if there is no regex to apply.
                 if (cqRegex != null) {
-                    IteratorSetting regexIterator = new IteratorSetting(15, "regex", RegExFilter.class);
+                    IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
                     RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
                     scanner.addScanIterator(regexIterator);
                 }
             }
 
-            //Use a transform to convert from Entry<Key,Value> to Metric
             return scanner;
 
         } catch (Exception e) {
@@ -213,7 +196,6 @@ public class AccumuloMetricStore implements MetricStore {
      */
     @Override
     public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
-
         return transform(
                 metricScanner(start, end, group, type, name, timeUnit, auths),
                 new MetricTransform<Metric>(timeUnit) {

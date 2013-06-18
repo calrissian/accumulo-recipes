@@ -23,6 +23,10 @@ public interface MetricFunction<T> {
 
     /**
      * Merges the two metrics together.
+     *
+     * TODO With no iterator settings specified during compactions, this should never happen and we can use
+     * more complex iterable math functions.
+     *
      * @param orig
      * @param value
      * @return

@@ -21,11 +21,11 @@ import static com.google.common.collect.Iterables.transform;
 import static java.lang.Long.parseLong;
 import static java.util.Arrays.asList;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
-
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 
 /**
- * This implementation of the metric service that allows the caller to specify a custom function during query time.  No
- * table configured iterators are configured for this table, as this might skew the results for any custom function.
+ * This implementation of the metric service allows the caller to specify a custom function during query time.  No
+ * table configured iterators are setup for this table, as this might skew the results for any custom function.
  * This means that during a compaction, the table is not able to consolidate data possibly increasing the query times for
  * metric data.
  *
@@ -39,10 +39,8 @@ import static org.apache.accumulo.core.client.IteratorSetting.Column;
  */
 public class AccumuloCustomMetricStore extends AccumuloMetricStore implements CustomMetricStore {
 
-    private static final String DEFAULT_TABLE_NAME = "custom_metrics";
-
     public AccumuloCustomMetricStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        super(connector, DEFAULT_TABLE_NAME);
+        super(connector, "custom_metrics");
     }
 
     public AccumuloCustomMetricStore(Connector connector, String tableName) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
@@ -55,6 +53,8 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
     @Override
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
         //do nothing as scan time iterators are attached at query time for a specific custom metric.
+        //this prevents the values in the table from getting squashed, so that different types of
+        //metric calculations can be run at any time.
     }
 
     /**
@@ -66,7 +66,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
         //Add a scan time SummingCombiner
-        IteratorSetting setting  = new IteratorSetting(10, "stats", SummingCombiner.class);
+        IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
         SummingCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
         scanner.addScanIterator(setting);
@@ -94,7 +94,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
         //Add a scan time iterator to apply the custom function.
-        IteratorSetting setting = new IteratorSetting(10, "functionCombiner", FunctionCombiner.class);
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "functionCombiner", FunctionCombiner.class);
         FunctionCombiner.setFunctionClass(setting, function);
         FunctionCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         scanner.addScanIterator(setting);
@@ -104,7 +104,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
 
     /**
      * Utility class to help provide the transform logic to go from the Entry<Key, Value> from accumulo to the Metric
-     * objects that are returned from this service.
+     * objects that are returned from this store.
      */
     private static class CustomMetricTransform<T> extends MetricTransform<CustomMetric<T>> {
         MetricFunction<T> function;
