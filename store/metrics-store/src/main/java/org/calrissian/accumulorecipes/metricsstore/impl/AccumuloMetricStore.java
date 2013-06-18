@@ -144,6 +144,13 @@ public class AccumuloMetricStore implements MetricStore {
         }
     }
 
+    /**
+     * Will close all underlying resources
+     * @throws MutationsRejectedException
+     */
+    public void shutdown() throws MutationsRejectedException {
+        metricWriter.close();
+    }
 
     /**
      * {@inheritDoc}
