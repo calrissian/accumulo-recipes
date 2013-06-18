@@ -66,13 +66,11 @@ public class StatsCombiner extends Combiner {
                 min = min(parseLong(stats[0], radix), min);
                 max = max(parseLong(stats[1], radix), max);
 
-                if(actualCount < min) {
+                if(actualCount < min)
                     min = actualCount;
-                }
 
-                if(actualCount > max) {
+                if(actualCount > max)
                     max = actualCount;
-                }
 
                 sum += parseLong(stats[2], radix);
                 count += parseLong(stats[3], radix);

@@ -14,11 +14,13 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
+
 /**
  * Accumulo Combiner class that handles the generic logic for enabling custom function aggregation.
  */
 public class FunctionCombiner extends Combiner {
-    private static final String PREFIX = "\u0000";
+    private static final String PREFIX = DELIM;
 
     public static final String FUNCTION_CLASS = "functionClass";
 
