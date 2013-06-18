@@ -3,7 +3,6 @@ package org.calrissian.accumulorecipes.metricsstore.ext.stats.impl;
 
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
@@ -12,6 +11,7 @@ import org.calrissian.accumulorecipes.metricsstore.ext.stats.StatsMetricStore;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.iterator.StatsCombiner;
 import org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore;
+import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,11 +20,9 @@ import java.util.List;
 import static com.google.common.collect.Iterables.transform;
 import static java.lang.Long.parseLong;
 import static java.util.EnumSet.allOf;
-import static java.util.Map.Entry;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.revertTimestamp;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
@@ -102,31 +100,26 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
      * Utility class to help provide the transform logic to go from the Entry<Key, Value> from accumulo to the Metric
      * objects that are returned from this service.
      */
-    private static class MetricStatsTransform implements Function<Entry<Key, Value>, Stats> {
+    private static class MetricStatsTransform extends MetricTransform<Stats> {
         MetricTimeUnit timeUnit;
 
-        private MetricStatsTransform(MetricTimeUnit timeUnit) {
-            this.timeUnit = timeUnit;
+        public MetricStatsTransform(MetricTimeUnit timeUnit) {
+            super(timeUnit);
         }
 
         @Override
-        public Stats apply(Entry<Key, Value> entry) {
-
-            String row[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), DELIM);
-            String colQ[] = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), DELIM);
-            String value[] = splitPreserveAllTokens(entry.getValue().toString(), ",");
-
+        protected Stats transform(long timestamp, String group, String type, String name, String visibility, Value value) {
+            String values[] = splitPreserveAllTokens(value.toString(), ",");
             return new Stats(
-                    revertTimestamp(row[1], timeUnit),
-                    row[0],
-                    colQ[0],
-                    colQ[1],
-                    entry.getKey().getColumnVisibility().toString(),
-                    parseLong(value[0]),
-                    parseLong(value[1]),
-                    parseLong(value[2]),
-                    parseLong(value[3])
-            );
+                    timestamp,
+                    group,
+                    type,
+                    name,
+                    visibility,
+                    parseLong(values[0]),
+                    parseLong(values[1]),
+                    parseLong(values[2]),
+                    parseLong(values[3]));
         }
     }
 }

@@ -56,5 +56,43 @@ public class CustomMetric<T> {
         return value;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        CustomMetric that = (CustomMetric) o;
+
+        if (timestamp != that.timestamp) return false;
+        if (!group.equals(that.group)) return false;
+        if (!name.equals(that.name)) return false;
+        if (!type.equals(that.type)) return false;
+        if (!value.equals(that.value)) return false;
+        if (!visibility.equals(that.visibility)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (timestamp ^ (timestamp >>> 32));
+        result = 31 * result + group.hashCode();
+        result = 31 * result + type.hashCode();
+        result = 31 * result + name.hashCode();
+        result = 31 * result + visibility.hashCode();
+        result = 31 * result + value.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "CustomMetric{" +
+                "timestamp=" + timestamp +
+                ", group='" + group + '\'' +
+                ", type='" + type + '\'' +
+                ", name='" + name + '\'' +
+                ", visibility='" + visibility + '\'' +
+                ", value=" + value +
+                '}';
+    }
 }

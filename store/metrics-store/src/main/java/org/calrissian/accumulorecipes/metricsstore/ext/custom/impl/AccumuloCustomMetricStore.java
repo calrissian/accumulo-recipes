@@ -1,9 +1,9 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl;
 
-import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.LongCombiner;
+import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
@@ -12,17 +12,15 @@ import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetri
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.iterator.FunctionCombiner;
 import org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore;
+import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 
 import java.util.Date;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
+import static java.lang.Long.parseLong;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.revertTimestamp;
 
 
 /**
@@ -58,14 +56,31 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
 
     @Override
     public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
-        return emptyList();  //no way to guarantee that a single value can be retrieved, so simply return an empty iterable.
+
+        Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
+
+        //Add a scan time SummingCombiner
+        IteratorSetting setting  = new IteratorSetting(10, "stats", SummingCombiner.class);
+        SummingCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
+        SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
+        scanner.addScanIterator(setting);
+
+        return transform(
+                scanner,
+                new MetricTransform<Metric>(timeUnit) {
+                    @Override
+                    protected Metric transform(long timestamp, String group, String type, String name, String visibility, Value value) {
+                        return new Metric(timestamp, group, type, name, visibility, parseLong(value.toString()));
+                    }
+                }
+        );
     }
 
     @Override
     public <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name, Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Authorizations auths) throws IllegalAccessException, InstantiationException {
         checkNotNull(function);
 
-        MetricFunction<T> impl = function.newInstance();
+        final MetricFunction<T> impl = function.newInstance();
 
         Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
@@ -75,37 +90,30 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         FunctionCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         scanner.addScanIterator(setting);
 
-
-        return transform(scanner, new CustomMetricTransform<T>(impl, timeUnit));
+        return transform(scanner, new CustomMetricTransform<T>(timeUnit, impl));
     }
 
     /**
      * Utility class to help provide the transform logic to go from the Entry<Key, Value> from accumulo to the Metric
      * objects that are returned from this service.
      */
-    private static class CustomMetricTransform<T> implements Function<Map.Entry<Key, Value>, CustomMetric<T>> {
+    private static class CustomMetricTransform<T> extends MetricTransform<CustomMetric<T>> {
         MetricFunction<T> function;
-        MetricTimeUnit timeUnit;
 
-        private CustomMetricTransform(MetricFunction<T> function, MetricTimeUnit timeUnit) {
+        public CustomMetricTransform(MetricTimeUnit timeUnit, MetricFunction<T> function) {
+            super(timeUnit);
             this.function = function;
-            this.timeUnit = timeUnit;
         }
 
         @Override
-        public CustomMetric<T> apply(Map.Entry<Key, Value> entry) {
-
-            String row[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), DELIM);
-            String colQ[] = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), DELIM);
-            T value = function.deserialize(entry.getValue().toString().substring(1));
-
+        protected CustomMetric<T> transform(long timestamp, String group, String type, String name, String visibility, Value value) {
             return new CustomMetric<T>(
-                    revertTimestamp(row[1], timeUnit),
-                    row[0],
-                    colQ[0],
-                    colQ[1],
-                    entry.getKey().getColumnVisibility().toString(),
-                    value
+                    timestamp,
+                    group,
+                    type,
+                    name,
+                    visibility,
+                    function.deserialize(value.toString().substring(1))
             );
         }
     }

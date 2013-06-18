@@ -1,9 +1,7 @@
 package org.calrissian.accumulorecipes.metricsstore.impl;
 
 
-import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -16,6 +14,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,13 +22,14 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
+import static java.lang.Long.parseLong;
 import static java.util.EnumSet.allOf;
-import static java.util.Map.Entry;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
-import static org.apache.commons.lang.StringUtils.*;
+import static org.apache.commons.lang.StringUtils.defaultString;
+import static org.apache.commons.lang.StringUtils.join;
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.revertTimestamp;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
@@ -46,7 +46,6 @@ import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.
  */
 public class AccumuloMetricStore implements MetricStore {
 
-    protected static final String DELIM = "\u0000";
     private static final String DEFAULT_TABLE_NAME = "metrics";
 
     private final Connector connector;
@@ -217,35 +216,12 @@ public class AccumuloMetricStore implements MetricStore {
 
         return transform(
                 metricScanner(start, end, group, type, name, timeUnit, auths),
-                new MetricTransform(timeUnit)
+                new MetricTransform<Metric>(timeUnit) {
+                    @Override
+                    protected Metric transform(long timestamp, String group, String type, String name, String visibility, Value value) {
+                        return new Metric(timestamp, group, type, name, visibility, parseLong(value.toString()));
+                    }
+                }
         );
-    }
-
-    /**
-     * Utility class to help provide the transform logic to go from the Entry<Key, Value> from accumulo to the Metric
-     * objects that are returned from this service.
-     */
-    private static class MetricTransform implements Function<Entry<Key, Value>, Metric> {
-        MetricTimeUnit timeUnit;
-
-        private MetricTransform(MetricTimeUnit timeUnit) {
-            this.timeUnit = timeUnit;
-        }
-
-        @Override
-        public Metric apply(Entry<Key, Value> entry) {
-
-            String row[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), DELIM);
-            String colQ[] = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), DELIM);
-
-            return new Metric(
-                    revertTimestamp(row[1], timeUnit),
-                    row[0],
-                    colQ[0],
-                    colQ[1],
-                    entry.getKey().getColumnVisibility().toString(),
-                    Long.parseLong(entry.getValue().toString())
-            );
-        }
     }
 }
