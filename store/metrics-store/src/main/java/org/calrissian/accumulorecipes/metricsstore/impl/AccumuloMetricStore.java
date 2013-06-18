@@ -16,10 +16,8 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
-import org.calrissian.accumulorecipes.metricsstore.ext.iterator.StatsCombiner;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -97,7 +95,7 @@ public class AccumuloMetricStore implements MetricStore {
     }
 
     /**
-     * Utility method to add the correct iterators to the table.
+     * Utility method to update the correct iterators to the table.
      * @param connector
      * @throws AccumuloSecurityException
      * @throws AccumuloException
@@ -115,18 +113,7 @@ public class AccumuloMetricStore implements MetricStore {
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
     }
 
-    /**
-     * Utility method to retrieve all metric values from the table pre-transform.
-     * @param start
-     * @param end
-     * @param group
-     * @param type
-     * @param name
-     * @param timeUnit
-     * @param auths
-     * @return
-     */
-    protected Iterable<Entry<Key, Value>> queryInternal(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
+    protected Scanner metricScanner(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
@@ -174,7 +161,6 @@ public class AccumuloMetricStore implements MetricStore {
             throw new RuntimeException(e);
         }
     }
-
 
 
     /**
@@ -230,7 +216,7 @@ public class AccumuloMetricStore implements MetricStore {
     public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
 
         return transform(
-                queryInternal(start, end, group, type, name, timeUnit, auths),
+                metricScanner(start, end, group, type, name, timeUnit, auths),
                 new MetricTransform(timeUnit)
         );
     }
