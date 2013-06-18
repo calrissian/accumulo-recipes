@@ -7,15 +7,14 @@ import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SummingFunction;
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.impl.AccumuloCustomMetricStore;
-import org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore;
 import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStoreTest.*;
+import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStoreTest.generateTestData;
+import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStoreTest.getConnector;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloCustomMetricStoreTest {

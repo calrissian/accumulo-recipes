@@ -4,7 +4,6 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
-import org.calrissian.accumulorecipes.metricsstore.ext.stats.impl.AccumuloStatsMetricStore;
 import org.junit.Test;
 
 import java.util.Date;

@@ -23,6 +23,7 @@ import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
@@ -39,10 +40,8 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
  */
 public class AccumuloStatsMetricStore extends AccumuloMetricStore implements StatsMetricStore {
 
-    private static final String DEFAULT_TABLE_NAME = "stats_metrics";
-
     public AccumuloStatsMetricStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        super(connector, DEFAULT_TABLE_NAME);
+        super(connector, "stats_metrics");
     }
 
     public AccumuloStatsMetricStore(Connector connector, String tableName) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
@@ -59,7 +58,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
         for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
             columns.add(new Column(timeUnit.toString()));
 
-        IteratorSetting setting  = new IteratorSetting(10, "stats", StatsCombiner.class);
+        IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", StatsCombiner.class);
         StatsCombiner.setColumns(setting, columns);
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
     }
@@ -101,7 +100,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
 
     /**
      * Utility class to help provide the transform logic to go from the Entry<Key, Value> from accumulo to the Metric
-     * objects that are returned from this service.
+     * objects that are returned from this store.
      */
     private static class MetricStatsTransform extends MetricTransform<Stats> {
         MetricTimeUnit timeUnit;
