@@ -9,6 +9,9 @@ import static java.lang.Math.min;
  */
 public class StatsFunction implements MetricFunction<long[]> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long[] intitialValue() {
         return new long[]{
@@ -19,6 +22,9 @@ public class StatsFunction implements MetricFunction<long[]> {
         };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long[] update(long[] orig, long value) {
         return new long[]{
@@ -29,6 +35,9 @@ public class StatsFunction implements MetricFunction<long[]> {
         };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long[] merge(long[] orig, long[] value) {
         return new long[]{
@@ -39,11 +48,17 @@ public class StatsFunction implements MetricFunction<long[]> {
         };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String serialize(long[] value) {
         return Long.toString(value[0]) + "," + Long.toString(value[1]) + "," + Long.toString(value[2]) + "," + Long.toString(value[3]);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long[] deserialize(String data) {
         String[] individual = data.split(",");

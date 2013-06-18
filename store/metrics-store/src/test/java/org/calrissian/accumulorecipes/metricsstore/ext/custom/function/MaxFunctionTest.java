@@ -1,7 +1,4 @@
-package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl.function;
-
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MaxFunction;
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
+package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 public class MaxFunctionTest extends BaseFunctionTest<Long>{
     @Override

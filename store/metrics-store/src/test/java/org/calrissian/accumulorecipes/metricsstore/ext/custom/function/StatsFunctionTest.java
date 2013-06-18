@@ -1,7 +1,4 @@
-package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl.function;
-
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;
+package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 import java.util.Arrays;
 

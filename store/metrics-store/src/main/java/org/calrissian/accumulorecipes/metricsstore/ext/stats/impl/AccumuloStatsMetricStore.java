@@ -49,6 +49,9 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
         super(connector, tableName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
         //Set up the default StatsCombiner

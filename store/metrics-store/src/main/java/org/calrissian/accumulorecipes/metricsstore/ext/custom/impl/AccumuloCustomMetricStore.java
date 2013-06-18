@@ -49,11 +49,17 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         super(connector, tableName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
         //do nothing as scan time iterators are attached at query time for a specific custom metric.
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
 
@@ -76,6 +82,9 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name, Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Authorizations auths) throws IllegalAccessException, InstantiationException {
         checkNotNull(function);

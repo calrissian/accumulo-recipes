@@ -1,7 +1,4 @@
-package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl.function;
-
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MinFunction;
+package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 public class MinFunctionTest extends BaseFunctionTest<Long>{
     @Override

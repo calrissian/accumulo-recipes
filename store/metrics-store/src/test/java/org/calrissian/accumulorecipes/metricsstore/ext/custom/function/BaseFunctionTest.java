@@ -1,8 +1,7 @@
-package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl.function;
+package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 
 import org.junit.Test;
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
 
 public abstract class BaseFunctionTest<T> {
 

@@ -1,7 +1,6 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom.iterator;
 
 
-import com.google.common.base.Function;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -67,13 +66,5 @@ public class FunctionCombiner extends Combiner {
             return new Value();
 
         return new Value((PREFIX + function.serialize(retVal)).getBytes());
-    }
-
-    private class FunctionValueToBytes implements Function<Value, byte[]> {
-
-        @Override
-        public byte[] apply(Value value) {
-            return value.get();
-        }
     }
 }
