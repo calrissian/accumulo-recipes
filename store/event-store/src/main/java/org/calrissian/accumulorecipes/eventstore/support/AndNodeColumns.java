@@ -38,7 +38,6 @@ public class AndNodeColumns {
     protected  final Text[] columns;
     protected  final boolean[] notFlags;
 
-
     public AndNodeColumns(AndNode query) {
 
         Map<String, Object> fields = new HashMap<String, Object>();

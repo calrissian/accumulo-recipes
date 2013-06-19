@@ -20,7 +20,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 
-import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -29,17 +28,11 @@ import java.util.Date;
 public interface EventStore {
 
     /**
-     * Persists a collection of StoreEntry objects into the event store
+     * Persists a set of StoreEntry objects into the event store
      * @param events
      * @throws Exception
      */
-    void put(Collection<StoreEntry> events) throws Exception;
-
-    /**
-     * Shut down the store and cleanup any resources being held
-     * @throws Exception
-     */
-    void shutdown() throws Exception;
+    void save(Iterable<StoreEntry> events) throws Exception;
 
     /**
      * Query the store using criteria specified

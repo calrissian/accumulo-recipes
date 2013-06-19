@@ -28,6 +28,7 @@ import org.calrissian.mango.types.TypeContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
@@ -46,12 +47,10 @@ public class IteratorUtils {
 
         Range eventRange = new Range(startRangeKey, stopRangeKey);
 
-        System.out.println(eventUUID);
-
         long timestamp = 0;
 
         try {
-            sourceItr.seek(eventRange, new ArrayList<ByteSequence>(), false);
+            sourceItr.seek(eventRange, Collections.<ByteSequence>emptyList(), false);
 
             Collection<Tuple> tuples = new ArrayList<Tuple>();
             while(sourceItr.hasTop()) {
@@ -71,9 +70,7 @@ public class IteratorUtils {
                     String tupleType = keyValueDatatype[1];
                     Object tupleVal = TypeContext.getInstance().denormalize(keyValueDatatype[2], tupleType);
 
-                    Tuple tuple = new Tuple(tupleKey, tupleVal, nextKey.getColumnVisibility().toString());
-                    tuples.add(tuple);
-
+                    tuples.add(new Tuple(tupleKey, tupleVal, nextKey.getColumnVisibility().toString()));
 
                     timestamp = nextKey.getTimestamp();
                 }
@@ -81,9 +78,9 @@ public class IteratorUtils {
 
             StoreEntry event = new StoreEntry(eventUUID, timestamp);
 
-            if(tuples.size() > 0) {
+            if(tuples.size() > 0)
                 event.putAll(tuples);
-            }
+
 
             return new Value(ObjectMapperContext.getInstance().getObjectMapper().writeValueAsBytes(event));
 
