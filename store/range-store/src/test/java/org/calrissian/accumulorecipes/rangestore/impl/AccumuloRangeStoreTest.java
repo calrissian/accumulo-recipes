@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.rangestore.impl;
 
 
@@ -6,6 +21,7 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.rangestore.helper.LongRangeHelper;
 import org.calrissian.mango.types.range.ValueRange;
 import org.junit.Test;
 
@@ -30,7 +46,7 @@ public class AccumuloRangeStoreTest {
 
     @Test
     public void testSaveAndQuery() throws Exception {
-        AccumuloRangeStore rangeStore = new AccumuloRangeStore(getConnector());
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
         ValueRange<Long> testData = new ValueRange<Long>(0L, 10L);
         rangeStore.save(singleton(testData));
 
@@ -41,8 +57,149 @@ public class AccumuloRangeStoreTest {
     }
 
     @Test
+    public void testQuerySingleRangeExpected() throws Exception {
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(1L, 4L)));
+        rangeStore.save(singleton(new ValueRange<Long>(3L, 7L)));
+        rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 2L), new Authorizations()));
+
+        assertEquals(1, results.size());
+        compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
+    }
+
+    @Test
+    public void testQueryTwoRangeOverlapExpected() throws Exception {
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(1L, 4L)));
+        rangeStore.save(singleton(new ValueRange<Long>(3L, 7L)));
+        rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 4L), new Authorizations()));
+
+        assertEquals(2, results.size());
+        compareRanges(new ValueRange<Long>(3L, 7L), results.get(0));
+        compareRanges(new ValueRange<Long>(1L, 4L), results.get(1));
+    }
+
+    @Test
+    public void testQueryEntireRangeExpected() throws Exception {
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(50L, 57L)));
+        rangeStore.save(singleton(new ValueRange<Long>(62L, 70L)));
+        rangeStore.save(singleton(new ValueRange<Long>(0L, 500L)));
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 500L), new Authorizations()));
+
+        assertEquals(3, results.size());
+        compareRanges(new ValueRange<Long>(0L, 500L), results.get(0));
+        compareRanges(new ValueRange<Long>(62L, 70L), results.get(1));
+        compareRanges(new ValueRange<Long>(50L, 57L), results.get(2));
+    }
+
+    @Test
+    public void testQuerySingleMonsterOutsideRangeExpected() throws Exception {
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(50L, 57L)));
+        rangeStore.save(singleton(new ValueRange<Long>(62L, 70L)));
+        rangeStore.save(singleton(new ValueRange<Long>(80L, 80L)));
+        rangeStore.save(singleton(new ValueRange<Long>(81L, 89L)));
+        rangeStore.save(singleton(new ValueRange<Long>(-4000L, 4000L)));
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(75L, 75L), new Authorizations()));
+
+        assertEquals(1, results.size());
+        compareRanges(new ValueRange<Long>(-4000L, 4000L), results.get(0));
+    }
+
+    @Test
+    public void testQueryMultipleMonsterOutsideRangeExpected() throws Exception {
+
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(50L, 57L)));
+        rangeStore.save(singleton(new ValueRange<Long>(62L, 70L)));
+        rangeStore.save(singleton(new ValueRange<Long>(80L, 80L)));
+        rangeStore.save(singleton(new ValueRange<Long>(81L, 89L)));
+        rangeStore.save(singleton(new ValueRange<Long>(-4000L, 4000L)));
+        rangeStore.save(singleton(new ValueRange<Long>(-100000L, 500000L)));
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(75L, 75L), new Authorizations()));
+
+        assertEquals(2, results.size());
+        compareRanges(new ValueRange<Long>(-100000L, 500000L), results.get(0));
+        compareRanges(new ValueRange<Long>(-4000L, 4000L), results.get(1));
+    }
+
+    @Test
+    public void testQueryExactRangeExpected() throws Exception {
+
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(1L, 4L)));
+        rangeStore.save(singleton(new ValueRange<Long>(3L, 7L)));
+        rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
+
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(8L, 9L), new Authorizations()));
+
+        assertEquals(1, results.size());
+        compareRanges(new ValueRange<Long>(8L, 9L), results.get(0));
+    }
+
+    @Test
+    public void testQueryInsideRangeExpected() throws Exception {
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(1L, 4L)));
+        rangeStore.save(singleton(new ValueRange<Long>(3L, 7L)));
+        rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
+
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(5L, 6L), new Authorizations()));
+
+        assertEquals(1, results.size());
+        compareRanges(new ValueRange<Long>(3L, 7L), results.get(0));
+    }
+
+    @Test
+    public void testQuerySinglePointExpected() throws Exception {
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(1L, 4L)));
+        rangeStore.save(singleton(new ValueRange<Long>(3L, 7L)));
+        rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
+
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 1L), new Authorizations()));
+
+        assertEquals(1, results.size());
+        compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
+    }
+
+    @Test
+    public void testQuerySinglePointNothingExpected() throws Exception {
+
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(2L, 3L)));
+        rangeStore.save(singleton(new ValueRange<Long>(6L, 15L)));
+        rangeStore.save(singleton(new ValueRange<Long>(20L, 27L)));
+
+
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(4L, 4L), new Authorizations()));
+
+        assertEquals(0, results.size());
+    }
+
+    @Test
     public void testBoundsWithQuery() throws Exception {
-        AccumuloRangeStore rangeStore = new AccumuloRangeStore(getConnector());
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
         ValueRange<Long> testData = new ValueRange<Long>(50L, 150L);
         rangeStore.save(singleton(testData));
 
@@ -92,7 +249,7 @@ public class AccumuloRangeStoreTest {
 
     @Test
     public void testBoundsWithQueryAndMultRanges() throws Exception {
-        AccumuloRangeStore rangeStore = new AccumuloRangeStore(getConnector());
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
         rangeStore.save(asList(new ValueRange<Long>(50L, 100L), new ValueRange<Long>(150L, 200L)));
 
         //test surrounding
