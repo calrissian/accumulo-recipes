@@ -1,8 +1,6 @@
 package org.calrissian.accumulorecipes.rangestore.impl;
 
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.DiscreteDomains;
-import com.google.common.collect.Range;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -12,23 +10,23 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
 import org.calrissian.mango.types.exception.TypeNormalizationException;
 import org.calrissian.mango.types.normalizers.LongNormalizer;
+import org.calrissian.mango.types.range.ValueRange;
 
 import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.emptyIterator;
-import static com.google.common.collect.Ranges.closed;
 import static java.lang.Long.parseLong;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.mango.collect.Iterables2.emptyIterable;
 
-public class AccumuloRangeStore implements RangeStore {
+public class AccumuloRangeStore implements RangeStore<Long> {
 
     private static final String INDEX_FORWARD = "f";
     private static final String INDEX_REVERSE = "r";
-    private static final String INDEX_MAXSIZE = "s";
+    private static final String INDEX_MAXDISTANCE = "s";
 
     private static final LongNormalizer normalizer = new LongNormalizer();
 
@@ -81,18 +79,15 @@ public class AccumuloRangeStore implements RangeStore {
     }
 
     @Override
-    public void save(Iterable<Range<Long>> ranges) {
+    public void save(Iterable<ValueRange<Long>> ranges) {
         checkNotNull(ranges);
-
         try {
-            for (Range<Long> range : ranges) {
-                //converts range to the form [a,b)
-                range = range.canonical(DiscreteDomains.longs());
-                if (range.isEmpty())
-                    continue;
+            for (ValueRange<Long> range : ranges) {
 
-                final Long lowValue = range.lowerEndpoint();
-                final Long highValue = (range.hasUpperBound() ? range.upperEndpoint() - 1 : Long.MAX_VALUE);
+                final Long lowValue = range.getStart();
+                final Long highValue = range.getStop();
+
+                checkState(lowValue >= 0, "No portion of a range can be less than 0");
 
                 String lowComplement = normalizer.normalize(complement(lowValue));
                 String low = normalizer.normalize(lowValue);
@@ -106,8 +101,8 @@ public class AccumuloRangeStore implements RangeStore {
                 Mutation reverse = new Mutation(INDEX_REVERSE + DELIM + highComplement + DELIM + low);
                 reverse.put(new Text(""), new Text(""), new Value("".getBytes()));
 
-                String maxSizeComplement = normalizer.normalize(complement(highValue - lowValue));
-                Mutation maxSize = new Mutation(INDEX_MAXSIZE + DELIM + maxSizeComplement);
+                String distanceComplement = normalizer.normalize(complement(highValue - lowValue));
+                Mutation maxSize = new Mutation(INDEX_MAXDISTANCE + DELIM + distanceComplement);
                 maxSize.put(new Text(low), new Text(high), new Value("".getBytes()));
 
                 writer.addMutation(forward);
@@ -125,18 +120,16 @@ public class AccumuloRangeStore implements RangeStore {
     }
 
     @Override
-    public void delete(Iterable<Range<Long>> ranges) {
+    public void delete(Iterable<ValueRange<Long>> ranges) {
         checkNotNull(ranges);
 
         try {
-            for (Range<Long> range : ranges) {
-                //converts range to the form [a,b)
-                range = range.canonical(DiscreteDomains.longs());
-                if (range.isEmpty())
-                    continue;
+            for (ValueRange<Long> range : ranges) {
 
-                final Long lowValue = range.lowerEndpoint();
-                final Long highValue = (range.hasUpperBound() ? range.upperEndpoint() - 1 : Long.MAX_VALUE);
+                final Long lowValue = range.getStart();
+                final Long highValue = range.getStop();
+
+                checkState(lowValue >= 0, "No portion of a range can be less than 0");
 
                 String lowComplement = normalizer.normalize(complement(lowValue));
                 String low = normalizer.normalize(lowValue);
@@ -150,8 +143,8 @@ public class AccumuloRangeStore implements RangeStore {
                 Mutation reverse = new Mutation(INDEX_REVERSE + DELIM + highComplement + DELIM + low);
                 reverse.putDelete(new Text(""), new Text(""));
 
-                String maxSizeComplement = normalizer.normalize(complement(highValue - lowValue));
-                Mutation maxSize = new Mutation(INDEX_MAXSIZE + DELIM + maxSizeComplement);
+                String distanceComplement = normalizer.normalize(complement(highValue - lowValue));
+                Mutation maxSize = new Mutation(INDEX_MAXDISTANCE + DELIM + distanceComplement);
                 maxSize.putDelete(new Text(low), new Text(high));
 
                 writer.addMutation(forward);
@@ -168,9 +161,9 @@ public class AccumuloRangeStore implements RangeStore {
         }
     }
 
-    private long getMaxRangeSize(Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
+    private long getMaxDistance(Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
         Scanner scanner = connector.createScanner(tableName, auths);
-        scanner.setRange(prefix(INDEX_MAXSIZE));
+        scanner.setRange(prefix(INDEX_MAXDISTANCE));
         scanner.setBatchSize(1);
 
         Iterator<Entry<Key, Value>> iterator = scanner.iterator();
@@ -182,7 +175,7 @@ public class AccumuloRangeStore implements RangeStore {
         return complement(normalizer.denormalize(entry.getKey().getRow().toString().split(DELIM)[1]));
     }
 
-    private Iterator<Range<Long>> forwardIterator(final Long rangeLow, final Long rangeHigh, Authorizations auths, final Mutable<Range<Long>> extremes) throws TableNotFoundException, TypeNormalizationException {
+    private Iterator<ValueRange<Long>> forwardIterator(final Long rangeLow, final Long rangeHigh, Authorizations auths, final ValueRange<Long> extremes) throws TableNotFoundException, TypeNormalizationException {
 
         String lowComplement = normalizer.normalize(complement(rangeLow));
         String high = normalizer.normalize(rangeHigh);
@@ -195,9 +188,9 @@ public class AccumuloRangeStore implements RangeStore {
         final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
         //Transform data into ranges and stop iterating after the low values exceed the high range mark.
-        return new AbstractIterator<Range<Long>>() {
+        return new AbstractIterator<ValueRange<Long>>() {
             @Override
-            protected Range<Long> computeNext() {
+            protected ValueRange<Long> computeNext() {
                 if (!iterator.hasNext())
                     return endOfData();
 
@@ -209,18 +202,18 @@ public class AccumuloRangeStore implements RangeStore {
                 if(lower > rangeHigh)
                     return endOfData();
 
-                if (upper > extremes.get().upperEndpoint())
-                    extremes.set(closed(extremes.get().lowerEndpoint(), upper));
+                if (upper > extremes.getStop())
+                    extremes.setStop(upper);
 
-                if (lower < extremes.get().lowerEndpoint())
-                    extremes.set(closed(lower, extremes.get().upperEndpoint()));
+                if (lower < extremes.getStart())
+                    extremes.setStart(lower);
 
-                return closed(lower, upper);
+                return new ValueRange<Long> (lower, upper);
             }
         };
     }
 
-    private Iterator<Range<Long>> reverseIterator(final Long rangeLow, final Long rangeHigh, Authorizations auths, final Mutable<Range<Long>> extremes) throws TableNotFoundException, TypeNormalizationException {
+    private Iterator<ValueRange<Long>> reverseIterator(final Long rangeLow, final Long rangeHigh, Authorizations auths, final ValueRange<Long> extremes) throws TableNotFoundException, TypeNormalizationException {
 
         String low = normalizer.normalize(rangeLow);
 
@@ -234,9 +227,9 @@ public class AccumuloRangeStore implements RangeStore {
         final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
         //Transform data into ranges and stop iterating after the high values fall below the low range mark.
-        return new AbstractIterator<Range<Long>>() {
+        return new AbstractIterator<ValueRange<Long>>() {
             @Override
-            protected Range<Long> computeNext() {
+            protected ValueRange<Long> computeNext() {
                 if (!iterator.hasNext())
                     return endOfData();
 
@@ -248,24 +241,24 @@ public class AccumuloRangeStore implements RangeStore {
                 if(upper < rangeLow)
                     return endOfData();
 
-                if (upper > extremes.get().upperEndpoint())
-                    extremes.set(closed(extremes.get().lowerEndpoint(), upper));
+                if (upper > extremes.getStop())
+                    extremes.setStop(upper);
 
-                if (lower < extremes.get().lowerEndpoint())
-                    extremes.set(closed(lower, extremes.get().upperEndpoint()));
+                if (lower < extremes.getStart())
+                    extremes.setStart(lower);
 
-                return closed(lower, upper);
+                return new ValueRange<Long>(lower, upper);
             }
         };
     }
 
-    private Iterator<Range<Long>> monsterIterator(final Long rangeLow, final Long rangeHigh, Long maxRangeSize, final Mutable<Range<Long>> extremes, Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
+    private Iterator<ValueRange<Long>> monsterIterator(final Long rangeLow, final Long rangeHigh, Long maxDistance, final ValueRange<Long> extremes, Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
 
         //if the extremes range is larger than the max range then there is nothing left to do
-        if (extremes.get().upperEndpoint() - extremes.get().lowerEndpoint() >= maxRangeSize)
+        if (extremes.getStop() - extremes.getStart() >= maxDistance)
             return emptyIterator();
 
-        String outerBoundStart = normalizer.normalize(rangeLow - maxRangeSize);
+        String outerBoundStart = normalizer.normalize(rangeLow - maxDistance);
         String outerBoundStop = normalizer.normalize(complement(rangeHigh));
 
         Scanner scanner = connector.createScanner(tableName, auths);
@@ -276,20 +269,20 @@ public class AccumuloRangeStore implements RangeStore {
         final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
         //Transform data into ranges and exhaust while trying to find a possible range that intersects.
-        return new AbstractIterator<Range<Long>>() {
+        return new AbstractIterator<ValueRange<Long>>() {
             @Override
-            protected Range<Long> computeNext() {
+            protected ValueRange<Long> computeNext() {
 
                 while (iterator.hasNext()) {
                     String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
                     final Long upper = complement(parseLong(vals[1]));
                     final Long lower = parseLong(vals[2]);
 
-                    if(upper < extremes.get().upperEndpoint())
+                    if(upper < extremes.getStart())
                         return endOfData();
 
                     if (lower < rangeLow && upper >= rangeLow)
-                        return closed(lower, upper);
+                        return new ValueRange<Long>(lower, upper);
 
                 }
                 return endOfData();
@@ -297,27 +290,27 @@ public class AccumuloRangeStore implements RangeStore {
         };
     }
 
-    private Iterator<Range<Long>> queryIterator(final Long lowValue, final Long highValue, final Authorizations auths) {
+    private Iterator<ValueRange<Long>> queryIterator(final Long lowValue, final Long highValue, final Authorizations auths) {
 
         try {
             //Iterate with a forward then a reverse iterator, while keeping track of the extremes.
             //After done iterating through then try to get a monster iterator to get the outliers
             // using the precomputed extremes.
 
-            final Mutable<Range<Long>> extremes = new Mutable<Range<Long>>(closed(lowValue, highValue));
-            final Iterator<Range<Long>> mainIterator = concat(
+            final ValueRange<Long> extremes = new ValueRange<Long>(lowValue, highValue);
+            final Iterator<ValueRange<Long>> mainIterator = concat(
                     forwardIterator(lowValue, highValue, auths, extremes),
                     reverseIterator(lowValue, highValue, auths, extremes)
 
             );
-            final long maxRangeSize = getMaxRangeSize(auths);
+            final long maxDistance = getMaxDistance(auths);
 
-            return new AbstractIterator<Range<Long>>() {
+            return new AbstractIterator<ValueRange<Long>>() {
 
-                Iterator<Range<Long>> monster = null;
+                Iterator<ValueRange<Long>> monster = null;
 
                 @Override
-                protected Range<Long> computeNext() {
+                protected ValueRange<Long> computeNext() {
                     //exhaust the forward and reverse iterators
                     if (mainIterator.hasNext())
                         return mainIterator.next();
@@ -325,7 +318,7 @@ public class AccumuloRangeStore implements RangeStore {
                         //Now create the monster iterator after the extremes have been populated.
                         //Lazy init here to wait for the extremes to be populated correctly.
                         if (monster == null)
-                            monster = monsterIterator(lowValue, highValue, maxRangeSize, extremes, auths);
+                            monster = monsterIterator(lowValue, highValue, maxDistance, extremes, auths);
 
                         if (monster.hasNext())
                             return monster.next();
@@ -347,42 +340,18 @@ public class AccumuloRangeStore implements RangeStore {
     }
 
     @Override
-    public Iterable<Range<Long>> query(Range<Long> range, final Authorizations auths) {
+    public Iterable<ValueRange<Long>> query(ValueRange<Long> range, final Authorizations auths) {
 
-        //converts range to the form [a,b)
-        range = range.canonical(DiscreteDomains.longs());
-        if (range.isEmpty())
-            return emptyIterable();
+        final Long lowValue = range.getStart();
+        final Long highValue = range.getStop();
 
-        final Long lowValue = range.lowerEndpoint();
-        final Long highValue = (range.hasUpperBound() ? range.upperEndpoint() - 1 : Long.MAX_VALUE);
+        checkState(lowValue >= 0, "No portion of a range can be less than 0");
 
-        return new Iterable<Range<Long>>() {
+        return new Iterable<ValueRange<Long>>() {
             @Override
-            public Iterator<Range<Long>> iterator() {
+            public Iterator<ValueRange<Long>> iterator() {
                 return queryIterator(lowValue, highValue, auths);
             }
         };
-    }
-
-    /**
-     * Simply holds a reference to a piece of data to allow mutable data to be changed inside of anonymous iterators.
-     * This is a hack.
-     * @param <T>
-     */
-    private static class Mutable<T> {
-        T value = null;
-
-        public Mutable(T value) {
-            this.value = value;
-        }
-
-        public T get() {
-            return value;
-        }
-
-        public void set(T value) {
-            this.value = value;
-        }
     }
 }
