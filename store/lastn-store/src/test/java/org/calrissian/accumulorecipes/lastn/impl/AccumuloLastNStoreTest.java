@@ -16,39 +16,30 @@
 package org.calrissian.accumulorecipes.lastn.impl;
 
 
-import org.apache.accumulo.core.client.*;
+import com.google.common.collect.Lists;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.lastn.support.LastNIterator;
 import org.calrissian.mango.domain.Tuple;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class AccumuloLastNStoreTest {
 
-    AccumuloLastNStore store;
-    Connector connector;
-
-    @Before
-    public void setUp() throws AccumuloException, AccumuloSecurityException {
-
-        MockInstance instance = new MockInstance();
-        connector = instance.getConnector("username", "password".getBytes());
-        store = new AccumuloLastNStore(connector, 3);
+    public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
+        return new MockInstance().getConnector("root", "".getBytes());
     }
 
-
     @Test
-    public void test() throws TableNotFoundException {
+    public void test() throws Exception {
+        AccumuloLastNStore lastNStore = new AccumuloLastNStore(getConnector(), 3);
 
         StoreEntry entry1 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
         entry1.put(new Tuple("key1", "val1", ""));
@@ -66,43 +57,15 @@ public class AccumuloLastNStoreTest {
         entry4.put(new Tuple("key1", "val1", ""));
         entry4.put(new Tuple("key3", "val3", ""));
 
-        store.put("index1", entry1);
-        store.put("index1", entry2);
-        store.put("index1", entry3);
-        store.put("index1", entry4);
+        lastNStore.put("index1", entry1);
+        lastNStore.put("index1", entry2);
+        lastNStore.put("index1", entry3);
+        lastNStore.put("index1", entry4);
 
-        LastNIterator itr = (LastNIterator) store.get("index1", new Authorizations());
-
-        int count = 0;
-        while(itr.hasNext()) {
-            if(count == 0) {
-                assertEquals(entry4, itr.next());
-            }
-
-            else if(count == 1) {
-                assertEquals(entry3,  itr.next());
-            }
-
-            else if(count == 2) {
-                assertEquals(entry2,  itr.next());
-            }
-
-            else {
-                fail();
-            }
-
-            count++;
-        }
-
-        assertEquals(3, count);
+        List<StoreEntry> results = Lists.newArrayList(lastNStore.get("index1", new Authorizations()));
+        assertEquals(3, results.size());
+        assertEquals(entry4, results.get(0));
+        assertEquals(entry3, results.get(1));
+        assertEquals(entry2, results.get(2));
     }
-
-    protected void printTable() throws TableNotFoundException {
-
-        Scanner scanner = connector.createScanner(store.getTableName(), new Authorizations());
-        for(Map.Entry<Key,Value> entry : scanner) {
-            System.out.println(entry + "- " + new String(entry.getValue().get()));
-        }
-    }
-
 }

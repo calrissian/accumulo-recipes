@@ -31,6 +31,7 @@ import org.calrissian.mango.types.TypeContext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
@@ -72,7 +73,7 @@ public class EntryIterator extends WrappingIterator {
             long timestamp = 0;
 
             try {
-                sourceItr.seek(range, new ArrayList<ByteSequence>(), false);
+                sourceItr.seek(range, Collections.<ByteSequence>emptyList(), false);
 
                 Collection<Tuple> tuples = new ArrayList<Tuple>();
                 while(sourceItr.hasTop()) {
