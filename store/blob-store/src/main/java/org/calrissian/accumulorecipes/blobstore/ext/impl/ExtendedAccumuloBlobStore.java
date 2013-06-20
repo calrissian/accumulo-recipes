@@ -77,19 +77,19 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
     private static final String PROP_CF = "PROP";
     private static final String SIZE_CF = "SIZE";
 
-    public ExtendedAccumuloBlobStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public ExtendedAccumuloBlobStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector);
     }
 
-    public ExtendedAccumuloBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public ExtendedAccumuloBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, tableName);
     }
 
-    public ExtendedAccumuloBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public ExtendedAccumuloBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, bufferSize);
     }
 
-    public ExtendedAccumuloBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public ExtendedAccumuloBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, tableName, bufferSize);
     }
 
@@ -97,18 +97,13 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
      * {@inheritDoc}
      */
     @Override
-    protected void createTable() throws TableExistsException, AccumuloSecurityException, AccumuloException {
-        super.createTable();
-
+    protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
         //Set up the default summing iterator with a priority of 5
         IteratorSetting setting = new IteratorSetting(5, "blob-size", SummingCombiner.class);
         SummingCombiner.setColumns(setting, asList(new Column(SIZE_CF, "")));
         SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
-        try {
-            connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorUtil.IteratorScope.class));
-        } catch (TableNotFoundException e) {
-            //TODO should never happen, but atleast log if there is a problem
-        }
+        connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorUtil.IteratorScope.class));
+
     }
 
     /**
