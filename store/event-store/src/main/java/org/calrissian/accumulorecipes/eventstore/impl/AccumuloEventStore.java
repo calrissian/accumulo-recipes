@@ -53,8 +53,7 @@ public class AccumuloEventStore implements EventStore {
     private final  Connector connector;
     private final String indexTable;
     private final String shardTable;
-    private final BatchWriter shardWriter;
-    private final BatchWriter indexWriter;
+    private final MultiTableBatchWriter multiTableWriter;
 
     private final QueryNodeHelper queryHelper;
 
@@ -77,8 +76,7 @@ public class AccumuloEventStore implements EventStore {
         }
 
         this.queryHelper = new QueryNodeHelper(connector, this.shardTable, 3, shard);
-        this.indexWriter = connector.createBatchWriter(this.indexTable, 100000L, 10000L, 3);
-        this.shardWriter = connector.createBatchWriter(this.shardTable, 100000L, 10000L, 3);
+        this.multiTableWriter = connector.createMultiTableBatchWriter(100000L, 10000L, 3);
     }
 
     /**
@@ -108,8 +106,7 @@ public class AccumuloEventStore implements EventStore {
      * @throws MutationsRejectedException
      */
     public void shutdown() throws MutationsRejectedException {
-        shardWriter.close();
-        indexWriter.close();
+        multiTableWriter.close();
     }
 
     /**
@@ -127,7 +124,6 @@ public class AccumuloEventStore implements EventStore {
             Mutation shardMutation = new Mutation(shardId);
 
             if(event.getTuples() != null) {
-
                 for(Tuple tuple : event.getTuples()) {
 
                     // forward mutation
@@ -156,17 +152,16 @@ public class AccumuloEventStore implements EventStore {
                             new Value("".getBytes()));  // forward mutation
                 }
 
-                shardWriter.addMutation(shardMutation);
+                multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
             }
 
             Mutation indexMutation = new Mutation(event.getId());
             indexMutation.put(new Text(shardId), new Text(""), event.getTimestamp(), new Value("".getBytes()));
 
-            indexWriter.addMutation(indexMutation);
+            multiTableWriter.getBatchWriter(indexTable).addMutation(indexMutation);
         }
 
-        shardWriter.flush();
-        indexWriter.flush();
+        multiTableWriter.flush();
     }
 
     /**
