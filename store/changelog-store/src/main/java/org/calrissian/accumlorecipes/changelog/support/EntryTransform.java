@@ -5,7 +5,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IterationInterruptedException;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.serialization.ObjectMapperContext;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;

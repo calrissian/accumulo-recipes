@@ -22,8 +22,8 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.domain.Tuple;
-import org.calrissian.commons.serialization.ObjectMapperContext;
+import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
 
 import java.util.ArrayList;

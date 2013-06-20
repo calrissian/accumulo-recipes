@@ -24,7 +24,7 @@
         <!-- Mango -->
         <dependency>
             <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-collect</artifactId>
+            <artifactId>mango-core</artifactId>
         </dependency>
 
         <!-- JUNIT -->

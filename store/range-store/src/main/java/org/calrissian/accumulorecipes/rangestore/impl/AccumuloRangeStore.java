@@ -1,8 +1,5 @@
 package org.calrissian.accumulorecipes.rangestore.impl;
 
-import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.normalizers.LongNormalizer;
-import org.calrissian.mango.types.range.ValueRange;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -11,6 +8,9 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
+import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.mango.types.normalizers.LongNormalizer;
+import org.calrissian.mango.types.range.ValueRange;
 
 import java.util.Collection;
 import java.util.Iterator;

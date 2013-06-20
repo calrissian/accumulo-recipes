@@ -17,8 +17,8 @@ package org.calrissian.accumulorecipes.eventstore;
 
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.criteria.domain.Node;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.criteria.domain.Node;
 
 import java.util.Collection;
 import java.util.Date;

@@ -24,10 +24,8 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.domain.Tuple;
-import org.calrissian.commons.serialization.ObjectMapperContext;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.hash.tree.MerkleTree;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -41,8 +39,6 @@ public class AccumuloChangelogStoreTest {
 
     Connector connector;
     AccumuloChangelogStore store;
-
-    ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
 
     @Before
     public void setUp() throws AccumuloException, AccumuloSecurityException {
