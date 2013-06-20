@@ -23,6 +23,9 @@ import org.calrissian.accumulorecipes.blobstore.BlobStore;
 import java.io.OutputStream;
 import java.util.Map;
 
+/**
+ * A blob store with the ability to store and retrieve additional metadata about the blobs stored in the store.
+ */
 public interface ExtendedBlobStore extends BlobStore {
 
     /**

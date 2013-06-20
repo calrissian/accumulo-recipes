@@ -27,8 +27,9 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.BlobStore;
 import org.calrissian.accumulorecipes.blobstore.support.AbstractBufferedInputStream;
 import org.calrissian.accumulorecipes.blobstore.support.AbstractBufferedOutputStream;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.TypeNormalizer;
 import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.mango.types.normalizers.IntegerNormalizer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,28 +55,29 @@ import static org.apache.commons.lang.Validate.*;
  */
 public class AccumuloBlobStore implements BlobStore {
 
+    private static final TypeNormalizer<Integer> normalizer = new IntegerNormalizer();
+    
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
     private static final String DEFAULT_TABLE_NAME = "blobstore";
-    private static final TypeContext NORMALIZER = TypeContext.getInstance();
     private static final String DATA_CF = "DATA";
 
     protected final Connector connector;
     protected final String tableName;
-    protected final int bufferSize;
+    private final int bufferSize;
 
-    public AccumuloBlobStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloBlobStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this(connector, DEFAULT_TABLE_NAME, DEFAULT_BUFFER_SIZE);
     }
 
-    public AccumuloBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this(connector, tableName, DEFAULT_BUFFER_SIZE);
     }
 
-    public AccumuloBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this(connector, DEFAULT_TABLE_NAME, bufferSize);
     }
 
-    public AccumuloBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         notNull(connector, "Invalid connector");
         notEmpty(tableName, "The table name must not be empty");
         isTrue(bufferSize > 0, "The buffer size must be greater than 0");
@@ -85,18 +87,20 @@ public class AccumuloBlobStore implements BlobStore {
         this.bufferSize = bufferSize;
 
         if(!connector.tableOperations().exists(tableName)) {
-            createTable();
+            connector.tableOperations().create(tableName);
+            configureTable(connector, tableName);
         }
     }
 
     /**
-     * Encapsulates logic for creating the table if it does not exist
-     * @throws TableExistsException
+     * Utility method to update the correct iterators to the table.
+     * @param connector
      * @throws AccumuloSecurityException
      * @throws AccumuloException
+     * @throws TableNotFoundException
      */
-    protected void createTable() throws TableExistsException, AccumuloSecurityException, AccumuloException {
-        connector.tableOperations().create(tableName);
+    protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        //Nothing to do for default implementation
     }
 
     /**
@@ -163,7 +167,7 @@ public class AccumuloBlobStore implements BlobStore {
     protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) throws TypeNormalizationException {
 
         Mutation mutation = new Mutation(generateRowId(key, type));
-        mutation.put(DATA_CF, NORMALIZER.normalize(sequenceNum), visibility, timestamp, new Value(data));
+        mutation.put(DATA_CF, normalizer.normalize(sequenceNum), visibility, timestamp, new Value(data));
 
         return mutation;
     }
@@ -222,7 +226,7 @@ public class AccumuloBlobStore implements BlobStore {
      */
     @Override
     public OutputStream store(String key, String type, long timestamp, String visibility) {
-        //Use of table user's auths instead of callers auths means information is leaked about
+        //Use of the accumulo user's auths instead of callers auths means information is leaked about
         //key and type.  Therefore they should now contain protected information, or this check
         //can not be done.
         isTrue(!checkExists(key, type), String.format("Data with %s type and %s key already exists.", type, key));
