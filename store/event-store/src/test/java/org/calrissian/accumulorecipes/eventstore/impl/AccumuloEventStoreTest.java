@@ -7,9 +7,9 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.domain.Tuple;
-import org.calrissian.criteria.builder.QueryBuilder;
-import org.calrissian.criteria.domain.Node;
+import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 

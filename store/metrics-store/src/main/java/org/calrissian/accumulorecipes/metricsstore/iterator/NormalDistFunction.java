@@ -2,7 +2,7 @@ package org.calrissian.accumulorecipes.metricsstore.iterator;
 
 import com.google.common.base.Function;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.calrissian.commons.serialization.ObjectMapperContext;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

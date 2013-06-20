@@ -19,7 +19,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.serialization.ObjectMapperContext;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 
 import java.io.IOException;
 import java.util.Iterator;

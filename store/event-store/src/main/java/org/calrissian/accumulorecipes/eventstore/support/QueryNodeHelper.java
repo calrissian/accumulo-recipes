@@ -28,10 +28,10 @@ import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIntersectingIterator;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.AndSingleDepthOnlyValidator;
-import org.calrissian.criteria.domain.AndNode;
-import org.calrissian.criteria.domain.EqualsLeaf;
-import org.calrissian.criteria.domain.Leaf;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.criteria.domain.AndNode;
+import org.calrissian.mango.criteria.domain.EqualsLeaf;
+import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.types.TypeContext;
 
 import java.util.Collections;

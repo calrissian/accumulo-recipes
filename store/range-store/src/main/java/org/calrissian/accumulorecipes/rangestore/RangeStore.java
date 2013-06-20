@@ -1,8 +1,8 @@
 package org.calrissian.accumulorecipes.rangestore;
 
 
-import org.calrissian.mango.types.range.ValueRange;
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.mango.types.range.ValueRange;
 
 import java.util.Collection;
 import java.util.Iterator;
