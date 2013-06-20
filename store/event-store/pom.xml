@@ -25,15 +25,7 @@
         <!-- Mango -->
         <dependency>
             <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-types</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-criteria</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-collect</artifactId>
+            <artifactId>mango-core</artifactId>
         </dependency>
 
         <!-- JUNIT -->

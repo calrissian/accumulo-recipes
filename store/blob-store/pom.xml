@@ -18,7 +18,7 @@
         <!-- Mango -->
         <dependency>
             <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-types</artifactId>
+            <artifactId>mango-core</artifactId>
         </dependency>
 
         <!-- Hadoop / CB -->

@@ -15,33 +15,30 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support.query;
 
-import com.google.common.collect.Lists;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoOrNotEqualsValidator;
-import org.calrissian.criteria.domain.*;
-import org.calrissian.criteria.visitor.CollapseParentClauseVisitor;
-import org.calrissian.criteria.visitor.EmptyParentCollapseVisitor;
-import org.calrissian.criteria.visitor.NodeVisitor;
-import org.calrissian.criteria.visitor.SingleClauseCollapseVisitor;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.visitor.CollapseParentClauseVisitor;
+import org.calrissian.mango.criteria.visitor.EmptyParentCollapseVisitor;
+import org.calrissian.mango.criteria.visitor.NodeVisitor;
+import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
 
 import java.io.IOException;
 import java.util.Date;
 
-import static org.calrissian.criteria.utils.NodeUtils.isLeaf;
-import static org.calrissian.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
+import static com.google.common.collect.Lists.newArrayList;
 import static org.calrissian.mango.collect.CloseableIterables.chain;
+import static org.calrissian.mango.criteria.utils.NodeUtils.isLeaf;
+import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
 
 /**
  * Visit query to validate and transform to perform the query against the swift event service.
  */
 public class QueryResultsVisitor implements NodeVisitor {
-    private static final Logger logger = LoggerFactory.getLogger(QueryResultsVisitor.class);
 
     protected Date start, end;
     protected Authorizations auths;
@@ -88,6 +85,8 @@ public class QueryResultsVisitor implements NodeVisitor {
                 }
                 populateIterable(n);
             }
+        } catch (RuntimeException re) {
+            throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -98,7 +97,7 @@ public class QueryResultsVisitor implements NodeVisitor {
             CloseableIterable<StoreEntry> query = andResults((AndNode) node);
             if (iterable != null) {
                 //assume OR
-                iterable = chain(Lists.newArrayList(query, iterable));
+                iterable = chain(newArrayList(query, iterable));
 
             } else {
                 iterable = query;
@@ -111,7 +110,7 @@ public class QueryResultsVisitor implements NodeVisitor {
             CloseableIterable<StoreEntry> query = leafResults((Leaf) node);
             if (iterable != null) {
                 //assume OR
-                iterable = chain(Lists.newArrayList(query, iterable));
+                iterable = chain(newArrayList(query, iterable));
             } else {
                 iterable = query;
             }

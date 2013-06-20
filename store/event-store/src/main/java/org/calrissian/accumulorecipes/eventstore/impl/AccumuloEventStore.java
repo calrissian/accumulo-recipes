@@ -26,19 +26,15 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
-import org.calrissian.accumulorecipes.eventstore.support.Constants;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.Shard;
 import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
-import org.calrissian.commons.domain.Tuple;
-import org.calrissian.commons.serialization.ObjectMapperContext;
-import org.calrissian.criteria.domain.Node;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
@@ -51,125 +47,147 @@ import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
  */
 public class AccumuloEventStore implements EventStore {
 
-    Logger logger = LoggerFactory.getLogger(AccumuloEventStore.class);
+    private static final TypeContext typeContext = TypeContext.getInstance();
+    private static final Shard shard = new Shard(DEFAULT_PARTITION_SIZE);
 
-    protected Connector connector;
+    private final  Connector connector;
+    private final String indexTable;
+    private final String shardTable;
+    private final MultiTableBatchWriter multiTableWriter;
 
-    protected BatchWriter shardWriter;
-    protected BatchWriter indexWriter;
+    private final QueryNodeHelper queryHelper;
 
-    protected Long maxMemory = 100000L;
-    protected Integer numThreads = 3;
-    protected Long maxLatency = 10000L;
+    public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        this(connector, "eventStore_index", "eventStore_shard");
+    }
 
-    protected String indexTable = "eventStore_index";
-    protected String shardTable = "eventStore_shard";
-
-    protected QueryNodeHelper queryHelper;
-
-    protected final Shard shard = new Shard(Constants.DEFAULT_PARTITION_SIZE);
-
-    protected final TypeContext typeContext = TypeContext.getInstance();
-
-    public AccumuloEventStore(Connector connector) {
+    public AccumuloEventStore(Connector connector, String indexTable, String shardTable) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this.connector = connector;
-        this.queryHelper = new QueryNodeHelper(connector, shardTable, numThreads, shard);
+        this.indexTable = indexTable;
+        this.shardTable = shardTable;
 
-        try {
-            initialize();
-        } catch (Exception e) {
-            logger.error("There was an error initializing the event store. excpetion=" + e);
+        if(!connector.tableOperations().exists(this.indexTable)) {
+            connector.tableOperations().create(this.indexTable);
+            configureIndexTable(connector, this.indexTable);
         }
+        if(!connector.tableOperations().exists(this.shardTable)) {
+            connector.tableOperations().create(this.shardTable);
+            configureShardTable(connector, this.indexTable);
+        }
+
+        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, 3, shard);
+        this.multiTableWriter = connector.createMultiTableBatchWriter(100000L, 10000L, 3);
     }
 
     /**
-     * Create tables if they don't exist and create the batch writers which will be used for the entire instance.
-     * @throws TableExistsException
-     * @throws AccumuloException
+     * Utility method to update the correct iterators to the index table.
+     * @param connector
      * @throws AccumuloSecurityException
+     * @throws AccumuloException
      * @throws TableNotFoundException
      */
-    protected void initialize() throws TableExistsException, AccumuloException, AccumuloSecurityException, TableNotFoundException {
-        if(!connector.tableOperations().exists(indexTable)) {
-            connector.tableOperations().create(indexTable);
-        }
-        if(!connector.tableOperations().exists(shardTable)) {
-            connector.tableOperations().create(shardTable);
-        }
-
-        indexWriter = connector.createBatchWriter(indexTable, maxMemory, maxLatency, numThreads);
-        shardWriter = connector.createBatchWriter(shardTable, maxMemory, maxLatency, numThreads);
+    protected void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        //Do nothing for default implementation
     }
 
     /**
-     * Events get put into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
+     * Utility method to update the correct iterators to the shard table.
+     * @param connector
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
+    protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        //Do nothing for default implementation
+    }
+
+    /**
+     * Free up any resources used by the store.
+     * @throws MutationsRejectedException
+     */
+    public void shutdown() throws MutationsRejectedException {
+        multiTableWriter.close();
+    }
+
+    /**
+     * Events get save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
      * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
      * @param events
      * @throws Exception
      */
     @Override
-    public void put(Collection<StoreEntry> events) throws Exception {
+    public void save(Iterable<StoreEntry> events) {
+        try {
+            for(StoreEntry event : events) {
 
-        for(StoreEntry event : events) {
+                //If there are no tuples then don't write anything to the data store.
+                if(event.getTuples() != null && !event.getTuples().isEmpty()) {
 
-            String shardId = shard.buildShard(event.getTimestamp(), event.getId());
-            Mutation shardMutation = new Mutation(shardId);
+                    String shardId = shard.buildShard(event.getTimestamp(), event.getId());
 
-            if(event.getTuples() != null) {
+                    Mutation indexMutation = new Mutation(event.getId());
+                    indexMutation.put(new Text(shardId), new Text(""), event.getTimestamp(), new Value("".getBytes()));
 
-                for(Tuple tuple : event.getTuples()) {
+                    Mutation shardMutation = new Mutation(shardId);
 
-                    // forward mutation
-                    shardMutation.put(new Text(SHARD_PREFIX_F + DELIM + event.getId()),
-                            new Text(tuple.getKey() + DELIM + typeContext.getAliasForType(tuple.getValue()) + DELIM +
-                                    typeContext.normalize(tuple.getValue())),
-                            new ColumnVisibility(tuple.getVisibility()),
-                            event.getTimestamp(),
-                            new Value("".getBytes()));
+                    for(Tuple tuple : event.getTuples()) {
 
-                    // reverse mutation
-                    shardMutation.put(new Text(SHARD_PREFIX_B + DELIM + tuple.getKey() + DELIM +
-                            typeContext.getAliasForType(tuple.getValue()) + DELIM +
-                            typeContext.normalize(tuple.getValue())),
-                            new Text(event.getId()),
-                            new ColumnVisibility(tuple.getVisibility()),
-                            event.getTimestamp(),
-                            new Value("".getBytes()));  // forward mutation
+                        // forward mutation
+                        shardMutation.put(new Text(SHARD_PREFIX_F + DELIM + event.getId()),
+                                new Text(tuple.getKey() + DELIM + typeContext.getAliasForType(tuple.getValue()) + DELIM +
+                                        typeContext.normalize(tuple.getValue())),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                event.getTimestamp(),
+                                new Value("".getBytes()));
 
-                    // value mutation
-                    shardMutation.put(new Text(SHARD_PREFIX_V + DELIM + typeContext.getAliasForType(tuple.getValue()) +
-                            DELIM + typeContext.normalize(tuple.getValue())),
-                            new Text(tuple.getKey() + DELIM + event.getId()),
-                            new ColumnVisibility(tuple.getVisibility()),
-                            event.getTimestamp(),
-                            new Value("".getBytes()));  // forward mutation
+                        // reverse mutation
+                        shardMutation.put(new Text(SHARD_PREFIX_B + DELIM + tuple.getKey() + DELIM +
+                                typeContext.getAliasForType(tuple.getValue()) + DELIM +
+                                typeContext.normalize(tuple.getValue())),
+                                new Text(event.getId()),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                event.getTimestamp(),
+                                new Value("".getBytes()));  // forward mutation
+
+                        // value mutation
+                        shardMutation.put(new Text(SHARD_PREFIX_V + DELIM + typeContext.getAliasForType(tuple.getValue()) +
+                                DELIM + typeContext.normalize(tuple.getValue())),
+                                new Text(tuple.getKey() + DELIM + event.getId()),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                event.getTimestamp(),
+                                new Value("".getBytes()));  // forward mutation
+                    }
+
+                    multiTableWriter.getBatchWriter(indexTable).addMutation(indexMutation);
+                    multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
                 }
-
-                shardWriter.addMutation(shardMutation);
             }
 
-            Mutation indexMutation = new Mutation(event.getId());
-            indexMutation.put(new Text(shardId), new Text(""), event.getTimestamp(), new Value("".getBytes()));
-
-            indexWriter.addMutation(indexMutation);
+            multiTableWriter.flush();
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        shardWriter.flush();
-        indexWriter.flush();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Authorizations auths) {
         return new QueryResultsVisitor(node, queryHelper, start, end, auths).getResults();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public StoreEntry get(String uuid, Authorizations auths) {
 
-        Scanner scanner = null;
         try {
 
-            scanner = connector.createScanner(indexTable, auths);
+            Scanner scanner = connector.createScanner(indexTable, auths);
             scanner.setRange(new Range(uuid, uuid + DELIM_END));
 
             Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
@@ -197,61 +215,11 @@ public class AccumuloEventStore implements EventStore {
 
             }
 
+            return null;
+        } catch (RuntimeException re) {
+            throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        return null;
-    }
-
-    @Override
-    public void shutdown() throws Exception {
-
-        shardWriter.close();
-        indexWriter.close();
-    }
-
-    public void setMaxMemory(Long maxMemory) {
-        this.maxMemory = maxMemory;
-    }
-
-    public void setNumThreads(Integer numThreads) {
-        this.numThreads = numThreads;
-    }
-
-    public void setMaxLatency(Long maxLatency) {
-        this.maxLatency = maxLatency;
-    }
-
-    public void setIndexTable(String indexTable) {
-        this.indexTable = indexTable;
-    }
-
-    public void setShardTable(String shardTable) {
-        this.shardTable = shardTable;
-    }
-
-    public Long getMaxMemory() {
-        return maxMemory;
-    }
-
-    public Integer getNumThreads() {
-        return numThreads;
-    }
-
-    public Long getMaxLatency() {
-        return maxLatency;
-    }
-
-    public String getIndexTable() {
-        return indexTable;
-    }
-
-    public String getShardTable() {
-        return shardTable;
-    }
-
-    public Shard getShard() {
-        return shard;
     }
 }

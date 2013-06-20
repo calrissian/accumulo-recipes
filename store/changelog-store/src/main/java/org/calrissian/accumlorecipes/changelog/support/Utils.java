@@ -16,7 +16,7 @@
 package org.calrissian.accumlorecipes.changelog.support;
 
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.domain.Tuple;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.hash.support.HashUtils;
 import org.calrissian.mango.types.TypeContext;
 import org.calrissian.mango.types.exception.TypeNormalizationException;

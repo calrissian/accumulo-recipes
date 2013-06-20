@@ -16,10 +16,10 @@
 package org.calrissian.accumulorecipes.eventstore.support;
 
 import org.apache.hadoop.io.Text;
-import org.calrissian.criteria.domain.AndNode;
-import org.calrissian.criteria.domain.EqualsLeaf;
-import org.calrissian.criteria.domain.Node;
-import org.calrissian.criteria.domain.NotEqualsLeaf;
+import org.calrissian.mango.criteria.domain.AndNode;
+import org.calrissian.mango.criteria.domain.EqualsLeaf;
+import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.types.TypeContext;
 
 import java.util.ArrayList;
@@ -37,7 +37,6 @@ public class AndNodeColumns {
 
     protected  final Text[] columns;
     protected  final boolean[] notFlags;
-
 
     public AndNodeColumns(AndNode query) {
 

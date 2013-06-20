@@ -27,7 +27,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.commons.serialization.ObjectMapperContext;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
