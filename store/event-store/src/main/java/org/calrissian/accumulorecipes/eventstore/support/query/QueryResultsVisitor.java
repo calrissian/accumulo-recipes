@@ -85,6 +85,8 @@ public class QueryResultsVisitor implements NodeVisitor {
                 }
                 populateIterable(n);
             }
+        } catch (RuntimeException re) {
+            throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

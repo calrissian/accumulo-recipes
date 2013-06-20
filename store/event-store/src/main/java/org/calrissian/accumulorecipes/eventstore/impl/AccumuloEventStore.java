@@ -116,52 +116,59 @@ public class AccumuloEventStore implements EventStore {
      * @throws Exception
      */
     @Override
-    public void save(Iterable<StoreEntry> events) throws Exception {
+    public void save(Iterable<StoreEntry> events) {
+        try {
+            for(StoreEntry event : events) {
 
-        for(StoreEntry event : events) {
+                //If there are no tuples then don't write anything to the data store.
+                if(event.getTuples() != null && !event.getTuples().isEmpty()) {
 
-            String shardId = shard.buildShard(event.getTimestamp(), event.getId());
-            Mutation shardMutation = new Mutation(shardId);
+                    String shardId = shard.buildShard(event.getTimestamp(), event.getId());
 
-            if(event.getTuples() != null) {
-                for(Tuple tuple : event.getTuples()) {
+                    Mutation indexMutation = new Mutation(event.getId());
+                    indexMutation.put(new Text(shardId), new Text(""), event.getTimestamp(), new Value("".getBytes()));
 
-                    // forward mutation
-                    shardMutation.put(new Text(SHARD_PREFIX_F + DELIM + event.getId()),
-                            new Text(tuple.getKey() + DELIM + typeContext.getAliasForType(tuple.getValue()) + DELIM +
-                                    typeContext.normalize(tuple.getValue())),
-                            new ColumnVisibility(tuple.getVisibility()),
-                            event.getTimestamp(),
-                            new Value("".getBytes()));
+                    Mutation shardMutation = new Mutation(shardId);
 
-                    // reverse mutation
-                    shardMutation.put(new Text(SHARD_PREFIX_B + DELIM + tuple.getKey() + DELIM +
-                            typeContext.getAliasForType(tuple.getValue()) + DELIM +
-                            typeContext.normalize(tuple.getValue())),
-                            new Text(event.getId()),
-                            new ColumnVisibility(tuple.getVisibility()),
-                            event.getTimestamp(),
-                            new Value("".getBytes()));  // forward mutation
+                    for(Tuple tuple : event.getTuples()) {
 
-                    // value mutation
-                    shardMutation.put(new Text(SHARD_PREFIX_V + DELIM + typeContext.getAliasForType(tuple.getValue()) +
-                            DELIM + typeContext.normalize(tuple.getValue())),
-                            new Text(tuple.getKey() + DELIM + event.getId()),
-                            new ColumnVisibility(tuple.getVisibility()),
-                            event.getTimestamp(),
-                            new Value("".getBytes()));  // forward mutation
+                        // forward mutation
+                        shardMutation.put(new Text(SHARD_PREFIX_F + DELIM + event.getId()),
+                                new Text(tuple.getKey() + DELIM + typeContext.getAliasForType(tuple.getValue()) + DELIM +
+                                        typeContext.normalize(tuple.getValue())),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                event.getTimestamp(),
+                                new Value("".getBytes()));
+
+                        // reverse mutation
+                        shardMutation.put(new Text(SHARD_PREFIX_B + DELIM + tuple.getKey() + DELIM +
+                                typeContext.getAliasForType(tuple.getValue()) + DELIM +
+                                typeContext.normalize(tuple.getValue())),
+                                new Text(event.getId()),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                event.getTimestamp(),
+                                new Value("".getBytes()));  // forward mutation
+
+                        // value mutation
+                        shardMutation.put(new Text(SHARD_PREFIX_V + DELIM + typeContext.getAliasForType(tuple.getValue()) +
+                                DELIM + typeContext.normalize(tuple.getValue())),
+                                new Text(tuple.getKey() + DELIM + event.getId()),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                event.getTimestamp(),
+                                new Value("".getBytes()));  // forward mutation
+                    }
+
+                    multiTableWriter.getBatchWriter(indexTable).addMutation(indexMutation);
+                    multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
                 }
-
-                multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
             }
 
-            Mutation indexMutation = new Mutation(event.getId());
-            indexMutation.put(new Text(shardId), new Text(""), event.getTimestamp(), new Value("".getBytes()));
-
-            multiTableWriter.getBatchWriter(indexTable).addMutation(indexMutation);
+            multiTableWriter.flush();
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        multiTableWriter.flush();
     }
 
     /**
@@ -178,10 +185,9 @@ public class AccumuloEventStore implements EventStore {
     @Override
     public StoreEntry get(String uuid, Authorizations auths) {
 
-        Scanner scanner = null;
         try {
 
-            scanner = connector.createScanner(indexTable, auths);
+            Scanner scanner = connector.createScanner(indexTable, auths);
             scanner.setRange(new Range(uuid, uuid + DELIM_END));
 
             Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
@@ -209,15 +215,11 @@ public class AccumuloEventStore implements EventStore {
 
             }
 
+            return null;
+        } catch (RuntimeException re) {
+            throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        return null;
     }
-
-    public String getShardTable() {
-        return shardTable;
-    }
-
 }

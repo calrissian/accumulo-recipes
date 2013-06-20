@@ -32,7 +32,7 @@ public interface EventStore {
      * @param events
      * @throws Exception
      */
-    void save(Iterable<StoreEntry> events) throws Exception;
+    void save(Iterable<StoreEntry> events);
 
     /**
      * Query the store using criteria specified
