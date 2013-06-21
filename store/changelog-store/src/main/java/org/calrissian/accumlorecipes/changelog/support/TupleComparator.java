@@ -15,9 +15,13 @@
  */
 package org.calrissian.accumlorecipes.changelog.support;
 
+import com.google.common.collect.ComparisonChain;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.types.exception.TypeNormalizationException;
 
 import java.util.Comparator;
+
+import static org.calrissian.accumlorecipes.changelog.support.Utils.CONTEXT;
 
 public class TupleComparator implements Comparator<Tuple> {
 
@@ -25,12 +29,13 @@ public class TupleComparator implements Comparator<Tuple> {
     @Override
     public int compare(Tuple tuple, Tuple tuple1) {
         try {
-            String tupleString = Utils.tupleToString(tuple);
-            String tuple1String = Utils.tupleToString(tuple1);
+            return ComparisonChain.start()
+                    .compare(tuple.getKey(), tuple1.getKey())
+                    .compare(CONTEXT.normalize(tuple.getValue()), CONTEXT.normalize(tuple.getValue()))
+                    .compare(tuple.getVisibility(), tuple.getVisibility())
+            .result();
 
-            return tupleString.compareTo(tuple1String);
-
-        } catch (Exception e) {
+        } catch (TypeNormalizationException e) {
             throw new RuntimeException(e);
         }
     }
