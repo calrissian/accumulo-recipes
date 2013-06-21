@@ -13,25 +13,13 @@
     <packaging>jar</packaging>
 
     <dependencies>
-
-        <!-- Accumulo Recipes -->
         <dependency>
-            <groupId>org.calrissian.accumulorecipes</groupId>
-            <artifactId>commons</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
         </dependency>
-
-        <!-- Mango -->
         <dependency>
-            <groupId>org.calrissian.mango</groupId>
-            <artifactId>mango-core</artifactId>
-        </dependency>
-
-        <!-- JUNIT -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
         </dependency>
 
         <!-- Hadoop / CB -->
@@ -44,20 +32,11 @@
             <artifactId>hadoop-core</artifactId>
         </dependency>
 
-        <!-- Logging -->
+        <!-- JUNIT -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
