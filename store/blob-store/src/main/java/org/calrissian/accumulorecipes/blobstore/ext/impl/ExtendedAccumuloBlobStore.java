@@ -27,6 +27,7 @@ import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.ext.ExtendedBlobStore;
 import org.calrissian.accumulorecipes.blobstore.impl.AccumuloBlobStore;
@@ -44,6 +45,7 @@ import static java.util.EnumSet.allOf;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.commons.lang.StringUtils.defaultString;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.apache.commons.lang.Validate.isTrue;
 import static org.apache.commons.lang.Validate.notNull;
 
@@ -165,8 +167,7 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
 
             Map<String, String> properties = new LinkedHashMap<String, String>();
             while (iterator.hasNext()) {
-                String[] keyVal = iterator.next().getKey().getColumnQualifier().toString().replaceFirst("\u0000", "")
-                        .split("\u0000");
+                String[] keyVal = splitPreserveAllTokens(iterator.next().getKey().getColumnQualifier().toString().replaceFirst("\u0000", ""), "\u0000", 2);
 
                 if(keyVal.length == 2)
                     properties.put(keyVal[0], keyVal[1]);

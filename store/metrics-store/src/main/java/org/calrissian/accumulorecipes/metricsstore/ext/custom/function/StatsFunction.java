@@ -17,6 +17,7 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 
+import static java.lang.Long.parseLong;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -84,7 +85,7 @@ public class StatsFunction implements MetricFunction<long[]> {
 
         long[] retVal = new long[4];
         for (int i = 0;i < retVal.length;i++)
-            retVal[i] = Long.parseLong(individual[i]);
+            retVal[i] = parseLong(individual[i]);
         return retVal;
     }
 }
