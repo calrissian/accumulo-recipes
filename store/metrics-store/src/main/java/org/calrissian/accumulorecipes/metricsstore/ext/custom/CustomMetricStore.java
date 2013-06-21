@@ -1,0 +1,49 @@
+/*
+* Licensed to the Apache Software Foundation (ASF) under one or more
+* contributor license agreements. See the NOTICE file distributed with
+* this work for additional information regarding copyright ownership.
+* The ASF licenses this file to You under the Apache License, Version 2.0
+* (the "License"); you may not use this file except in compliance with
+* the License. You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+package org.calrissian.accumulorecipes.metricsstore.ext.custom;
+
+
+import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.metricsstore.MetricStore;
+import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
+import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
+
+import java.util.Date;
+
+/**
+ * Allows a caller to define a custom metric function at query time for aggregating data.
+ */
+public interface CustomMetricStore extends MetricStore {
+
+    /**
+     * Query metrics back from the store.
+     * @param start
+     * @param end
+     * @param group
+     * @param type
+     * @param name
+     * @param function
+     * @param timeUnit
+     * @param auths
+     * @param <T>
+     * @return
+     */
+    <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name,
+                               Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Authorizations auths) throws IllegalAccessException, InstantiationException;
+
+}

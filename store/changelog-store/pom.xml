@@ -59,13 +59,6 @@
             <artifactId>kryo</artifactId>
             <version>2.20</version>
         </dependency>
-
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-        </dependency>
-
     </dependencies>
 
 </project>
