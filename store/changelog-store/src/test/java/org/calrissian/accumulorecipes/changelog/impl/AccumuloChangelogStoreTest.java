@@ -15,80 +15,64 @@
  */
 package org.calrissian.accumulorecipes.changelog.impl;
 
-import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.hash.tree.MerkleTree;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloChangelogStoreTest {
 
-    Connector connector;
-    AccumuloChangelogStore store;
-
-    @Before
-    public void setUp() throws AccumuloException, AccumuloSecurityException {
-
-        Instance instance = new MockInstance();
-        connector = instance.getConnector("root", "password".getBytes());
-
-        store = new AccumuloChangelogStore(connector);
+    public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
+        return new MockInstance().getConnector("root", "".getBytes());
     }
 
-    @Ignore //This is just broken.  Need to see what was intended for this test.
+    //@Ignore //This is just broken.  Need to see what was intended for this test.
     @Test
-    public void test() throws TableNotFoundException, IOException {
+    public void test() throws Exception {
+
+        AccumuloChangelogStore store = new AccumuloChangelogStore(getConnector());
 
         MerkleTree mt = store.getChangeTree(
-                new Date(System.currentTimeMillis() - 50000000),
-                new Date(System.currentTimeMillis() + 50000000));
+                new Date(currentTimeMillis() - 50000000),
+                new Date(currentTimeMillis() + 50000000), new Authorizations());
 
-        System.out.println("MERKLE: " + mt);
+        StoreEntry entry = createStoreEntry("1", currentTimeMillis());
+        StoreEntry entry2 = createStoreEntry("2", currentTimeMillis() - 900000);
+        StoreEntry entry3 = createStoreEntry("3", currentTimeMillis() - 50000000);
+        StoreEntry entry4 = createStoreEntry("4", currentTimeMillis());
+        StoreEntry entry5 = createStoreEntry("5", currentTimeMillis() + 5000000);
 
-        StoreEntry entry = createStoreEntry("1", System.currentTimeMillis());
-        StoreEntry entry2 = createStoreEntry("2", System.currentTimeMillis() - 900000);
-        StoreEntry entry3 = createStoreEntry("3", System.currentTimeMillis() - 50000000);
-        StoreEntry entry4 = createStoreEntry("4", System.currentTimeMillis());
-        StoreEntry entry5 = createStoreEntry("5", System.currentTimeMillis() + 5000000);
-
-        store.put(Arrays.asList(new StoreEntry[] { entry, entry2, entry3, entry4, entry5 }));
-
-        printTable();
+        store.put(asList(entry, entry2, entry3, entry4, entry5));
 
         MerkleTree mt2 = store.getChangeTree(
-                new Date(System.currentTimeMillis() - 50000000),
-                new Date(System.currentTimeMillis() + 50000000));
+                new Date(currentTimeMillis() - 50000000),
+                new Date(currentTimeMillis() + 50000000), new Authorizations());
 
         /**
          * Now would be the time you'd pull the merkle tree from the foreign host and diff the remote with the local
          * (in that direction) to find out which leaves on the remote host differ from the leaves in the local host.
          */
-        System.out.println("MERKLE: " + mt2);
 
         assertEquals(mt.getNumLeaves(), mt2.getNumLeaves());
         assertEquals(mt.getDimensions(), mt2.getDimensions());
 
-        System.out.println(mt.getNumLeaves() + " " + mt2.getNumLeaves());
-        System.out.println(mt.getDimensions() + " " + mt2.getDimensions());
-
         List<BucketHashLeaf> diffLeaves = mt2.diff(mt);
-        System.out.println("DIFFS: " + diffLeaves);
-
-        printTable();
+        assertEquals(4, diffLeaves.size());
 
         /**
          * This call to "getChanges()" would be done with the result of diffing the two local merkle tree against
@@ -101,23 +85,7 @@ public class AccumuloChangelogStoreTest {
         for(BucketHashLeaf hashLeaf : diffLeaves) {
             dates.add(new Date(hashLeaf.getTimestamp()));
         }
-
-
-        for(StoreEntry actualEntry : store.getChanges(dates)) {
-            System.out.println(actualEntry);
-        }
     }
-
-    protected void printTable() throws TableNotFoundException, IOException {
-
-        Scanner scanner = connector.createScanner(store.getTableName(), new Authorizations());
-
-        for(Map.Entry<Key,Value> entry : scanner) {
-
-            System.out.println(entry);
-        }
-    }
-
 
     private StoreEntry createStoreEntry(String uuid , long timestamp) {
         StoreEntry entry = new StoreEntry(uuid, timestamp);
