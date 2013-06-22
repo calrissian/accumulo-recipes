@@ -28,8 +28,8 @@ import java.util.List;
 
 import static java.lang.Long.parseLong;
 import static java.util.Collections.sort;
+import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.calrissian.accumlorecipes.changelog.support.Constants.DELIM;
-import static org.calrissian.mango.hash.support.HashUtils.hashString;
 
 public class Utils {
 
@@ -52,7 +52,7 @@ public class Utils {
             tupleString += tupleToString(tuple, typeContext) + ",";
 
         try {
-            return hashString(tupleString).getBytes();
+            return md5Hex(tupleString).getBytes();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

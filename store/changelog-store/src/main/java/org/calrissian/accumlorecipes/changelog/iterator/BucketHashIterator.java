@@ -36,8 +36,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
+import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.hashEntry;
-import static org.calrissian.mango.hash.support.HashUtils.hashString;
 import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 public class BucketHashIterator extends WrappingIterator {
@@ -117,7 +118,7 @@ public class BucketHashIterator extends WrappingIterator {
             }
 
             if(hashes.size() > 0) {
-                val = new Value(hashString(objectMapper.writeValueAsString(hashes)).getBytes());
+                val = new Value(md5Hex(join(hashes, ",")).getBytes());
                 retKey = new Key(new Text(nowBucket));
             }
 

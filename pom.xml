@@ -27,7 +27,6 @@ limitations under the License.
 
     <properties>
         <accumulo.version>1.4.1</accumulo.version>
-        <commons.codec.version>1.7</commons.codec.version>
         <guava.version>13.0.1</guava.version>
         <hadoop.version>0.20.2</hadoop.version>
         <joda.time.version>2.2</joda.time.version>
@@ -55,12 +54,6 @@ limitations under the License.
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>${commons.codec.version}</version>
             </dependency>
 
             <dependency>
