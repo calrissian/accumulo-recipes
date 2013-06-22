@@ -1,79 +1,108 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.rangestore.impl;
 
+import com.google.common.collect.AbstractIterator;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
 import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.normalizers.LongNormalizer;
 import org.calrissian.mango.types.range.ValueRange;
 
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 
-public class AccumuloRangeStore implements RangeStore {
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.emptyIterator;
+import static java.util.Map.Entry;
+import static org.apache.accumulo.core.data.Range.prefix;
 
-    public static final String INDEX_FORWARD = "f";
-    public static final String INDEX_REVERSE = "r";
-    public static final String INDEX_MAXSIZE = "s";
+public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
 
-    public static final String DELIM = "\u0000";
+    private static final String INDEX_FORWARD = "f";
+    private static final String INDEX_REVERSE = "r";
+    private static final String INDEX_MAXDISTANCE = "s";
 
-    protected String tableName = "ranges";
+    private static final String DELIM = "\u0000";
 
-    protected Connector connector;
-    protected BatchWriter writer;
-    protected final LongNormalizer normalizer = new LongNormalizer();
+    private final Connector connector;
+    private final String tableName;
+    private final BatchWriter writer;
+    private final RangeHelper<T> helper;
 
+    public AccumuloRangeStore(Connector connector, RangeHelper<T> helper) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+        this(connector, "ranges", helper);
+    }
 
-    public AccumuloRangeStore(Connector connector) {
+    public AccumuloRangeStore(Connector connector, String tableName, RangeHelper<T> helper) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        checkNotNull(connector, "Invalid connector");
+        checkNotNull(tableName, "The table name must not be empty");
 
         this.connector = connector;
-    }
-
-    public void initialize() {
-
-        if(!connector.tableOperations().exists(tableName)) {
-            try {
-                connector.tableOperations().create(tableName);
-            } catch (Exception e) {
-
-                e.printStackTrace();
-            }
-        }
-
-        try {
-            writer = connector.createBatchWriter(tableName, 10000L, 10000L, 10);
-        } catch (TableNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setTableName(String tableName) {
         this.tableName = tableName;
+        this.helper = helper;
+
+        if(!connector.tableOperations().exists(this.tableName)) {
+            connector.tableOperations().create(this.tableName);
+            configureTable(connector, this.tableName);
+        }
+
+        writer = connector.createBatchWriter(this.tableName, 10000L, 10000L, 10);
     }
 
+    /**
+     * Utility method to update the correct iterators to the table.
+     * @param connector
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
+    protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        //Nothing special to do for default implementation
+    }
+    /**
+     * Will close all underlying resources
+     * @throws MutationsRejectedException
+     */
+    public void shutdown() throws MutationsRejectedException {
+        writer.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void insert(Collection<ValueRange<Long>> ranges) {
-
+    public void save(Iterable<ValueRange<T>> ranges) {
+        checkNotNull(ranges);
         try {
+            for (ValueRange<T> range : ranges) {
 
-            for(ValueRange<Long> range : ranges) {
+                checkState(helper.isValid(range), "Invalid Range:" + range.toString());
 
-                String lowComplement =  normalizer.normalize(Long.MAX_VALUE - range.getStart());
-                String low = normalizer.normalize(range.getStart());
+                String lowComplement = helper.encodeComplement(range.getStart());
+                String low = helper.encode(range.getStart());
 
-                String highComplement = normalizer.normalize(Long.MAX_VALUE - range.getStop());
-                String high = normalizer.normalize(range.getStop());
+                String highComplement = helper.encodeComplement(range.getStop());
+                String high = helper.encode(range.getStop());
 
                 Mutation forward = new Mutation(INDEX_FORWARD + DELIM + high + DELIM + lowComplement);
                 forward.put(new Text(""), new Text(""), new Value("".getBytes()));
@@ -81,8 +110,8 @@ public class AccumuloRangeStore implements RangeStore {
                 Mutation reverse = new Mutation(INDEX_REVERSE + DELIM + highComplement + DELIM + low);
                 reverse.put(new Text(""), new Text(""), new Value("".getBytes()));
 
-                String maxSizeComplement = normalizer.normalize(Long.MAX_VALUE - (range.getStop() - range.getStart()));
-                Mutation maxSize = new Mutation(INDEX_MAXSIZE + DELIM + maxSizeComplement);
+                String distanceComplement = helper.encodeComplement(helper.distance(range));
+                Mutation maxSize = new Mutation(INDEX_MAXDISTANCE + DELIM + distanceComplement);
                 maxSize.put(new Text(low), new Text(high), new Value("".getBytes()));
 
                 writer.addMutation(forward);
@@ -92,243 +121,245 @@ public class AccumuloRangeStore implements RangeStore {
 
             writer.flush();
 
-        } catch (TypeNormalizationException e) {
-            e.printStackTrace();
-        } catch (MutationsRejectedException e) {
-            e.printStackTrace();
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Iterator<ValueRange<Long>> query(final ValueRange<Long> range, Authorizations auths) {
+    public void delete(Iterable<ValueRange<T>> ranges) {
+        checkNotNull(ranges);
 
         try {
+            for (ValueRange<T> range : ranges) {
 
-            String lowComplement =  normalizer.normalize(Long.MAX_VALUE - range.getStart());
-            String low = normalizer.normalize(range.getStart());
+                checkState(helper.isValid(range), "Invalid Range:" + range.toString());
 
-            String highComplement = normalizer.normalize(Long.MAX_VALUE - range.getStop());
-            String high = normalizer.normalize(range.getStop());
+                String lowComplement = helper.encodeComplement(range.getStart());
+                String low = helper.encode(range.getStart());
 
-            final Scanner forwardScanner = connector.createScanner(tableName, auths);
-            final Scanner reverseScanner = connector.createScanner(tableName, auths);
-            Scanner maxSizeScanner = connector.createScanner(tableName, auths);
+                String highComplement = helper.encodeComplement(range.getStop());
+                String high = helper.encode(range.getStop());
 
-            Range forwardRange = new Range(INDEX_FORWARD + DELIM + high + DELIM + lowComplement, false, INDEX_FORWARD + "\uffff", true);
-            Range reverseRange = new Range(INDEX_REVERSE + DELIM + highComplement + DELIM + low, INDEX_REVERSE + "\uffff");
-            Range maxSizeRange = new Range(INDEX_MAXSIZE, INDEX_MAXSIZE + "\uffff");
+                Mutation forward = new Mutation(INDEX_FORWARD + DELIM + high + DELIM + lowComplement);
+                forward.putDelete(new Text(""), new Text(""));
 
-            forwardScanner.setRange(forwardRange);
-            reverseScanner.setRange(reverseRange);
-            maxSizeScanner.setRange(maxSizeRange);
+                Mutation reverse = new Mutation(INDEX_REVERSE + DELIM + highComplement + DELIM + low);
+                reverse.putDelete(new Text(""), new Text(""));
 
-            final Iterator<Map.Entry<Key,Value>> forwardIterator = forwardScanner.iterator();
-            final Iterator<Map.Entry<Key,Value>> reverseIterator = reverseScanner.iterator();
+                String distanceComplement = helper.encodeComplement(helper.distance(range));
+                Mutation maxSize = new Mutation(INDEX_MAXDISTANCE + DELIM + distanceComplement);
+                maxSize.putDelete(new Text(low), new Text(high));
 
-            Long intervalMaxSize = 0L;
-            Iterator<Map.Entry<Key,Value>> maxSizeItr = maxSizeScanner.iterator();
-            if(maxSizeItr.hasNext()) {
-
-                Map.Entry<Key,Value> entry = maxSizeItr.next();
-                intervalMaxSize = Long.MAX_VALUE - normalizer.denormalize(entry.getKey().getRow().toString().split(DELIM)[1]);
+                writer.addMutation(forward);
+                writer.addMutation(reverse);
+                writer.addMutation(maxSize);
             }
 
-            final Long maxSizeLong = intervalMaxSize;
+            writer.flush();
 
-            return new Iterator<ValueRange<Long>>() {
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-                ValueRange<Long> nextValue;
+    private T getMaxDistance(Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
+        Scanner scanner = connector.createScanner(tableName, auths);
+        scanner.setRange(prefix(INDEX_MAXDISTANCE));
+        scanner.setBatchSize(1);
 
-                Long fullLength = range.getStop() - range.getStart();
-                //
-                Long outerBoundStart = range.getStart() - maxSizeLong;
-                Long outerBoundStop = Long.MAX_VALUE - range.getStop();
+        Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+        if (!iterator.hasNext())
+            return null;
 
-                boolean forwardIteratorDone = false;
-                boolean reverseIteratorDone = false;
-                boolean monsterRangeDone = false;
+        //Only need the top one, as it should be sorted by size.
+        Entry<Key,Value> entry = iterator.next();
+        return helper.decodeComplement(entry.getKey().getRow().toString().split(DELIM)[1]);
+    }
 
-                ValueRange<Long> lowest;
-                ValueRange<Long> highest;
+    private Iterator<ValueRange<T>> forwardIterator(final T rangeLow, final T rangeHigh, Authorizations auths, final ValueRange<T> extremes) throws TableNotFoundException, TypeNormalizationException {
 
-                Iterator<Map.Entry<Key,Value>> monsterIterator = null;
+        String lowComplement = helper.encodeComplement(rangeLow);
+        String high = helper.encode(rangeHigh);
 
+        Scanner scanner = connector.createScanner(tableName, auths);
+        scanner.setRange(new org.apache.accumulo.core.data.Range(
+                INDEX_FORWARD + DELIM + high + DELIM + lowComplement, false,
+                INDEX_FORWARD + "\uffff", true
+        ));
+        final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+
+        //Transform data into ranges and stop iterating after the low values exceed the high range mark.
+        return new AbstractIterator<ValueRange<T>>() {
+            @Override
+            protected ValueRange<T> computeNext() {
+                if (!iterator.hasNext())
+                    return endOfData();
+
+                String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
+                final T upper = helper.decode(vals[1]);
+                final T lower = helper.decodeComplement(vals[2]);
+
+                //If we have gone past the high value then stop iterating
+                if(lower.compareTo(rangeHigh) > 0)
+                    return endOfData();
+
+                if (upper.compareTo(extremes.getStop()) > 0)
+                    extremes.setStop(upper);
+
+                if (lower.compareTo(extremes.getStart()) < 0)
+                    extremes.setStart(lower);
+
+                return new ValueRange<T> (lower, upper);
+            }
+        };
+    }
+
+    private Iterator<ValueRange<T>> reverseIterator(final T rangeLow, final T rangeHigh, Authorizations auths, final ValueRange<T> extremes) throws TableNotFoundException, TypeNormalizationException {
+
+        String low = helper.encode(rangeLow);
+        String highComplement = helper.encodeComplement(rangeHigh);
+
+        Scanner scanner = connector.createScanner(tableName, auths);
+        scanner.setRange(new org.apache.accumulo.core.data.Range(
+                INDEX_REVERSE + DELIM + highComplement + DELIM + low,
+                INDEX_REVERSE + "\uffff"
+        ));
+        final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+
+        //Transform data into ranges and stop iterating after the high values fall below the low range mark.
+        return new AbstractIterator<ValueRange<T>>() {
+            @Override
+            protected ValueRange<T> computeNext() {
+                if (!iterator.hasNext())
+                    return endOfData();
+
+                String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
+                final T upper = helper.decodeComplement(vals[1]);
+                final T lower = helper.decode(vals[2]);
+
+                //If we have gone past the low value then stop iterating
+                if(upper.compareTo(rangeLow) < 0)
+                    return endOfData();
+
+                if (upper.compareTo(extremes.getStop()) > 0)
+                    extremes.setStop(upper);
+
+                if (lower.compareTo(extremes.getStart()) < 0)
+                    extremes.setStart(lower);
+
+                return new ValueRange<T>(lower, upper);
+            }
+        };
+    }
+
+    private Iterator<ValueRange<T>> monsterIterator(final T rangeLow, final T rangeHigh, T maxDistance, final ValueRange<T> extremes, Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
+
+        //if the extremes range is larger than the max range then there is nothing left to do
+        if (helper.distance(extremes).compareTo(maxDistance) >= 0)
+            return emptyIterator();
+
+        String outerBoundStart = helper.encode(helper.distance(new ValueRange<T>(maxDistance, rangeLow)));
+        String outerBoundStop = helper.encodeComplement(rangeHigh);
+
+        Scanner scanner = connector.createScanner(tableName, auths);
+        scanner.setRange(new org.apache.accumulo.core.data.Range(
+                INDEX_REVERSE + DELIM + outerBoundStart + DELIM + outerBoundStop,
+                INDEX_REVERSE + "\uffff"
+        ));
+        final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+
+        //Transform data into ranges and exhaust while trying to find a possible range that intersects.
+        return new AbstractIterator<ValueRange<T>>() {
+            @Override
+            protected ValueRange<T> computeNext() {
+
+                while (iterator.hasNext()) {
+                    String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
+                    final T upper = helper.decodeComplement(vals[1]);
+                    final T lower = helper.decode(vals[2]);
+
+                    if(upper.compareTo(extremes.getStart()) < 0)
+                        return endOfData();
+
+                    if (lower.compareTo(rangeLow) < 0 && upper.compareTo(rangeLow) >= 0)
+                        return new ValueRange<T>(lower, upper);
+
+                }
+                return endOfData();
+            }
+        };
+    }
+
+    private Iterator<ValueRange<T>> queryIterator(final T lowValue, final T highValue, final Authorizations auths) {
+
+        try {
+            //Iterate with a forward then a reverse iterator, while keeping track of the extremes.
+            //After done iterating through then try to get a monster iterator to get the outliers
+            // using the precomputed extremes.
+
+            final ValueRange<T> extremes = new ValueRange<T>(lowValue, highValue);
+            final Iterator<ValueRange<T>> mainIterator = concat(
+                    forwardIterator(lowValue, highValue, auths, extremes),
+                    reverseIterator(lowValue, highValue, auths, extremes)
+
+            );
+            final T maxDistance = getMaxDistance(auths);
+
+            return new AbstractIterator<ValueRange<T>>() {
+
+                Iterator<ValueRange<T>> monster = null;
 
                 @Override
-                public boolean hasNext() {
+                protected ValueRange<T> computeNext() {
+                    //exhaust the forward and reverse iterators
+                    if (mainIterator.hasNext())
+                        return mainIterator.next();
+                    try {
+                        //Now create the monster iterator after the extremes have been populated.
+                        //Lazy init here to wait for the extremes to be populated correctly.
+                        if (monster == null)
+                            monster = monsterIterator(lowValue, highValue, maxDistance, extremes, auths);
 
-                    if(nextValue != null) {
-                        return true;
+                        if (monster.hasNext())
+                            return monster.next();
+
+                    } catch (RuntimeException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
 
-                    else if(forwardIteratorDone && reverseIteratorDone && monsterRangeDone) {
-                        return false;
-                    }
-
-                    primeNext();
-
-                    return nextValue != null;
-                }
-
-                @Override
-                public ValueRange<Long> next() {
-
-                    if(hasNext()) {
-
-                        ValueRange<Long> retVal = nextValue;
-                        nextValue = null;
-
-                        return retVal;
-                    }
-
-                    else {
-                        throw new RuntimeException("Iterator has been exhausted");
-                    }
-
-                }
-
-                @Override
-                public void remove() {
-
-                    forwardIterator.remove();
-                    reverseIterator.remove();
-                }
-
-                private void primeNext() {
-
-
-
-                    if((!forwardIteratorDone && forwardIterator.hasNext())){
-
-                        Map.Entry<Key,Value> next = forwardIterator.next();
-
-                        String vals[] = next.getKey().getRow().toString().split(DELIM);
-
-                        final Long high = Long.parseLong(vals[1]);
-                        final Long low = Long.MAX_VALUE - Long.parseLong(vals[2]);
-
-                        if(low > range.getStop()) {
-
-                            forwardIteratorDone = true;
-                        }
-
-                        else {
-                            nextValue = new ValueRange<Long>(low, high);
-                        }
-                    }
-
-                    else {
-                        forwardIteratorDone = true;
-                    }
-
-                    if(forwardIteratorDone && reverseIterator.hasNext()) {
-
-                        Map.Entry<Key,Value> next = reverseIterator.next();
-                        String vals[] = next.getKey().getRow().toString().split(DELIM);
-
-                        final Long high = Long.MAX_VALUE - Long.parseLong(vals[1]);
-                        final Long low = Long.parseLong(vals[2]);
-
-                        if(high < range.getStart()) {
-
-                            reverseIteratorDone = true;
-                        }
-
-                        else {
-                            nextValue = new ValueRange<Long>(low, high);
-                        }
-                    }
-
-                    else if(forwardIteratorDone) {
-                        reverseIteratorDone = true;
-                    }
-
-                    if(reverseIteratorDone && monsterIterator == null) {
-
-                        if(fullLength < maxSizeLong) {
-                            Range reverseRange = new Range(INDEX_REVERSE + DELIM + outerBoundStart + DELIM + outerBoundStop, INDEX_REVERSE + "\uffff");
-                            reverseScanner.clearScanIterators();
-                            reverseScanner.setRange(reverseRange);
-
-                            monsterIterator = reverseScanner.iterator();
-
-                        }
-
-                        else {
-                            monsterRangeDone = true;
-                        }
-
-                    }
-
-                    if(reverseIteratorDone && monsterIterator != null && monsterIterator.hasNext()) {
-
-                        while(monsterIterator.hasNext()) {
-
-                            Map.Entry<Key,Value> next = monsterIterator.next();
-                            String vals[] = next.getKey().getRow().toString().split(DELIM);
-
-                            final Long high = Long.MAX_VALUE - Long.parseLong(vals[1]);
-                            final Long low = Long.parseLong(vals[2]);
-
-                            if(high <= (highest != null ? highest.getStop() : range.getStop())) {
-
-                                monsterRangeDone = true;
-                                break;
-                            }
-
-                            else if(low < range.getStart() && high >= range.getStart()) {
-
-                                nextValue = new ValueRange<Long>(low, high);
-                                break;
-                            }
-                        }
-                    }
-
-                    else {
-                        monsterRangeDone = true;
-                    }
-
-                    if(!(forwardIteratorDone && reverseIteratorDone)) {
-                        if(lowest == null) {
-                            lowest = nextValue;
-                        }
-
-                        if(highest == null) {
-                            highest = nextValue;
-                        }
-
-                        if(nextValue != null) {
-
-                            if(nextValue.getStart() < lowest.getStart()) {
-                                lowest = nextValue;
-
-                            }
-
-                            if(nextValue.getStart() > highest.getStart()) {
-                                highest = nextValue;
-                            }
-
-                            fullLength = highest.getStop() - lowest.getStart();
-                        }
-                    }
+                    return endOfData();
                 }
             };
-
-        } catch (TableNotFoundException e) {
-            e.printStackTrace();
-        } catch (TypeNormalizationException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    public void shutdown() {
-        try {
-            writer.close();
-        } catch (MutationsRejectedException e) {
-            e.printStackTrace();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterable<ValueRange<T>> query(final ValueRange<T> range, final Authorizations auths) {
+
+        checkState(helper.isValid(range), "Invalid range.");
+
+        return new Iterable<ValueRange<T>>() {
+            @Override
+            public Iterator<ValueRange<T>> iterator() {
+                return queryIterator(range.getStart(), range.getStop(), auths);
+            }
+        };
+    }
 }
