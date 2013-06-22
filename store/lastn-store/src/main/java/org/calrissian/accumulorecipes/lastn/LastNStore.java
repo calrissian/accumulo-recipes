@@ -18,8 +18,6 @@ package org.calrissian.accumulorecipes.lastn;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 
-import java.util.Iterator;
-
 /**
  * The LastN store is a version-based eviction mechanism- meaning that it will only keep around the last N versions of
  * an indexed set of attributes but it will maintain cell-level security of those attributes. This is useful in news
@@ -41,10 +39,6 @@ public interface LastNStore {
      * @param auths
      * @return
      */
-    Iterator<StoreEntry> get(String index, Authorizations auths);
+    Iterable<StoreEntry> get(String index, Authorizations auths);
 
-    /**
-     * Clean up and release any resources being held
-     */
-    void shutdown() throws Exception;
 }
