@@ -17,24 +17,25 @@ package org.calrissian.accumlorecipes.changelog.support;
 
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.hash.support.HashUtils;
 import org.calrissian.mango.types.TypeContext;
 import org.calrissian.mango.types.exception.TypeNormalizationException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
+import static java.util.Collections.sort;
 import static org.calrissian.accumlorecipes.changelog.support.Constants.DELIM;
+import static org.calrissian.mango.hash.support.HashUtils.hashString;
 
 public class Utils {
 
-    static TypeContext context = TypeContext.getInstance();
+    public static TypeContext CONTEXT = TypeContext.getInstance();
 
     public static final Long MAX_TIME = 999999999999999999l;
     public static final String DATE_FORMAT = "yyyyMMddHHmmssSSS";
-
-
 
     /**
      * Tuples are hashed by sorting them by their keys, normalized values, and visibilities.
@@ -43,18 +44,17 @@ public class Utils {
      */
     public static byte[] hashEntry(StoreEntry entry) {
 
-        Comparator c = new TupleComparator();
         List<Tuple> tuples = new ArrayList(entry.getTuples());
 
-        Collections.sort(tuples, c);
+        sort(tuples, new TupleComparator());
 
         String tupleString = entry.getId();
         for(Tuple tuple : tuples) {
-            tupleString += Utils.tupleToString(tuple) + ",";
+            tupleString += tupleToString(tuple) + ",";
         }
 
         try {
-            return HashUtils.hashString(tupleString).getBytes();
+            return hashString(tupleString).getBytes();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -98,7 +98,7 @@ public class Utils {
     public static String tupleToString(Tuple tuple) {
 
         try {
-            return tuple.getKey() + DELIM + context.normalize(tuple.getValue()) +
+            return tuple.getKey() + DELIM + CONTEXT.normalize(tuple.getValue()) +
                     "\u0000" + tuple.getVisibility();
         } catch (TypeNormalizationException e) {
             throw new RuntimeException(e);

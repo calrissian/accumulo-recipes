@@ -25,7 +25,6 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
-import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -36,6 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static org.calrissian.accumlorecipes.changelog.support.Utils.hashEntry;
 import static org.calrissian.mango.hash.support.HashUtils.hashString;
 
 public class BucketHashIterator extends WrappingIterator {
@@ -108,7 +108,7 @@ public class BucketHashIterator extends WrappingIterator {
                 super.next();
 
                 StoreEntry entry = objectMapper.readValue(new String(value.get()), StoreEntry.class);
-                hashes.add(new String(Utils.hashEntry(entry)));
+                hashes.add(new String(hashEntry(entry)));
             }
 
             if(hashes.size() > 0) {

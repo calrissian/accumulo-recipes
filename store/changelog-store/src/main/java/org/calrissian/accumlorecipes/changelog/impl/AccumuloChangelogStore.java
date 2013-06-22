@@ -15,8 +15,8 @@
  */
 package org.calrissian.accumlorecipes.changelog.impl;
 
+import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -27,7 +27,6 @@ import org.calrissian.accumlorecipes.changelog.ChangelogStore;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.iterator.BucketHashIterator;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
-import org.calrissian.accumlorecipes.changelog.support.EntryTransform;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -35,8 +34,15 @@ import org.calrissian.mango.hash.tree.MerkleTree;
 import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
+import static java.util.Map.Entry;
+import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
@@ -46,45 +52,60 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
  */
 public class AccumuloChangelogStore implements ChangelogStore {
 
-    protected Long maxMemory = 100000L;
-    protected Integer numThreads = 3;
-    protected Long maxLatency = 10000L;
+    private static Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
+        @Override
+        public StoreEntry apply(Entry<Key, Value> entry) {
+            try {
+                return ObjectMapperContext.getInstance().getObjectMapper()
+                        .readValue(entry.getValue().get(), StoreEntry.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
 
-    protected String tableName = "changelog";
-    protected Connector connector;
-    protected BatchWriter writer;
+    private final String tableName;
+    private final Connector connector;
+    private final BucketSize bucketSize;
+    private final BatchWriter writer;
 
-    protected int merkleAry = 4;    // default the merkle to a quad tree
-
-    protected BucketSize bucketSize = BucketSize.FIVE_MINS; // default to a medium sized bucket
 
     ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
 
-    public AccumuloChangelogStore(Connector connector) {
-        this.connector = connector;
-
-        init();
+    public AccumuloChangelogStore(Connector connector) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+        this(connector, FIVE_MINS); // default to a medium sized bucket
     }
 
-    public AccumuloChangelogStore(Connector connector, String tableName) {
+    public AccumuloChangelogStore(Connector connector, String tableName) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+        this(connector, tableName, FIVE_MINS); // default to a medium sized bucket
+    }
+
+    public AccumuloChangelogStore(Connector connector, BucketSize bucketSize) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+        this(connector, "changelog", bucketSize);
+    }
+
+    public AccumuloChangelogStore(Connector connector, String tableName, BucketSize bucketSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this.connector = connector;
         this.tableName = tableName;
+        this.bucketSize = bucketSize;
 
-        init();
+        if(!connector.tableOperations().exists(tableName)) {
+            connector.tableOperations().create(tableName);
+            configureTable(connector, tableName);
+        }
+
+        writer = connector.createBatchWriter(tableName, 100000L, 10000L, 3);
     }
 
-    private void init() {
-
-        try {
-            if(!connector.tableOperations().exists(tableName)) {
-                connector.tableOperations().create(tableName);
-            }
-
-            writer = connector.createBatchWriter(tableName, maxMemory, maxLatency, numThreads);
-
-        } catch(Exception e) {
-            throw new RuntimeException("Failed to create changelog table");
-        }
+    /**
+     * Utility method to update the correct iterators to the table.
+     * @param connector
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
+    protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        //Nothing to do for default implementation
     }
 
     /**
@@ -92,60 +113,62 @@ public class AccumuloChangelogStore implements ChangelogStore {
      * @param changes
      */
     @Override
-    public void put(Collection<StoreEntry> changes) {
-
-        for(StoreEntry change : changes) {
-
-            Mutation m = new Mutation(Long.toString(Utils.truncatedReverseTimestamp(change.getTimestamp(), bucketSize)));
-            try {
-                Text reverseTimestamp = new Text(Long.toString(Utils.reverseTimestamp(change.getTimestamp())));
-                m.put(reverseTimestamp, new Text(change.getId()), change.getTimestamp(),
-                        new Value(objectMapper.writeValueAsBytes(change)));
-                writer.addMutation(m);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
+    public void put(Iterable<StoreEntry> changes) {
 
         try {
+            for(StoreEntry change : changes) {
+
+                Mutation m = new Mutation(Long.toString(truncatedReverseTimestamp(change.getTimestamp(), bucketSize)));
+                try {
+                    Text reverseTimestamp = new Text(Long.toString(Utils.reverseTimestamp(change.getTimestamp())));
+                    m.put(reverseTimestamp, new Text(change.getId()), change.getTimestamp(),
+                            new Value(objectMapper.writeValueAsBytes(change)));
+                    writer.addMutation(m);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
             writer.flush();
+
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
 
+    @Override
+    public MerkleTree getChangeTree(Date start, Date stop, Authorizations auths) {
+        return getChangeTree(start, stop, 4, auths); //default to a quad tree
+    }
+
     /**
-     * Returns a Merkle Tree rollup representing the buckets of the given time range.
-     * @param start
-     * @param stop
-     * @return
+     * {@inheritDoc}
      */
     @Override
-    public MerkleTree getChangeTree(Date start, Date stop) {
+    public MerkleTree getChangeTree(Date start, Date stop, int dimensions, Authorizations auths) {
 
-        Scanner scanner = null;
         try {
-            scanner = connector.createScanner(tableName, new Authorizations());
+            Scanner scanner = connector.createScanner(tableName, auths);
             IteratorSetting is = new IteratorSetting(2, BucketHashIterator.class);
+            BucketHashIterator.setBucketSize(is, bucketSize);
             scanner.addScanIterator(is);
 
-            String startRange = Utils.truncatedReverseTimestamp(start.getTime(), bucketSize).toString();
-            String endRange = Utils.truncatedReverseTimestamp(stop.getTime(), bucketSize).toString();
+            String startRange = truncatedReverseTimestamp(start.getTime(), bucketSize).toString();
+            String endRange = truncatedReverseTimestamp(stop.getTime(), bucketSize).toString();
 
             scanner.setRange(new Range(endRange, startRange));
 
             List<BucketHashLeaf> leafList = new ArrayList<BucketHashLeaf>();
-            Long prevTs = Utils.reverseTimestampToNormalTime(Long.parseLong(endRange));
+            Long prevTs = reverseTimestampToNormalTime(Long.parseLong(endRange));
 
             int count = 0;
-            for(Map.Entry<Key,Value> entry : scanner) {
-                Long ts = Utils.reverseTimestampToNormalTime(Long.parseLong(entry.getKey().getRow().toString()));
+            for(Entry<Key,Value> entry : scanner) {
+                Long ts = reverseTimestampToNormalTime(Long.parseLong(entry.getKey().getRow().toString()));
 
 
-                if(count == 0 && (prevTs - ts > bucketSize.getMs() || ts > prevTs)) {
+                if(count == 0 && (prevTs - ts > bucketSize.getMs() || ts > prevTs))
                     leafList.add(new BucketHashLeaf("", prevTs));
-                }
 
                 /**
                  * It's a little ridiculous that a merkle tree has to guarantee the same number of leaves.
@@ -162,21 +185,20 @@ public class AccumuloChangelogStore implements ChangelogStore {
                 count++;
             }
 
-            Long startTs = Utils.reverseTimestampToNormalTime(Long.parseLong(startRange));
+            Long startTs = reverseTimestampToNormalTime(Long.parseLong(startRange));
 
             /**
              * If we didn't have a single bucket returned from the Scanner, we need to prime the leafs.
              */
-            if(count == 0) {
+            if(count == 0)
                 leafList.add(new BucketHashLeaf("", prevTs));
-            }
 
             while(prevTs - startTs >= bucketSize.getMs()) {
                 leafList.add(new BucketHashLeaf("", prevTs - bucketSize.getMs()));
                 prevTs -= bucketSize.getMs();
             }
 
-            return new MerkleTree(leafList, merkleAry);
+            return new MerkleTree(leafList, dimensions);
 
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
@@ -189,68 +211,24 @@ public class AccumuloChangelogStore implements ChangelogStore {
      * @return
      */
     @Override
-    public CloseableIterable<StoreEntry> getChanges(Collection<Date> buckets) {
+    public CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Authorizations auths) {
 
         try {
-            final BatchScanner scanner = connector.createBatchScanner(tableName, new Authorizations(), numThreads);
+            final BatchScanner scanner = connector.createBatchScanner(tableName, auths, 3);
 
             List<Range> ranges = new ArrayList<Range>();
             for(Date date : buckets) {
 
-                Range range = new Range(String.format("%d", Utils.truncatedReverseTimestamp(date.getTime(), bucketSize)));
+                Range range = new Range(String.format("%d", truncatedReverseTimestamp(date.getTime(), bucketSize)));
                 ranges.add(range);
             }
 
             scanner.setRanges(ranges);
 
-            return transform(wrap(scanner), new EntryTransform());
+            return transform(wrap(scanner), entityTransform);
 
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public Long getMaxMemory() {
-        return maxMemory;
-    }
-
-    public void setMaxMemory(Long maxMemory) {
-        this.maxMemory = maxMemory;
-    }
-
-    public Integer getNumThreads() {
-        return numThreads;
-    }
-
-    public void setNumThreads(Integer numThreads) {
-        this.numThreads = numThreads;
-    }
-
-    public Long getMaxLatency() {
-        return maxLatency;
-    }
-
-    public void setMaxLatency(Long maxLatency) {
-        this.maxLatency = maxLatency;
-    }
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setBucketSize(BucketSize bucketSize) {
-        this.bucketSize = bucketSize;
-    }
-
-    public BucketSize getBucketSize() {
-        return bucketSize;
-    }
-
-    public int getMerkleAry() {
-        return merkleAry;
-    }
-
-    public void setMerkleAry(int merkleAry) {
-        this.merkleAry = merkleAry;
     }
 }

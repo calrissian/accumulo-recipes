@@ -10,11 +10,13 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
-import org.calrissian.accumlorecipes.changelog.support.Utils;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+
+import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
 
 public class BucketRollupIterator extends WrappingIterator {
 
@@ -22,7 +24,7 @@ public class BucketRollupIterator extends WrappingIterator {
 
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
-        super.init(source, options, env);    //To change body of overridden methods use File | Settings | File Templates.
+        super.init(source, options, env);
 
         if(options.containsKey("bucketSize")) {
             bucketSize = BucketSize.valueOf(options.get("bucketSize"));
@@ -41,18 +43,18 @@ public class BucketRollupIterator extends WrappingIterator {
 
     @Override
     public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
-        super.seek(range, columnFamilies, inclusive);    //To change body of overridden methods use File | Settings | File Templates.
+        super.seek(range, columnFamilies, inclusive);
     }
 
     @Override
     public Key getTopKey() {
         Key topKey = super.getTopKey();
 
-        long timestamp = Utils.reverseTimestampToNormalTime(Long.parseLong(topKey.getRow().toString()));
+        long timestamp = reverseTimestampToNormalTime(Long.parseLong(topKey.getRow().toString()));
 
-        Key retKey =  new Key(new Text(Utils.truncatedReverseTimestamp(timestamp, bucketSize).toString()),
-                       topKey.getColumnFamily(), topKey.getColumnQualifier(),
-                       new Text(topKey.getColumnVisibility().toString()), topKey.getTimestamp());
+        Key retKey =  new Key(new Text(truncatedReverseTimestamp(timestamp, bucketSize).toString()),
+                topKey.getColumnFamily(), topKey.getColumnQualifier(),
+                new Text(topKey.getColumnVisibility().toString()), topKey.getTimestamp());
 
         return retKey;
     }
