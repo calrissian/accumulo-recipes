@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.blobstore;
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,6 +41,6 @@ public interface BlobStore {
      * @param auths
      * @return
      */
-    InputStream get(String key, String type, Authorizations auths);
+    InputStream get(String key, String type, Auths auths);
 
 }

@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl;
 
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
@@ -73,7 +73,7 @@ public class AccumuloCustomMetricStoreTest {
 
         metricStore.save(testData);
 
-        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SummingFunction.class,  MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SummingFunction.class,  MetricTimeUnit.MINUTES, new Auths());
 
         checkCustom(actual, 60, 1L);
     }
@@ -88,7 +88,7 @@ public class AccumuloCustomMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SummingFunction.class, MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SummingFunction.class, MetricTimeUnit.MINUTES, new Auths());
 
         checkCustom(actual, 60, 3L);
     }
@@ -103,7 +103,7 @@ public class AccumuloCustomMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<CustomMetric<long[]>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", StatsFunction.class, MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<CustomMetric<long[]>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", StatsFunction.class, MetricTimeUnit.MINUTES, new Auths());
 
         checkCustomStats(actual, 60, 3);
     }

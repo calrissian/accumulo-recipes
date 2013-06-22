@@ -19,9 +19,9 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.hash.tree.MerkleTree;
@@ -49,7 +49,7 @@ public class AccumuloChangelogStoreTest {
 
         MerkleTree mt = store.getChangeTree(
                 new Date(currentTimeMillis() - 50000000),
-                new Date(currentTimeMillis() + 50000000), new Authorizations());
+                new Date(currentTimeMillis() + 50000000), new Auths());
 
         StoreEntry entry = createStoreEntry("1", currentTimeMillis());
         StoreEntry entry2 = createStoreEntry("2", currentTimeMillis() - 900000);
@@ -61,7 +61,7 @@ public class AccumuloChangelogStoreTest {
 
         MerkleTree mt2 = store.getChangeTree(
                 new Date(currentTimeMillis() - 50000000),
-                new Date(currentTimeMillis() + 50000000), new Authorizations());
+                new Date(currentTimeMillis() + 50000000), new Auths());
 
         /**
          * Now would be the time you'd pull the merkle tree from the foreign host and diff the remote with the local

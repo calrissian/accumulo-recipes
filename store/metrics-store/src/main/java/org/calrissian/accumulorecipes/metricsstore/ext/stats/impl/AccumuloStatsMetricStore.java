@@ -19,7 +19,7 @@ package org.calrissian.accumulorecipes.metricsstore.ext.stats.impl;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.StatsMetricStore;
@@ -82,7 +82,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
+    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
         return transform(
                 queryStats(start, end, group, type, name, timeUnit, auths),
                 new Function<Stats, Metric>() {
@@ -105,7 +105,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Stats> queryStats(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
+    public Iterable<Stats> queryStats(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
 
         return transform(
                 metricScanner(start, end, group, type, name, timeUnit, auths),

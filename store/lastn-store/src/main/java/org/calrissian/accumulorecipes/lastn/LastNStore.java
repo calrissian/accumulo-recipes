@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.lastn;
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 
 /**
@@ -39,6 +39,6 @@ public interface LastNStore {
      * @param auths
      * @return
      */
-    Iterable<StoreEntry> get(String index, Authorizations auths);
+    Iterable<StoreEntry> get(String index, Auths auths);
 
 }
