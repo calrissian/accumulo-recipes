@@ -23,6 +23,8 @@ import org.apache.accumulo.core.iterators.user.IntersectingIterator;
 
 import java.io.IOException;
 
+import static org.calrissian.accumulorecipes.eventstore.iterator.IteratorUtils.retrieveFullEvent;
+
 public class EventIntersectingIterator extends IntersectingIterator {
 
     protected SortedKeyValueIterator<Key,Value> sourceItr;
@@ -43,8 +45,7 @@ public class EventIntersectingIterator extends IntersectingIterator {
             Key topKey = getTopKey();
             String eventUUID = topKey.getColumnQualifier().toString();
 
-            System.out.println("UUID:" + eventUUID);
-            Value event = IteratorUtils.retrieveFullEvent(eventUUID, topKey, sourceItr);
+            Value event = retrieveFullEvent(eventUUID, topKey, sourceItr);
             return event;
         }
 

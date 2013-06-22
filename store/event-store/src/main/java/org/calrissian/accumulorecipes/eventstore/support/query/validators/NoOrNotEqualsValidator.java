@@ -20,12 +20,9 @@ import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.criteria.domain.OrNode;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class NoOrNotEqualsValidator implements NodeVisitor {
-    private static final Logger logger = LoggerFactory.getLogger(NoOrNotEqualsValidator.class);
 
     @Override
     public void begin(ParentNode node) {

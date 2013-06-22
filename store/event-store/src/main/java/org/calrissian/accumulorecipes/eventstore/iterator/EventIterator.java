@@ -23,6 +23,7 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 
 import java.io.IOException;
 
+import static org.calrissian.accumulorecipes.eventstore.iterator.IteratorUtils.retrieveFullEvent;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.SHARD_PREFIX_B;
 
@@ -45,19 +46,15 @@ public class EventIterator extends WrappingIterator {
             Key topKey = getTopKey();
 
             String colFam = topKey.getColumnFamily().toString();
-            String eventuUUID = null;
+            String eventuUUID;
 
-            if(colFam.startsWith(SHARD_PREFIX_B)) {
+            if(colFam.startsWith(SHARD_PREFIX_B))
                 eventuUUID = topKey.getColumnQualifier().toString();
-            }
-
-            else {
+            else
                 eventuUUID = colFam.split(DELIM)[1];
 
-            }
 
-            Value event = IteratorUtils.retrieveFullEvent(eventuUUID, topKey, sourceItr);
-            return event;
+            return retrieveFullEvent(eventuUUID, topKey, sourceItr);
         }
 
         return new Value("".getBytes());

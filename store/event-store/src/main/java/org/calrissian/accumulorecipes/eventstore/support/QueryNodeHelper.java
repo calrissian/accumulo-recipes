@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import com.google.common.base.Function;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -32,25 +33,37 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
 
-import java.util.Collections;
+import java.io.IOException;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
 
+import static java.util.Collections.singleton;
+import static java.util.Map.Entry;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class QueryNodeHelper {
 
+    private static final TypeContext typeContext = TypeContext.getInstance();
+    private static Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
+        @Override
+        public StoreEntry apply(Entry<Key, Value> entry) {
+            try {
+                return ObjectMapperContext.getInstance().getObjectMapper()
+                        .readValue(entry.getValue().get(), StoreEntry.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
+
     protected final Connector connector;
     protected final String shardTable;
     protected final Integer numThreads;
     protected final Shard shard;
-
-    protected final TypeContext typeContext = TypeContext.getInstance();
 
     public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard) {
         this.connector = connector;
@@ -85,17 +98,9 @@ public class QueryNodeHelper {
             throw new IllegalArgumentException("You must have 2 or more items to query.");
         }
 
-        scanner.setRanges(Collections.singleton(new Range(range[0], range[1] + DELIM_END)));
+        scanner.setRanges(singleton(new Range(range[0], range[1] + DELIM_END)));
 
-        Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
-
-        System.out.println("HAS NEXT: " + itr.hasNext());
-        for(Map.Entry<Key,Value> entry : scanner) {
-
-            System.out.println("VAL: " + new String(entry.getValue().get()));
-        }
-
-        return transform(wrap(scanner), new EventScannerTransform());
+        return transform(wrap(scanner), entityTransform);
     }
 
 
@@ -128,8 +133,8 @@ public class QueryNodeHelper {
             throw new RuntimeException("Need to have a query and/or leaves of the query");
         }
 
-        scanner.setRanges(Collections.singleton(new Range(range[0], range[1] + DELIM_END)));
+        scanner.setRanges(singleton(new Range(range[0], range[1] + DELIM_END)));
 
-        return transform(wrap(scanner), new EventScannerTransform());
+        return transform(wrap(scanner), entityTransform);
     }
 }
