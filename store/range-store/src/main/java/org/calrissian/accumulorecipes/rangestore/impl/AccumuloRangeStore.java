@@ -352,7 +352,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
      */
     @Override
     public Iterable<ValueRange<T>> query(final ValueRange<T> range, final Authorizations auths) {
-
+        checkNotNull(range);
+        checkNotNull(auths);
         checkState(helper.isValid(range), "Invalid range.");
 
         return new Iterable<ValueRange<T>>() {

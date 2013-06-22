@@ -138,6 +138,8 @@ public class AccumuloLastNStore implements LastNStore {
      */
     @Override
     public void put(String index, StoreEntry entry) {
+        checkNotNull(index);
+        checkNotNull(entry);
 
         // first put the main index pointing to the contextId (The column family is prefixed with the DELIM to guarantee it shows up first
         Mutation indexMutation = new Mutation(index);
@@ -172,6 +174,8 @@ public class AccumuloLastNStore implements LastNStore {
      */
     @Override
     public Iterable<StoreEntry> get(String index, Authorizations auths) {
+        checkNotNull(index);
+        checkNotNull(auths);
 
         try {
             Scanner scanner = connector.createScanner(tableName, auths);

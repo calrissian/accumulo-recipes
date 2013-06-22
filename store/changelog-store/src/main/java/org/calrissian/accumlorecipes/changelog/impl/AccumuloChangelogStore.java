@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Map.Entry;
 import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
@@ -85,6 +87,10 @@ public class AccumuloChangelogStore implements ChangelogStore {
     }
 
     public AccumuloChangelogStore(Connector connector, String tableName, BucketSize bucketSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        checkNotNull(connector);
+        checkNotNull(tableName);
+        checkNotNull(bucketSize);
+
         this.connector = connector;
         this.tableName = tableName;
         this.bucketSize = bucketSize;
@@ -114,7 +120,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
      */
     @Override
     public void put(Iterable<StoreEntry> changes) {
-
+        checkNotNull(changes);
         try {
             for(StoreEntry change : changes) {
 
@@ -147,6 +153,10 @@ public class AccumuloChangelogStore implements ChangelogStore {
      */
     @Override
     public MerkleTree getChangeTree(Date start, Date stop, int dimensions, Authorizations auths) {
+        checkNotNull(start);
+        checkNotNull(stop);
+        checkArgument(dimensions > 1);
+        checkNotNull(auths);
 
         try {
             Scanner scanner = connector.createScanner(tableName, auths);
@@ -212,7 +222,8 @@ public class AccumuloChangelogStore implements ChangelogStore {
      */
     @Override
     public CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Authorizations auths) {
-
+        checkNotNull(buckets);
+        checkNotNull(auths);
         try {
             final BatchScanner scanner = connector.createBatchScanner(tableName, auths, 3);
 

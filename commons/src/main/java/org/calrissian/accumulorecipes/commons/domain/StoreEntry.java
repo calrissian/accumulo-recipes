@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
+import static java.lang.System.currentTimeMillis;
+
 /**
  * A store entry acts as a useful common business object for representing different types of models. An optional time
  * dimension can be set directly or left untouched (defaulting in current time).
@@ -38,8 +40,7 @@ public class StoreEntry {
      * New store entry with random UUID and timestamp defaulted to current time
      */
     public StoreEntry() {
-        this.id = UUID.randomUUID().toString();
-        this.timestamp = System.currentTimeMillis();
+        this(UUID.randomUUID().toString());
     }
 
     /**
@@ -47,10 +48,7 @@ public class StoreEntry {
      * @param id
      */
     public StoreEntry(String id) {
-        this.id = id;
-        this.timestamp = System.currentTimeMillis();
-
-        this.tuples = new ArrayList<Tuple>();
+        this(id, currentTimeMillis());
     }
 
     /**

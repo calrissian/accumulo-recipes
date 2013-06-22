@@ -30,6 +30,7 @@ import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
 import java.io.IOException;
 import java.util.Date;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.calrissian.mango.collect.CloseableIterables.chain;
 import static org.calrissian.mango.criteria.utils.NodeUtils.isLeaf;
@@ -46,6 +47,12 @@ public class QueryResultsVisitor implements NodeVisitor {
     private QueryNodeHelper queryHelper;
 
     public QueryResultsVisitor(Node query, QueryNodeHelper queryHelper, Date start, Date end, Authorizations auths) {
+        checkNotNull(query);
+        checkNotNull(queryHelper);
+        checkNotNull(start);
+        checkNotNull(end);
+        checkNotNull(auths);
+
         this.queryHelper = queryHelper;
         this.start = start;
         this.end = end;

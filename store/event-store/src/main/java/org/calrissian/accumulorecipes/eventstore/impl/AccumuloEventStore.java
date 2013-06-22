@@ -39,6 +39,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
 /**
@@ -62,6 +63,10 @@ public class AccumuloEventStore implements EventStore {
     }
 
     public AccumuloEventStore(Connector connector, String indexTable, String shardTable) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        checkNotNull(connector);
+        checkNotNull(indexTable);
+        checkNotNull(shardTable);
+
         this.connector = connector;
         this.indexTable = indexTable;
         this.shardTable = shardTable;
@@ -117,6 +122,7 @@ public class AccumuloEventStore implements EventStore {
      */
     @Override
     public void save(Iterable<StoreEntry> events) {
+        checkNotNull(events);
         try {
             for(StoreEntry event : events) {
 
@@ -184,7 +190,8 @@ public class AccumuloEventStore implements EventStore {
      */
     @Override
     public StoreEntry get(String uuid, Authorizations auths) {
-
+        checkNotNull(uuid);
+        checkNotNull(auths);
         try {
 
             Scanner scanner = connector.createScanner(indexTable, auths);
