@@ -28,14 +28,6 @@
             <artifactId>mango-core</artifactId>
         </dependency>
 
-        <!-- JUNIT -->
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Hadoop / CB -->
 
         <dependency>
@@ -47,16 +39,11 @@
             <artifactId>hadoop-core</artifactId>
         </dependency>
 
-        <!-- Logging -->
+        <!-- JUNIT -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
     </dependencies>
 
 </project>

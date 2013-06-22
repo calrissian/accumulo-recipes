@@ -22,7 +22,6 @@
         </dependency>
 
         <!-- Hadoop / CB -->
-
         <dependency>
             <groupId>org.apache.accumulo</groupId>
             <artifactId>accumulo-core</artifactId>
@@ -33,13 +32,10 @@
         </dependency>
 
         <!-- JUNIT -->
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
-
     </dependencies>
 
 </project>
