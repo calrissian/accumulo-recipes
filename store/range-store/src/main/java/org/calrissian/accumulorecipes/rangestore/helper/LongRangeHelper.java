@@ -15,10 +15,9 @@
  */
 package org.calrissian.accumulorecipes.rangestore.helper;
 
-
 import org.calrissian.mango.types.exception.TypeNormalizationException;
 import org.calrissian.mango.types.normalizers.LongNormalizer;
-import org.calrissian.mango.types.range.ValueRange;
+import org.calrissian.mango.domain.ValueRange;
 
 public class LongRangeHelper implements RangeHelper<Long> {
 

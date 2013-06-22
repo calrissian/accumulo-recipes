@@ -22,7 +22,7 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.rangestore.helper.LongRangeHelper;
-import org.calrissian.mango.types.range.ValueRange;
+import org.calrissian.mango.domain.ValueRange;
 import org.junit.Test;
 
 import java.util.List;

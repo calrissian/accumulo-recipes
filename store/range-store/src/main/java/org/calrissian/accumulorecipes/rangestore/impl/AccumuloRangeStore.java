@@ -25,7 +25,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
 import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.range.ValueRange;
+import org.calrissian.mango.domain.ValueRange;
 
 import java.util.Iterator;
 
