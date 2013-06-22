@@ -33,8 +33,9 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.serialization.TupleModule;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Date;
@@ -47,13 +48,13 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class QueryNodeHelper {
 
-    private static final TypeContext typeContext = TypeContext.getInstance();
-    private static Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
+    private final TypeContext typeContext;
+    private final ObjectMapper objectMapper;
+    private Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
         @Override
         public StoreEntry apply(Entry<Key, Value> entry) {
             try {
-                return ObjectMapperContext.getInstance().getObjectMapper()
-                        .readValue(entry.getValue().get(), StoreEntry.class);
+                return objectMapper.readValue(entry.getValue().get(), StoreEntry.class);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -65,11 +66,13 @@ public class QueryNodeHelper {
     protected final Integer numThreads;
     protected final Shard shard;
 
-    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard) {
+    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard, TypeContext typeContext) {
         this.connector = connector;
         this.shardTable = shardTable;
         this.numThreads = numThreads;
         this.shard = shard;
+        this.typeContext = typeContext;
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
     }
 
     public CloseableIterable<StoreEntry> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)
@@ -88,7 +91,7 @@ public class QueryNodeHelper {
 
             query.accept(new AndSingleDepthOnlyValidator());
 
-            AndNodeColumns andNodeColumns = new AndNodeColumns(query);
+            AndNodeColumns andNodeColumns = new AndNodeColumns(query, typeContext);
 
             IteratorSetting is = new IteratorSetting(16, "eventIntersectingIterator", EventIntersectingIterator.class);
             EventIntersectingIterator.setColumnFamilies(is, andNodeColumns.getColumns(), andNodeColumns.getNotFlags());

@@ -30,8 +30,9 @@ import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.serialization.TupleModule;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 
@@ -41,6 +42,7 @@ import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
+import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 /**
  * Accumulo implementation of the LastN Store. This will try to create and configure the necessary table and properties
@@ -50,26 +52,26 @@ import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
  */
 public class AccumuloLastNStore implements LastNStore {
 
-    private static final TypeContext typeContext = TypeContext.getInstance();
 
     private static final IteratorSetting EVENT_FILTER_SETTING =
             new IteratorSetting(40, "eventFilter", IndexEntryFilteringIterator.class);
 
-    private static Function<Entry<Key, Value>, StoreEntry> storeTransform = new Function<Entry<Key, Value>, StoreEntry>() {
+    private final Connector connector;
+    private final String tableName;
+    private final BatchWriter writer;
+    private final TypeContext typeContext;
+    private final ObjectMapper objectMapper;
+
+    private Function<Entry<Key, Value>, StoreEntry> storeTransform = new Function<Entry<Key, Value>, StoreEntry>() {
         @Override
         public StoreEntry apply(Entry<Key, Value> entry) {
             try {
-                return ObjectMapperContext.getInstance().getObjectMapper()
-                        .readValue(entry.getValue().get(), StoreEntry.class);
+                return objectMapper.readValue(entry.getValue().get(), StoreEntry.class);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     };
-
-    private final Connector connector;
-    private final String tableName;
-    private final BatchWriter writer;
 
     /**
      * Uses the default tableName and maxVersions
@@ -97,6 +99,8 @@ public class AccumuloLastNStore implements LastNStore {
 
         this.connector = connector;
         this.tableName = tableName;
+        this.typeContext = DEFAULT_TYPES; //TODO allow caller to pass in types.
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
 
         if(!connector.tableOperations().exists(this.tableName)) {
             //Create table without versioning iterator.

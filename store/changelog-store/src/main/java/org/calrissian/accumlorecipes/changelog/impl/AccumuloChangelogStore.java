@@ -31,7 +31,8 @@ import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
-import org.calrissian.mango.serialization.ObjectMapperContext;
+import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
@@ -47,6 +48,7 @@ import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimes
 import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
+import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 /**
  * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent
@@ -54,25 +56,23 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
  */
 public class AccumuloChangelogStore implements ChangelogStore {
 
-    private static Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
-        @Override
-        public StoreEntry apply(Entry<Key, Value> entry) {
-            try {
-                return ObjectMapperContext.getInstance().getObjectMapper()
-                        .readValue(entry.getValue().get(), StoreEntry.class);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    };
+    private final ObjectMapper objectMapper;
 
     private final String tableName;
     private final Connector connector;
     private final BucketSize bucketSize;
     private final BatchWriter writer;
 
-
-    ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
+    private final Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
+        @Override
+        public StoreEntry apply(Entry<Key, Value> entry) {
+            try {
+                return objectMapper.readValue(entry.getValue().get(), StoreEntry.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
 
     public AccumuloChangelogStore(Connector connector) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
         this(connector, FIVE_MINS); // default to a medium sized bucket
@@ -94,6 +94,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
         this.connector = connector;
         this.tableName = tableName;
         this.bucketSize = bucketSize;
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(DEFAULT_TYPES)); //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);

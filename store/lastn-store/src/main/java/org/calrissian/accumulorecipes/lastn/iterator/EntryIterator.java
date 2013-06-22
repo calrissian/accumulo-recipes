@@ -25,8 +25,9 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.serialization.TupleModule;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.Collections;
 
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
+import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 /**
  * An iterator to return StoreEntry objects serialized to JSON so that grouping can be done server side instead of
@@ -42,13 +44,17 @@ import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
  */
 public class EntryIterator extends WrappingIterator {
 
-    protected SortedKeyValueIterator<Key,Value> sourceItr;
+    private TypeContext typeContext;
+    private ObjectMapper objectMapper;
+    private SortedKeyValueIterator<Key,Value> sourceItr;
 
     public void init(SortedKeyValueIterator<Key,Value> source, java.util.Map<String,String> options,
                      IteratorEnvironment env) throws IOException {
 
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
+        this.typeContext = DEFAULT_TYPES; //TODO make types configurable.
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
     }
 
     /**
@@ -89,24 +95,23 @@ public class EntryIterator extends WrappingIterator {
 
                     if(keyValueDatatype.length == 3) {
 
-                        String tupleKey = keyValueDatatype[0];
-                        String tupleType = keyValueDatatype[2];
-                        Object tupleVal = TypeContext.getInstance().denormalize(keyValueDatatype[1], tupleType);
 
-                        Tuple tuple = new Tuple(tupleKey, tupleVal, nextKey.getColumnVisibility().toString());
+                        Tuple tuple = new Tuple(
+                                keyValueDatatype[0],
+                                typeContext.denormalize(keyValueDatatype[1], keyValueDatatype[2]),
+                                nextKey.getColumnVisibility().toString());
+
                         tuples.add(tuple);
-
                         timestamp = nextKey.getTimestamp();
                     }
                 }
 
                 StoreEntry entry = new StoreEntry(entryId, timestamp);
 
-                if(tuples.size() > 0) {
+                if(tuples.size() > 0)
                     entry.putAll(tuples);
-                }
 
-                return new Value(ObjectMapperContext.getInstance().getObjectMapper().writeValueAsBytes(entry));
+                return new Value(objectMapper.writeValueAsBytes(entry));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);

@@ -33,12 +33,10 @@ import static org.calrissian.accumulorecipes.eventstore.support.Constants.SHARD_
 
 public class AndNodeColumns {
 
-    protected final TypeContext typeContext = TypeContext.getInstance();
-
     protected  final Text[] columns;
     protected  final boolean[] notFlags;
 
-    public AndNodeColumns(AndNode query) {
+    public AndNodeColumns(AndNode query, TypeContext typeContext) {
 
         Map<String, Object> fields = new HashMap<String, Object>();
         List<String> notFields = new ArrayList<String>();

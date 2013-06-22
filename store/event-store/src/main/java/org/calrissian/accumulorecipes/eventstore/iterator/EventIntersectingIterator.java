@@ -20,21 +20,23 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.user.IntersectingIterator;
+import org.calrissian.mango.types.TypeContext;
 
 import java.io.IOException;
 
 import static org.calrissian.accumulorecipes.eventstore.iterator.IteratorUtils.retrieveFullEvent;
+import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 public class EventIntersectingIterator extends IntersectingIterator {
 
+    private TypeContext typeContext;
     protected SortedKeyValueIterator<Key,Value> sourceItr;
-
-    protected Key topKey;
 
     public void init(SortedKeyValueIterator<Key,Value> source, java.util.Map<String,String> options, IteratorEnvironment env) throws IOException {
 
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
+        typeContext = DEFAULT_TYPES; //TODO make types configurable.
     }
 
     @Override
@@ -45,8 +47,7 @@ public class EventIntersectingIterator extends IntersectingIterator {
             Key topKey = getTopKey();
             String eventUUID = topKey.getColumnQualifier().toString();
 
-            Value event = retrieveFullEvent(eventUUID, topKey, sourceItr);
-            return event;
+            return retrieveFullEvent(eventUUID, topKey, sourceItr, typeContext);
         }
 
         return new Value("".getBytes());

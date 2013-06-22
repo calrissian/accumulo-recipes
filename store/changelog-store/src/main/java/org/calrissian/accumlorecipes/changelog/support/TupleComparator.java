@@ -17,23 +17,27 @@ package org.calrissian.accumlorecipes.changelog.support;
 
 import com.google.common.collect.ComparisonChain;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.types.TypeContext;
 import org.calrissian.mango.types.exception.TypeNormalizationException;
 
 import java.util.Comparator;
 
-import static org.calrissian.accumlorecipes.changelog.support.Utils.CONTEXT;
-
 public class TupleComparator implements Comparator<Tuple> {
 
+    private final TypeContext typeContext;
+
+    public TupleComparator(TypeContext typeContext) {
+        this.typeContext = typeContext;
+    }
 
     @Override
     public int compare(Tuple tuple, Tuple tuple1) {
         try {
             return ComparisonChain.start()
                     .compare(tuple.getKey(), tuple1.getKey())
-                    .compare(CONTEXT.normalize(tuple.getValue()), CONTEXT.normalize(tuple.getValue()))
+                    .compare(typeContext.normalize(tuple.getValue()), typeContext.normalize(tuple.getValue()))
                     .compare(tuple.getVisibility(), tuple.getVisibility())
-            .result();
+                    .result();
 
         } catch (TypeNormalizationException e) {
             throw new RuntimeException(e);

@@ -32,8 +32,9 @@ import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisit
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.serialization.ObjectMapperContext;
 import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.serialization.TupleModule;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.Date;
 import java.util.Iterator;
@@ -41,6 +42,7 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
+import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 /**
  * The Accumulo implementation of the EventStore which uses deterministic sharding to distribute ingest/queries over
@@ -48,7 +50,7 @@ import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
  */
 public class AccumuloEventStore implements EventStore {
 
-    private static final TypeContext typeContext = TypeContext.getInstance();
+
     private static final Shard shard = new Shard(DEFAULT_PARTITION_SIZE);
 
     private final  Connector connector;
@@ -56,6 +58,7 @@ public class AccumuloEventStore implements EventStore {
     private final String shardTable;
     private final MultiTableBatchWriter multiTableWriter;
 
+    private final TypeContext typeContext;
     private final QueryNodeHelper queryHelper;
 
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
@@ -70,6 +73,7 @@ public class AccumuloEventStore implements EventStore {
         this.connector = connector;
         this.indexTable = indexTable;
         this.shardTable = shardTable;
+        this.typeContext = DEFAULT_TYPES; //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -80,7 +84,7 @@ public class AccumuloEventStore implements EventStore {
             configureShardTable(connector, this.indexTable);
         }
 
-        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, 3, shard);
+        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, 3, shard, typeContext);
         this.multiTableWriter = connector.createMultiTableBatchWriter(100000L, 10000L, 3);
     }
 
@@ -216,7 +220,7 @@ public class AccumuloEventStore implements EventStore {
                 if(itr.hasNext()) {
                     Map.Entry<Key,Value> event = itr.next();
 
-                    return ObjectMapperContext.getInstance().getObjectMapper()
+                    return new ObjectMapper().withModule(new TupleModule(typeContext))
                             .readValue(new String(event.getValue().get()), StoreEntry.class);
                 }
 

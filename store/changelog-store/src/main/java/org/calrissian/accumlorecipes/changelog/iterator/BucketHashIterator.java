@@ -26,7 +26,8 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.mango.serialization.ObjectMapperContext;
+import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
@@ -37,10 +38,12 @@ import java.util.Map;
 
 import static org.calrissian.accumlorecipes.changelog.support.Utils.hashEntry;
 import static org.calrissian.mango.hash.support.HashUtils.hashString;
+import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 public class BucketHashIterator extends WrappingIterator {
 
-    ObjectMapper objectMapper = ObjectMapperContext.getInstance().getObjectMapper();
+    private ObjectMapper objectMapper;
+    private TypeContext typeContext;
 
     protected  String currentBucket;
     protected List<String> hashes;
@@ -53,6 +56,8 @@ public class BucketHashIterator extends WrappingIterator {
             throws IOException {
 
         super.init(source, options, env);
+        typeContext = DEFAULT_TYPES;   //TODO make types configurable.
+        objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
         hashes = new ArrayList<String>();
     }
 
@@ -108,11 +113,10 @@ public class BucketHashIterator extends WrappingIterator {
                 super.next();
 
                 StoreEntry entry = objectMapper.readValue(new String(value.get()), StoreEntry.class);
-                hashes.add(new String(hashEntry(entry)));
+                hashes.add(new String(hashEntry(entry, typeContext)));
             }
 
             if(hashes.size() > 0) {
-
                 val = new Value(hashString(objectMapper.writeValueAsString(hashes)).getBytes());
                 retKey = new Key(new Text(nowBucket));
             }

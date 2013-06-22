@@ -26,13 +26,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static java.lang.Long.parseLong;
 import static java.util.Collections.sort;
 import static org.calrissian.accumlorecipes.changelog.support.Constants.DELIM;
 import static org.calrissian.mango.hash.support.HashUtils.hashString;
 
 public class Utils {
-
-    public static TypeContext CONTEXT = TypeContext.getInstance();
 
     public static final Long MAX_TIME = 999999999999999999l;
     public static final String DATE_FORMAT = "yyyyMMddHHmmssSSS";
@@ -42,16 +41,15 @@ public class Utils {
      * @param entry
      * @return
      */
-    public static byte[] hashEntry(StoreEntry entry) {
+    public static byte[] hashEntry(StoreEntry entry, TypeContext typeContext) {
 
         List<Tuple> tuples = new ArrayList(entry.getTuples());
 
-        sort(tuples, new TupleComparator());
+        sort(tuples, new TupleComparator(typeContext));
 
         String tupleString = entry.getId();
-        for(Tuple tuple : tuples) {
-            tupleString += tupleToString(tuple) + ",";
-        }
+        for(Tuple tuple : tuples)
+            tupleString += tupleToString(tuple, typeContext) + ",";
 
         try {
             return hashString(tupleString).getBytes();
@@ -67,14 +65,10 @@ public class Utils {
      * @return
      */
     public static Long truncatedReverseTimestamp(long timestamp, BucketSize bucketSize) {
-
         timestamp = timestamp - (timestamp % bucketSize.getMs());
-
         String minutes = new SimpleDateFormat(DATE_FORMAT).format(new Date(timestamp));
-        Long l = Long.parseLong(minutes);
 
-        return MAX_TIME - l;
-
+        return MAX_TIME - parseLong(minutes);
     }
 
     public static Long reverseTimestampToNormalTime(long timestamp) {
@@ -89,16 +83,15 @@ public class Utils {
 
     public static Long reverseTimestamp(long timestamp) {
         String seconds = new SimpleDateFormat(DATE_FORMAT).format(new Date(timestamp));
-        Long l = Long.parseLong(seconds);
-        long revTs = MAX_TIME - l;
+        long revTs = MAX_TIME - parseLong(seconds);
 
         return revTs;
     }
 
-    public static String tupleToString(Tuple tuple) {
+    public static String tupleToString(Tuple tuple, TypeContext typeContext) {
 
         try {
-            return tuple.getKey() + DELIM + CONTEXT.normalize(tuple.getValue()) +
+            return tuple.getKey() + DELIM + typeContext.normalize(tuple.getValue()) +
                     "\u0000" + tuple.getVisibility();
         } catch (TypeNormalizationException e) {
             throw new RuntimeException(e);
