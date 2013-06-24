@@ -17,17 +17,17 @@ package org.calrissian.accumlorecipes.changelog.support;
 
 import com.google.common.collect.ComparisonChain;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.TypeContext;
-import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.mango.types.TypeRegistry;
+import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.Comparator;
 
 public class TupleComparator implements Comparator<Tuple> {
 
-    private final TypeContext typeContext;
+    private final TypeRegistry<String> typeRegistry;
 
-    public TupleComparator(TypeContext typeContext) {
-        this.typeContext = typeContext;
+    public TupleComparator(TypeRegistry<String> typeRegistry) {
+        this.typeRegistry = typeRegistry;
     }
 
     @Override
@@ -35,11 +35,11 @@ public class TupleComparator implements Comparator<Tuple> {
         try {
             return ComparisonChain.start()
                     .compare(tuple.getKey(), tuple1.getKey())
-                    .compare(typeContext.normalize(tuple.getValue()), typeContext.normalize(tuple.getValue()))
+                    .compare(typeRegistry.encode(tuple.getValue()), typeRegistry.encode(tuple.getValue()))
                     .compare(tuple.getVisibility(), tuple.getVisibility())
                     .result();
 
-        } catch (TypeNormalizationException e) {
+        } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }
     }

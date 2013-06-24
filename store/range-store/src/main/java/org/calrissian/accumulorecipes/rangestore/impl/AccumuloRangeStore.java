@@ -22,9 +22,8 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
-import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.mango.domain.ValueRange;
 
 import java.util.Iterator;
@@ -170,7 +169,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         }
     }
 
-    private T getMaxDistance(Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
+    private T getMaxDistance(Authorizations auths) throws TableNotFoundException {
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(prefix(INDEX_MAXDISTANCE));
         scanner.setBatchSize(1);
@@ -184,7 +183,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         return helper.decodeComplement(entry.getKey().getRow().toString().split(DELIM)[1]);
     }
 
-    private Iterator<ValueRange<T>> forwardIterator(final T rangeLow, final T rangeHigh, Authorizations auths, final ValueRange<T> extremes) throws TableNotFoundException, TypeNormalizationException {
+    private Iterator<ValueRange<T>> forwardIterator(final T rangeLow, final T rangeHigh, Authorizations auths, final ValueRange<T> extremes) throws TableNotFoundException {
 
         String lowComplement = helper.encodeComplement(rangeLow);
         String high = helper.encode(rangeHigh);
@@ -222,7 +221,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         };
     }
 
-    private Iterator<ValueRange<T>> reverseIterator(final T rangeLow, final T rangeHigh, Authorizations auths, final ValueRange<T> extremes) throws TableNotFoundException, TypeNormalizationException {
+    private Iterator<ValueRange<T>> reverseIterator(final T rangeLow, final T rangeHigh, Authorizations auths, final ValueRange<T> extremes) throws TableNotFoundException {
 
         String low = helper.encode(rangeLow);
         String highComplement = helper.encodeComplement(rangeHigh);
@@ -260,7 +259,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         };
     }
 
-    private Iterator<ValueRange<T>> monsterIterator(final T rangeLow, final T rangeHigh, T maxDistance, final ValueRange<T> extremes, Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
+    private Iterator<ValueRange<T>> monsterIterator(final T rangeLow, final T rangeHigh, T maxDistance, final ValueRange<T> extremes, Authorizations auths) throws TableNotFoundException {
 
         //if the extremes range is larger than the max range then there is nothing left to do
         if (helper.distance(extremes).compareTo(maxDistance) >= 0)

@@ -33,7 +33,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -48,7 +48,7 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class QueryNodeHelper {
 
-    private final TypeContext typeContext;
+    private final TypeRegistry<String> typeRegistry;
     private final ObjectMapper objectMapper;
     private Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
         @Override
@@ -66,13 +66,13 @@ public class QueryNodeHelper {
     protected final Integer numThreads;
     protected final Shard shard;
 
-    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard, TypeContext typeContext) {
+    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard, TypeRegistry<String> serializeRegistry, TypeRegistry<String> normalizeRegistry) {
         this.connector = connector;
         this.shardTable = shardTable;
         this.numThreads = numThreads;
         this.shard = shard;
-        this.typeContext = typeContext;
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
+        this.typeRegistry = normalizeRegistry;
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(serializeRegistry));
     }
 
     public CloseableIterable<StoreEntry> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)
@@ -91,7 +91,7 @@ public class QueryNodeHelper {
 
             query.accept(new AndSingleDepthOnlyValidator());
 
-            AndNodeColumns andNodeColumns = new AndNodeColumns(query, typeContext);
+            AndNodeColumns andNodeColumns = new AndNodeColumns(query, typeRegistry);
 
             IteratorSetting is = new IteratorSetting(16, "eventIntersectingIterator", EventIntersectingIterator.class);
             EventIntersectingIterator.setColumnFamilies(is, andNodeColumns.getColumns(), andNodeColumns.getNotFlags());
@@ -126,8 +126,8 @@ public class QueryNodeHelper {
                 IteratorSetting iteratorSetting = new IteratorSetting(16, "eventIterator", EventIterator.class);
                 scanner.addScanIterator(iteratorSetting);
                 scanner.fetchColumnFamily(new Text(SHARD_PREFIX_B + DELIM + equalsLeaf.getKey() +
-                        DELIM + typeContext.getAliasForType(equalsLeaf.getValue()) +
-                        DELIM + typeContext.normalize(equalsLeaf.getValue())));
+                        DELIM + typeRegistry.getAlias(equalsLeaf.getValue()) +
+                        DELIM + typeRegistry.encode(equalsLeaf.getValue())));
             } else {
                 throw new IllegalArgumentException("The query " + query + " was not supported");
             }
