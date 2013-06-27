@@ -23,6 +23,7 @@ import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.rangestore.helper.LongRangeHelper;
 import org.calrissian.mango.domain.ValueRange;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -42,6 +43,24 @@ public class AccumuloRangeStoreTest {
 
         assertEquals(expected.getStart(), actual.getStart());
         assertEquals(expected.getStop(), actual.getStop());
+    }
+
+    @Ignore
+    @Test
+    public void testGoofyMonsterRange() throws Exception{
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(5L, 10L)));
+        rangeStore.save(singleton(new ValueRange<Long>(90L, 95L)));
+        rangeStore.save(singleton(new ValueRange<Long>(2L, 98L)));
+        rangeStore.save(singleton(new ValueRange<Long>(20L, 80L)));
+
+        //should return [2-98] and [20-80]
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), new Authorizations()));
+
+        //actually returns [20-80], [2-98], [20-80] because the forward and monster iterator both pick up 20-80
+        assertEquals(2, results.size());
+        compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
     }
 
     @Test
