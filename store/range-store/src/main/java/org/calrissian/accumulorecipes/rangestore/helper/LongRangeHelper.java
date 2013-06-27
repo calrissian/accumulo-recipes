@@ -15,13 +15,13 @@
  */
 package org.calrissian.accumulorecipes.rangestore.helper;
 
-import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.normalizers.LongNormalizer;
 import org.calrissian.mango.domain.ValueRange;
+
+import static java.lang.Long.parseLong;
 
 public class LongRangeHelper implements RangeHelper<Long> {
 
-    private static final LongNormalizer normalizer = new LongNormalizer();
+    //private static final LongNormalizer normalizer = new LongNormalizer();
 
     /**
      * {@inheritDoc}
@@ -44,11 +44,18 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encode(Long value) {
-        try {
-            return normalizer.normalize(value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
+
+        //TODO: Use math to solve this problem.
+        //TODO: The problem is the default normalizer doesn't normalize negative numbers lexigraphically.
+        String prefix;
+        if (value >= 0) {
+            prefix = "0";
+        } else {
+            prefix = "-";
+            value = Long.MAX_VALUE + value;
         }
+
+        return prefix + String.format("%020d", value);
     }
 
     /**
@@ -56,11 +63,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encodeComplement(Long value) {
-        try {
-            return normalizer.normalize(Long.MAX_VALUE - value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        return encode(Long.MAX_VALUE - value);
     }
 
     /**
@@ -68,11 +71,13 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decode(String value) {
-        try {
-            return normalizer.denormalize(value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+
+        //TODO: Use math to solve this problem.
+        //TODO: The problem is the default normalizer doesn't normalize negative numbers lexigraphically.
+        if (value.startsWith("-"))
+            return -1 * (Long.MAX_VALUE - parseLong(value.substring(1)));
+        else
+            return parseLong(value);
     }
 
     /**
@@ -80,10 +85,6 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decodeComplement(String value) {
-        try {
-            return Long.MAX_VALUE - normalizer.denormalize(value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        return Long.MAX_VALUE - decode(value);
     }
 }

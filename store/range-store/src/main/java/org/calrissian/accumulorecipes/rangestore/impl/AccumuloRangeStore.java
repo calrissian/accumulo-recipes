@@ -15,8 +15,8 @@
  */
 package org.calrissian.accumulorecipes.rangestore.impl;
 
+import com.google.common.base.Function;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Iterators;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -32,13 +32,16 @@ import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.emptyIterator;
+import static com.google.common.collect.Iterators.transform;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
 
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
 
-    private static final String INDEX_FORWARD = "f";
-    private static final String INDEX_REVERSE = "r";
+    private static final String LOWER_BOUND_INDEX = "l";
+    private static final String UPPER_BOUND_INDEX = "r";
     private static final String INDEX_MAXDISTANCE = "s";
 
     private static final String DELIM = "\u0000";
@@ -101,10 +104,10 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
                 String high = helper.encode(range.getStop());
 
-                Mutation forwardRange = new Mutation(INDEX_FORWARD + DELIM + low + DELIM + high);
+                Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + DELIM + low + DELIM + high);
                 forwardRange.put(new Text(""), new Text(""), new Value("".getBytes()));
 
-                Mutation reverseRange = new Mutation(INDEX_REVERSE + DELIM + high + DELIM + low);
+                Mutation reverseRange = new Mutation(UPPER_BOUND_INDEX + DELIM + high + DELIM + low);
                 reverseRange.put(new Text(""), new Text(""), new Value("".getBytes()));
 
                 String distanceComplement = helper.encodeComplement(helper.distance(range));
@@ -141,10 +144,10 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
                 String high = helper.encode(range.getStop());
 
-                Mutation forwardRange = new Mutation(INDEX_FORWARD + DELIM + low + DELIM + high);
+                Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + DELIM + low + DELIM + high);
                 forwardRange.putDelete(new Text(""), new Text(""));
 
-                Mutation reverseRange = new Mutation(INDEX_REVERSE + DELIM + high + DELIM + low);
+                Mutation reverseRange = new Mutation(UPPER_BOUND_INDEX + DELIM + high + DELIM + low);
                 reverseRange.putDelete(new Text(""), new Text(""));
 
                 String distanceComplement = helper.encodeComplement(helper.distance(range));
@@ -186,25 +189,21 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                INDEX_FORWARD + DELIM + helper.encode(queryRange.getStart()) + DELIM, true,
-                INDEX_FORWARD + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff", false
+                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, true,
+                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff", false
         ));
-        final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
-        //Transform data into ranges and stop iterating after the low values exceed the high range mark.
-        return new AbstractIterator<ValueRange<T>>() {
-            @Override
-            protected ValueRange<T> computeNext() {
-                if (!iterator.hasNext())
-                    return endOfData();
-
-                String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
-                T lower = helper.decode(vals[1]);
-                T upper = helper.decode(vals[2]);
-
-                return new ValueRange<T> (lower, upper);
-            }
-        };
+        return transform(
+                scanner.iterator(),
+                new Function<Entry<Key, Value>, ValueRange<T>>() {
+                    @Override
+                    public ValueRange<T> apply(Entry<Key, Value> entry) {
+                        String vals[] = entry.getKey().getRow().toString().split(DELIM);
+                        T lower = helper.decode(vals[1]);
+                        T upper = helper.decode(vals[2]);
+                        return new ValueRange<T>(lower, upper);
+                    }
+                });
     }
 
     /**
@@ -214,8 +213,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                INDEX_REVERSE + DELIM + helper.encode(queryRange.getStart()) + DELIM, true,
-                INDEX_REVERSE + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff", false
+                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, true,
+                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff", false
         ));
         final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
@@ -234,6 +233,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                     if (lower.compareTo(queryRange.getStart()) < 0)
                         return new ValueRange<T> (lower, upper);
 
+                    //System.out.println("Wasted reverse");
                 }
                 return endOfData();
             }
@@ -241,18 +241,28 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     }
 
     /**
-     * This iterator is looking through all the ranges largest the min/max range of the items already seen.
-     * This is to catch ranges that are surrounding the query range.
+     * This iterator is looking through all the ranges surrounding the query range to see if it is inside.
+     * It uses the knowledge of the max range to limit the query to the ranges closes to the range using the following
+     * logic to generate an efficient scan
      *
-     * TODO this would be more efficient if we did (high - maxdistance -> low) on the forward table as it would only
-     * account for large intervals that are close but outside the range of the values already scanned.
+     * [(high - maxdistance) -> low]
+     *
+     * It will then ignore all ranges that don't overlap the query range.
      */
     private Iterator<ValueRange<T>> monsterIterator(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
 
+        T maxDistance = getMaxDistance(auths);
+
+        //No point of running this check if the query range has spanned the max distance.
+        if (maxDistance == null || helper.distance(queryRange).compareTo(maxDistance) >= 0)
+            return emptyIterator();
+
+        //We do [(high - maxdistance) -> low] on the forward table as it would only
+        //account for large intervals that are close but outside the range of the ranges already scanned.
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                INDEX_MAXDISTANCE + DELIM, true,
-                INDEX_MAXDISTANCE + DELIM + helper.encodeComplement(helper.distance(queryRange)), false
+                LOWER_BOUND_INDEX + DELIM + helper.encode(helper.distance(new ValueRange<T>(maxDistance, queryRange.getStop()))), true,
+                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()), false
         ));
         final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
@@ -262,37 +272,19 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
             protected ValueRange<T> computeNext() {
 
                 while (iterator.hasNext()) {
-                    Key key = iterator.next().getKey();
-                    T lower = helper.decode(key.getColumnFamily().toString());
-                    T upper = helper.decode(key.getColumnQualifier().toString());
+                    String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
+                    T lower = helper.decode(vals[1]);
+                    T upper = helper.decode(vals[2]);
 
-                    if (lower.compareTo(queryRange.getStart()) < 0 && upper.compareTo(queryRange.getStop()) >= 0)
+                    //Only include ranges where the upper range is higher or equal to the lower range.
+                    if (upper.compareTo(queryRange.getStop()) >= 0)
                         return new ValueRange<T>(lower, upper);
 
+                    //System.out.println("Wasted monster");
                 }
                 return endOfData();
             }
         };
-    }
-
-    private Iterator<ValueRange<T>> queryIterator(final ValueRange<T> queryRange, final Authorizations auths) {
-
-        try {
-            //Iterate with a forward then a reverse iterator, while keeping track of the extremes.
-            //After done iterating through then try to get a monster iterator to get the outliers
-            // using the precomputed extremes.
-
-            return Iterators.concat(
-                    forwardIterator(queryRange, auths),
-                    reverseIterator(queryRange, auths),
-                    monsterIterator(queryRange, auths)
-            );
-
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -307,7 +299,17 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         return new Iterable<ValueRange<T>>() {
             @Override
             public Iterator<ValueRange<T>> iterator() {
-                return queryIterator(range, auths);
+                try {
+                    return concat(
+                            forwardIterator(range, auths),
+                            reverseIterator(range, auths),
+                            monsterIterator(range, auths)
+                    );
+                } catch (RuntimeException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         };
     }
