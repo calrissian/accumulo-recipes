@@ -201,6 +201,11 @@ public class AccumuloRangeStoreTest {
 
         assertEquals(1, results.size());
         compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
+
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(9L, 9L), new Authorizations()));
+
+        assertEquals(1, results.size());
+        compareRanges(new ValueRange<Long>(8L, 9L), results.get(0));
     }
 
     @Test

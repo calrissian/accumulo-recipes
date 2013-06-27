@@ -276,8 +276,9 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                     T lower = helper.decode(vals[1]);
                     T upper = helper.decode(vals[2]);
 
-                    //Only include ranges where the upper range is higher or equal to the lower range.
-                    if (upper.compareTo(queryRange.getStop()) >= 0)
+                    //Only include ranges where the upper range is higher than query upper range.
+                    //as the other ranges were already accounted for in the forward and reverse iterators.
+                    if (upper.compareTo(queryRange.getStop()) > 0)
                         return new ValueRange<T>(lower, upper);
 
                     //System.out.println("Wasted monster");
