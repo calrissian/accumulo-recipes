@@ -45,7 +45,6 @@ public class AccumuloRangeStoreTest {
         assertEquals(expected.getStop(), actual.getStop());
     }
 
-    @Ignore
     @Test
     public void testGoofyMonsterRange() throws Exception{
         AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
@@ -60,7 +59,8 @@ public class AccumuloRangeStoreTest {
 
         //actually returns [20-80], [2-98], [20-80] because the forward and monster iterator both pick up 20-80
         assertEquals(2, results.size());
-        compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
+        compareRanges(new ValueRange<Long>(2L, 98L), results.get(0));
+        compareRanges(new ValueRange<Long>(20L, 80L), results.get(1));
     }
 
     @Test
@@ -100,8 +100,9 @@ public class AccumuloRangeStoreTest {
         List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 4L), new Authorizations()));
 
         assertEquals(2, results.size());
-        compareRanges(new ValueRange<Long>(3L, 7L), results.get(0));
-        compareRanges(new ValueRange<Long>(1L, 4L), results.get(1));
+        compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
+        compareRanges(new ValueRange<Long>(3L, 7L), results.get(1));
+
     }
 
     @Test
@@ -116,8 +117,9 @@ public class AccumuloRangeStoreTest {
 
         assertEquals(3, results.size());
         compareRanges(new ValueRange<Long>(0L, 500L), results.get(0));
-        compareRanges(new ValueRange<Long>(62L, 70L), results.get(1));
-        compareRanges(new ValueRange<Long>(50L, 57L), results.get(2));
+        compareRanges(new ValueRange<Long>(50L, 57L), results.get(1));
+        compareRanges(new ValueRange<Long>(62L, 70L), results.get(2));
+
     }
 
     @Test
