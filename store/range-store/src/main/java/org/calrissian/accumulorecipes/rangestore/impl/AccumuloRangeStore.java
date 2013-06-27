@@ -41,8 +41,8 @@ import static org.apache.accumulo.core.data.Range.prefix;
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
 
     private static final String LOWER_BOUND_INDEX = "l";
-    private static final String UPPER_BOUND_INDEX = "r";
-    private static final String INDEX_MAXDISTANCE = "s";
+    private static final String UPPER_BOUND_INDEX = "u";
+    private static final String DISTANCE_INDEX = "d";
 
     private static final String DELIM = "\u0000";
 
@@ -111,7 +111,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 reverseRange.put(new Text(""), new Text(""), new Value("".getBytes()));
 
                 String distanceComplement = helper.encodeComplement(helper.distance(range));
-                Mutation distanceMut = new Mutation(INDEX_MAXDISTANCE + DELIM + distanceComplement);
+                Mutation distanceMut = new Mutation(DISTANCE_INDEX + DELIM + distanceComplement);
                 distanceMut.put(new Text(low), new Text(high), new Value("".getBytes()));
 
                 writer.addMutation(forwardRange);
@@ -151,7 +151,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 reverseRange.putDelete(new Text(""), new Text(""));
 
                 String distanceComplement = helper.encodeComplement(helper.distance(range));
-                Mutation distanceMut = new Mutation(INDEX_MAXDISTANCE + DELIM + distanceComplement);
+                Mutation distanceMut = new Mutation(DISTANCE_INDEX + DELIM + distanceComplement);
                 distanceMut.putDelete(new Text(low), new Text(high));
 
                 writer.addMutation(forwardRange);
@@ -170,7 +170,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
     private T getMaxDistance(Authorizations auths) throws TableNotFoundException, TypeNormalizationException {
         Scanner scanner = connector.createScanner(tableName, auths);
-        scanner.setRange(prefix(INDEX_MAXDISTANCE));
+        scanner.setRange(prefix(DISTANCE_INDEX));
         scanner.setBatchSize(1);
 
         Iterator<Entry<Key, Value>> iterator = scanner.iterator();
@@ -189,8 +189,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, true,
-                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff", false
+                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
+                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
 
         return transform(
@@ -213,8 +213,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, true,
-                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff", false
+                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
+                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
         final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
@@ -261,8 +261,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         //account for large intervals that are close but outside the range of the ranges already scanned.
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                LOWER_BOUND_INDEX + DELIM + helper.encode(helper.distance(new ValueRange<T>(maxDistance, queryRange.getStop()))), true,
-                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()), false
+                LOWER_BOUND_INDEX + DELIM + helper.encode(helper.distance(new ValueRange<T>(maxDistance, queryRange.getStop()))) + DELIM, true,
+                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, false
         ));
         final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
