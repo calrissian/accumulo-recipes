@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.metricsstore.ext.stats;
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
@@ -39,6 +39,6 @@ public interface StatsMetricStore extends MetricStore{
      * @return
      */
     Iterable<Stats> queryStats(Date start, Date end, String group, String type, String name,
-                           MetricTimeUnit timeUnit, Authorizations auths);
+                               MetricTimeUnit timeUnit, Auths auths);
 
 }

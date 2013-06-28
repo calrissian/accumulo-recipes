@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.rangestore;
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.domain.ValueRange;
 
 /**
@@ -41,6 +41,6 @@ public interface RangeStore<T extends Comparable<T>> {
      * @param auths
      * @return
      */
-    Iterable<ValueRange<T>> query(ValueRange<T> range, Authorizations auths);
+    Iterable<ValueRange<T>> query(ValueRange<T> range, Auths auths);
 
 }

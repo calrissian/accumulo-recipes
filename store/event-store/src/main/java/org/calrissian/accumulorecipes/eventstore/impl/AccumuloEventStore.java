@@ -20,9 +20,9 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
@@ -185,20 +185,20 @@ public class AccumuloEventStore implements EventStore {
      * {@inheritDoc}
      */
     @Override
-    public CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Authorizations auths) {
-        return new QueryResultsVisitor(node, queryHelper, start, end, auths).getResults();
+    public CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Auths auths) {
+        return new QueryResultsVisitor(node, queryHelper, start, end, auths.getAuths()).getResults();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public StoreEntry get(String uuid, Authorizations auths) {
+    public StoreEntry get(String uuid, Auths auths) {
         checkNotNull(uuid);
         checkNotNull(auths);
         try {
 
-            Scanner scanner = connector.createScanner(indexTable, auths);
+            Scanner scanner = connector.createScanner(indexTable, auths.getAuths());
             scanner.setRange(new Range(uuid, uuid + DELIM_END));
 
             Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
@@ -208,7 +208,7 @@ public class AccumuloEventStore implements EventStore {
                 Map.Entry<Key,Value> entry = itr.next();
                 String shardId = entry.getKey().getColumnFamily().toString();
 
-                Scanner eventScanner = connector.createScanner(shardTable, auths);
+                Scanner eventScanner = connector.createScanner(shardTable, auths.getAuths());
                 eventScanner.setRange(new Range(shardId));
                 eventScanner.fetchColumnFamily(new Text(SHARD_PREFIX_F + DELIM + uuid));
 

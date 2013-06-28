@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.metricsstore.ext.stats.impl;
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
@@ -56,11 +56,11 @@ public class AccumuloStatsMetricStoreTest {
 
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 1);
 
-        Iterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkStats(stats, 60, 1);
     }
@@ -75,11 +75,11 @@ public class AccumuloStatsMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 3);
 
-        Iterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkStats(stats, 60, 3);
     }

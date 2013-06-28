@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumlorecipes.changelog;
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
@@ -41,7 +41,7 @@ public interface ChangelogStore {
      * @param stop
      * @return
      */
-    MerkleTree getChangeTree(Date start, Date stop, Authorizations auths);
+    MerkleTree getChangeTree(Date start, Date stop, Auths auths);
 
     /**
      * Get a Merkle tree containing hashes of each of the buckets with the given dimensions
@@ -49,7 +49,7 @@ public interface ChangelogStore {
      * @param stop
      * @return
      */
-    MerkleTree getChangeTree(Date start, Date stop, int dimensions, Authorizations auths);
+    MerkleTree getChangeTree(Date start, Date stop, int dimensions, Auths auths);
 
     /**
      * Get changesets living inside of the given buckets
@@ -58,5 +58,5 @@ public interface ChangelogStore {
      * @param buckets dates representing time increments (i.e. 15 minutes)
      * @return
      */
-    CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Authorizations auths);
+    CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Auths auths);
 }

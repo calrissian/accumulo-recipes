@@ -16,8 +16,8 @@
 package org.calrissian.accumulorecipes.blobstore.ext;
 
 
-import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.blobstore.BlobStore;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 
 import java.io.OutputStream;
 import java.util.Map;
@@ -34,7 +34,7 @@ public interface ExtendedBlobStore extends BlobStore {
      * @param auths
      * @return
      */
-    int blobSize(String key, String type, Authorizations auths);
+    int blobSize(String key, String type, Auths auths);
 
     /**
      * Returns the properties stored with the data for the given key and type.
@@ -43,7 +43,7 @@ public interface ExtendedBlobStore extends BlobStore {
      * @param auths
      * @return
      */
-    Map<String, String> getProperties(String key, String type, Authorizations auths);
+    Map<String, String> getProperties(String key, String type, Auths auths);
 
     /**
      * Provides an {@link java.io.OutputStream} to allow storage of the data into the store along with some properties.

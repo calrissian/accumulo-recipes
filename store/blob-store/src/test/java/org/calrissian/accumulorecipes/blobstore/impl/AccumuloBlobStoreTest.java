@@ -20,7 +20,7 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.junit.Test;
@@ -61,7 +61,7 @@ public class AccumuloBlobStoreTest {
 
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -80,7 +80,7 @@ public class AccumuloBlobStoreTest {
 
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -100,7 +100,7 @@ public class AccumuloBlobStoreTest {
         mapper.writeValue(new GZIPOutputStream(storageStream), testValues);
 
         //reassemble the json after unzipping the stream.
-        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         Collection<String> actualValues = mapper.readValue(new GZIPInputStream(retrievalStream), strColRef);
 
         //if there were no errors, then verify that the two collections are equal.
