@@ -21,7 +21,7 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.junit.Test;
@@ -95,7 +95,7 @@ public class AccumuloMetricStoreTest {
 
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 1);
     }
@@ -110,7 +110,7 @@ public class AccumuloMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Authorizations());
+        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 3);
     }
