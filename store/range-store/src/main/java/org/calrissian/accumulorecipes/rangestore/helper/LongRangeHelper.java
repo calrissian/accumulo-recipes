@@ -17,11 +17,25 @@ package org.calrissian.accumulorecipes.rangestore.helper;
 
 import org.calrissian.mango.domain.ValueRange;
 
-import static java.lang.Long.parseLong;
+import static java.lang.Character.digit;
 
 public class LongRangeHelper implements RangeHelper<Long> {
 
-    //private static final LongNormalizer normalizer = new LongNormalizer();
+    //TODO move this logic to mango when the types situation gets worked out.
+    private static final char POS = '0';
+    private static final char NEG = '-';
+
+    /**
+     * Helper function simply because Long.parseLong(hex,16) does not handle negative numbers that were
+     * converted to hex.
+     */
+    private static long fromHex(String hex) {
+        long value = 0;
+        for (int i = 0; i < hex.length(); i++)
+            value = (value << 4) | digit(hex.charAt(i), 16);
+
+        return value;
+    }
 
     /**
      * {@inheritDoc}
@@ -44,18 +58,11 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encode(Long value) {
-
-        //TODO: Use math to solve this problem.
-        //TODO: The problem is the default normalizer doesn't normalize negative numbers lexigraphically.
-        String prefix;
-        if (value >= 0) {
-            prefix = "0";
-        } else {
-            prefix = "-";
-            value = Long.MAX_VALUE + value;
-        }
-
-        return prefix + String.format("%020d", value);
+        //First have neg and positive characters simply to allow positives to sort first
+        //The second part works because java represents negative numbers as 2's compliment
+        //Then when it converts to hex in the format, it simply encodes the bits.
+        //This property means that negative numbers when converted to hex are already lexicographically sorted.
+        return String.format("%c%016x", (value < 0 ? NEG : POS), value);
     }
 
     /**
@@ -63,7 +70,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encodeComplement(Long value) {
-        return encode(Long.MAX_VALUE - value);
+        return encode(~value);
     }
 
     /**
@@ -71,13 +78,8 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decode(String value) {
-
-        //TODO: Use math to solve this problem.
-        //TODO: The problem is the default normalizer doesn't normalize negative numbers lexigraphically.
-        if (value.startsWith("-"))
-            return -1 * (Long.MAX_VALUE - parseLong(value.substring(1)));
-        else
-            return parseLong(value);
+        //Ignore first character and convert from hex back to a long.
+        return fromHex(value.substring(1));
     }
 
     /**
@@ -85,6 +87,6 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decodeComplement(String value) {
-        return Long.MAX_VALUE - decode(value);
+        return ~decode(value);
     }
 }
