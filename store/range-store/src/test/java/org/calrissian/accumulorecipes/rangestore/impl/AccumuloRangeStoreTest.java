@@ -20,7 +20,6 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.rangestore.helper.LongRangeHelper;
 import org.calrissian.mango.domain.ValueRange;
@@ -57,7 +56,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(20L, 80L)));
 
         //should return [2-98] and [20-80]
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), new Authorizations()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), new Auths()));
 
         //actually returns [20-80], [2-98], [20-80] because the forward and monster iterator both pick up 20-80
         assertEquals(2, results.size());
