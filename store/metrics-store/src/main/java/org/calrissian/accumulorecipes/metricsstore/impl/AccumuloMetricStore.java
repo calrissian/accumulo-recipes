@@ -23,9 +23,9 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
@@ -111,7 +111,7 @@ public class AccumuloMetricStore implements MetricStore {
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
     }
 
-    protected Scanner metricScanner(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
+    protected Scanner metricScanner(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
@@ -124,7 +124,7 @@ public class AccumuloMetricStore implements MetricStore {
 
             //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
             //timestamp.  Which is used to provide the latest results first.
-            Scanner scanner = connector.createScanner(tableName, auths);
+            Scanner scanner = connector.createScanner(tableName, auths.getAuths());
             scanner.setRange(new Range(
                     combine(group, generateTimestamp(end.getTime(), timeUnit)),
                     combine(group, generateTimestamp(start.getTime(), timeUnit))
@@ -217,7 +217,7 @@ public class AccumuloMetricStore implements MetricStore {
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
+    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
         return transform(
                 metricScanner(start, end, group, type, name, timeUnit, auths),
                 new MetricTransform<Metric>(timeUnit) {

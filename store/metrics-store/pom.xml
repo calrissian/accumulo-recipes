@@ -28,10 +28,13 @@ limitations under the License.
     <packaging>jar</packaging>
 
     <dependencies>
+        <!-- Accumulo Recipes -->
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+            <groupId>org.calrissian.accumulorecipes</groupId>
+            <artifactId>commons</artifactId>
+            <version>${project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>

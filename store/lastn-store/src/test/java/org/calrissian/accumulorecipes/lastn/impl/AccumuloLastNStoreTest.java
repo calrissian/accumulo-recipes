@@ -21,7 +21,7 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
@@ -62,7 +62,7 @@ public class AccumuloLastNStoreTest {
         lastNStore.put("index1", entry3);
         lastNStore.put("index1", entry4);
 
-        List<StoreEntry> results = Lists.newArrayList(lastNStore.get("index1", new Authorizations()));
+        List<StoreEntry> results = Lists.newArrayList(lastNStore.get("index1", new Auths()));
         assertEquals(3, results.size());
         assertEquals(entry4, results.get(0));
         assertEquals(entry3, results.get(1));

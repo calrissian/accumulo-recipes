@@ -19,7 +19,7 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.CustomMetricStore;
@@ -76,7 +76,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Authorizations auths) {
+    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
 
         Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
@@ -101,7 +101,8 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
      * {@inheritDoc}
      */
     @Override
-    public <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name, Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Authorizations auths) throws IllegalAccessException, InstantiationException {
+    public <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name, Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Auths
+            auths) throws IllegalAccessException, InstantiationException {
         checkNotNull(function);
 
         final MetricFunction<T> impl = function.newInstance();

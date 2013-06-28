@@ -20,8 +20,8 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.blobstore.ext.impl.ExtendedAccumuloBlobStore;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.junit.Test;
@@ -61,10 +61,10 @@ public class ExtendedAccumuloBlobStoreTest {
         storageStream.write(testBlob);
         storageStream.close();
 
-        assertEquals(CHUNK_SIZE, blobStore.blobSize("test", "1", new Authorizations()));
+        assertEquals(CHUNK_SIZE, blobStore.blobSize("test", "1", new Auths()));
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -81,10 +81,10 @@ public class ExtendedAccumuloBlobStoreTest {
         storageStream.write(testBlob);
         storageStream.close();
 
-        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Authorizations()));
+        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Auths()));
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -104,7 +104,7 @@ public class ExtendedAccumuloBlobStoreTest {
         mapper.writeValue(new GZIPOutputStream(storageStream), testValues);
 
         //reassemble the json after unzipping the stream.
-        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         Collection<String> actualValues = mapper.readValue(new GZIPInputStream(retrievalStream), strColRef);
 
         //if there were no errors, then verify that the two collections are equal.
@@ -124,17 +124,17 @@ public class ExtendedAccumuloBlobStoreTest {
         storageStream.write(testBlob);
         storageStream.close();
 
-        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Authorizations()));
+        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Auths()));
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Authorizations());
+        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         retrievalStream.read(actual);
         retrievalStream.close();
 
         assertArrayEquals(testBlob, actual);
 
         //now test props
-        Map<String, String> retrievedProps = blobStore.getProperties("test", "1", new Authorizations());
+        Map<String, String> retrievedProps = blobStore.getProperties("test", "1", new Auths());
         assertEquals(testProps.size() ,retrievedProps.size());
 
         assertThat(retrievedProps, is(equalTo(testProps)));

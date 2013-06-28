@@ -23,6 +23,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
 import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.mango.domain.ValueRange;
@@ -32,9 +33,7 @@ import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterators.concat;
-import static com.google.common.collect.Iterators.emptyIterator;
-import static com.google.common.collect.Iterators.transform;
+import static com.google.common.collect.Iterators.*;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
 
@@ -292,19 +291,20 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
      * {@inheritDoc}
      */
     @Override
-    public Iterable<ValueRange<T>> query(final ValueRange<T> range, final Authorizations auths) {
+    public Iterable<ValueRange<T>> query(final ValueRange<T> range, Auths auths) {
         checkNotNull(range);
         checkNotNull(auths);
         checkState(helper.isValid(range), "Invalid range.");
 
+        final Authorizations authorizations = auths.getAuths();
         return new Iterable<ValueRange<T>>() {
             @Override
             public Iterator<ValueRange<T>> iterator() {
                 try {
                     return concat(
-                            forwardIterator(range, auths),
-                            reverseIterator(range, auths),
-                            monsterIterator(range, auths)
+                            forwardIterator(range, authorizations),
+                            reverseIterator(range, authorizations),
+                            monsterIterator(range, authorizations)
                     );
                 } catch (RuntimeException e) {
                     throw e;

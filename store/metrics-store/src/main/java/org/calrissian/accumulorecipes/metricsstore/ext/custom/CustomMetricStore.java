@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom;
 
 
-import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
@@ -43,6 +43,6 @@ public interface CustomMetricStore extends MetricStore {
      * @return
      */
     <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name,
-                               Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Authorizations auths) throws IllegalAccessException, InstantiationException;
+                                              Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Auths auths) throws IllegalAccessException, InstantiationException;
 
 }

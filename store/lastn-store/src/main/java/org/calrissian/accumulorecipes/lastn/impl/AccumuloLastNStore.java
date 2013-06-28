@@ -22,9 +22,9 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
@@ -177,12 +177,12 @@ public class AccumuloLastNStore implements LastNStore {
      * @return
      */
     @Override
-    public Iterable<StoreEntry> get(String index, Authorizations auths) {
+    public Iterable<StoreEntry> get(String index, Auths auths) {
         checkNotNull(index);
         checkNotNull(auths);
 
         try {
-            Scanner scanner = connector.createScanner(tableName, auths);
+            Scanner scanner = connector.createScanner(tableName, auths.getAuths());
             scanner.setRange(new Range(index));
             scanner.fetchColumnFamily(new Text(DELIM + "INDEX"));
 
