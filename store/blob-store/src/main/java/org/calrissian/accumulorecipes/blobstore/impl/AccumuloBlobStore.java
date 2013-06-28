@@ -20,10 +20,10 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.BlobStore;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.io.AbstractBufferedInputStream;
 import org.calrissian.mango.io.AbstractBufferedOutputStream;
 import org.calrissian.mango.types.TypeEncoder;
@@ -245,13 +245,13 @@ public class AccumuloBlobStore implements BlobStore {
      * {@inheritDoc}
      */
     @Override
-    public InputStream get(String key, String type, Authorizations auths) {
+    public InputStream get(String key, String type, Auths auths) {
         notNull(auths, "Null authorizations");
 
         try {
             String rowId = generateRowId(key, type);
             //Scan for a range including only the data
-            Scanner scanner = connector.createScanner(tableName, auths);
+            Scanner scanner = connector.createScanner(tableName, auths.getAuths());
             scanner.setRange(Range.exact(rowId, DATA_CF));
             scanner.fetchColumnFamily(new Text(DATA_CF));
 

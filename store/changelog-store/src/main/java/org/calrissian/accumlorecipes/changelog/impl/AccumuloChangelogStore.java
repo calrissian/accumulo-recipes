@@ -21,13 +21,13 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.ChangelogStore;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.iterator.BucketHashIterator;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
@@ -144,7 +144,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
     }
 
     @Override
-    public MerkleTree getChangeTree(Date start, Date stop, Authorizations auths) {
+    public MerkleTree getChangeTree(Date start, Date stop, Auths auths) {
         return getChangeTree(start, stop, 4, auths); //default to a quad tree
     }
 
@@ -152,14 +152,14 @@ public class AccumuloChangelogStore implements ChangelogStore {
      * {@inheritDoc}
      */
     @Override
-    public MerkleTree getChangeTree(Date start, Date stop, int dimensions, Authorizations auths) {
+    public MerkleTree getChangeTree(Date start, Date stop, int dimensions, Auths auths) {
         checkNotNull(start);
         checkNotNull(stop);
         checkArgument(dimensions > 1);
         checkNotNull(auths);
 
         try {
-            Scanner scanner = connector.createScanner(tableName, auths);
+            Scanner scanner = connector.createScanner(tableName, auths.getAuths());
             IteratorSetting is = new IteratorSetting(2, BucketHashIterator.class);
             BucketHashIterator.setBucketSize(is, bucketSize);
             scanner.addScanIterator(is);
@@ -221,11 +221,11 @@ public class AccumuloChangelogStore implements ChangelogStore {
      * @return
      */
     @Override
-    public CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Authorizations auths) {
+    public CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Auths auths) {
         checkNotNull(buckets);
         checkNotNull(auths);
         try {
-            final BatchScanner scanner = connector.createBatchScanner(tableName, auths, 3);
+            final BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), 3);
 
             List<Range> ranges = new ArrayList<Range>();
             for(Date date : buckets) {

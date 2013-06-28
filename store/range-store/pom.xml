@@ -29,6 +29,13 @@ limitations under the License.
     <packaging>jar</packaging>
 
     <dependencies>
+        <!-- Accumulo Recipes -->
+        <dependency>
+            <groupId>org.calrissian.accumulorecipes</groupId>
+            <artifactId>commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Mango -->
         <dependency>
             <groupId>org.calrissian.mango</groupId>

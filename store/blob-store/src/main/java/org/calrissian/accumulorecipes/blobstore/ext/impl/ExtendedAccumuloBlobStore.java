@@ -29,6 +29,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.ext.ExtendedBlobStore;
 import org.calrissian.accumulorecipes.blobstore.impl.AccumuloBlobStore;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.OutputStream;
@@ -123,12 +124,12 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
      * {@inheritDoc}
      */
     @Override
-    public int blobSize(String key, String type, Authorizations auths) {
+    public int blobSize(String key, String type, Auths auths) {
         notNull(auths, "Null authorizations");
 
         try {
             //Scan over the range for the key, but only include the size column family
-            Scanner scanner = connector.createScanner(tableName, auths);
+            Scanner scanner = connector.createScanner(tableName, auths.getAuths());
             scanner.setRange(Range.exact(generateRowId(key, type), SIZE_CF));
             scanner.fetchColumnFamily(new Text(SIZE_CF));
             scanner.setBatchSize(1);
@@ -150,12 +151,12 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
      * {@inheritDoc}
      */
     @Override
-    public Map<String, String> getProperties(String key, String type, Authorizations auths) {
+    public Map<String, String> getProperties(String key, String type, Auths auths) {
         notNull(auths, "Null authorizations");
 
         try {
             //Scan over the range for the key, but only include the property column family
-            Scanner scanner = connector.createScanner(tableName, auths);
+            Scanner scanner = connector.createScanner(tableName, auths.getAuths());
             scanner.setRange(Range.exact(generateRowId(key, type), PROP_CF));
             scanner.fetchColumnFamily(new Text(PROP_CF));
 

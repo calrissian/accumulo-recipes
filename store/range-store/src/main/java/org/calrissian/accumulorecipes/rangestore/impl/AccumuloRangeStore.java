@@ -22,6 +22,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
 import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.mango.domain.ValueRange;
@@ -350,7 +351,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
      * {@inheritDoc}
      */
     @Override
-    public Iterable<ValueRange<T>> query(final ValueRange<T> range, final Authorizations auths) {
+    public Iterable<ValueRange<T>> query(final ValueRange<T> range, final Auths auths) {
         checkNotNull(range);
         checkNotNull(auths);
         checkState(helper.isValid(range), "Invalid range.");
@@ -358,7 +359,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         return new Iterable<ValueRange<T>>() {
             @Override
             public Iterator<ValueRange<T>> iterator() {
-                return queryIterator(range.getStart(), range.getStop(), auths);
+                return queryIterator(range.getStart(), range.getStop(), auths.getAuths());
             }
         };
     }

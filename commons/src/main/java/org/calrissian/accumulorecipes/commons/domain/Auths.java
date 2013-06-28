@@ -15,6 +15,8 @@
  */
 package org.calrissian.accumulorecipes.commons.domain;
 
+import org.apache.accumulo.core.security.Authorizations;
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -48,8 +50,8 @@ public class Auths extends LinkedHashSet<String> {
         this(asList(auths));
     }
 
-    public String[] getAuths() {
-        return toArray(new String[size()]);
+    public Authorizations getAuths() {
+        return new Authorizations(toArray(new String[size()]));
     }
 
     public String serialize() {
