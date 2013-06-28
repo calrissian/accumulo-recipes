@@ -22,8 +22,6 @@ import static java.lang.Character.digit;
 public class LongRangeHelper implements RangeHelper<Long> {
 
     //TODO move this logic to mango when the types situation gets worked out.
-    private static final char POS = '0';
-    private static final char NEG = '-';
 
     /**
      * Helper function simply because Long.parseLong(hex,16) does not handle negative numbers that were
@@ -58,11 +56,11 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encode(Long value) {
-        //First have neg and positive characters simply to allow positives to sort first
-        //The second part works because java represents negative numbers as 2's compliment
+        //First I flip the first bit (not the same as multiplying by -1)
+        //The encoding part works because java represents negative numbers as 2's compliment
         //Then when it converts to hex in the format, it simply encodes the bits.
         //This property means that negative numbers when converted to hex are already lexicographically sorted.
-        return String.format("%c%016x", (value < 0 ? NEG : POS), value);
+        return String.format("%016x", value ^ Long.MIN_VALUE);
     }
 
     /**
@@ -78,8 +76,8 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decode(String value) {
-        //Ignore first character and convert from hex back to a long.
-        return fromHex(value.substring(1));
+        //flip first bit back
+        return fromHex(value) ^ Long.MIN_VALUE;
     }
 
     /**
