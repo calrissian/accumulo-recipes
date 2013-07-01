@@ -15,13 +15,25 @@
  */
 package org.calrissian.accumulorecipes.rangestore.helper;
 
-import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.normalizers.LongNormalizer;
 import org.calrissian.mango.domain.ValueRange;
+
+import static java.lang.Character.digit;
 
 public class LongRangeHelper implements RangeHelper<Long> {
 
-    private static final LongNormalizer normalizer = new LongNormalizer();
+    //TODO move this logic to mango when the types situation gets worked out.
+
+    /**
+     * Helper function simply because Long.parseLong(hex,16) does not handle negative numbers that were
+     * converted to hex.
+     */
+    private static long fromHex(String hex) {
+        long value = 0;
+        for (int i = 0; i < hex.length(); i++)
+            value = (value << 4) | digit(hex.charAt(i), 16);
+
+        return value;
+    }
 
     /**
      * {@inheritDoc}
@@ -44,11 +56,11 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encode(Long value) {
-        try {
-            return normalizer.normalize(value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        //First I flip the first bit (not the same as multiplying by -1)
+        //The encoding part works because java represents negative numbers as 2's compliment
+        //Then when it converts to hex in the format, it simply encodes the bits.
+        //This property means that negative numbers when converted to hex are already lexicographically sorted.
+        return String.format("%016x", value ^ Long.MIN_VALUE);
     }
 
     /**
@@ -56,11 +68,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encodeComplement(Long value) {
-        try {
-            return normalizer.normalize(Long.MAX_VALUE - value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        return encode(~value);
     }
 
     /**
@@ -68,11 +76,8 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decode(String value) {
-        try {
-            return normalizer.denormalize(value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        //flip first bit back
+        return fromHex(value) ^ Long.MIN_VALUE;
     }
 
     /**
@@ -80,10 +85,6 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decodeComplement(String value) {
-        try {
-            return Long.MAX_VALUE - normalizer.denormalize(value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        return ~decode(value);
     }
 }
