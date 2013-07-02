@@ -45,9 +45,9 @@ import static java.util.Map.Entry;
 import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
+import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
-import static org.calrissian.mango.types.GenericTypeEncoders.DEFAULT_TYPES;
 
 /**
  * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent
@@ -93,7 +93,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
         this.connector = connector;
         this.tableName = tableName;
         this.bucketSize = bucketSize;
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(DEFAULT_TYPES)); //TODO allow caller to pass in types.
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(ACCUMULO_TYPES)); //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);

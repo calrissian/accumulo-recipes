@@ -66,13 +66,13 @@ public class QueryNodeHelper {
     protected final Integer numThreads;
     protected final Shard shard;
 
-    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard, TypeRegistry<String> serializeRegistry, TypeRegistry<String> normalizeRegistry) {
+    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard, TypeRegistry<String> typeRegistry) {
         this.connector = connector;
         this.shardTable = shardTable;
         this.numThreads = numThreads;
         this.shard = shard;
-        this.typeRegistry = normalizeRegistry;
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(serializeRegistry));
+        this.typeRegistry = typeRegistry;
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
     }
 
     public CloseableIterable<StoreEntry> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)

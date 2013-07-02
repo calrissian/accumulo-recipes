@@ -29,11 +29,9 @@ import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.Shard;
 import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
-import org.calrissian.mango.accumulo.types.AccumuloTypeEncoders;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.GenericTypeEncoders;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -44,6 +42,7 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
+import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 
 /**
  * The Accumulo implementation of the EventStore which uses deterministic sharding to distribute ingest/queries over
@@ -59,8 +58,7 @@ public class AccumuloEventStore implements EventStore {
     private final String shardTable;
     private final MultiTableBatchWriter multiTableWriter;
 
-    private final TypeRegistry<String> serializeRegistry;
-    private final TypeRegistry<String> normalizeRegistry;
+    private final TypeRegistry<String> typeRegistry;
     private final QueryNodeHelper queryHelper;
 
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
@@ -75,8 +73,7 @@ public class AccumuloEventStore implements EventStore {
         this.connector = connector;
         this.indexTable = indexTable;
         this.shardTable = shardTable;
-        this.serializeRegistry = GenericTypeEncoders.DEFAULT_TYPES; //TODO allow caller to pass in types.
-        this.normalizeRegistry = AccumuloTypeEncoders.ACCUMULO_TYPES; //TODO allow caller to pass in types.
+        this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -87,7 +84,7 @@ public class AccumuloEventStore implements EventStore {
             configureShardTable(connector, this.indexTable);
         }
 
-        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, 3, shard, serializeRegistry, normalizeRegistry);
+        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, 3, shard, typeRegistry);
         this.multiTableWriter = connector.createMultiTableBatchWriter(100000L, 10000L, 3);
     }
 
@@ -147,24 +144,24 @@ public class AccumuloEventStore implements EventStore {
 
                         // forward mutation
                         shardMutation.put(new Text(SHARD_PREFIX_F + DELIM + event.getId()),
-                                new Text(tuple.getKey() + DELIM + normalizeRegistry.getAlias(tuple.getValue()) + DELIM +
-                                        normalizeRegistry.encode(tuple.getValue())),
+                                new Text(tuple.getKey() + DELIM + typeRegistry.getAlias(tuple.getValue()) + DELIM +
+                                        typeRegistry.encode(tuple.getValue())),
                                 new ColumnVisibility(tuple.getVisibility()),
                                 event.getTimestamp(),
                                 new Value("".getBytes()));
 
                         // reverse mutation
                         shardMutation.put(new Text(SHARD_PREFIX_B + DELIM + tuple.getKey() + DELIM +
-                                normalizeRegistry.getAlias(tuple.getValue()) + DELIM +
-                                normalizeRegistry.encode(tuple.getValue())),
+                                typeRegistry.getAlias(tuple.getValue()) + DELIM +
+                                typeRegistry.encode(tuple.getValue())),
                                 new Text(event.getId()),
                                 new ColumnVisibility(tuple.getVisibility()),
                                 event.getTimestamp(),
                                 new Value("".getBytes()));  // forward mutation
 
                         // value mutation
-                        shardMutation.put(new Text(SHARD_PREFIX_V + DELIM + normalizeRegistry.getAlias(tuple.getValue()) +
-                                DELIM + normalizeRegistry.encode(tuple.getValue())),
+                        shardMutation.put(new Text(SHARD_PREFIX_V + DELIM + typeRegistry.getAlias(tuple.getValue()) +
+                                DELIM + typeRegistry.encode(tuple.getValue())),
                                 new Text(tuple.getKey() + DELIM + event.getId()),
                                 new ColumnVisibility(tuple.getVisibility()),
                                 event.getTimestamp(),
@@ -223,7 +220,7 @@ public class AccumuloEventStore implements EventStore {
                 if(itr.hasNext()) {
                     Map.Entry<Key,Value> event = itr.next();
 
-                    return new ObjectMapper().withModule(new TupleModule(serializeRegistry))
+                    return new ObjectMapper().withModule(new TupleModule(typeRegistry))
                             .readValue(new String(event.getValue().get()), StoreEntry.class);
                 }
 

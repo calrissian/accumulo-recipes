@@ -39,7 +39,7 @@ import java.util.Map;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.hashEntry;
-import static org.calrissian.mango.types.GenericTypeEncoders.DEFAULT_TYPES;
+import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 
 public class BucketHashIterator extends WrappingIterator {
 
@@ -57,7 +57,7 @@ public class BucketHashIterator extends WrappingIterator {
             throws IOException {
 
         super.init(source, options, env);
-        typeRegistry = DEFAULT_TYPES;   //TODO make types configurable.
+        typeRegistry = ACCUMULO_TYPES;   //TODO make types configurable.
         objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
         hashes = new ArrayList<String>();
     }

@@ -33,7 +33,7 @@ limitations under the License.
     <!-- Mango -->
     <dependency>
       <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-core</artifactId>
+      <artifactId>mango-accumulo</artifactId>
     </dependency>
     <!-- Hadoop / CB -->
     <dependency>
@@ -43,6 +43,12 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-core</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- JUNIT -->
     <dependency>

@@ -36,7 +36,7 @@ import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 public class IteratorUtils {
 
     public static Value retrieveFullEvent(String eventUUID, Key topKey, SortedKeyValueIterator<Key,Value> sourceItr,
-                                          TypeRegistry<String> serializeRegistry, TypeRegistry<String> normalizeRegistry) {
+                                          TypeRegistry<String> typeRegistry) {
 
         Key key = topKey;
 
@@ -70,7 +70,7 @@ public class IteratorUtils {
 
                     tuples.add(new Tuple(
                             keyValueDatatype[0],
-                            normalizeRegistry.decode(keyValueDatatype[1], keyValueDatatype[2]),
+                            typeRegistry.decode(keyValueDatatype[1], keyValueDatatype[2]),
                             nextKey.getColumnVisibility().toString()));
 
                     timestamp = nextKey.getTimestamp();
@@ -82,7 +82,7 @@ public class IteratorUtils {
             if(tuples.size() > 0)
                 event.putAll(tuples);
 
-            return new Value(new ObjectMapper().withModule(new TupleModule(serializeRegistry)).writeValueAsBytes(event));
+            return new Value(new ObjectMapper().withModule(new TupleModule(typeRegistry)).writeValueAsBytes(event));
 
         } catch (RuntimeException re) {
             throw re;
