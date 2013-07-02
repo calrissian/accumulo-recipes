@@ -59,7 +59,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encodeComplement(Long value) {
-        return encode(Long.MAX_VALUE - value);
+        return encode(~value);
     }
 
     /**
@@ -79,6 +79,6 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decodeComplement(String value) {
-        return Long.MAX_VALUE - decode(value);
+        return ~decode(value);
     }
 }
