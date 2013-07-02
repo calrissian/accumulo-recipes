@@ -20,23 +20,26 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.user.IntersectingIterator;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.accumulo.types.AccumuloTypeEncoders;
+import org.calrissian.mango.types.GenericTypeEncoders;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
 
 import static org.calrissian.accumulorecipes.eventstore.iterator.IteratorUtils.retrieveFullEvent;
-import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 public class EventIntersectingIterator extends IntersectingIterator {
 
-    private TypeContext typeContext;
+    private TypeRegistry<String> serializeRegistry;
+    private TypeRegistry<String> normalizeRegistry;
     protected SortedKeyValueIterator<Key,Value> sourceItr;
 
     public void init(SortedKeyValueIterator<Key,Value> source, java.util.Map<String,String> options, IteratorEnvironment env) throws IOException {
 
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
-        typeContext = DEFAULT_TYPES; //TODO make types configurable.
+        serializeRegistry = GenericTypeEncoders.DEFAULT_TYPES; //TODO make types configurable.
+        normalizeRegistry = AccumuloTypeEncoders.ACCUMULO_TYPES; //TODO make types configurable.
     }
 
     @Override
@@ -47,7 +50,7 @@ public class EventIntersectingIterator extends IntersectingIterator {
             Key topKey = getTopKey();
             String eventUUID = topKey.getColumnQualifier().toString();
 
-            return retrieveFullEvent(eventUUID, topKey, sourceItr, typeContext);
+            return retrieveFullEvent(eventUUID, topKey, sourceItr, serializeRegistry, normalizeRegistry);
         }
 
         return new Value("".getBytes());

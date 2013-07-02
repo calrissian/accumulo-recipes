@@ -26,9 +26,8 @@ import org.calrissian.accumulorecipes.blobstore.BlobStore;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.io.AbstractBufferedInputStream;
 import org.calrissian.mango.io.AbstractBufferedOutputStream;
-import org.calrissian.mango.types.TypeNormalizer;
-import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.normalizers.IntegerNormalizer;
+import org.calrissian.mango.types.TypeEncoder;
+import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +37,7 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.Validate.*;
+import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.integerEncoder;
 
 /**
  * An accumulo representation of the blob store. For purposes of simplicity, current implementation only stores data
@@ -54,7 +54,7 @@ import static org.apache.commons.lang.Validate.*;
  */
 public class AccumuloBlobStore implements BlobStore {
 
-    private static final TypeNormalizer<Integer> normalizer = new IntegerNormalizer();
+    private static final TypeEncoder<Integer, String> encoder = integerEncoder();
 
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
     private static final String DEFAULT_TABLE_NAME = "blobstore";
@@ -161,12 +161,12 @@ public class AccumuloBlobStore implements BlobStore {
      * @param timestamp
      * @param visibility
      * @return
-     * @throws TypeNormalizationException
+     * @throws TypeEncodingException
      */
-    protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) throws TypeNormalizationException {
+    protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) throws TypeEncodingException {
 
         Mutation mutation = new Mutation(generateRowId(key, type));
-        mutation.put(DATA_CF, normalizer.normalize(sequenceNum), visibility, timestamp, new Value(data));
+        mutation.put(DATA_CF, encoder.encode(sequenceNum), visibility, timestamp, new Value(data));
 
         return mutation;
     }

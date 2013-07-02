@@ -29,8 +29,10 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
+import org.calrissian.mango.accumulo.types.AccumuloTypeEncoders;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.GenericTypeEncoders;
+import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -42,7 +44,6 @@ import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
-import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 /**
  * Accumulo implementation of the LastN Store. This will try to create and configure the necessary table and properties
@@ -59,7 +60,7 @@ public class AccumuloLastNStore implements LastNStore {
     private final Connector connector;
     private final String tableName;
     private final BatchWriter writer;
-    private final TypeContext typeContext;
+    private final TypeRegistry<String> typeRegistry;
     private final ObjectMapper objectMapper;
 
     private Function<Entry<Key, Value>, StoreEntry> storeTransform = new Function<Entry<Key, Value>, StoreEntry>() {
@@ -99,8 +100,8 @@ public class AccumuloLastNStore implements LastNStore {
 
         this.connector = connector;
         this.tableName = tableName;
-        this.typeContext = DEFAULT_TYPES; //TODO allow caller to pass in types.
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
+        this.typeRegistry = AccumuloTypeEncoders.ACCUMULO_TYPES; //TODO allow caller to pass in types.
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(GenericTypeEncoders.DEFAULT_TYPES)); //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(this.tableName)) {
             //Create table without versioning iterator.
@@ -153,8 +154,8 @@ public class AccumuloLastNStore implements LastNStore {
             String fam = String.format("%s%s", DELIM_END, entry.getId());
             Object value = tuple.getValue();
             try {
-                String serialize = typeContext.normalize(value);
-                String aliasForType = typeContext.getAliasForType(value);
+                String serialize = typeRegistry.encode(value);
+                String aliasForType = typeRegistry.getAlias(value);
                 String qual = String.format("%s%s%s%s%s", tuple.getKey(), DELIM, serialize, DELIM, aliasForType);
                 indexMutation.put(fam, qual, new ColumnVisibility(tuple.getVisibility()), entry.getTimestamp(),
                         new Value("".getBytes()));

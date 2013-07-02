@@ -30,6 +30,11 @@ limitations under the License.
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- Mango -->
+    <dependency>
+      <groupId>org.calrissian.mango</groupId>
+      <artifactId>mango-accumulo</artifactId>
+    </dependency>
     <!-- Hadoop / CB -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>

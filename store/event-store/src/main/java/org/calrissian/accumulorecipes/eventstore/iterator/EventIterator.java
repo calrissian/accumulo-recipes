@@ -20,18 +20,20 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.accumulo.types.AccumuloTypeEncoders;
+import org.calrissian.mango.types.GenericTypeEncoders;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
 
 import static org.calrissian.accumulorecipes.eventstore.iterator.IteratorUtils.retrieveFullEvent;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.SHARD_PREFIX_B;
-import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 public class EventIterator extends WrappingIterator {
 
-    private TypeContext typeContext;
+    private TypeRegistry<String> serializeRegistry;
+    private TypeRegistry<String> normalizeRegistry;
     private SortedKeyValueIterator<Key,Value> sourceItr;
 
     public void init(SortedKeyValueIterator<Key,Value> source, java.util.Map<String,String> options,
@@ -39,7 +41,8 @@ public class EventIterator extends WrappingIterator {
 
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
-        typeContext = DEFAULT_TYPES; //TODO make types configurable.
+        serializeRegistry = GenericTypeEncoders.DEFAULT_TYPES; //TODO make types configurable.
+        normalizeRegistry = AccumuloTypeEncoders.ACCUMULO_TYPES; //TODO make types configurable.
     }
 
     @Override
@@ -57,7 +60,7 @@ public class EventIterator extends WrappingIterator {
             else
                 eventuUUID = colFam.split(DELIM)[1];
 
-            return retrieveFullEvent(eventuUUID, topKey, sourceItr, typeContext);
+            return retrieveFullEvent(eventuUUID, topKey, sourceItr, serializeRegistry, normalizeRegistry);
         }
 
         return new Value("".getBytes());

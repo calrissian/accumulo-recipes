@@ -20,7 +20,7 @@ import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +36,7 @@ public class AndNodeColumns {
     protected  final Text[] columns;
     protected  final boolean[] notFlags;
 
-    public AndNodeColumns(AndNode query, TypeContext typeContext) {
+    public AndNodeColumns(AndNode query, TypeRegistry<String> typeRegistry) {
 
         Map<String, Object> fields = new HashMap<String, Object>();
         List<String> notFields = new ArrayList<String>();
@@ -57,7 +57,7 @@ public class AndNodeColumns {
         int i = 0;
         for(Map.Entry<String, Object> entry : fields.entrySet()) {
 
-            this.columns[i] = new Text(SHARD_PREFIX_B + DELIM + entry.getKey() + DELIM + typeContext.getAliasForType(entry.getValue())
+            this.columns[i] = new Text(SHARD_PREFIX_B + DELIM + entry.getKey() + DELIM + typeRegistry.getAlias(entry.getValue())
                     + DELIM + entry.getValue());
 
             this.notFlags[i] = notFields.contains(entry.getKey()) ? true : false;
