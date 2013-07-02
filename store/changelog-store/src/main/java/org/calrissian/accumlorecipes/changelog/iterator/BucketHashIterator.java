@@ -26,7 +26,7 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -39,12 +39,12 @@ import java.util.Map;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.hashEntry;
-import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
+import static org.calrissian.mango.types.GenericTypeEncoders.DEFAULT_TYPES;
 
 public class BucketHashIterator extends WrappingIterator {
 
     private ObjectMapper objectMapper;
-    private TypeContext typeContext;
+    private TypeRegistry<String> typeRegistry;
 
     protected  String currentBucket;
     protected List<String> hashes;
@@ -57,8 +57,8 @@ public class BucketHashIterator extends WrappingIterator {
             throws IOException {
 
         super.init(source, options, env);
-        typeContext = DEFAULT_TYPES;   //TODO make types configurable.
-        objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
+        typeRegistry = DEFAULT_TYPES;   //TODO make types configurable.
+        objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
         hashes = new ArrayList<String>();
     }
 
@@ -114,7 +114,7 @@ public class BucketHashIterator extends WrappingIterator {
                 super.next();
 
                 StoreEntry entry = objectMapper.readValue(new String(value.get()), StoreEntry.class);
-                hashes.add(new String(hashEntry(entry, typeContext)));
+                hashes.add(new String(hashEntry(entry, typeRegistry)));
             }
 
             if(hashes.size() > 0) {

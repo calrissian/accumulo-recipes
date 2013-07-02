@@ -15,13 +15,16 @@
  */
 package org.calrissian.accumulorecipes.rangestore.helper;
 
-import org.calrissian.mango.types.exception.TypeNormalizationException;
-import org.calrissian.mango.types.normalizers.LongNormalizer;
 import org.calrissian.mango.domain.ValueRange;
+import org.calrissian.mango.types.TypeEncoder;
+import org.calrissian.mango.types.exception.TypeDecodingException;
+import org.calrissian.mango.types.exception.TypeEncodingException;
+
+import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.longEncoder;
 
 public class LongRangeHelper implements RangeHelper<Long> {
 
-    private static final LongNormalizer normalizer = new LongNormalizer();
+    private static final TypeEncoder<Long, String> normalizer = longEncoder();
 
     /**
      * {@inheritDoc}
@@ -45,8 +48,8 @@ public class LongRangeHelper implements RangeHelper<Long> {
     @Override
     public String encode(Long value) {
         try {
-            return normalizer.normalize(value);
-        } catch (TypeNormalizationException e) {
+            return normalizer.encode(value);
+        } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }
     }
@@ -56,11 +59,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encodeComplement(Long value) {
-        try {
-            return normalizer.normalize(Long.MAX_VALUE - value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        return encode(Long.MAX_VALUE - value);
     }
 
     /**
@@ -69,8 +68,8 @@ public class LongRangeHelper implements RangeHelper<Long> {
     @Override
     public Long decode(String value) {
         try {
-            return normalizer.denormalize(value);
-        } catch (TypeNormalizationException e) {
+            return normalizer.decode(value);
+        } catch (TypeDecodingException e) {
             throw new RuntimeException(e);
         }
     }
@@ -80,10 +79,6 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decodeComplement(String value) {
-        try {
-            return Long.MAX_VALUE - normalizer.denormalize(value);
-        } catch (TypeNormalizationException e) {
-            throw new RuntimeException(e);
-        }
+        return Long.MAX_VALUE - decode(value);
     }
 }

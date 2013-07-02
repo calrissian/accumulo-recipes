@@ -17,8 +17,8 @@ package org.calrissian.accumlorecipes.changelog.support;
 
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.TypeContext;
-import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.mango.types.TypeRegistry;
+import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,15 +41,15 @@ public class Utils {
      * @param entry
      * @return
      */
-    public static byte[] hashEntry(StoreEntry entry, TypeContext typeContext) {
+    public static byte[] hashEntry(StoreEntry entry, TypeRegistry<String> typeRegistry) {
 
         List<Tuple> tuples = new ArrayList(entry.getTuples());
 
-        sort(tuples, new TupleComparator(typeContext));
+        sort(tuples, new TupleComparator(typeRegistry));
 
         String tupleString = entry.getId();
         for(Tuple tuple : tuples)
-            tupleString += tupleToString(tuple, typeContext) + ",";
+            tupleString += tupleToString(tuple, typeRegistry) + ",";
 
         try {
             return md5Hex(tupleString).getBytes();
@@ -88,12 +88,12 @@ public class Utils {
         return revTs;
     }
 
-    public static String tupleToString(Tuple tuple, TypeContext typeContext) {
+    public static String tupleToString(Tuple tuple, TypeRegistry<String> typeRegistry) {
 
         try {
-            return tuple.getKey() + DELIM + typeContext.normalize(tuple.getValue()) +
+            return tuple.getKey() + DELIM + typeRegistry.encode(tuple.getValue()) +
                     "\u0000" + tuple.getVisibility();
-        } catch (TypeNormalizationException e) {
+        } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }
     }

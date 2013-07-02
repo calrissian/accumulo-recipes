@@ -23,7 +23,7 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -35,7 +35,8 @@ import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
 
 public class IteratorUtils {
 
-    public static Value retrieveFullEvent(String eventUUID, Key topKey, SortedKeyValueIterator<Key,Value> sourceItr, TypeContext typeContext) {
+    public static Value retrieveFullEvent(String eventUUID, Key topKey, SortedKeyValueIterator<Key,Value> sourceItr,
+                                          TypeRegistry<String> serializeRegistry, TypeRegistry<String> normalizeRegistry) {
 
         Key key = topKey;
 
@@ -69,7 +70,7 @@ public class IteratorUtils {
 
                     tuples.add(new Tuple(
                             keyValueDatatype[0],
-                            typeContext.denormalize(keyValueDatatype[2], keyValueDatatype[1]),
+                            normalizeRegistry.decode(keyValueDatatype[1], keyValueDatatype[2]),
                             nextKey.getColumnVisibility().toString()));
 
                     timestamp = nextKey.getTimestamp();
@@ -81,7 +82,7 @@ public class IteratorUtils {
             if(tuples.size() > 0)
                 event.putAll(tuples);
 
-            return new Value(new ObjectMapper().withModule(new TupleModule(typeContext)).writeValueAsBytes(event));
+            return new Value(new ObjectMapper().withModule(new TupleModule(serializeRegistry)).writeValueAsBytes(event));
 
         } catch (RuntimeException re) {
             throw re;

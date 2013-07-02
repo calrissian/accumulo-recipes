@@ -44,6 +44,11 @@ limitations under the License.
         <version>${mango.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.calrissian.mango</groupId>
+        <artifactId>mango-accumulo</artifactId>
+        <version>${mango.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>

@@ -24,12 +24,13 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.ext.ExtendedBlobStore;
 import org.calrissian.accumulorecipes.blobstore.impl.AccumuloBlobStore;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.mango.types.exception.TypeNormalizationException;
+import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.OutputStream;
 import java.util.Iterator;
@@ -110,7 +111,7 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
      * {@inheritDoc}
      */
     @Override
-    protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) throws TypeNormalizationException {
+    protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) throws TypeEncodingException {
         Mutation m = super.generateMutation(key, type, data, sequenceNum, timestamp, visibility);
 
         //add a size value to the mutation

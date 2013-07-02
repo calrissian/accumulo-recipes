@@ -24,8 +24,10 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.accumulo.types.AccumuloTypeEncoders;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.TypeContext;
+import org.calrissian.mango.types.GenericTypeEncoders;
+import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -36,7 +38,6 @@ import java.util.Collections;
 
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
-import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
 
 /**
  * An iterator to return StoreEntry objects serialized to JSON so that grouping can be done server side instead of
@@ -44,7 +45,7 @@ import static org.calrissian.mango.types.TypeContext.DEFAULT_TYPES;
  */
 public class EntryIterator extends WrappingIterator {
 
-    private TypeContext typeContext;
+    private TypeRegistry<String> typeRegistry;
     private ObjectMapper objectMapper;
     private SortedKeyValueIterator<Key,Value> sourceItr;
 
@@ -53,8 +54,8 @@ public class EntryIterator extends WrappingIterator {
 
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
-        this.typeContext = DEFAULT_TYPES; //TODO make types configurable.
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeContext));
+        this.typeRegistry = AccumuloTypeEncoders.ACCUMULO_TYPES; //TODO make types configurable.
+        this.objectMapper = new ObjectMapper().withModule(new TupleModule(GenericTypeEncoders.DEFAULT_TYPES)); //TODO make types configurable.
     }
 
     /**
@@ -98,7 +99,7 @@ public class EntryIterator extends WrappingIterator {
 
                         Tuple tuple = new Tuple(
                                 keyValueDatatype[0],
-                                typeContext.denormalize(keyValueDatatype[1], keyValueDatatype[2]),
+                                typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]),
                                 nextKey.getColumnVisibility().toString());
 
                         tuples.add(tuple);

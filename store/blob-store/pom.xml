@@ -33,7 +33,7 @@ limitations under the License.
     <!-- Mango -->
     <dependency>
       <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-core</artifactId>
+      <artifactId>mango-accumulo</artifactId>
     </dependency>
     <!-- Hadoop / CB -->
     <dependency>
