@@ -110,7 +110,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
         //Add a scan time iterator to apply the custom function.
-        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "functionCombiner", FunctionCombiner.class);
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY + 1, "functionCombiner", FunctionCombiner.class);
         FunctionCombiner.setFunctionClass(setting, function);
         FunctionCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         scanner.addScanIterator(setting);

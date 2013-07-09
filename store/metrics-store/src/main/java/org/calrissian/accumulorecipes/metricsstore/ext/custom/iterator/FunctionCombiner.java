@@ -61,25 +61,23 @@ public class FunctionCombiner extends Combiner {
 
     @Override
     public Value reduce(Key key, Iterator<Value> iter) {
+        if (!iter.hasNext())
+            return new Value();
 
-        Object retVal = function.intitialValue();
+        function.reset();
 
         while (iter.hasNext()) {
             String data = iter.next().toString();
             if (data.length() > 0) {
-
                 //Value is either Long or serialized with Prefix.
-                if (data.startsWith(PREFIX)) {
-                    retVal = function.merge(retVal, function.deserialize(data.substring(1)));
-                } else {
-                    retVal = function.update(retVal, Long.parseLong(data));
-                }
+                if (data.startsWith(PREFIX))
+                    function.merge(function.deserialize(data.substring(1)));
+                else
+                    function.update(Long.parseLong(data));
+
             }
         }
 
-        if (retVal == null)
-            return new Value();
-
-        return new Value((PREFIX + function.serialize(retVal)).getBytes());
+        return new Value((PREFIX + function.serialize()).getBytes());
     }
 }

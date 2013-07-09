@@ -19,18 +19,22 @@ package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 import static java.lang.Long.parseLong;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.util.Arrays.asList;
+import static org.apache.commons.lang.StringUtils.join;
 
 /**
  * Custom metric function that calculates the min, max, sum, and count of all the values (in that order).
  */
 public class StatsFunction implements MetricFunction<long[]> {
 
+    long[] stats;
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public long[] intitialValue() {
-        return new long[]{
+    public void reset() {
+        stats = new long[]{
                 Long.MAX_VALUE,
                 Long.MIN_VALUE,
                 0,
@@ -42,34 +46,30 @@ public class StatsFunction implements MetricFunction<long[]> {
      * {@inheritDoc}
      */
     @Override
-    public long[] update(long[] orig, long value) {
-        return new long[]{
-                min(orig[0], value),
-                max(orig[1], value),
-                orig[2] + value,
-                orig[3] + 1
-        };
+    public void update(long value) {
+        stats[0] = min(stats[0], value);
+        stats[1] = max(stats[1], value);
+        stats[2] = stats[2] + value;
+        stats[3] = stats[3] + 1;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public long[] merge(long[] orig, long[] value) {
-        return new long[]{
-                min(orig[0], value[0]),
-                max(orig[1], value[1]),
-                orig[2] + value[2],
-                orig[3] + value[3]
-        };
+    public void merge(long[] value) {
+        stats[0] = min(stats[0], value[0]);
+        stats[1] = max(stats[1], value[1]);
+        stats[2] = stats[2] + value[2];
+        stats[3] = stats[3] + value[3];
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String serialize(long[] value) {
-        return Long.toString(value[0]) + "," + Long.toString(value[1]) + "," + Long.toString(value[2]) + "," + Long.toString(value[3]);
+    public String serialize() {
+        return join(asList(Long.toString(stats[0]), Long.toString(stats[1]), Long.toString(stats[2]), Long.toString(stats[3])), ",");
     }
 
     /**

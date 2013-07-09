@@ -27,6 +27,7 @@ limitations under the License.
   </modules>
   <properties>
     <accumulo.version>1.4.1</accumulo.version>
+    <commons.math.version>2.2</commons.math.version>
     <hadoop.version>0.20.2</hadoop.version>
     <joda.time.version>2.2</joda.time.version>
     <junit.version>4.11</junit.version>
@@ -51,6 +52,11 @@ limitations under the License.
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
         <version>${joda.time.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-math</artifactId>
+        <version>${commons.math.version}</version>
       </dependency>
       <!-- Accumulo -->
       <dependency>

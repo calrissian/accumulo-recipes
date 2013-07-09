@@ -23,36 +23,39 @@ import static java.lang.Math.max;
  * Custom metric function that calculates the max value.
  */
 public class MaxFunction implements MetricFunction<Long> {
+
+    long max;
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long intitialValue() {
-        return Long.MIN_VALUE;
+    public void reset() {
+        max = Long.MIN_VALUE;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long update(Long orig, long value) {
-        return max(orig, value);
+    public void update(long value) {
+        max = max(max, value);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long merge(Long orig, Long value) {
-        return max(orig, value);
+    public void merge(Long value) {
+        max = max(max, value);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String serialize(Long value) {
-        return Long.toString(value);
+    public String serialize() {
+        return Long.toString(max);
     }
 
     /**

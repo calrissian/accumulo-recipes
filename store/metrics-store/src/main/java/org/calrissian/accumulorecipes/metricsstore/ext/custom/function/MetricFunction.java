@@ -22,19 +22,13 @@ package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
  */
 public interface MetricFunction<T> {
 
-    /**
-     * Provides an initial value for metric value
-     * @return
-     */
-    T intitialValue();
+    void reset();
 
     /**
      * Updates the original metric with the given value.
-     * @param orig
      * @param value
-     * @return
      */
-    T update(T orig, long value);
+    void update(long value);
 
     /**
      * Merges the two metrics together.
@@ -42,18 +36,15 @@ public interface MetricFunction<T> {
      * TODO With no iterator settings specified during compactions, this should never happen and we can use
      * more complex iterable math functions.
      *
-     * @param orig
      * @param value
-     * @return
      */
-    T merge(T orig, T value);
+    void merge(T value);
 
     /**
      * Serialize the given metric
-     * @param value
      * @return
      */
-    String serialize(T value);
+    String serialize();
 
     /**
      * Deserialize the given metric.

@@ -24,36 +24,38 @@ import static java.lang.Math.min;
  */
 public class MinFunction implements MetricFunction<Long> {
 
+    long min;
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long intitialValue() {
-        return Long.MAX_VALUE;
+    public void reset() {
+        min = Long.MAX_VALUE;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long update(Long orig, long value) {
-        return min(orig, value);
+    public void update(long value) {
+        min =  min(min, value);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long merge(Long orig, Long value) {
-        return min(orig, value);
+    public void merge(Long value) {
+        min = min(min, value);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String serialize(Long value) {
-        return Long.toString(value);
+    public String serialize() {
+        return Long.toString(min);
     }
 
     /**
