@@ -22,6 +22,7 @@ import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MaxFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Date;
@@ -65,6 +66,7 @@ public class AccumuloCustomMetricStoreTest {
         }
     }
 
+    @Ignore
     @Test
     public void testStoreAndQuery() throws Exception {
         AccumuloCustomMetricStore metricStore = new AccumuloCustomMetricStore(getConnector());
@@ -78,6 +80,7 @@ public class AccumuloCustomMetricStoreTest {
         checkCustom(actual, 60, 1L);
     }
 
+    @Ignore
     @Test
     public void testQueryAggregation() throws Exception {
         AccumuloCustomMetricStore metricStore = new AccumuloCustomMetricStore(getConnector());
@@ -93,6 +96,7 @@ public class AccumuloCustomMetricStoreTest {
         checkCustom(actual, 60, 1L);
     }
 
+    @Ignore
     @Test
     public void testQueryAggregationComplex() throws Exception {
         AccumuloCustomMetricStore metricStore = new AccumuloCustomMetricStore(getConnector());
