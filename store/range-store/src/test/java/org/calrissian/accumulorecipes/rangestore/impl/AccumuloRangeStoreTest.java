@@ -54,10 +54,10 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(50L, 100L)));
         rangeStore.save(singleton(new ValueRange<Long>(50L, 75L)));
 
-        //should return [2-98] and [20-80]
+        //should return [50-100], [50-75]
         List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), new Auths()));
 
-        //actually returns [50-100], [50-75] because the forward and monster iterator both pick up 20-80
+        //actually returns [50-75] because the sentinel condition in the forward iterator kills it at [80-90]
         assertEquals(2, results.size());
     }
 
