@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.rangestore.impl;
 
 import com.google.common.base.Function;
-import com.google.common.collect.AbstractIterator;
+import com.google.common.base.Predicate;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -32,6 +32,7 @@ import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Map.Entry;
@@ -191,17 +192,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
 
-        return transform(
-                scanner,
-                new Function<Entry<Key, Value>, ValueRange<T>>() {
-                    @Override
-                    public ValueRange<T> apply(Entry<Key, Value> entry) {
-                        String vals[] = entry.getKey().getRow().toString().split(DELIM);
-                        T lower = helper.decode(vals[1]);
-                        T upper = helper.decode(vals[2]);
-                        return new ValueRange<T>(lower, upper);
-                    }
-                });
+        return transform(scanner,new RangeTransform<T>(helper, true));
     }
 
     /**
@@ -215,32 +206,18 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
 
-        return new Iterable<ValueRange<T>>() {
-            @Override
-            public Iterator<ValueRange<T>> iterator() {
-
-                //Transform data into ranges and stop iterating after the low values exceed the high range mark.
-                return new AbstractIterator<ValueRange<T>>() {
-                    final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+        //TODO move the filter to an accumulo iterator to reduce the overhead on the client.
+        return from(scanner)
+                .transform(new RangeTransform<T>(helper, false))
+                .filter(new Predicate<ValueRange<T>>() {
                     @Override
-                    protected ValueRange<T> computeNext() {
-                        while (iterator.hasNext()) {
-
-                            String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
-                            T lower = helper.decode(vals[2]);
-                            T upper = helper.decode(vals[1]);
-
-                            //If the lower is greater than the query range then it was already picked up in the forward
-                            //iterator so ignore it.
-                            if (lower.compareTo(queryRange.getStart()) < 0)
-                                return new ValueRange<T> (lower, upper);
-
-                        }
-                        return endOfData();
+                    public boolean apply(ValueRange<T> range) {
+                        //If the lower is greater or equal to the query range then it was already picked up in
+                        // the forward scan so ignore it.
+                        return range.getStart().compareTo(queryRange.getStart()) < 0;
                     }
-                };
-            }
-        };
+                });
+
     }
 
     /**
@@ -268,32 +245,17 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, false
         ));
 
-        return new Iterable<ValueRange<T>>() {
-            @Override
-            public Iterator<ValueRange<T>> iterator() {
-
-                //Transform data into ranges and exhaust while trying to find a possible range that intersects.
-                return new AbstractIterator<ValueRange<T>>() {
-
-                    final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+        //TODO move the filter to an accumulo iterator to reduce the overhead on the client.
+        return from(scanner)
+                .transform(new RangeTransform<T>(helper, true))
+                .filter(new Predicate<ValueRange<T>>() {
                     @Override
-                    protected ValueRange<T> computeNext() {
-
-                        while (iterator.hasNext()) {
-                            String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
-                            T lower = helper.decode(vals[1]);
-                            T upper = helper.decode(vals[2]);
-
-                            //Only include ranges where the upper range is higher than query upper range.
-                            //as the other ranges were already accounted for in the forward and reverse iterators.
-                            if (upper.compareTo(queryRange.getStop()) > 0)
-                                return new ValueRange<T>(lower, upper);
-                        }
-                        return endOfData();
+                    public boolean apply(ValueRange<T> range) {
+                        //Only include ranges where the upper range is higher than query upper range.
+                        //as the other ranges were already accounted for in the forward and reverse scans.
+                        return range.getStop().compareTo(queryRange.getStop()) > 0;
                     }
-                };
-            }
-        };
+                });
     }
 
     /**
@@ -318,6 +280,28 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private class RangeTransform<T extends Comparable<T>> implements Function<Entry<Key, Value>, ValueRange<T>> {
+
+        private final RangeHelper<T> helper;
+        private final int lowIdx;
+        private final int highIdx;
+
+        private RangeTransform(RangeHelper<T> helper, boolean lowFirst) {
+            this.helper = helper;
+            this.lowIdx = (lowFirst ? 1 : 2);
+            this.highIdx = (lowFirst ? 2 : 1);
+        }
+
+        @Override
+        public ValueRange<T> apply(Entry<Key, Value> entry) {
+            System.out.println("a");
+            String vals[] = entry.getKey().getRow().toString().split(DELIM);
+            T lower = helper.decode(vals[lowIdx]);
+            T upper = helper.decode(vals[highIdx]);
+            return new ValueRange<T>(lower, upper);
         }
     }
 }
