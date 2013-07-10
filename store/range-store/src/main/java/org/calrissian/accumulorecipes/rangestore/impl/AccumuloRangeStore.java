@@ -32,9 +32,11 @@ import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterators.*;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.transform;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
+import static org.calrissian.mango.collect.Iterables2.emptyIterable;
 
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
 
@@ -99,7 +101,6 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 checkState(helper.isValid(range), "Invalid Range:" + range.toString());
 
                 String low = helper.encode(range.getStart());
-
                 String high = helper.encode(range.getStop());
 
                 Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + DELIM + low + DELIM + high);
@@ -139,7 +140,6 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 checkState(helper.isValid(range), "Invalid Range:" + range.toString());
 
                 String low = helper.encode(range.getStart());
-
                 String high = helper.encode(range.getStop());
 
                 Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + DELIM + low + DELIM + high);
@@ -183,7 +183,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     /**
      * This will only get ranges who's low value is within the query range.
      */
-    private Iterator<ValueRange<T>> forwardIterator(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
+    private Iterable<ValueRange<T>> forwardScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
@@ -192,7 +192,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         ));
 
         return transform(
-                scanner.iterator(),
+                scanner,
                 new Function<Entry<Key, Value>, ValueRange<T>>() {
                     @Override
                     public ValueRange<T> apply(Entry<Key, Value> entry) {
@@ -207,81 +207,91 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     /**
      * This will only get ranges who's high value is within the query range, ignoring ranges that are fully contained in the query range.
      */
-    private Iterator<ValueRange<T>> reverseIterator(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
+    private Iterable<ValueRange<T>> reverseScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
-        Scanner scanner = connector.createScanner(tableName, auths);
+        final Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
                 UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
                 UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
-        final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
-        //Transform data into ranges and stop iterating after the low values exceed the high range mark.
-        return new AbstractIterator<ValueRange<T>>() {
+        return new Iterable<ValueRange<T>>() {
             @Override
-            protected ValueRange<T> computeNext() {
-                while (iterator.hasNext()) {
+            public Iterator<ValueRange<T>> iterator() {
 
-                    String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
-                    T lower = helper.decode(vals[2]);
-                    T upper = helper.decode(vals[1]);
+                //Transform data into ranges and stop iterating after the low values exceed the high range mark.
+                return new AbstractIterator<ValueRange<T>>() {
+                    final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+                    @Override
+                    protected ValueRange<T> computeNext() {
+                        while (iterator.hasNext()) {
 
-                    //If the lower is greater than the query range then it was already picked up in the forward
-                    //iterator so ignore it.
-                    if (lower.compareTo(queryRange.getStart()) < 0)
-                        return new ValueRange<T> (lower, upper);
+                            String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
+                            T lower = helper.decode(vals[2]);
+                            T upper = helper.decode(vals[1]);
 
-                    //System.out.println("Wasted reverse");
-                }
-                return endOfData();
+                            //If the lower is greater than the query range then it was already picked up in the forward
+                            //iterator so ignore it.
+                            if (lower.compareTo(queryRange.getStart()) < 0)
+                                return new ValueRange<T> (lower, upper);
+
+                        }
+                        return endOfData();
+                    }
+                };
             }
         };
     }
 
     /**
      * This iterator is looking through all the ranges surrounding the query range to see if it is inside.
-     * It uses the knowledge of the max range to limit the query to the ranges closes to the range using the following
+     * It uses the knowledge of the max range to limit the query to the ranges closest to the range using the following
      * logic to generate an efficient scan
      *
      * [(high - maxdistance) -> low]
      *
      * It will then ignore all ranges that don't overlap the query range.
      */
-    private Iterator<ValueRange<T>> monsterIterator(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
+    private Iterable<ValueRange<T>> overlappingScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
         T maxDistance = getMaxDistance(auths);
 
         //No point of running this check if the query range has spanned the max distance.
         if (maxDistance == null || helper.distance(queryRange).compareTo(maxDistance) >= 0)
-            return emptyIterator();
+            return emptyIterable();
 
         //We do [(high - maxdistance) -> low] on the forward table as it would only
         //account for large intervals that are close but outside the range of the ranges already scanned.
-        Scanner scanner = connector.createScanner(tableName, auths);
+        final Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
                 LOWER_BOUND_INDEX + DELIM + helper.encode(helper.distance(new ValueRange<T>(maxDistance, queryRange.getStop()))) + DELIM, true,
                 LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, false
         ));
-        final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
 
-        //Transform data into ranges and exhaust while trying to find a possible range that intersects.
-        return new AbstractIterator<ValueRange<T>>() {
+        return new Iterable<ValueRange<T>>() {
             @Override
-            protected ValueRange<T> computeNext() {
+            public Iterator<ValueRange<T>> iterator() {
 
-                while (iterator.hasNext()) {
-                    String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
-                    T lower = helper.decode(vals[1]);
-                    T upper = helper.decode(vals[2]);
+                //Transform data into ranges and exhaust while trying to find a possible range that intersects.
+                return new AbstractIterator<ValueRange<T>>() {
 
-                    //Only include ranges where the upper range is higher than query upper range.
-                    //as the other ranges were already accounted for in the forward and reverse iterators.
-                    if (upper.compareTo(queryRange.getStop()) > 0)
-                        return new ValueRange<T>(lower, upper);
+                    final Iterator<Entry<Key, Value>> iterator = scanner.iterator();
+                    @Override
+                    protected ValueRange<T> computeNext() {
 
-                    //System.out.println("Wasted monster");
-                }
-                return endOfData();
+                        while (iterator.hasNext()) {
+                            String vals[] = iterator.next().getKey().getRow().toString().split(DELIM);
+                            T lower = helper.decode(vals[1]);
+                            T upper = helper.decode(vals[2]);
+
+                            //Only include ranges where the upper range is higher than query upper range.
+                            //as the other ranges were already accounted for in the forward and reverse iterators.
+                            if (upper.compareTo(queryRange.getStop()) > 0)
+                                return new ValueRange<T>(lower, upper);
+                        }
+                        return endOfData();
+                    }
+                };
             }
         };
     }
@@ -296,21 +306,18 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         checkState(helper.isValid(range), "Invalid range.");
 
         final Authorizations authorizations = auths.getAuths();
-        return new Iterable<ValueRange<T>>() {
-            @Override
-            public Iterator<ValueRange<T>> iterator() {
-                try {
-                    return concat(
-                            forwardIterator(range, authorizations),
-                            reverseIterator(range, authorizations),
-                            monsterIterator(range, authorizations)
-                    );
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
+
+        try {
+            return concat(
+                    forwardScan(range, authorizations),
+                    reverseScan(range, authorizations),
+                    overlappingScan(range, authorizations)
+            );
+
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
