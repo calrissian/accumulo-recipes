@@ -47,6 +47,22 @@ public class AccumuloRangeStoreTest {
 
     @Ignore
     @Test
+    public void testStumbleForwardIterator() throws Exception{
+        AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
+
+        rangeStore.save(singleton(new ValueRange<Long>(80L, 90L)));
+        rangeStore.save(singleton(new ValueRange<Long>(50L, 100L)));
+        rangeStore.save(singleton(new ValueRange<Long>(50L, 75L)));
+
+        //should return [2-98] and [20-80]
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), new Auths()));
+
+        //actually returns [50-100], [50-75] because the forward and monster iterator both pick up 20-80
+        assertEquals(2, results.size());
+    }
+
+    @Ignore
+    @Test
     public void testGoofyMonsterRange() throws Exception{
         AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
 
