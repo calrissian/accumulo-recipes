@@ -67,7 +67,34 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
      */
     @Override
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super.configureTable(connector, tableName);
+        //do nothing as scan time iterators are attached at query time for a specific custom metric.
+        //this prevents the values in the table from getting squashed, so that different types of
+        //metric calculations can be run at any time.
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
+
+        Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
+
+        //Add a scan time SummingCombiner
+        IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
+        SummingCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
+        SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
+        scanner.addScanIterator(setting);
+
+        return transform(
+                scanner,
+                new MetricTransform<Metric>(timeUnit) {
+                    @Override
+                    protected Metric transform(long timestamp, String group, String type, String name, String visibility, Value value) {
+                        return new Metric(timestamp, group, type, name, visibility, parseLong(value.toString()));
+                    }
+                }
+        );
     }
 
     /**
@@ -83,7 +110,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
         //Add a scan time iterator to apply the custom function.
-        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY + 1, "functionCombiner", FunctionCombiner.class);
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "functionCombiner", FunctionCombiner.class);
         FunctionCombiner.setFunctionClass(setting, function);
         FunctionCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         scanner.addScanIterator(setting);
