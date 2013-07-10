@@ -27,6 +27,7 @@ limitations under the License.
   </modules>
   <properties>
     <accumulo.version>1.4.1</accumulo.version>
+    <commons.math.version>2.2</commons.math.version>
     <hadoop.version>0.20.2</hadoop.version>
     <joda.time.version>2.2</joda.time.version>
     <junit.version>4.11</junit.version>
@@ -51,6 +52,11 @@ limitations under the License.
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
         <version>${joda.time.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-math</artifactId>
+        <version>${commons.math.version}</version>
       </dependency>
       <!-- Accumulo -->
       <dependency>
@@ -122,6 +128,15 @@ limitations under the License.
           <groupId>com.google.code.sortpom</groupId>
           <artifactId>maven-sortpom-plugin</artifactId>
           <version>2.1.0</version>
+          <configuration>
+            <predefinedSortOrder>custom_1</predefinedSortOrder>
+            <lineSeparator>\n</lineSeparator>
+            <encoding>${project.build.sourceEncoding}</encoding>
+            <sortProperties>true</sortProperties>
+            <keepBlankLines>true</keepBlankLines>
+            <sortDependencies>scope</sortDependencies>
+            <createBackupFile>false</createBackupFile>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -136,53 +151,11 @@ limitations under the License.
         </configuration>
       </plugin>
       <plugin>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>verify</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>com.google.code.sortpom</groupId>
         <artifactId>maven-sortpom-plugin</artifactId>
-        <configuration>
-          <predefinedSortOrder>custom_1</predefinedSortOrder>
-          <lineSeparator>\n</lineSeparator>
-          <encoding>${project.build.sourceEncoding}</encoding>
-          <sortProperties>true</sortProperties>
-          <keepBlankLines>false</keepBlankLines>
-          <sortDependencies>scope</sortDependencies>
-          <createBackupFile>false</createBackupFile>
-        </configuration>
         <executions>
           <execution>
+            <id>sort-pom</id>
             <goals>
               <goal>sort</goal>
             </goals>
@@ -192,4 +165,48 @@ limitations under the License.
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>full</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.rat</groupId>
+            <artifactId>apache-rat-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

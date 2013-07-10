@@ -34,6 +34,10 @@ limitations under the License.
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-math</artifactId>
+    </dependency>
     <!-- Hadoop / CB -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
