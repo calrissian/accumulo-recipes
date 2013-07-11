@@ -24,7 +24,7 @@ import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.longEncod
 
 public class LongRangeHelper implements RangeHelper<Long> {
 
-    private static final TypeEncoder<Long, String> normalizer = longEncoder();
+    private static final TypeEncoder<Long, String> encoder = longEncoder();
 
     /**
      * {@inheritDoc}
@@ -48,7 +48,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
     @Override
     public String encode(Long value) {
         try {
-            return normalizer.encode(value);
+            return encoder.encode(value);
         } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -68,7 +68,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
     @Override
     public Long decode(String value) {
         try {
-            return normalizer.decode(value);
+            return encoder.decode(value);
         } catch (TypeDecodingException e) {
             throw new RuntimeException(e);
         }
