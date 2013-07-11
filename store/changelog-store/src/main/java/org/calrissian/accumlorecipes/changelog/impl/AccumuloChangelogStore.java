@@ -31,7 +31,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
-import org.calrissian.mango.types.serialization.TupleModule;
+import org.calrissian.mango.json.tuple.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;

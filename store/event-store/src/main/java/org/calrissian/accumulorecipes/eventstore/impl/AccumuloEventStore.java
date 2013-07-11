@@ -32,8 +32,8 @@ import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisit
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.Date;

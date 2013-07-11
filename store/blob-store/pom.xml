@@ -49,5 +49,11 @@ limitations under the License.
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+    <!--Json-->
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

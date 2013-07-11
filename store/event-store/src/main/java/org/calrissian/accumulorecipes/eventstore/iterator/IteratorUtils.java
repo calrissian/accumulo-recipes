@@ -23,8 +23,8 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.ArrayList;
