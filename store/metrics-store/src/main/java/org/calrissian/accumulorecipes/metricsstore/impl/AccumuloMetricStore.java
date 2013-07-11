@@ -26,6 +26,7 @@ import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
@@ -62,17 +63,21 @@ import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.
  */
 public class AccumuloMetricStore implements MetricStore {
 
+    private static final String DEFAULT_TABLE_NAME = "metrics";
+    protected static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000, 100, 10);
+
     private final Connector connector;
     private final String tableName;
     private final BatchWriter metricWriter;
 
     public AccumuloMetricStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        this(connector, "metrics");
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG);
     }
 
-    public AccumuloMetricStore(Connector connector, String tableName) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloMetricStore(Connector connector, String tableName, StoreConfig config) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         checkNotNull(connector);
         checkNotNull(tableName);
+        checkNotNull(config);
 
         this.connector = connector;
         this.tableName = tableName;
@@ -83,7 +88,7 @@ public class AccumuloMetricStore implements MetricStore {
             configureTable(connector, this.tableName);
         }
 
-        this.metricWriter = this.connector.createBatchWriter(tableName, 100000, 100, 10);
+        this.metricWriter = this.connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
     protected static String combine(String... items) {

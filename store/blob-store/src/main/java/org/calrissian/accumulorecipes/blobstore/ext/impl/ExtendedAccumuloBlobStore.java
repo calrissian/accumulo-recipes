@@ -30,6 +30,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.ext.ExtendedBlobStore;
 import org.calrissian.accumulorecipes.blobstore.impl.AccumuloBlobStore;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.OutputStream;
@@ -82,16 +83,16 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
         super(connector);
     }
 
-    public ExtendedAccumuloBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, tableName);
+    public ExtendedAccumuloBlobStore(Connector connector, String tableName, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        super(connector, tableName, config);
     }
 
     public ExtendedAccumuloBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, bufferSize);
     }
 
-    public ExtendedAccumuloBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, tableName, bufferSize);
+    public ExtendedAccumuloBlobStore(Connector connector, String tableName, StoreConfig config, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        super(connector, tableName, config, bufferSize);
     }
 
     /**

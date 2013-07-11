@@ -28,6 +28,7 @@ import org.calrissian.accumlorecipes.changelog.iterator.BucketHashIterator;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
@@ -55,10 +56,14 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
  */
 public class AccumuloChangelogStore implements ChangelogStore {
 
+    private static final String DEFAULT_TABLE_NAME = "changelog";
+    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+
     private final ObjectMapper objectMapper;
 
     private final String tableName;
     private final Connector connector;
+    private final StoreConfig config;
     private final BucketSize bucketSize;
     private final BatchWriter writer;
 
@@ -77,21 +82,23 @@ public class AccumuloChangelogStore implements ChangelogStore {
         this(connector, FIVE_MINS); // default to a medium sized bucket
     }
 
-    public AccumuloChangelogStore(Connector connector, String tableName) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
-        this(connector, tableName, FIVE_MINS); // default to a medium sized bucket
+    public AccumuloChangelogStore(Connector connector, String tableName, StoreConfig config) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+        this(connector, tableName, config, FIVE_MINS); // default to a medium sized bucket
     }
 
     public AccumuloChangelogStore(Connector connector, BucketSize bucketSize) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
-        this(connector, "changelog", bucketSize);
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG, bucketSize);
     }
 
-    public AccumuloChangelogStore(Connector connector, String tableName, BucketSize bucketSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public AccumuloChangelogStore(Connector connector, String tableName, StoreConfig config, BucketSize bucketSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         checkNotNull(connector);
         checkNotNull(tableName);
+        checkNotNull(config);
         checkNotNull(bucketSize);
 
         this.connector = connector;
         this.tableName = tableName;
+        this.config = config;
         this.bucketSize = bucketSize;
         this.objectMapper = new ObjectMapper().withModule(new TupleModule(ACCUMULO_TYPES)); //TODO allow caller to pass in types.
 
@@ -100,7 +107,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
             configureTable(connector, tableName);
         }
 
-        writer = connector.createBatchWriter(tableName, 100000L, 10000L, 3);
+        writer = connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
     /**
@@ -225,7 +232,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
         checkNotNull(buckets);
         checkNotNull(auths);
         try {
-            final BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), 3);
+            final BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), config.getMaxQueryThreads());
 
             List<Range> ranges = new ArrayList<Range>();
             for(Date date : buckets) {

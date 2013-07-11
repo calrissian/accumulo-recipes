@@ -24,6 +24,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
 import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.mango.domain.ValueRange;
@@ -41,6 +42,9 @@ import static org.calrissian.mango.collect.Iterables2.emptyIterable;
 
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
 
+    private static final String DEFAULT_TABLE_NAME = "ranges";
+    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 10000L, 10000L, 10);
+
     private static final String LOWER_BOUND_INDEX = "l";
     private static final String UPPER_BOUND_INDEX = "u";
     private static final String DISTANCE_INDEX = "d";
@@ -53,12 +57,13 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     private final RangeHelper<T> helper;
 
     public AccumuloRangeStore(Connector connector, RangeHelper<T> helper) throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
-        this(connector, "ranges", helper);
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG, helper);
     }
 
-    public AccumuloRangeStore(Connector connector, String tableName, RangeHelper<T> helper) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public AccumuloRangeStore(Connector connector, String tableName, StoreConfig config, RangeHelper<T> helper) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         checkNotNull(connector, "Invalid connector");
         checkNotNull(tableName, "The table name must not be empty");
+        checkNotNull(config, "Invalid store configuration");
 
         this.connector = connector;
         this.tableName = tableName;
@@ -69,7 +74,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
             configureTable(connector, this.tableName);
         }
 
-        writer = connector.createBatchWriter(this.tableName, 10000L, 10000L, 10);
+        writer = connector.createBatchWriter(this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
     /**

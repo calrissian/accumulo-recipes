@@ -16,7 +16,6 @@
 package org.calrissian.accumulorecipes.lastn.impl;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -25,6 +24,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
@@ -37,6 +37,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.transform;
 import static java.util.EnumSet.allOf;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
@@ -52,7 +53,8 @@ import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_
  */
 public class AccumuloLastNStore implements LastNStore {
 
-
+    private static final String DEFAULT_TABLE_NAME = "lastN";
+    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000L, 10000L, 3);
     private static final IteratorSetting EVENT_FILTER_SETTING =
             new IteratorSetting(40, "eventFilter", IndexEntryFilteringIterator.class);
 
@@ -74,7 +76,7 @@ public class AccumuloLastNStore implements LastNStore {
     };
 
     /**
-     * Uses the default tableName and maxVersions
+     * Uses the default tableName, store config, and maxVersions
      * @param connector
      */
     public AccumuloLastNStore(Connector connector) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
@@ -82,20 +84,21 @@ public class AccumuloLastNStore implements LastNStore {
     }
 
     /**
-     * Uses the default tableName
+     * Uses the default tableName and store config
      * @param connector
      */
     public AccumuloLastNStore(Connector connector, int maxVersions) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
-        this(connector, "lastN", maxVersions);
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG, maxVersions);
     }
 
     /**
-     * Uses the specified tableName and maxVersions
+     * Uses the specified tableName, store config, and maxVersions
      * @param connector
      */
-    public AccumuloLastNStore(Connector connector, String tableName, int maxVersions) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloLastNStore(Connector connector, String tableName, StoreConfig config, int maxVersions) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         checkNotNull(connector);
         checkNotNull(tableName);
+        checkNotNull(config);
 
         this.connector = connector;
         this.tableName = tableName;
@@ -108,7 +111,7 @@ public class AccumuloLastNStore implements LastNStore {
             configureTable(connector, this.tableName, maxVersions);
         }
 
-        this.writer = this.connector.createBatchWriter(this.tableName, 100000L, 10000L, 3);
+        this.writer = this.connector.createBatchWriter(this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
     /**
@@ -189,7 +192,7 @@ public class AccumuloLastNStore implements LastNStore {
             IteratorSetting iteratorSetting = new IteratorSetting(16, "eventIterator", EntryIterator.class);
             scanner.addScanIterator(iteratorSetting);
 
-            return Iterables.transform(scanner, storeTransform);
+            return transform(scanner, storeTransform);
 
         } catch (RuntimeException e) {
             throw e;
