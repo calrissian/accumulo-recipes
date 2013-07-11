@@ -20,6 +20,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.CustomMetricStore;
@@ -54,12 +55,14 @@ import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFA
  */
 public class AccumuloCustomMetricStore extends AccumuloMetricStore implements CustomMetricStore {
 
+    private static final String DEFAULT_TABLE_NAME = "custom_metrics";
+
     public AccumuloCustomMetricStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        super(connector, "custom_metrics");
+        super(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG);
     }
 
-    public AccumuloCustomMetricStore(Connector connector, String tableName) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        super(connector, tableName);
+    public AccumuloCustomMetricStore(Connector connector, String tableName, StoreConfig config) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
+        super(connector, tableName, config);
     }
 
     /**

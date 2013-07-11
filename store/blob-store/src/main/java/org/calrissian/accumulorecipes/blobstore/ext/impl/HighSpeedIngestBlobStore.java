@@ -17,6 +17,7 @@ package org.calrissian.accumulorecipes.blobstore.ext.impl;
 
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Mutation;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 
 /**
  * This is an implementation of the blob store using a single large batch writer to the blob store.
@@ -35,31 +36,22 @@ public class HighSpeedIngestBlobStore extends ExtendedAccumuloBlobStore {
 
     public HighSpeedIngestBlobStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector);
-        mainWriter = createBatchWriter();
+        mainWriter = super.getWriter();
     }
 
-    public HighSpeedIngestBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, tableName);
-        mainWriter = createBatchWriter();
+    public HighSpeedIngestBlobStore(Connector connector, String tableName, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        super(connector, tableName, config);
+        mainWriter = super.getWriter();
     }
 
     public HighSpeedIngestBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, bufferSize);
-        mainWriter = createBatchWriter();
+        mainWriter = super.getWriter();
     }
 
-    public HighSpeedIngestBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, tableName, bufferSize);
-        mainWriter = createBatchWriter();
-    }
-
-    /**
-     * Creates a batch writer for all streams in the table.
-     * @return
-     * @throws TableNotFoundException
-     */
-    private BatchWriter createBatchWriter() throws TableNotFoundException {
-        return this.connector.createBatchWriter(tableName, 1000000L, 100L, 10);
+    public HighSpeedIngestBlobStore(Connector connector, String tableName, StoreConfig config, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        super(connector, tableName, config, bufferSize);
+        mainWriter = super.getWriter();
     }
 
     /**

@@ -24,6 +24,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.BlobStore;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.mango.io.AbstractBufferedInputStream;
 import org.calrissian.mango.io.AbstractBufferedOutputStream;
 import org.calrissian.mango.types.TypeEncoder;
@@ -62,27 +63,30 @@ public class AccumuloBlobStore implements BlobStore {
 
     protected final Connector connector;
     protected final String tableName;
+    private final StoreConfig config;
     private final int bufferSize;
 
     public AccumuloBlobStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_TABLE_NAME, DEFAULT_BUFFER_SIZE);
+        this(connector, DEFAULT_BUFFER_SIZE);
     }
 
-    public AccumuloBlobStore(Connector connector, String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, tableName, DEFAULT_BUFFER_SIZE);
+    public AccumuloBlobStore(Connector connector, String tableName, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        this(connector, tableName, config, DEFAULT_BUFFER_SIZE);
     }
 
     public AccumuloBlobStore(Connector connector, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_TABLE_NAME, bufferSize);
+        this(connector, DEFAULT_TABLE_NAME, new StoreConfig(1, bufferSize * 100, 100, 1), bufferSize);
     }
 
-    public AccumuloBlobStore(Connector connector, String tableName, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public AccumuloBlobStore(Connector connector, String tableName, StoreConfig config, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         notNull(connector, "Invalid connector");
         notEmpty(tableName, "The table name must not be empty");
+        notNull(config, "Invalid Config");
         isTrue(bufferSize > 0, "The buffer size must be greater than 0");
 
         this.connector = connector;
         this.tableName = tableName;
+        this.config = config;
         this.bufferSize = bufferSize;
 
         if(!connector.tableOperations().exists(tableName)) {
@@ -108,7 +112,7 @@ public class AccumuloBlobStore implements BlobStore {
      * @throws TableNotFoundException
      */
     protected BatchWriter getWriter() throws TableNotFoundException {
-        return this.connector.createBatchWriter(tableName, bufferSize * 100, 100, 2);
+        return this.connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
     /**
