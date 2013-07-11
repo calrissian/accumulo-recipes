@@ -23,6 +23,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
@@ -50,6 +51,9 @@ import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_
  */
 public class AccumuloEventStore implements EventStore {
 
+    private static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
+    private static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
+    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
     private static final Shard shard = new Shard(DEFAULT_PARTITION_SIZE);
 
@@ -62,13 +66,14 @@ public class AccumuloEventStore implements EventStore {
     private final QueryNodeHelper queryHelper;
 
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, "eventStore_index", "eventStore_shard");
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, new StoreConfig());
     }
 
-    public AccumuloEventStore(Connector connector, String indexTable, String shardTable) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         checkNotNull(connector);
         checkNotNull(indexTable);
         checkNotNull(shardTable);
+        checkNotNull(config);
 
         this.connector = connector;
         this.indexTable = indexTable;
@@ -84,8 +89,8 @@ public class AccumuloEventStore implements EventStore {
             configureShardTable(connector, this.indexTable);
         }
 
-        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, 3, shard, typeRegistry);
-        this.multiTableWriter = connector.createMultiTableBatchWriter(100000L, 10000L, 3);
+        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, config.getMaxQueryThreads(), shard, typeRegistry);
+        this.multiTableWriter = connector.createMultiTableBatchWriter(config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
     /**
