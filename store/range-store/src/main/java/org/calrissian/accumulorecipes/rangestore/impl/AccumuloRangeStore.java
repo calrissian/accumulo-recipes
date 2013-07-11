@@ -297,7 +297,6 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         @Override
         public ValueRange<T> apply(Entry<Key, Value> entry) {
-            System.out.println("a");
             String vals[] = entry.getKey().getRow().toString().split(DELIM);
             T lower = helper.decode(vals[lowIdx]);
             T upper = helper.decode(vals[highIdx]);

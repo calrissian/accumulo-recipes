@@ -22,6 +22,7 @@ import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MaxFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;
+import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SumFunction;
 import org.junit.Test;
 
 import java.util.Date;
@@ -73,7 +74,7 @@ public class AccumuloCustomMetricStoreTest {
 
         metricStore.save(testData);
 
-        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", MaxFunction.class,  MetricTimeUnit.MINUTES, new Auths());
+        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class,  MetricTimeUnit.MINUTES, new Auths());
 
         checkCustom(actual, 60, 1L);
     }
@@ -88,9 +89,9 @@ public class AccumuloCustomMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", MaxFunction.class, MetricTimeUnit.MINUTES, new Auths());
+        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class, MetricTimeUnit.MINUTES, new Auths());
 
-        checkCustom(actual, 60, 1L);
+        checkCustom(actual, 60, 3L);
     }
 
     @Test
