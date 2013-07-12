@@ -16,7 +16,6 @@
 package org.calrissian.accumulorecipes.rangestore.impl;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -27,17 +26,21 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
 import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
+import org.calrissian.accumulorecipes.rangestore.iterator.OverlappingScanFilter;
+import org.calrissian.accumulorecipes.rangestore.iterator.ReverseScanFilter;
 import org.calrissian.mango.domain.ValueRange;
 
 import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.rangestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
+import static org.calrissian.accumulorecipes.rangestore.support.Constants.DELIM;
 import static org.calrissian.mango.collect.Iterables2.emptyIterable;
 
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
@@ -48,8 +51,6 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     private static final String LOWER_BOUND_INDEX = "l";
     private static final String UPPER_BOUND_INDEX = "u";
     private static final String DISTANCE_INDEX = "d";
-
-    private static final String DELIM = "\u0000";
 
     private final Connector connector;
     private final String tableName;
@@ -201,28 +202,24 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     }
 
     /**
-     * This will only get ranges who's high value is within the query range, ignoring ranges that are fully contained in the query range.
+     * This will only get ranges who's high value is within the query range, ignoring ranges that are fully contained
+     * in the query range via the use of a filter.
      */
     private Iterable<ValueRange<T>> reverseScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
-        final Scanner scanner = connector.createScanner(tableName, auths);
+        Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
                 UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
                 UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
 
-        //TODO move the filter to an accumulo iterator to reduce the overhead on the client.
-        return from(scanner)
-                .transform(new RangeTransform<T>(helper, false))
-                .filter(new Predicate<ValueRange<T>>() {
-                    @Override
-                    public boolean apply(ValueRange<T> range) {
-                        //If the lower is greater or equal to the query range then it was already picked up in
-                        // the forward scan so ignore it.
-                        return range.getStart().compareTo(queryRange.getStart()) < 0;
-                    }
-                });
+        //Configure filter to remove any ranges that are fully contained in the query range, as they
+        //have already been picked up by the forward scan.
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, ReverseScanFilter.class);
+        ReverseScanFilter.setQueryLowBound(setting, helper.encode(queryRange.getStart()));
+        scanner.addScanIterator(setting);
 
+        return transform(scanner,new RangeTransform<T>(helper, false));
     }
 
     /**
@@ -232,7 +229,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
      *
      * [(high - maxdistance) -> low]
      *
-     * It will then ignore all ranges that don't overlap the query range.
+     * It will then ignore all ranges that don't overlap the query range, via the use of a filter.
      */
     private Iterable<ValueRange<T>> overlappingScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
@@ -250,17 +247,13 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, false
         ));
 
-        //TODO move the filter to an accumulo iterator to reduce the overhead on the client.
-        return from(scanner)
-                .transform(new RangeTransform<T>(helper, true))
-                .filter(new Predicate<ValueRange<T>>() {
-                    @Override
-                    public boolean apply(ValueRange<T> range) {
-                        //Only include ranges where the upper range is higher than query upper range.
-                        //as the other ranges were already accounted for in the forward and reverse scans.
-                        return range.getStop().compareTo(queryRange.getStop()) > 0;
-                    }
-                });
+        //Configure Filter to filter out any ranges that don't overlap the query range as they
+        //either are outside the query range or have already been picked up by the forward and reverse scans.
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, OverlappingScanFilter.class);
+        OverlappingScanFilter.setQueryUpperBound(setting, helper.encode(queryRange.getStop()));
+        scanner.addScanIterator(setting);
+
+        return transform(scanner,new RangeTransform<T>(helper, true));
     }
 
     /**
@@ -302,7 +295,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         @Override
         public ValueRange<T> apply(Entry<Key, Value> entry) {
-            String vals[] = entry.getKey().getRow().toString().split(DELIM);
+            String vals[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), DELIM);
             T lower = helper.decode(vals[lowIdx]);
             T upper = helper.decode(vals[highIdx]);
             return new ValueRange<T>(lower, upper);
