@@ -49,15 +49,15 @@ public class SumFunction implements MetricFunction<Long> {
      * {@inheritDoc}
      */
     @Override
-    public String serialize() {
-        return Long.toString(sum);
+    public byte[] serialize() {
+        return Long.toString(sum).getBytes();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long deserialize(String data) {
-        return parseLong(data);
+    public Long deserialize(byte[] data) {
+        return parseLong(new String(data));
     }
 }

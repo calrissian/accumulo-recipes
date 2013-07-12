@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
+import static java.lang.Long.parseLong;
+import static java.lang.Thread.currentThread;
+import static java.util.Arrays.copyOfRange;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
 
 /**
@@ -48,7 +51,7 @@ public class FunctionCombiner extends Combiner {
 
         try {
             function = (MetricFunction)
-                    Thread.currentThread().getContextClassLoader().loadClass((options.get(FUNCTION_CLASS))).newInstance();
+                    currentThread().getContextClassLoader().loadClass((options.get(FUNCTION_CLASS))).newInstance();
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -67,17 +70,22 @@ public class FunctionCombiner extends Combiner {
         function.reset();
 
         while (iter.hasNext()) {
-            String data = iter.next().toString();
-            if (data.length() > 0) {
+            byte[] data = iter.next().get();
+            if (data.length > 0) {
                 //Value is either Long or serialized with Prefix.
-                if (data.startsWith(PREFIX))
-                    function.merge(function.deserialize(data.substring(1)));
+                if (data[0] == 0)
+                    function.merge(function.deserialize(copyOfRange(data, 1, data.length)));
                 else
-                    function.update(Long.parseLong(data));
+                    function.update(parseLong(new String(data)));
 
             }
         }
+        byte[] data = function.serialize();
+        byte[] prefixed = new byte[data.length + 1];
+        prefixed[0] = 0;
+        for (int i = 0;i< data.length; i++)
+            prefixed[i + 1] = data[i];
 
-        return new Value((PREFIX + function.serialize()).getBytes());
+        return new Value(prefixed);
     }
 }

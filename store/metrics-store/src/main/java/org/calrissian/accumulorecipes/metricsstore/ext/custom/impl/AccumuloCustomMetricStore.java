@@ -36,6 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
 import static java.lang.Long.parseLong;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.copyOfRange;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 
@@ -135,13 +136,14 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
 
         @Override
         protected CustomMetric<T> transform(long timestamp, String group, String type, String name, String visibility, Value value) {
+            byte[] data = value.get();
             return new CustomMetric<T>(
                     timestamp,
                     group,
                     type,
                     name,
                     visibility,
-                    function.deserialize(value.toString().substring(1))
+                    function.deserialize(copyOfRange(data, 1, data.length))
             );
         }
     }

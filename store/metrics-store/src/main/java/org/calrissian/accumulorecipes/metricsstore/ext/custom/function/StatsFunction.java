@@ -68,16 +68,16 @@ public class StatsFunction implements MetricFunction<long[]> {
      * {@inheritDoc}
      */
     @Override
-    public String serialize() {
-        return join(asList(Long.toString(stats[0]), Long.toString(stats[1]), Long.toString(stats[2]), Long.toString(stats[3])), ",");
+    public byte[] serialize() {
+        return join(asList(Long.toString(stats[0]), Long.toString(stats[1]), Long.toString(stats[2]), Long.toString(stats[3])), ",").getBytes();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public long[] deserialize(String data) {
-        String[] individual = data.split(",");
+    public long[] deserialize(byte[] data) {
+        String[] individual = new String(data).split(",");
 
         if (individual.length != 4)
             throw new IllegalStateException("Invalid number of elements in combiner function");

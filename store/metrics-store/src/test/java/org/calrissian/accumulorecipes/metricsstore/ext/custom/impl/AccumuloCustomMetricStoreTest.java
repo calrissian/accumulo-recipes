@@ -16,11 +16,13 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl;
 
 
+import com.google.common.collect.Iterables;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MaxFunction;
+import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SummaryStatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SumFunction;
 import org.junit.Test;
@@ -34,6 +36,8 @@ import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricSto
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloCustomMetricStoreTest {
+
+
 
     private static void checkCustom(Iterable<CustomMetric<Long>> actual, int expectedNum, Long expectedVal) {
         List<CustomMetric<Long>> actualList = newArrayList(actual);
@@ -63,6 +67,25 @@ public class AccumuloCustomMetricStoreTest {
             assertEquals(1, metric.getValue()[1]);
             assertEquals(expectedVal, metric.getValue()[2]);
             assertEquals(expectedVal, metric.getValue()[3]);
+        }
+    }
+
+    private static void checkSummaryStats(Iterable<CustomMetric<SummaryStatistics>> actual, int expectedNum, long expectedVal) {
+        List<CustomMetric<SummaryStatistics>> actualList = newArrayList(actual);
+
+        assertEquals(expectedNum, actualList.size());
+
+        for (CustomMetric<SummaryStatistics> metric : actualList) {
+            assertEquals("group", metric.getGroup());
+            assertEquals("type", metric.getType());
+            assertEquals("name", metric.getName());
+            assertEquals("", metric.getVisibility());
+            assertEquals(1, metric.getValue().getMin(), 0.00000001);
+            assertEquals(1, metric.getValue().getMax(), 0.00000001);
+            assertEquals(1.0, metric.getValue().getMean(), 0.00000001);
+            assertEquals(0.0, metric.getValue().getStandardDeviation(), 0.00000001);
+            assertEquals(0.0, metric.getValue().getVariance(), 0.00000001);
+            assertEquals(expectedVal, metric.getValue().getN());
         }
     }
 
@@ -107,5 +130,20 @@ public class AccumuloCustomMetricStoreTest {
         Iterable<CustomMetric<long[]>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", StatsFunction.class, MetricTimeUnit.MINUTES, new Auths());
 
         checkCustomStats(actual, 60, 3);
+    }
+
+    @Test
+    public void testQueryComplexFunction() throws Exception {
+        AccumuloCustomMetricStore metricStore = new AccumuloCustomMetricStore(getConnector());
+
+        Iterable<Metric> testData = generateTestData(MetricTimeUnit.MINUTES, 60);
+
+        metricStore.save(testData);
+        metricStore.save(testData);
+        metricStore.save(testData);
+
+        Iterable<CustomMetric<SummaryStatistics>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SummaryStatsFunction.class, MetricTimeUnit.MINUTES, new Auths());
+
+        checkSummaryStats(actual, 60, 3);
     }
 }

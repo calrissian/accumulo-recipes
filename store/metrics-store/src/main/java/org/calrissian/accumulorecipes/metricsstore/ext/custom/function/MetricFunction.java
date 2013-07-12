@@ -44,13 +44,13 @@ public interface MetricFunction<T> {
      * Serialize the given metric
      * @return
      */
-    String serialize();
+    byte[] serialize();
 
     /**
      * Deserialize the given metric.
      * @param data
      * @return
      */
-    T deserialize(String data);
+    T deserialize(byte[] data);
 
 }

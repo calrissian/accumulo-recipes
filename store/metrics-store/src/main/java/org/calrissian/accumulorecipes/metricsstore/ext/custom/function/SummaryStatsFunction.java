@@ -18,11 +18,12 @@ package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
-import static java.lang.Double.parseDouble;
-import static java.util.Arrays.asList;
-import static org.apache.commons.lang.StringUtils.join;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
-public class NormalDistFunction implements MetricFunction<double[]> {
+public class SummaryStatsFunction implements MetricFunction<SummaryStatistics> {
 
     SummaryStatistics stats;
 
@@ -46,7 +47,7 @@ public class NormalDistFunction implements MetricFunction<double[]> {
      * {@inheritDoc}
      */
     @Override
-    public void merge(double[] value) {
+    public void merge(SummaryStatistics value) {
         //This can be a problem if the data that we are aggregating is spread out across tablet servers.
         throw new UnsupportedOperationException("Can't merge data for normal dist");
     }
@@ -55,20 +56,37 @@ public class NormalDistFunction implements MetricFunction<double[]> {
      * {@inheritDoc}
      */
     @Override
-    public String serialize() {
-        return join(asList(Double.toString(stats.getMean()), Double.toString(stats.getStandardDeviation())), ",");
+    public byte[] serialize() {
+        try {
+            ByteArrayOutputStream byteArrStream = new ByteArrayOutputStream();
+            ObjectOutputStream oStream = new ObjectOutputStream(byteArrStream);
+            oStream.writeObject(stats);
+            oStream.close();
+            byteArrStream.close();
+
+            return byteArrStream.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public double[] deserialize(String data) {
-        String[] split = data.split(",");
-        double[] retVal = new double[split.length];
-        for (int i = 0;i< split.length;i++)
-            retVal[i] = parseDouble(split[i]);
+    public SummaryStatistics deserialize(byte[] data) {
+        try {
 
-        return retVal;
+            ByteArrayInputStream byteArrStream = new ByteArrayInputStream(data);
+            ObjectInputStream istream = new ObjectInputStream(byteArrStream);
+            SummaryStatistics retVal = (SummaryStatistics)istream.readObject();
+            istream.close();
+            byteArrStream.close();
+            return retVal;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

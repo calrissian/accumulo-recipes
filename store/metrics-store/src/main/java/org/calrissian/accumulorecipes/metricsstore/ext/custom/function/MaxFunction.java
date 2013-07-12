@@ -54,15 +54,15 @@ public class MaxFunction implements MetricFunction<Long> {
      * {@inheritDoc}
      */
     @Override
-    public String serialize() {
-        return Long.toString(max);
+    public byte[] serialize() {
+        return Long.toString(max).getBytes();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Long deserialize(String data) {
-        return parseLong(data);
+    public Long deserialize(byte[] data) {
+        return parseLong(new String(data));
     }
 }
