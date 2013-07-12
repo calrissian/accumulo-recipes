@@ -16,8 +16,9 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 
-import org.apache.commons.math.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
+import static java.lang.Double.parseDouble;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.join;
 
@@ -46,7 +47,7 @@ public class NormalDistFunction implements MetricFunction<double[]> {
      */
     @Override
     public void merge(double[] value) {
-        //This is ok, this is only used when this is configured on a compaction iterator.
+        //This can be a problem if the data that we are aggregating is spread out across tablet servers.
         throw new UnsupportedOperationException("Can't merge data for normal dist");
     }
 
@@ -55,9 +56,7 @@ public class NormalDistFunction implements MetricFunction<double[]> {
      */
     @Override
     public String serialize() {
-        return join(
-                asList(Double.toString(stats.getMax()), Double.toString(stats.getMin()), Double.toString(stats.getMean()), Double.toString(stats.getVariance()), Double.toString(stats.getN())),
-                ",");
+        return join(asList(Double.toString(stats.getMean()), Double.toString(stats.getStandardDeviation())), ",");
     }
 
     /**
@@ -65,6 +64,11 @@ public class NormalDistFunction implements MetricFunction<double[]> {
      */
     @Override
     public double[] deserialize(String data) {
-        return new double[0];  //To change body of implemented methods use File | Settings | File Templates.
+        String[] split = data.split(",");
+        double[] retVal = new double[split.length];
+        for (int i = 0;i< split.length;i++)
+            retVal[i] = parseDouble(split[i]);
+
+        return retVal;
     }
 }
