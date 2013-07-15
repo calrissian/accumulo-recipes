@@ -126,37 +126,6 @@ public class AccumuloBlobStore implements BlobStore {
     }
 
     /**
-     * Helper method that will see if there is any data in the store for the given key and type.
-     *
-     * This method uses the Accumulo user's auths and not the auths passed in from a caller.  The reason
-     * for this is that a caller may not have the auths required to view the data, but allowing them
-     * to store data with that key and type would corrupt the data that is already there.
-     *
-     * The side effect of this is that any warning to the caller about data existing exposes the fact
-     * that there is data there they may not be able to see.  For this reason, keys and types should not
-     * contain any protected information.  The data however will not be leaked from the API, but that
-     * due to actual data being returned to a client, this is not exactly secure.
-     *
-     * @param key
-     * @param type
-     * @return
-     */
-    protected boolean checkExists(String key, String type) {
-        String rowId = generateRowId(key, type);
-
-        try {
-            //Scan entire range and see if there is any data.
-            Scanner scanner = connector.createScanner(tableName, connector.securityOperations().getUserAuthorizations(connector.whoami()));
-            scanner.setRange(new Range(rowId));
-            scanner.setBatchSize(1);
-            return scanner.iterator().hasNext();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * Helper method to generate a mutation for each chunk of data that is being stored.
      * @param key
      * @param type
@@ -229,11 +198,6 @@ public class AccumuloBlobStore implements BlobStore {
      */
     @Override
     public OutputStream store(String key, String type, long timestamp, String visibility) {
-        //Use of the accumulo user's auths instead of callers auths means information is leaked about
-        //key and type.  Therefore they should now contain protected information, or this check
-        //can not be done.
-        isTrue(!checkExists(key, type), String.format("Data with %s type and %s key already exists.", type, key));
-
         try {
 
             return generateWriteStream(getWriter(), key, type, timestamp, visibility);

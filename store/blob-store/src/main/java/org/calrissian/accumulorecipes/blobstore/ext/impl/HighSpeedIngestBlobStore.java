@@ -26,9 +26,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
  * means data flushed from one stream will actually flush data for all streams that are currently opened.
  * In most instances this should not be a problem as the data will be written anyway.
  *
- * Additionally all safety checks for the existence of another blob with the same key and type are removed
- * to prevent a query.  This requires the caller to provide unique information each time (such as a UUID)
- * or risk corrupting existing data in the store.
  */
 public class HighSpeedIngestBlobStore extends ExtendedAccumuloBlobStore {
 
@@ -69,11 +66,6 @@ public class HighSpeedIngestBlobStore extends ExtendedAccumuloBlobStore {
     protected BatchWriter getWriter() throws TableNotFoundException {
         //Return a batch writer that ignores close calls.
         return ignoreClose(mainWriter);
-    }
-
-    @Override
-    protected boolean checkExists(String key, String type) {
-        return false;
     }
 
     /**

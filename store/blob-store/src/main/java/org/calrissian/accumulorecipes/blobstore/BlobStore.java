@@ -27,19 +27,11 @@ public interface BlobStore {
 
     /**
      * Provides an {@link java.io.OutputStream} to allow storage of the data into the store.
-     * @param key
-     * @param type
-     * @param visibility
-     * @return
      */
     OutputStream store(String key, String type, long timestamp, String visibility);
 
     /**
      * Provides an {@link InputStream} to retrieve the data from the store.
-     * @param key
-     * @param type
-     * @param auths
-     * @return
      */
     InputStream get(String key, String type, Auths auths);
 

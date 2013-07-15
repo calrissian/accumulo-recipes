@@ -24,7 +24,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.blobstore.ext.ExtendedBlobStore;
@@ -46,7 +45,6 @@ import static java.util.Map.Entry;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.apache.commons.lang.Validate.isTrue;
 import static org.apache.commons.lang.Validate.notNull;
 
 /**
@@ -187,11 +185,6 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
      */
     @Override
     public OutputStream store(String key, String type, Map<String, String> properties, long timestamp, String visibility) {
-
-        //Use of table user's auths instead of callers auths means information is leaked about
-        //key and type.  Therefore they should now contain protected information, or this check
-        //can not be done.
-        isTrue(!checkExists(key, type), String.format("Data with %s type and %s key already exists.", type, key));
 
         try {
 
