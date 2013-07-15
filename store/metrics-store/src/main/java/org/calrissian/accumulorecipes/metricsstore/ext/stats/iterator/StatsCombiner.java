@@ -15,31 +15,27 @@
  */
 package org.calrissian.accumulorecipes.metricsstore.ext.stats.iterator;
 
-import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Combiner;
-import org.apache.accumulo.core.iterators.IteratorEnvironment;
-import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
+import org.apache.commons.lang.StringUtils;
 
-import java.io.IOException;
 import java.util.Iterator;
-import java.util.Map;
 
 import static java.lang.Long.parseLong;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 /**
- * This combiner calculates the max, min, sum, and count of long integers represented as strings in values. It stores the result in a comma-separated value of
- * the form max,min,sum,count. If such a value is encountered while combining, its information is incorporated into the running calculations of max, min, sum,
- * and count. See {@link Combiner} for more information on which values are combined together. See docs/examples/README.combiner for instructions.
+ * This combiner calculates the max, min, sum, count, and sumSquare of long integers represented as strings in values. It stores the result in a comma-separated value of
+ * the form max,min,sum,count,sumSquare. If such a value is encountered while combining, its information is incorporated into the running calculations of max, min, sum,
+ * ,count, and sumSquare. See {@link Combiner} for more information on which values are combined together.
  */
 public class StatsCombiner extends Combiner {
 
-    public static final String RADIX_OPTION = "radix";
-
-    private int radix = 10;
+    private String join(String seperator, String... values) {
+        return StringUtils.join(values, seperator);
+    }
 
     @Override
     public Value reduce(Key key, Iterator<Value> iter) {
@@ -48,23 +44,25 @@ public class StatsCombiner extends Combiner {
         long max = Long.MIN_VALUE;
         long sum = 0;
         long count = 0;
+        long sumSquare = 0;
 
         while (iter.hasNext()) {
 
             String stats[] = iter.next().toString().split(",");
 
             if (stats.length == 1) {
-                long val = parseLong(stats[0], radix);
+                long val = parseLong(stats[0]);
                 min = min(val, min);
                 max = max(val, max);
                 sum += val;
                 count += 1;
+                sumSquare += (val * val);
             } else {
 
                 long actualCount = parseLong(stats[2]);
 
-                min = min(parseLong(stats[0], radix), min);
-                max = max(parseLong(stats[1], radix), max);
+                min = min(parseLong(stats[0]), min);
+                max = max(parseLong(stats[1]), max);
 
                 if(actualCount < min)
                     min = actualCount;
@@ -72,23 +70,21 @@ public class StatsCombiner extends Combiner {
                 if(actualCount > max)
                     max = actualCount;
 
-                sum += parseLong(stats[2], radix);
-                count += parseLong(stats[3], radix);
+                sum += parseLong(stats[2]);
+                count += parseLong(stats[3]);
+                sumSquare += parseLong(stats[4]);
             }
         }
 
-        String ret = Long.toString(min, radix) + "," + Long.toString(max, radix) + "," + Long.toString(sum, radix) + "," + Long.toString(count, radix);
+        String ret = join(",",
+                Long.toString(min),
+                Long.toString(max),
+                Long.toString(sum),
+                Long.toString(count),
+                Long.toString(sumSquare)
+        );
+
         return new Value(ret.getBytes());
-    }
-
-    @Override
-    public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
-        super.init(source, options, env);
-
-        if (options.containsKey(RADIX_OPTION))
-            radix = Integer.parseInt(options.get(RADIX_OPTION));
-        else
-            radix = 10;
     }
 
     @Override
@@ -96,30 +92,6 @@ public class StatsCombiner extends Combiner {
         IteratorOptions io = super.describeOptions();
         io.setName("statsCombiner");
         io.setDescription("Combiner that keeps track of min, max, sum, and count");
-        io.addNamedOption(RADIX_OPTION, "radix/base of the numbers");
         return io;
-    }
-
-    @Override
-    public boolean validateOptions(Map<String,String> options) {
-        if (!super.validateOptions(options))
-            return false;
-
-        if (options.containsKey(RADIX_OPTION) && !options.get(RADIX_OPTION).matches("\\d+"))
-            throw new IllegalArgumentException("invalid option " + RADIX_OPTION + ":" + options.get(RADIX_OPTION));
-
-        return true;
-    }
-
-    /**
-     * A convenience method for setting the expected base/radix of the numbers
-     *
-     * @param iterConfig
-     *          Iterator settings to configure
-     * @param base
-     *          The expected base/radix of the numbers.
-     */
-    public static void setRadix(IteratorSetting iterConfig, int base) {
-        iterConfig.addOption(RADIX_OPTION, base + "");
     }
 }
