@@ -38,6 +38,7 @@ public class StatsFunction implements MetricFunction<long[]> {
                 Long.MAX_VALUE,
                 Long.MIN_VALUE,
                 0,
+                0,
                 0
         };
     }
@@ -51,6 +52,7 @@ public class StatsFunction implements MetricFunction<long[]> {
         stats[1] = max(stats[1], value);
         stats[2] = stats[2] + value;
         stats[3] = stats[3] + 1;
+        stats[4] = stats[4] + (value * value);
     }
 
     /**
@@ -62,6 +64,7 @@ public class StatsFunction implements MetricFunction<long[]> {
         stats[1] = max(stats[1], value[1]);
         stats[2] = stats[2] + value[2];
         stats[3] = stats[3] + value[3];
+        stats[4] = stats[4] + value[4];
     }
 
     /**
@@ -69,7 +72,7 @@ public class StatsFunction implements MetricFunction<long[]> {
      */
     @Override
     public byte[] serialize() {
-        return join(asList(Long.toString(stats[0]), Long.toString(stats[1]), Long.toString(stats[2]), Long.toString(stats[3])), ",").getBytes();
+        return join(asList(Long.toString(stats[0]), Long.toString(stats[1]), Long.toString(stats[2]), Long.toString(stats[3]), Long.toString(stats[4])), ",").getBytes();
     }
 
     /**
@@ -79,10 +82,10 @@ public class StatsFunction implements MetricFunction<long[]> {
     public long[] deserialize(byte[] data) {
         String[] individual = new String(data).split(",");
 
-        if (individual.length != 4)
+        if (individual.length != 5)
             throw new IllegalStateException("Invalid number of elements in combiner function");
 
-        long[] retVal = new long[4];
+        long[] retVal = new long[5];
         for (int i = 0;i < retVal.length;i++)
             retVal[i] = parseLong(individual[i]);
         return retVal;

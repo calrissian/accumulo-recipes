@@ -121,7 +121,6 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
      * objects that are returned from this store.
      */
     private static class MetricStatsTransform extends MetricTransform<Stats> {
-        MetricTimeUnit timeUnit;
 
         public MetricStatsTransform(MetricTimeUnit timeUnit) {
             super(timeUnit);
@@ -139,7 +138,8 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
                     parseLong(values[0]),
                     parseLong(values[1]),
                     parseLong(values[2]),
-                    parseLong(values[3]));
+                    parseLong(values[3]),
+                    parseLong(values[4]));
         }
     }
 }
