@@ -30,8 +30,8 @@ import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.serialization.TupleModule;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
