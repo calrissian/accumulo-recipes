@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -35,7 +36,6 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.Date;
 import java.util.Iterator;
@@ -225,7 +225,7 @@ public class AccumuloEventStore implements EventStore {
                 if(itr.hasNext()) {
                     Map.Entry<Key,Value> event = itr.next();
 
-                    return new ObjectMapper().withModule(new TupleModule(typeRegistry))
+                    return new ObjectMapper().registerModule(new TupleModule(typeRegistry))
                             .readValue(new String(event.getValue().get()), StoreEntry.class);
                 }
 

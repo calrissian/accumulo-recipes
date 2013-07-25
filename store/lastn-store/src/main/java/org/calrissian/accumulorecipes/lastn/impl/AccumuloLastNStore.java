@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.lastn.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
@@ -32,7 +33,6 @@ import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 
@@ -103,7 +103,7 @@ public class AccumuloLastNStore implements LastNStore {
         this.connector = connector;
         this.tableName = tableName;
         this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
+        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
 
         if(!connector.tableOperations().exists(this.tableName)) {
             //Create table without versioning iterator.

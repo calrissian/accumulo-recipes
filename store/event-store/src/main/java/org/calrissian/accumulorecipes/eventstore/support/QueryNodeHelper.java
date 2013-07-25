@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Connector;
@@ -35,7 +36,6 @@ import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Date;
@@ -72,7 +72,7 @@ public class QueryNodeHelper {
         this.numThreads = numThreads;
         this.shard = shard;
         this.typeRegistry = typeRegistry;
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
+        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
     }
 
     public CloseableIterable<StoreEntry> queryAndNode(Date start, Date stop, AndNode query, Authorizations auths)

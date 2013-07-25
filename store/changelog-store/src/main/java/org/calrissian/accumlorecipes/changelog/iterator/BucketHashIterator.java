@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumlorecipes.changelog.iterator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -28,7 +29,6 @@ import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ public class BucketHashIterator extends WrappingIterator {
 
         super.init(source, options, env);
         typeRegistry = ACCUMULO_TYPES;   //TODO make types configurable.
-        objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
+        objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
         hashes = new ArrayList<String>();
     }
 

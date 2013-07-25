@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.lastn.iterator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -27,7 +28,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class EntryIterator extends WrappingIterator {
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
         this.typeRegistry = ACCUMULO_TYPES; //TODO make types configurable.
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
+        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
     }
 
     /**

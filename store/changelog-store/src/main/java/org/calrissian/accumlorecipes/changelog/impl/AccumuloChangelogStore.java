@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumlorecipes.changelog.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
@@ -33,7 +34,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.calrissian.mango.json.tuple.TupleModule;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -100,7 +100,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
         this.tableName = tableName;
         this.config = config;
         this.bucketSize = bucketSize;
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(ACCUMULO_TYPES)); //TODO allow caller to pass in types.
+        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(ACCUMULO_TYPES)); //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);
