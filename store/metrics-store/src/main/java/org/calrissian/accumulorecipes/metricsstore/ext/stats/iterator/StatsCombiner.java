@@ -58,18 +58,8 @@ public class StatsCombiner extends Combiner {
                 count += 1;
                 sumSquare += (val * val);
             } else {
-
-                long actualCount = parseLong(stats[2]);
-
                 min = min(parseLong(stats[0]), min);
                 max = max(parseLong(stats[1]), max);
-
-                if(actualCount < min)
-                    min = actualCount;
-
-                if(actualCount > max)
-                    max = actualCount;
-
                 sum += parseLong(stats[2]);
                 count += parseLong(stats[3]);
                 sumSquare += parseLong(stats[4]);
