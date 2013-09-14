@@ -178,4 +178,50 @@ public class AccumuloEventStoreTest {
         }
     }
 
+    @Test
+    public void testQuery_MultipleNotInQuery() throws Exception {
+        AccumuloEventStore store = new AccumuloEventStore(getConnector());
+
+        StoreEntry event = new StoreEntry(UUID.randomUUID().toString(),
+                currentTimeMillis());
+        event.put(new Tuple("hasIp", "true", ""));
+        event.put(new Tuple("ip", "1.1.1.1", ""));
+
+        StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(),
+                currentTimeMillis());
+        event2.put(new Tuple("hasIp", "true", ""));
+        event2.put(new Tuple("ip", "2.2.2.2", ""));
+
+        StoreEntry event3 = new StoreEntry(UUID.randomUUID().toString(),
+                currentTimeMillis());
+        event3.put(new Tuple("hasIp", "true", ""));
+        event3.put(new Tuple("ip", "3.3.3.3", ""));
+
+        store.save(Collections.singleton(event));
+        store.save(Collections.singleton(event2));
+        store.save(Collections.singleton(event3));
+
+        Node query = new QueryBuilder()
+                .and()
+                .notEq("ip", "1.1.1.1")
+                .notEq("ip", "2.2.2.2")
+                .notEq("ip", "4.4.4.4")
+                .eq("hasIp", "true")
+                .endStatement().build();
+
+        Iterator<StoreEntry> itr = store.query(
+                new Date(currentTimeMillis() - 5000), new Date(), query,
+                new Auths()).iterator();
+
+        int x = 0;
+
+        while (itr.hasNext()) {
+            x++;
+            StoreEntry e = itr.next();
+            assertEquals("3.3.3.3",e.get("ip").getValue());
+
+        }
+        assertEquals(1, x);
+    }
+
 }

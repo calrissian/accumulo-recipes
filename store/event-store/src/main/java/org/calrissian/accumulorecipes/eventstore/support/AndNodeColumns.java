@@ -21,11 +21,7 @@ import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.SHARD_PREFIX_B;
@@ -36,31 +32,30 @@ public class AndNodeColumns {
     protected  final Text[] columns;
     protected  final boolean[] notFlags;
 
+    private static Text generateColumn(String key, Object value, TypeRegistry<String> typeRegistry) {
+        try {
+            return new Text(SHARD_PREFIX_B + DELIM + key + DELIM + typeRegistry.getAlias(value)
+                    + DELIM + typeRegistry.encode(value));
+        } catch (TypeEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public AndNodeColumns(AndNode query, TypeRegistry<String> typeRegistry) {
 
-        Map<String, Object> fields = new HashMap<String, Object>();
-        List<String> notFields = new ArrayList<String>();
-        for (Node node : query.children()) {
-            if (node instanceof NotEqualsLeaf) {
-                NotEqualsLeaf notEqualsLeaf = (NotEqualsLeaf) node;
-                notFields.add(notEqualsLeaf.getKey());
-                fields.put(notEqualsLeaf.getKey(), notEqualsLeaf.getValue());
-            } else if (node instanceof EqualsLeaf) {
-                EqualsLeaf equalsLeaf = (EqualsLeaf) node;
-                fields.put(equalsLeaf.getKey(), equalsLeaf.getValue());
-            }
-        }
-
-        this.columns = new Text[fields.size()];
-        this.notFlags = new boolean[fields.size()];
+        this.columns = new Text[query.children().size()];
+        this.notFlags = new boolean[columns.length];
 
         int i = 0;
-        for(Map.Entry<String, Object> entry : fields.entrySet()) {
-
-            this.columns[i] = new Text(SHARD_PREFIX_B + DELIM + entry.getKey() + DELIM + typeRegistry.getAlias(entry.getValue())
-                    + DELIM + entry.getValue());
-
-            this.notFlags[i] = notFields.contains(entry.getKey()) ? true : false;
+        for (Node node : query.children()) {
+            if (node instanceof NotEqualsLeaf) {
+                this.notFlags[i] = true;
+                NotEqualsLeaf leaf = (NotEqualsLeaf) node;
+                this.columns[i] = generateColumn(leaf.getKey(), leaf.getValue(), typeRegistry);
+            } else if (node instanceof EqualsLeaf) {
+                EqualsLeaf leaf = (EqualsLeaf) node;
+                this.columns[i] = generateColumn(leaf.getKey(), leaf.getValue(), typeRegistry);
+            }
             i++;
         }
     }
