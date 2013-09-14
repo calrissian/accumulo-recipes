@@ -18,6 +18,7 @@ package org.calrissian.accumulorecipes.eventstore.support.query;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
+import org.calrissian.accumulorecipes.eventstore.support.query.validators.MultipleEqualsValidator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoOrNotEqualsValidator;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -69,6 +70,7 @@ public class QueryResultsVisitor implements NodeVisitor {
         //validators
         query.accept(new NoAndOrValidator());
         query.accept(new NoOrNotEqualsValidator());
+        query.accept(new MultipleEqualsValidator());
 
         //develop query
         query.accept(this);

@@ -26,12 +26,12 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
 
 import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloEventStoreTest {
@@ -53,8 +53,7 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key2", "val2", ""));
 
-        store.save(Collections.singleton(event));
-        store.save(Collections.singleton(event2));
+        store.save(asList(event, event2));
 
         StoreEntry actualEvent = store.get(event.getId(), new Auths());
 
@@ -73,8 +72,7 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key2", "val2", ""));
 
-        store.save(Collections.singleton(event));
-        store.save(Collections.singleton(event2));
+        store.save(asList(event, event2));
 
         Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
 
@@ -112,8 +110,7 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key3", "val3", ""));
 
-        store.save(Collections.singleton(event));
-        store.save(Collections.singleton(event2));
+        store.save(asList(event, event2));
 
         Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").endStatement().build();
 
@@ -151,8 +148,7 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key3", "val3", ""));
 
-        store.save(Collections.singleton(event));
-        store.save(Collections.singleton(event2));
+        store.save(asList(event, event2));
 
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
@@ -197,9 +193,7 @@ public class AccumuloEventStoreTest {
         event3.put(new Tuple("hasIp", "true", ""));
         event3.put(new Tuple("ip", "3.3.3.3", ""));
 
-        store.save(Collections.singleton(event));
-        store.save(Collections.singleton(event2));
-        store.save(Collections.singleton(event3));
+        store.save(asList(event, event2, event3));
 
         Node query = new QueryBuilder()
                 .and()
@@ -222,6 +216,22 @@ public class AccumuloEventStoreTest {
 
         }
         assertEquals(1, x);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testQuery_MultEqInAnd() throws Exception {
+        AccumuloEventStore store = new AccumuloEventStore(getConnector());
+
+        Node query = new QueryBuilder()
+                .and()
+                .eq("id", "1")
+                .eq("id", "2")
+                .endStatement().build();
+
+        store.query(
+                new Date(currentTimeMillis() - 5000), new Date(), query,
+                new Auths()).iterator();
+
     }
 
 }
