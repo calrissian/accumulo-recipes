@@ -78,7 +78,6 @@ public class AccumuloBlobStoreTest {
         storageStream.write(testBlob);
         storageStream.close();
 
-
         byte[] actual = new byte[testBlob.length];
         InputStream retrievalStream = blobStore.get("test", "1", new Auths());
         retrievalStream.read(actual);
