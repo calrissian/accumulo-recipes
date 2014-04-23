@@ -1,4 +1,3 @@
-
 #Accumulo Blob Store Recipe
 
 ## What is it?
@@ -36,9 +35,9 @@ Connector connector = instance.getConnector("root", "secret".getBytes());
 AccumuloBlobStore blobStore = new AccumuloBlobStore(connector, 1024);  
 
 // let's load a file and stream it into the blob store
-File file = new File("/path/to/output/file.txt");
+File file = new File("/tmp/exampleFile.txt");
 
-FileOutputStream fos = new FileOutputStream("/tmp/exampleFile.txt");
+FileOutputStream fos = new FileOutputStream(file);
 InputStream retrievalStream = blobStore.get("/files/exampleFile.txt", "txt", new Auths("ABC"));
 IOUtils.copy(retrievalStream, fos);
 fos.flush();
