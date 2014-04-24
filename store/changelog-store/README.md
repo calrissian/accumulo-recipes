@@ -37,3 +37,24 @@ AccumuloChangelogStore store = new AccumuloChangelogStore(connector);
 
 store.put(Collections.singletonList(changeEvent));
 ```
+
+##Building the tree and synchronizing results
+
+###Getting a merkle tree
+
+The merkle tree is built by asking the store for a set of changes for a period of time. It's very important, when using this to reconcile changes between two distributed systems, that the trees are built for the same period of time. The amount of variance in time allowed between the systems depends on the bucket size. A bucket size of 5 minutes will only allow variations within 5 minutes of each other, no more. 
+
+```java
+MerkleTree changeTree = store.getChangeTree(new Date(System.currentTimeMillis() - (2 * 60 * 60 * 1000)), new Date());
+```
+
+The code above builds a change tree for the last 2 hours. This change tree could be serialized in different ways and sent over the wire to a source node so that it can determine if there will be any other transmissions necessary.
+
+###Determining differences
+
+The merkle tree data structure itself contains a ```diff(MerkleTree other)``` method that will propagate down a tree when changes are found to find those buckets which will need to be transmitted.
+
+```java
+// what we care about here is the timestamp of each leaf that's different. This determines the buckets that need to be re-transmitted
+List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);  
+```
