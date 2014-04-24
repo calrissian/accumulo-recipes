@@ -37,7 +37,3 @@ Overlapping intervals are returned by calling the query method on the store and 
 Iterable<ValueRange<Long>> results = rangeStore.query(new ValueRange<Long>(49L, 51L), new Auths());
 ```
 
-##The worst case
-
-If there's a single range that spans the entire table, then it could possibly lead to a full table scan. There's some ongoing design discussions about the best ways to handle this- most specifically that if we know the ranges of the highest intervals and we know that they don't overlap our query iterval, then we can ignore them. A top10 or topn could help with this as well.
-
