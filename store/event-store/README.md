@@ -82,5 +82,4 @@ Node query = new QueryBuilder().and().eq("eventType", "status").eq("healthOK", f
 
 // find all the event object from Maryland or Virginia
 Node query = new QueryBuilder().or().eq("location", "Maryland").eq("location", "Virginia").endStatement().build());
-
-
+```
