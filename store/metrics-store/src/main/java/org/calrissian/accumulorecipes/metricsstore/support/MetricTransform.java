@@ -47,8 +47,8 @@ public abstract class MetricTransform<T> implements Function<Entry<Key, Value>, 
 
         return transform(
                 revertTimestamp(row[1], timeUnit),
-                row[0],
                 colQ[0],
+                row[0],
                 colQ[1],
                 entry.getKey().getColumnVisibility().toString(),
                 entry.getValue()

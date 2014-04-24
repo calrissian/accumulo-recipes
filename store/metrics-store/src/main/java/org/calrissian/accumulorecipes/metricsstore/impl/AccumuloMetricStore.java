@@ -39,6 +39,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
 import static java.lang.Long.parseLong;
+import static java.util.Collections.singleton;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
@@ -63,12 +64,15 @@ import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.
  */
 public class AccumuloMetricStore implements MetricStore {
 
-    private static final String DEFAULT_TABLE_NAME = "metrics";
+    public static final String DEFAULT_TABLE_NAME = "metrics";
+    public static final String REVERSE_SUFFIX = "_reverse";
     protected static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000, 100, 10);
 
     private final Connector connector;
+    private final StoreConfig config;
     private final String tableName;
-    private final BatchWriter metricWriter;
+    private final BatchWriter groupWriter;
+    private final BatchWriter typeWriter;
 
     public AccumuloMetricStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG);
@@ -81,17 +85,24 @@ public class AccumuloMetricStore implements MetricStore {
 
         this.connector = connector;
         this.tableName = tableName;
+        this.config = config;
 
-        if(!connector.tableOperations().exists(this.tableName)) {
-            //Create table without versioning iterator.
-            connector.tableOperations().create(this.tableName, false);
-            configureTable(connector, this.tableName);
-        }
+        createTable(this.tableName);
+        createTable(this.tableName + REVERSE_SUFFIX);
 
-        this.metricWriter = this.connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+        this.groupWriter = this.connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+        this.typeWriter = this.connector.createBatchWriter(tableName + REVERSE_SUFFIX, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
-    protected static String combine(String... items) {
+    private void createTable(String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        if(!connector.tableOperations().exists(tableName)) {
+            //Create table without versioning iterator.
+            connector.tableOperations().create(tableName, false);
+            configureTable(connector, tableName);
+        }
+    }
+
+    public static String combine(String... items) {
         if (items == null)
             return null;
         return join(items, DELIM);
@@ -116,45 +127,39 @@ public class AccumuloMetricStore implements MetricStore {
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
     }
 
-    protected Scanner metricScanner(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
+    protected ScannerBase metricScanner(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
+        checkNotNull(group);
+        checkNotNull(type);
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
 
         try {
-
             //fix null values
             group = defaultString(group);
             timeUnit = (timeUnit == null ? MetricTimeUnit.MINUTES : timeUnit);
 
             //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
             //timestamp.  Which is used to provide the latest results first.
-            Scanner scanner = connector.createScanner(tableName, auths.getAuths());
-            scanner.setRange(new Range(
-                    combine(group, generateTimestamp(end.getTime(), timeUnit)),
-                    combine(group, generateTimestamp(start.getTime(), timeUnit))
-            ));
+            BatchScanner scanner = connector.createBatchScanner(tableName + REVERSE_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
+            scanner.setRanges(singleton(new Range(
+                combine(type, generateTimestamp(end.getTime(), timeUnit)),
+                combine(type, generateTimestamp(start.getTime(), timeUnit))
+            )));
 
             //If both type and name are here then simply fetch the column
             //else fetch the timeunit column family and apply a regex filter for the CQ containing the type and name.
-            if (type != null && name != null) {
-                scanner.fetchColumn(new Text(timeUnit.toString()), new Text(combine(type, name)));
+            if (name != null) {
+                scanner.fetchColumn(new Text(timeUnit.toString()), new Text(combine(group, name)));
             } else {
                 scanner.fetchColumnFamily(new Text(timeUnit.toString()));
 
                 //generates the correct regex
                 String cqRegex = null;
-                if (type != null)
-                    cqRegex = combine(type, "(.*)");
-                else if (name != null)
-                    cqRegex = combine("(.*)", name);
-
-                //No need to apply a filter if there is no regex to apply.
-                if (cqRegex != null) {
-                    IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
-                    RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
-                    scanner.addScanIterator(regexIterator);
-                }
+                cqRegex = combine(group, "(.*)");
+                IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
+                RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
+                scanner.addScanIterator(regexIterator);
             }
 
             return scanner;
@@ -169,7 +174,7 @@ public class AccumuloMetricStore implements MetricStore {
      * @throws MutationsRejectedException
      */
     public void shutdown() throws MutationsRejectedException {
-        metricWriter.close();
+        groupWriter.close();
     }
 
     /**
@@ -192,13 +197,21 @@ public class AccumuloMetricStore implements MetricStore {
 
                     //Create mutation with:
                     //rowID: group\u0000timestamp
-                    Mutation mutation = new Mutation(
+                    Mutation group_mutation = new Mutation(
                             combine(group, generateTimestamp(metric.getTimestamp(), timeUnit))
                     );
 
+                    //Create mutation with:
+                    //rowID: type\u0000timestamp
+                    Mutation type_mutation = new Mutation(
+                            combine(type, generateTimestamp(metric.getTimestamp(), timeUnit))
+                    );
+
+
+
                     //CF: Timeunit
                     //CQ: type\u0000name
-                    mutation.put(
+                    group_mutation.put(
                             timeUnit.toString(),
                             combine(type, name),
                             visibility,
@@ -206,11 +219,24 @@ public class AccumuloMetricStore implements MetricStore {
                             new Value(Long.toString(metric.getValue()).getBytes())
                     );
 
-                    metricWriter.addMutation(mutation);
+                    //CF: Timeunit
+                    //CQ: group\u0000name
+                    type_mutation.put(
+                            timeUnit.toString(),
+                            combine(group, name),
+                            visibility,
+                            metric.getTimestamp(),
+                            new Value(Long.toString(metric.getValue()).getBytes())
+                    );
+
+
+                    groupWriter.addMutation(group_mutation);
+                    typeWriter.addMutation(type_mutation);
                 }
             }
 
-            metricWriter.flush();
+            groupWriter.flush();
+            typeWriter.flush();
 
         } catch (Exception e) {
             throw new RuntimeException(e);

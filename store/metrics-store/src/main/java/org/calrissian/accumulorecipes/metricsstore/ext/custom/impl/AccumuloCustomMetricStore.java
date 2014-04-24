@@ -82,7 +82,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
     @Override
     public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
 
-        Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
+        ScannerBase scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
         //Add a scan time SummingCombiner
         IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
@@ -111,7 +111,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
 
         final MetricFunction<T> impl = function.newInstance();
 
-        Scanner scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
+        ScannerBase scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
         //Add a scan time iterator to apply the custom function.
         IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "functionCombiner", FunctionCombiner.class);
