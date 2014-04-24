@@ -35,5 +35,14 @@ AccumuloEventStore store = new AccumuloEventStore(connector);
 store.save(event);
 ```
 
-Almost seemed too easy. What's really happening is that a discrete shard has been created
+Almost seemed too easy. What's really happening underneath is that a discrete shard has been created for the RowID of the underlying Accumulo table. The shard is created to guarantee even distribution of the event over the nodes in the Accumulo cluster. Aside from the shard, the key and value have been normalized so that they can be searched using the built-in query mechanism.
 
+It's important, however, that you pre-split the Accumulo table. 
+
+##Pre-splitting the Accumulo table
+
+If the event table isn't pre-split, all shards will end up on the same physical tablet until it gets big enough and Accumulo decides to split it into two. This won't allow the store distribute its data randomly across the cluster. Let's go ahead and split the table. There's a class provided in org.calrissian.eventstore.cli called ShardSplitter. It's an executable class but you'll need to pass in as arguments your Accumulo configuration. Since events are all time-based, a time-range for which to the split the table needs to be passed in as well. This allows shards to be split every morning, for instance, or every hour.
+
+```java
+java -cp accumulo-recipes-<version>.jar org.calrissian.eventstore.cli.ShardSplitter <zookeepers> <instance> <username> <password> <tableName> <start day: yyyy-mm-dd> <stop day: yyyy-mm-dd>
+```
