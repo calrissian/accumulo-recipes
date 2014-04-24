@@ -12,7 +12,6 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore;
-import org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -55,7 +54,6 @@ public class MetricsInputFormatTest {
         assertEquals(metric.getValue(), TestMapper.metric.getValue());
 
     }
-
 
     public static class TestMapper extends Mapper<Key, MetricWritable, Text, Text> {
 
