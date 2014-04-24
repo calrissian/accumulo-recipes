@@ -70,3 +70,7 @@ for(StoreEntry entry : events)
 events.close();
 ```
 
+What's intrigueing about the loose and schemaless model of the StoreEntry object is that many heterogenous models can live together in the same store and be queried/returned together, each object returned can have a completely different set of tuples. You could, in theory, have several different types of "status update" events from several types of systems that are located in Maryland and you could query all of them from the same location for a given time period.
+
+Better yet, if you want separation of keys so that they don't collide with other events in the store, you have the freedom to namespace them as you wish (i.e. status.location instead of just location).
+
