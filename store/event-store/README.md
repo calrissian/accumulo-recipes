@@ -74,3 +74,13 @@ What's intrigueing about the loose and schemaless model of the StoreEntry object
 
 Better yet, if you want separation of keys so that they don't collide with other events in the store, you have the freedom to namespace them as you wish (i.e. status.location instead of just location).
 
+A query wouldn't be extremely useful, however, if all you could ever query are single keys equal to a single value. You can use OR and AND queries here as well:
+
+```java
+// find all the status update events that have healthOK equal to false
+Node query = new QueryBuilder().and().eq("eventType", "status").eq("healthOK", false).endStatement().build();
+
+// find all the event object from Maryland or Virginia
+Node query = new QueryBuilder().or().eq("location", "Maryland").eq("location", "Virginia").endStatement().build());
+
+
