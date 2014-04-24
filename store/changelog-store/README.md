@@ -2,7 +2,11 @@
 
 ## What is the Changelog Store?
 
-It's easy to use Accumulo to manage data changes that may need to be shared & further rectified on foreign clouds. With the lexicographically sorted property of Accumulo keys, reading items in descending order is easily achieved through reverse indexing the timestamps into static-length strings. By truncating those static-length string, we can truncate our timestamps (i.e. to every hour, half hour, fifteen minutes, etc...) to create buckets. Reverse sorted time-based buckets? That sounds like a wonderful changelog problem for a Merkle Tree to optimize. You can read all about merkle trees on [wikipedia](http://en.wikipedia.org/wiki/Hash_tree). The Changelog store uses the merkle tree implementation in [mango-hash](https://github.com/calrissian/mango/tree/master/mango-core/src/main/java/org/calrissian/mango/hash/tree).
+Many multi-datacenter systems today have to make trade-offs on how they handle their data. Which data needs to be kept synchronized across the systems? Which data should be local to the systems? Many times, it's possible the datacenters themselves may not be connected all the time. When they are, it's very possible they have very little bandwidth by which to communicate. Problems like this make it important to summarize changes between the systems so that as little as possible can be communicated back and forth before the systems determine which data actually needs to be synchronized.
+
+Merkle Trees work very well for summarizing changes between systems. These work by breaking up the larger set of data into smaller buckets and then summarizing those buckets, futher working up summarizations to the root of the tree. The best-case scenario is when two systems contain the same data and only the root of the tree was used for the determination. You can read more about Merkle Trees [here](http://en.wikipedia.org/wiki/Hash_tree). 
+
+Calrissian provides a MerkleTree implementation in our commons repo, Mango. We call it [mango-hash](https://github.com/calrissian/mango/tree/master/mango-core/src/main/java/org/calrissian/mango/hash/tree).
 
 ## How to store and model changes
 
