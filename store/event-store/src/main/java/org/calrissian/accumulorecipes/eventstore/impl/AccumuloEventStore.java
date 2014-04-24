@@ -28,7 +28,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
-import org.calrissian.accumulorecipes.eventstore.support.Shard;
+import org.calrissian.accumulorecipes.eventstore.support.ShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
@@ -55,7 +55,7 @@ public class AccumuloEventStore implements EventStore {
     private static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
     private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
-    private static final Shard shard = new Shard(DEFAULT_PARTITION_SIZE);
+    private static final ShardBuilder shard = new ShardBuilder(DEFAULT_PARTITION_SIZE);
 
     private final  Connector connector;
     private final String indexTable;

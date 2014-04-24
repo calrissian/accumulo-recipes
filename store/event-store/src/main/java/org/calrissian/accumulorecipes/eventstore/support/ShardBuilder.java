@@ -16,10 +16,14 @@
 package org.calrissian.accumulorecipes.eventstore.support;
 
 
+import org.apache.hadoop.io.Text;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public class Shard {
+public class ShardBuilder {
 
     protected final Integer numPartitions;
 
@@ -28,18 +32,37 @@ public class Shard {
     /**
      * A proper date format should be lexicographically sortable
      */
-    protected String dateFormat = "yyyyMMddhh";
+    protected String dateFormat = "yyyyMMddHH";
 
-    public Shard(Integer numPartitions) {
+    public ShardBuilder(Integer numPartitions) {
         this.numPartitions = numPartitions;
     }
 
     public String buildShard(long timestamp, String uuid) {
+        return buildShard(timestamp, (Math.abs(uuid.hashCode()) % numPartitions));
+    }
 
+    public String buildShard(long timestamp, int partition) {
         int partitionWidth = String.valueOf(numPartitions).length();
         Date date = new Date(timestamp);
         return String.format("%s%s%0" + partitionWidth + "d", new SimpleDateFormat(dateFormat).format(date),
-                delimiter, (Math.abs(uuid.hashCode()) % numPartitions));
+                delimiter, partition);
+    }
+
+    public SortedSet<Text> buildShardsInRange(Date start, Date stop) {
+
+        SortedSet<Text> shards = new TreeSet<Text>();
+
+        int hours = (int) ((stop.getTime() - start.getTime()) / (60 * 60 * 1000));
+        hours = hours > 0 ? hours : 1;
+
+        for(int i = 0; i < hours; i++) {
+            for(int j = 0; j < numPartitions; j++)
+                shards.add(new Text(buildShard(start.getTime(), j)));
+            start.setTime(start.getTime() + (60 * 60 * 1000));
+        }
+
+        return shards;
     }
 
     public String[] getRange(Date start, Date end) {

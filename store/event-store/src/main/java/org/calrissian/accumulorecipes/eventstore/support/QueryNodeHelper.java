@@ -64,9 +64,9 @@ public class QueryNodeHelper {
     protected final Connector connector;
     protected final String shardTable;
     protected final Integer numThreads;
-    protected final Shard shard;
+    protected final ShardBuilder shard;
 
-    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, Shard shard, TypeRegistry<String> typeRegistry) {
+    public QueryNodeHelper(Connector connector, String shardTable, int numThreads, ShardBuilder shard, TypeRegistry<String> typeRegistry) {
         this.connector = connector;
         this.shardTable = shardTable;
         this.numThreads = numThreads;

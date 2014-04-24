@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.eventstore.support;
 
 public class Constants {
 
-    public static final int DEFAULT_PARTITION_SIZE = 15;
+    public static final int DEFAULT_PARTITION_SIZE = 7;
 
     public static final String SHARD_PREFIX_B = "b";    // backwards index (key/value:uuid)
     public static final String SHARD_PREFIX_F = "f";    // forwards index (uuid:key/value)
