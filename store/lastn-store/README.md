@@ -2,7 +2,7 @@
 
 
 ##Description
-Accumulo's Versioning iterator is great at keeping only some finite number of previous versions of a single column but it will not help with documents that have been partitioned over many columns so that cell-level security can be constrained. This store effectively demonstrates how a count-based eviction can still be implemented using filters that store state so that the underlying keys/values of documents can be filtered appropriately. 
+Accumulo's Versioning iterator is great at keeping only some finite number of previous versions of a single column but it will not help with documents that have been partitioned over many columns so that cell-level security can be constrained. This store effectively demonstrates how a count-based eviction can still be implemented using filters that store state so that the underlying keys/values of documents can be filtered appropriately. Accumulo also allows an age-off filter to be configured which would keep only the last n for a period of time before they expire.
 
 Ultimately, this store maintains for you a window of the last events while Accumulo will automatically sort the events in descending order by time.
 
