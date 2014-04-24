@@ -55,6 +55,9 @@ The code above builds a change tree for the last 2 hours. This change tree could
 The merkle tree data structure itself contains a ```diff(MerkleTree other)``` method that will propagate down a tree when changes are found to find those buckets which will need to be transmitted.
 
 ```java
-// what we care about here is the timestamp of each leaf that's different. This determines the buckets that need to be re-transmitted
+/** 
+  * what we care about here is the timestamp of each leaf that's different. 
+  * This determines the buckets that need to be re-transmitted
+ **/
 List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);  
 ```
