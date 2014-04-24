@@ -11,7 +11,7 @@ Generally, it makes sense to model metrics in a way where items in the same grou
 A metric object can be created as follows:
 
 ```java
-Metric metric = new Metric(System.currentTimeMillis(), "internal", "systemA", "itemsIngested", 100);
+Metric metric = new Metric(System.currentTimeMillis(), "datacenter", "maryland|location1", "latencyMillis", 4500);
 ```
 
 The metric above can be added to the store just as easily:
@@ -31,4 +31,18 @@ Metrics are pretty easy to fetch from the store. They can be queried back by spe
 Iterable<Metric> metrics = store.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 ```
 
-Easy Peesy.
+##MetricsInputFormat
+
+The default metrics store provides a Hadoop input format which can be used to process metrics in mapreduce jobs. In fact, if you look at the tables created in Accumulo, you'll notice there are two of them. That's because one table is optimized to pull metrics in batch very quickly from the tablet servers and one is optimized to query single types very quickly over long periods of time. The metrics input format can be set up very easily in your mapreduce job.
+
+```java
+MetricsInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
+MetricsInputFormat.setQueryInfo(job.getConfiguration(), new Date(0), new Date(), MetricTimeUnit.MINUTES, "group", "type", "name");
+MetricsInputFormat.setZooKeeperInstance(job.getConfiguration(), "accumulo", "localhost:2181");
+```
+
+Your mapper will need to be parameterized to <Key, MetricWritable> for the input.
+
+```java
+class MyMapper extends Mapper<Key, MetricWritable...
+```
