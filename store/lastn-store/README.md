@@ -12,7 +12,11 @@ There are many use-cases when this could be an effective solution. Specifically,
 
 ##How do I use it?
 
+The "last n" value is determined when the store is first configured. This is passed into the store upon construction and stored with the table configuration in Accumulo.
+
 ###Add objects to the store
+
+Let's set up a store that will keep only the last 100 entries for some index. We'll use the generic "index1" here but you could make this anything grouping you'd like. Thinking about windows, you could group by something special based on the events themselves. Or you could group by a user's id. You could event group by some category of updates.
 
 ```java
 Instance instance = new MockInstance();
@@ -34,7 +38,12 @@ lastNStore.put("index1", entry1);
 lastNStore.put("index1", entry2);
 ```
 
+###Retrieve the last n objects from the store
 
+```java
+Iterable<StoreEntry> lastN = lastNStore.get("index1", new Auths());
+```
 
+There you have it. Seem simple?
 
 
