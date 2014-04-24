@@ -11,9 +11,9 @@ Many of the stores in the Calrissian stack deal with objects modeled like events
 StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
 
 // add the state to the event
-event.put(new Tuple("systemName", "system1", "USER&ADMIN"));
-event.put(new Tuple("eventType", "status", "USER&ADMIN"));
-event.put(new Tuple("healthOK", true, "USER&ADMIN"));
+event.put(new Tuple("systemName", "system1", "USER|ADMIN"));
+event.put(new Tuple("eventType", "status", "USER|ADMIN"));
+event.put(new Tuple("healthOK", true, "USER|ADMIN"));
 event.put(new Tuple("location", "Maryland", "ADMIN"));
 ```
 
@@ -46,3 +46,27 @@ If the event table isn't pre-split, all shards will end up on the same physical 
 ```java
 java -cp accumulo-recipes-<version>.jar org.calrissian.eventstore.cli.ShardSplitter <zookeepers> <instance> <username> <password> <tableName> <start day: yyyy-mm-dd> <stop day: yyyy-mm-dd>
 ```
+
+##Querying events from the store
+
+A store isn't any good if we can't get data back out. Because of the nature of the indexes in the EventStore, we are actually able to perform a fairly rich set of queries against the store in parallel across the many tablets that make up the store. The query is actually pushed down to each Accumulo tablet server that hosts the shards where our data is being stored for the period of time for which we are interested.
+
+Let's say we want to query back the event we constructure earlier. Let's first query for the events that are located in Maryland:
+
+```java
+Node query = new QueryBuilder().eq("location", "Maryland").build();
+Date startTime = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
+Date endTime = new Date(System.currentTimeMillis() + (60 * 60 * 1000));
+CloseableIterable<StoreEntry> events = store.query(startTime, endTime, query, new Auths("ADMIN"));
+```
+
+This query will return all events that have a "location" field equal to "Maryland" for the given time range where any tuples visiblity to the "ADMIN" label will be returned.
+
+Notice the returned object is a CloseableIterable. Accumulo opens up socket connections to the tablet servers in a threadpool to queue up the items that should be returned when iterating the result set. It's important that you close the results when the iteration is done.
+
+```java
+for(StoreEntry entry : events)
+  System.out.println("Entry Returned: " + entry);
+events.close();
+```
+
