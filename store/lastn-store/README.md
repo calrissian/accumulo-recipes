@@ -16,7 +16,7 @@ The "last n" value is determined when the store is first configured. This is pas
 
 ###Add objects to the store
 
-Let's set up a store that will keep only the last 100 entries for some index. We'll use the generic "index1" here but you could make this anything grouping you'd like. Thinking about windows, you could group by something special based on the events themselves. Or you could group by a user's id. You could event group by some category of updates.
+Let's set up a store that will keep only the last 100 entries for some index. We'll use the generic "index1" here but you could make this anything grouping you'd like. Thinking about windows, you could group by something special based on the events themselves. Or you could group by a user's id. You could also group by some category of updates- like "blog posts" or "status changes"
 
 ```java
 Instance instance = new MockInstance();
