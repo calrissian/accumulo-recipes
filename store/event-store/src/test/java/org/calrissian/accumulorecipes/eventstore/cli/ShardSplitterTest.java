@@ -3,7 +3,6 @@ package org.calrissian.accumulorecipes.eventstore.cli;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.calrissian.accumulorecipes.eventstore.support.Constants;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 

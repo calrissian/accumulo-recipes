@@ -15,76 +15,184 @@
  */
 package org.calrissian.accumulorecipes.changelog.impl;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
+import com.google.common.collect.Iterables;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
+import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.hash.tree.MerkleTree;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AccumuloChangelogStoreTest {
+
+    private AccumuloChangelogStore store;
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
         return new MockInstance().getConnector("root", "".getBytes());
     }
 
-    //@Ignore //This is just broken.  Need to see what was intended for this test.
+    @Before
+    public void setUp() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+        store = new AccumuloChangelogStore(getConnector());
+    }
+
     @Test
-    public void test() throws Exception {
+    public void singleChange() throws Exception {
 
-        AccumuloChangelogStore store = new AccumuloChangelogStore(getConnector());
 
-        MerkleTree mt = store.getChangeTree(
-                new Date(currentTimeMillis() - 50000000),
-                new Date(currentTimeMillis() + 50000000), new Auths());
+        long currentTime = currentTimeMillis();
 
-        StoreEntry entry = createStoreEntry("1", currentTimeMillis());
-        StoreEntry entry2 = createStoreEntry("2", currentTimeMillis() - 900000);
-        StoreEntry entry3 = createStoreEntry("3", currentTimeMillis() - 50000000);
-        StoreEntry entry4 = createStoreEntry("4", currentTimeMillis());
-        StoreEntry entry5 = createStoreEntry("5", currentTimeMillis() + 5000000);
+        /**
+         * First, we build an empty source tree
+         */
+        MerkleTree sourceTree = buildTree();
+
+        /**
+         * Put some data into the store to represent changes in the underlying data
+         */
+        StoreEntry entry = createStoreEntry("1", currentTime);
+
+        store.put(asList(entry));
+
+        /**
+         * We are querying both trees for the same time period (the exact timestamp doesn't need to be exact, though it
+         * needs to be within the same set of buckets (the same 5 minute period). This is easy to accomplish as the
+         * system requesting the changes can send the target systems the time range for which to query.
+         */
+
+        MerkleTree targetTree = buildTree();
+
+        assertEquals(sourceTree.getNumLeaves(), targetTree.getNumLeaves());        // verify same dimensionality and number of leaves.
+        assertEquals(sourceTree.getDimensions(), targetTree.getDimensions());
+
+        List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);
+
+        // the we had a difference in one bucket from the source to the target. T
+        assertEquals(1, diffLeaves.size());
+
+        long expectedBucket = currentTime - (currentTime % BucketSize.FIVE_MINS.getMs());
+        assertEquals(expectedBucket, diffLeaves.get(0).getTimestamp());
+    }
+
+    @Test
+    public void multipleChanges() throws Exception {
+
+        long currentTime = currentTimeMillis();
+
+        MerkleTree sourceTree = buildTree();
+
+        StoreEntry entry = createStoreEntry("1", currentTime);
+        StoreEntry entry2 = createStoreEntry("2", currentTime - 900000);
+        StoreEntry entry3 = createStoreEntry("3", currentTime - 50000000);
+        StoreEntry entry4 = createStoreEntry("4", currentTime);
+        StoreEntry entry5 = createStoreEntry("5", currentTime + 5000000);
 
         store.put(asList(entry, entry2, entry3, entry4, entry5));
 
-        MerkleTree mt2 = store.getChangeTree(
-                new Date(currentTimeMillis() - 50000000),
-                new Date(currentTimeMillis() + 50000000), new Auths());
+        MerkleTree targetTree = buildTree();
 
-        /**
-         * Now would be the time you'd pull the merkle tree from the foreign host and diff the remote with the local
-         * (in that direction) to find out which leaves on the remote host differ from the leaves in the local host.
-         */
+        assertEquals(sourceTree.getNumLeaves(), targetTree.getNumLeaves());        // verify same dimensionality and number of leaves.
+        assertEquals(sourceTree.getDimensions(), targetTree.getDimensions());
 
-        assertEquals(mt.getNumLeaves(), mt2.getNumLeaves());
-        assertEquals(mt.getDimensions(), mt2.getDimensions());
-
-        List<BucketHashLeaf> diffLeaves = mt2.diff(mt);
+        List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);  // these will be returned in reverse order
         assertEquals(4, diffLeaves.size());
 
-        /**
-         * This call to "getChanges()" would be done with the result of diffing the two local merkle tree against
-         * the merkle trees of foreign hosts and getting the "buckets" that differ. One the buckets that differ are
-         * known, we just need to transmit the data in those buckets.
-         *
-         * Let's assume that the bucket with timestamp 0 was different and we want to re-transmit just that bucket
-         */
-        List<Date> dates = new ArrayList<Date>();
-        for(BucketHashLeaf hashLeaf : diffLeaves) {
-            dates.add(new Date(hashLeaf.getTimestamp()));
+        long expectedTime1 = (currentTime + 5000000) - ((currentTime + 5000000) % BucketSize.FIVE_MINS.getMs());
+        assertEquals(expectedTime1 , diffLeaves.get(0).getTimestamp());
+
+        long expectedTime2 = (currentTime) - ((currentTime) % BucketSize.FIVE_MINS.getMs());
+        assertEquals(expectedTime2 , diffLeaves.get(1).getTimestamp());
+
+        long expectedTime3 = (currentTime - 900000) - ((currentTime - 900000) % BucketSize.FIVE_MINS.getMs());
+        assertEquals(expectedTime3 , diffLeaves.get(2).getTimestamp());
+
+        long expectedTime4 = (currentTime - 50000000) - ((currentTime - 50000000) % BucketSize.FIVE_MINS.getMs());
+        assertEquals(expectedTime4 , diffLeaves.get(3).getTimestamp());
+    }
+
+
+    @Test
+    public void singleChange_fetched() throws Exception {
+
+        MerkleTree sourceTree = buildTree();
+
+        long currentTime = currentTimeMillis();
+
+        StoreEntry entry = createStoreEntry("1", currentTime);
+        store.put(asList(entry));
+
+        MerkleTree targetTree = buildTree();
+
+        assertEquals(sourceTree.getNumLeaves(), targetTree.getNumLeaves());        // verify same dimensionality and number of leaves.
+        assertEquals(sourceTree.getDimensions(), targetTree.getDimensions());
+
+        List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);
+        Collection<Date> dates = new ArrayList<Date>();
+        for(BucketHashLeaf leaf : diffLeaves)
+            dates.add(new Date(leaf.getTimestamp()));
+
+        Iterable<StoreEntry> entries = store.getChanges(dates, new Auths());
+        assertEquals(entry, Iterables.get(entries, 0));
+    }
+
+
+    @Test
+    public void multipleChanges_fetched() throws Exception {
+
+        MerkleTree sourceTree = buildTree();
+
+        long currentTime = currentTimeMillis();
+
+        StoreEntry entry = createStoreEntry("1", currentTime);
+        StoreEntry entry2 = createStoreEntry("2", currentTime - 900000);
+        StoreEntry entry3 = createStoreEntry("3", currentTime - 50000000);
+        StoreEntry entry4 = createStoreEntry("4", currentTime);
+        StoreEntry entry5 = createStoreEntry("5", currentTime + 5000000);
+
+
+        List<StoreEntry> entryList = asList(entry, entry2, entry3, entry4, entry5);
+        store.put(entryList);
+
+        MerkleTree targetTree = buildTree();
+
+        assertEquals(sourceTree.getNumLeaves(), targetTree.getNumLeaves());        // verify same dimensionality and number of leaves.
+        assertEquals(sourceTree.getDimensions(), targetTree.getDimensions());
+
+        List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);
+        Collection<Date> dates = new ArrayList<Date>();
+        for(BucketHashLeaf leaf : diffLeaves)
+            dates.add(new Date(leaf.getTimestamp()));
+
+        System.out.println(dates);
+
+        Iterable<StoreEntry> entries = store.getChanges(dates, new Auths());
+        assertEquals(5, Iterables.size(entries));
+
+        for(StoreEntry actualEntry : entries) {
+            assertTrue(entryList.contains(actualEntry));
         }
+    }
+
+
+    private MerkleTree buildTree() {
+        return store.getChangeTree(
+                new Date(currentTimeMillis() - 50000000),
+                new Date(currentTimeMillis() + 50000000), new Auths());
     }
 
     private StoreEntry createStoreEntry(String uuid , long timestamp) {

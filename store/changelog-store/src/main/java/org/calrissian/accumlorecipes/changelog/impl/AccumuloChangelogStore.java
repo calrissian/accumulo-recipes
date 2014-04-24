@@ -205,7 +205,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
             Long startTs = reverseTimestampToNormalTime(Long.parseLong(startRange));
 
             /**
-             * If we didn't have a single bucket returned from the Scanner, we need to prime the leafs.
+             * If we didn't have a single bucket returned from the Scanner, we need to prime the leaves.
              */
             if(count == 0)
                 leafList.add(new BucketHashLeaf("", prevTs));
