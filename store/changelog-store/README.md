@@ -61,3 +61,19 @@ The merkle tree data structure itself contains a ```diff(MerkleTree other)``` me
  **/
 List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);  
 ```
+
+###Getting the changes
+
+Now that we have our buckets that differed from the target tree to the source tree, we can fetch the changes in those buckets. How many changes are fetched largely depends on the throughput of the system and the bucket size. A system that's only gathering changes for user-generated data with 1000 users and a bucket size set to 5 minutes is going to return much less data per bucket than gathering system generated updates that where 500 are received every 5 seconds and the bucket size is set to a day.
+
+To get the changes, we just need to request them from the store with the dates of the buckets that were returned from the merkle tree diff.
+
+```java
+for(BucketHashLeaf leaf : diffLeaves)
+ dates.add(new Date(leaf.getTimestamp()));
+
+Iterable<StoreEntry> entries = store.getChanges(dates, new Auths());
+```
+
+There you have it, in most scenarios, this should severely have limited the amount of data that would have been sent across the systems had they needed to share everything in order to determine what differed.
+
