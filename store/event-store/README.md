@@ -19,5 +19,7 @@ event.put(new Tuple("location", "Maryland", "ADMIN"));
 
 Here we've constructed an event to model the health status of a system. In this scenario, assume we have systems at several locations throughout an enterprise fabric. Perhaps we have a couple clouds located throughout the country but only users with ADMIN privileges can see those locations. 
 
-Also notice that tuple values aren't just limited to being strings. Most standard java primitives are supported (with the exception of arrays). When this event gets stored in Accumulo, the value of the tuple will keep datatype information with it so that queries that are performed will know exactly the datatype of each value in which to search. Ths is important as well because of the lexicographically sorted nature of Accumulo keys. When the value of a tuple is supposed to be representing a number, it's important that I don't put that number in a string because 10 will sort before 2 in the lexicographic order of the bytes.
+Also notice that tuple values aren't just limited to being strings. Most standard java primitives are supported (with the exception of arrays). When this event gets stored in Accumulo, the value of the tuple will keep datatype information with it so that queries that are performed will know exactly the datatype of each value in which to search. Ths is important as well because of the lexicographically sorted nature of Accumulo keys. When the value of a tuple is supposed to be representing a number, it's important that I don't put that number in a string because 10 will sort before 2 in the lexicographic order of the bytes. This may not seem like a big deal until I want to search for numbers 1-10 and find that only 1 and 10 were returned and not 2-9.
+
+
 
