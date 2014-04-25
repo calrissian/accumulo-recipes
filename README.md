@@ -5,3 +5,6 @@ These recipes and stores have been created as a starting point for using Accumul
 - How effective Accumulo can be at munging data in parallel across a cluster of machines. 
 - How great Accumulo can index and process data using lexicographically sorted keys making that data immediately available.
 - How well Accumulo is integrated into the Hadoop stack where data partitioning across the cluster can be fine-tuned to take advantage of locality when doing bulk operations.
+
+
+Be sure to check the README files at the root of each store's folder to get detailed instructions and explanations. If you've got a recipe that you don't see here, we'd love to have it. 

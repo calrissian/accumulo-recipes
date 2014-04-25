@@ -28,7 +28,7 @@ store.save(Collections.singleton(metric));
 Metrics are pretty easy to fetch from the store. They can be queried back by specifying at least the group and the type. The name is optional. 
 
 ```java
-Iterable<Metric> metrics = store.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
+CloseableIterable<Metric> metrics = store.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 ```
 
 ##MetricsInputFormat

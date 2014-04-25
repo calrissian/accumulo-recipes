@@ -31,13 +31,13 @@ import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
+import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.transform;
 import static java.lang.Long.parseLong;
 import static java.util.Collections.singleton;
 import static java.util.EnumSet.allOf;
@@ -48,6 +48,8 @@ import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
@@ -195,16 +197,17 @@ public class AccumuloMetricStore implements MetricStore {
 
                 for (MetricTimeUnit timeUnit : MetricTimeUnit.values()) {
 
+                    String timestamp = generateTimestamp(metric.getTimestamp(), timeUnit);
                     //Create mutation with:
                     //rowID: group\u0000timestamp
                     Mutation group_mutation = new Mutation(
-                            combine(group, generateTimestamp(metric.getTimestamp(), timeUnit))
+                            combine(group, timestamp)
                     );
 
                     //Create mutation with:
                     //rowID: type\u0000timestamp
                     Mutation type_mutation = new Mutation(
-                            combine(type, generateTimestamp(metric.getTimestamp(), timeUnit))
+                            combine(type, timestamp)
                     );
 
 
@@ -248,9 +251,9 @@ public class AccumuloMetricStore implements MetricStore {
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
+    public CloseableIterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
         return transform(
-                metricScanner(start, end, group, type, name, timeUnit, auths),
+                closeableIterable(metricScanner(start, end, group, type, name, timeUnit, auths)),
                 new MetricTransform<Metric>(timeUnit) {
                     @Override
                     protected Metric transform(long timestamp, String group, String type, String name, String visibility, Value value) {

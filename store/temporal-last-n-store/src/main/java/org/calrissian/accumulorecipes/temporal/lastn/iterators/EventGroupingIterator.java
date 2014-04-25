@@ -118,40 +118,24 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key,Value> 
         Text currentRow;
         Text currentColF;
         String uuid;
-        do {
-            if (sourceIter.hasTop() == false)
-                return;
+        if (sourceIter.hasTop() == false)
+            return;
 
-            currentRow = new Text(sourceIter.getTopKey().getRow());
-            currentColF = new Text(sourceIter.getTopKey().getColumnFamily());
-            uuid = getUUIDFromValue(sourceIter.getTopValue());
+        currentRow = new Text(sourceIter.getTopKey().getRow());
+        currentColF = new Text(sourceIter.getTopKey().getColumnFamily());
+        uuid = getUUIDFromValue(sourceIter.getTopValue());
 
-            keys.clear();
-            values.clear();
-            while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
-                    sourceIter.getTopKey().getColumnFamily().equals(currentColF) && getUUIDFromValue(sourceIter.getTopValue()).equals(uuid)) {
-                keys.add(new Key(sourceIter.getTopKey()));
-                values.add(new Value(sourceIter.getTopValue()));
-                sourceIter.next();
-            }
-        } while (!filter(currentRow, keys, values));
+        keys.clear();
+        values.clear();
+        while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
+                sourceIter.getTopKey().getColumnFamily().equals(currentColF) && getUUIDFromValue(sourceIter.getTopValue()).equals(uuid)) {
+            keys.add(new Key(sourceIter.getTopKey()));
+            values.add(new Value(sourceIter.getTopValue()));
+            sourceIter.next();
+        }
 
         topKey = new Key(currentRow, currentColF);
         topValue = encodeRow(keys, values);
-    }
-
-    /**
-     *
-     * @param currentRow
-     *          All keys have this in their row portion (do not modify!).
-     * @param keys
-     *          One key for each key in the row, ordered as they are given by the source iterator (do not modify!).
-     * @param values
-     *          One value for each key in keys, ordered to correspond to the ordering in keys (do not modify!).
-     * @return true if we want to keep the row, false if we want to skip it
-     */
-    protected boolean filter(Text currentRow, List<Key> keys, List<Value> values) {
-        return true;
     }
 
     @Override

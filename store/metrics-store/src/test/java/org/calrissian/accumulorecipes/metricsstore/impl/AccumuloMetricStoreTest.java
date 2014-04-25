@@ -24,6 +24,7 @@ import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.mango.collect.CloseableIterable;
 import org.junit.Test;
 
 import java.util.Date;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.common.collect.Iterables.limit;
 import static com.google.common.collect.Lists.newArrayList;
+import static org.calrissian.mango.collect.CloseableIterables.autoClose;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloMetricStoreTest {
@@ -56,25 +58,25 @@ public class AccumuloMetricStoreTest {
         final long offset = getTimeOffset(timeUnit);
 
         return limit(
-            new Iterable<Metric>() {
-                @Override
-                public Iterator<Metric> iterator() {
-                    return new AbstractIterator<Metric>() {
-                        long current = startTime;
+                new Iterable<Metric>() {
+                    @Override
+                    public Iterator<Metric> iterator() {
+                        return new AbstractIterator<Metric>() {
+                            long current = startTime;
 
-                        @Override
-                        protected Metric computeNext() {
-                            current -= offset;
-                            return new Metric(current, "group", "type", "name", "", 1);
-                        }
-                    };
-                }
-            },
-            limit);
+                            @Override
+                            protected Metric computeNext() {
+                                current -= offset;
+                                return new Metric(current, "group", "type", "name", "", 1);
+                            }
+                        };
+                    }
+                },
+                limit);
     }
 
-    public static void checkMetrics(Iterable<Metric> actual, int expectedNum, int expectedVal) {
-        List<Metric> actualList = newArrayList(actual);
+    public static void checkMetrics(CloseableIterable<Metric> actual, int expectedNum, int expectedVal) {
+        List<Metric> actualList = newArrayList(autoClose(actual));
 
         assertEquals(expectedNum, actualList.size());
 
@@ -95,7 +97,7 @@ public class AccumuloMetricStoreTest {
 
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 1);
     }
@@ -112,7 +114,7 @@ public class AccumuloMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 3);
     }

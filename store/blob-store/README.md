@@ -12,7 +12,7 @@ An extended version of the default blob store allows metadata (like created by, 
 ###Example: Insert a file 
 ```java
 Instance instance = new MockInstance();
-Connector connector = instance.getConnector("root", "secret".getBytes());
+Connector connector = instance.getConnector("root", "".getBytes());
 
 // create a blob store with default chunk size of 1kb
 AccumuloBlobStore blobStore = new AccumuloBlobStore(connector, 1024);  
@@ -31,7 +31,7 @@ fis.close();
 ###Example: Getting a stored file
 ```java
 Instance instance = new MockInstance();
-Connector connector = instance.getConnector("root", "secret".getBytes());
+Connector connector = instance.getConnector("root", "".getBytes());
 
 // create a blob store with default chunk size of 1kb
 AccumuloBlobStore blobStore = new AccumuloBlobStore(connector, 1024);  

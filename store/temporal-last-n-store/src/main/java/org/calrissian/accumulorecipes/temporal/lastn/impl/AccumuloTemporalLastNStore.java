@@ -42,7 +42,6 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     private final String tableName;
     private final BatchWriter writer;
     private final TypeRegistry<String> typeRegistry;
-    private final ObjectMapper objectMapper;
 
 
     public AccumuloTemporalLastNStore(Connector connector) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
@@ -53,7 +52,6 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         this.connector = connector;
         this.tableName = tableName;
         this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
-        this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
 
         if(!connector.tableOperations().exists(this.tableName))
             connector.tableOperations().create(this.tableName, false);
@@ -107,7 +105,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     }
 
     @Override
-    public CloseableIterable<StoreEntry> get(Date start, Date stop, Collection<String> groups, int n, Auths auths) {
+    public Iterable<StoreEntry> get(Date start, Date stop, Collection<String> groups, int n, Auths auths) {
 
         List<Iterable<Map.Entry<Key,Value>>> cursors = new ArrayList<Iterable<Map.Entry<Key, Value>>>();
         String stopDay = generateTimestamp(start.getTime(), MetricTimeUnit.DAYS);

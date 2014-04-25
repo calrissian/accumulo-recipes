@@ -21,6 +21,7 @@ import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
+import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
 
@@ -42,7 +43,7 @@ public interface CustomMetricStore extends MetricStore {
      * @param <T>
      * @return
      */
-    <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name,
+    <T> CloseableIterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name,
                                               Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Auths auths) throws IllegalAccessException, InstantiationException;
 
 }

@@ -19,6 +19,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
+import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
 
@@ -38,7 +39,7 @@ public interface StatsMetricStore extends MetricStore{
      * @param auths
      * @return
      */
-    Iterable<Stats> queryStats(Date start, Date end, String group, String type, String name,
+    CloseableIterable<Stats> queryStats(Date start, Date end, String group, String type, String name,
                                MetricTimeUnit timeUnit, Auths auths);
 
 }

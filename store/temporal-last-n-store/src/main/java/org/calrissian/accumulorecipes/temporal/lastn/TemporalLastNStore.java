@@ -11,5 +11,5 @@ public interface TemporalLastNStore {
 
     void put(String group, StoreEntry entry);
 
-    CloseableIterable<StoreEntry> get(Date start, Date stop, Collection<String> groups, int n, Auths auths);
+    Iterable<StoreEntry> get(Date start, Date stop, Collection<String> groups, int n, Auths auths);
 }

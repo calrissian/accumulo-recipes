@@ -21,9 +21,9 @@ import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_
 import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
 import static org.calrissian.mango.collect.CloseableIterators.wrap;
 
-public class MergeJoinIterable implements CloseableIterable<StoreEntry> {
+public class MergeJoinIterable implements Iterable<StoreEntry> {
 
-    TypeRegistry registry = ACCUMULO_TYPES;
+    private TypeRegistry registry = ACCUMULO_TYPES;
 
     private List<Iterable<Map.Entry<Key,Value>>> cursors;
 
@@ -79,7 +79,7 @@ public class MergeJoinIterable implements CloseableIterable<StoreEntry> {
 
     }
 
-    static Function<List<Map.Entry<Key,Value>>, StoreEntry> entryXform = new Function<List<Map.Entry<Key, Value>>, StoreEntry>() {
+    Function<List<Map.Entry<Key,Value>>, StoreEntry> entryXform = new Function<List<Map.Entry<Key, Value>>, StoreEntry>() {
         @Override
         public StoreEntry apply(List<Map.Entry<Key, Value>> entries) {
             StoreEntry toReturn = null;
@@ -99,14 +99,4 @@ public class MergeJoinIterable implements CloseableIterable<StoreEntry> {
        }
     };
 
-    @Override
-    public void closeQuietly() {
-
-
-    }
-
-    @Override
-    public void close() throws IOException {
-
-    }
 }
