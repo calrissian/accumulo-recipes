@@ -32,3 +32,21 @@ emailUpdate.add(new Tuple("from", "thisguy@gmail.com", ""));
 emailUpdate.add(new Tuple("subject", "Things you should see before age 50", ""));
 emailUpdate.add(new Tuple("to", "yournamehere@gmail.com", ""));
 ```
+
+Now let's create a store and add the events above to the store under the appropriate groups.
+
+```java
+Instance instance = new MockInstance();
+Connector connector  = instance.getConnector("root", "".getBytes());
+AccumuloTemporalLastNStore store = new AccumuloTemporalLastNStore(connector);
+
+store.put("userName|blogUpdates", blogUpdate);
+store.put("userName|worldNews", worldNews);
+store.put("userName|emailUpdates", emailUpdates);
+```
+
+So now we have our events in the stored grouped logically by username and feed category. 
+
+##Querying the events
+
+The events contained in the store will always be returned in chronological order. However, it's up to you how you want to ask for them.
