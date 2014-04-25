@@ -48,8 +48,16 @@ public class AccumuloTemporalLastNTest {
         Iterable<StoreEntry> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
                 singleton("group"), 2, new Auths());
 
-        assertEquals(testEntry, Iterables.get(results, 0));
-        assertEquals(testEntry2, Iterables.get(results,1));
+        StoreEntry actualEntry = Iterables.get(results, 0);
+        assertEquals(actualEntry.getId(), testEntry.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+
+
+        actualEntry = Iterables.get(results, 1);
+        assertEquals(actualEntry.getId(), testEntry2.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry2.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry2.getTuples()));
     }
 
     @Test
@@ -69,8 +77,16 @@ public class AccumuloTemporalLastNTest {
         Iterable<StoreEntry> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
                 Arrays.asList(new String[] {"group", "group1"}), 2, new Auths());
 
-        assertEquals(testEntry, Iterables.get(results,0));
-        assertEquals(testEntry2, Iterables.get(results,1));
+        StoreEntry actualEntry = Iterables.get(results, 0);
+        assertEquals(actualEntry.getId(), testEntry.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+
+
+        actualEntry = Iterables.get(results, 1);
+        assertEquals(actualEntry.getId(), testEntry2.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry2.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry2.getTuples()));
     }
 
     @Test
@@ -97,10 +113,22 @@ public class AccumuloTemporalLastNTest {
         Iterable<StoreEntry> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
                 Arrays.asList(new String[] {"group", "group1"}), 3, new Auths());
 
-        assertEquals(testEntry, Iterables.get(results,0));
-        assertEquals(testEntry3, Iterables.get(results,1));
-        assertEquals(testEntry2, Iterables.get(results,2));
-    }
+
+        StoreEntry actualEntry = Iterables.get(results, 0);
+        assertEquals(actualEntry.getId(), testEntry.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+
+
+        actualEntry = Iterables.get(results, 1);
+        assertEquals(actualEntry.getId(), testEntry3.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry3.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry3.getTuples()));
+
+        actualEntry = Iterables.get(results, 2);
+        assertEquals(actualEntry.getId(), testEntry2.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry2.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry2.getTuples()));    }
 
 
 
