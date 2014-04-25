@@ -29,6 +29,7 @@ import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIntersectingIterator;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.AndSingleDepthOnlyValidator;
+import org.calrissian.mango.accumulo.Scanners;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
@@ -43,8 +44,8 @@ import java.util.Date;
 import static java.util.Collections.singleton;
 import static java.util.Map.Entry;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class QueryNodeHelper {
 
@@ -103,7 +104,7 @@ public class QueryNodeHelper {
 
         scanner.setRanges(singleton(new Range(range[0], range[1] + DELIM_END)));
 
-        return transform(wrap(scanner), entityTransform);
+        return transform(closeableIterable(scanner), entityTransform);
     }
 
 
@@ -138,6 +139,6 @@ public class QueryNodeHelper {
 
         scanner.setRanges(singleton(new Range(range[0], range[1] + DELIM_END)));
 
-        return transform(wrap(scanner), entityTransform);
+        return transform(closeableIterable(scanner), entityTransform);
     }
 }

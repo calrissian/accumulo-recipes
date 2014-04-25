@@ -30,6 +30,10 @@ limitations under the License.
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
+      <dependency>
+          <groupId>org.calrissian.mango</groupId>
+          <artifactId>mango-accumulo</artifactId>
+      </dependency>
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>

@@ -30,6 +30,7 @@ import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.accumulo.Scanners;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.calrissian.mango.json.tuple.TupleModule;
@@ -46,9 +47,9 @@ import static java.util.Map.Entry;
 import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 /**
  * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent
@@ -243,7 +244,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
 
             scanner.setRanges(ranges);
 
-            return transform(wrap(scanner), entityTransform);
+            return transform(closeableIterable(scanner), entityTransform);
 
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);

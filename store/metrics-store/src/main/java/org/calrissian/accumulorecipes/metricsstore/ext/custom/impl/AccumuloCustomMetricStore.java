@@ -39,8 +39,8 @@ import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 /**
  * This implementation of the metric service allows the caller to specify a custom function during query time.  No
@@ -93,7 +93,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         scanner.addScanIterator(setting);
 
         return transform(
-                wrap(scanner),
+                closeableIterable(scanner),
                 new MetricTransform<Metric>(timeUnit) {
                     @Override
                     protected Metric transform(long timestamp, String group, String type, String name, String visibility, Value value) {
@@ -121,7 +121,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         FunctionCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         scanner.addScanIterator(setting);
 
-        return transform(wrap(scanner), new CustomMetricTransform<T>(timeUnit, impl));
+        return transform(closeableIterable(scanner), new CustomMetricTransform<T>(timeUnit, impl));
     }
 
     /**

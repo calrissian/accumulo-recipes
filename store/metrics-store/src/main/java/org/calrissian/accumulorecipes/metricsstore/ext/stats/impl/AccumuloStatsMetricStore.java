@@ -40,8 +40,8 @@ import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
@@ -113,7 +113,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
     public CloseableIterable<Stats> queryStats(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
 
         return transform(
-                wrap(metricScanner(start, end, group, type, name, timeUnit, auths)),
+                closeableIterable(metricScanner(start, end, group, type, name, timeUnit, auths)),
                 new MetricStatsTransform(timeUnit)
         );
     }
