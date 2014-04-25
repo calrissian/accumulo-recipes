@@ -1,5 +1,6 @@
 package org.calrissian.accumulorecipes.temporal.lastn.support;
 
+import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
@@ -55,29 +56,18 @@ public class MergeJoinIterable implements CloseableIterable<StoreEntry> {
 
                 PeekingCloseableIterator<Map.Entry<Key, Value>> curEntry = null;
                 for (PeekingCloseableIterator<Map.Entry<Key, Value>> itr : iterators) {
-                    if (itr.hasNext() && (curEntry == null || (itr.peek()).getKey().getTimestamp() > curEntry.peek().getKey().getTimestamp())) {
+                    if (itr.hasNext() && (curEntry == null ||
+                            (itr.peek()).getKey().getTimestamp() > curEntry.peek().getKey().getTimestamp()))
                         curEntry = itr;
-                    }
                 }
 
                 Map.Entry<Key,Value> entry = curEntry.next();
-
-                StoreEntry toReturn = null;
                 try {
-                    List<Map.Entry<Key,Value>> tupleCols = decodeRow(entry.getKey(), entry.getValue());
-                    for(Map.Entry<Key,Value> tupleCol : tupleCols) {
-                        String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), "\0");
-                        if(toReturn == null) {
-                            toReturn = new StoreEntry(splits[0], Long.parseLong(splits[1]));
-                        }
-                        toReturn.put(new Tuple(splits[2], registry.decode(splits[3], splits[4]), splits[5]));
-                    }
-                } catch (Exception e) {
+                    StoreEntry toReturn = entryXform.apply(decodeRow(entry.getKey(), entry.getValue()));
+                    return toReturn;
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-
-
-                return toReturn;
             }
 
             @Override
@@ -88,6 +78,26 @@ public class MergeJoinIterable implements CloseableIterable<StoreEntry> {
         };
 
     }
+
+    static Function<List<Map.Entry<Key,Value>>, StoreEntry> entryXform = new Function<List<Map.Entry<Key, Value>>, StoreEntry>() {
+        @Override
+        public StoreEntry apply(List<Map.Entry<Key, Value>> entries) {
+            StoreEntry toReturn = null;
+            try {
+                for(Map.Entry<Key,Value> tupleCol : entries) {
+                    String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), "\0");
+                    if(toReturn == null) {
+                        toReturn = new StoreEntry(splits[0], Long.parseLong(splits[1]));
+                    }
+                    toReturn.put(new Tuple(splits[2], registry.decode(splits[3], splits[4]), splits[5]));
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            return toReturn;
+       }
+    };
 
     @Override
     public void closeQuietly() {
