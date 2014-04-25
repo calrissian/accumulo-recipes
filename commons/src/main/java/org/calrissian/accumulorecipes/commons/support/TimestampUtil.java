@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.support;
+package org.calrissian.accumulorecipes.commons.support;
 
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 

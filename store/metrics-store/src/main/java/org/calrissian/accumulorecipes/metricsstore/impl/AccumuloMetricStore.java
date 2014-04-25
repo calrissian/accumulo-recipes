@@ -29,7 +29,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.generateTimestamp;
+import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals

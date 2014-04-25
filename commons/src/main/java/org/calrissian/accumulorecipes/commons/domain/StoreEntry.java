@@ -20,6 +20,7 @@ import org.calrissian.mango.domain.Tuple;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.UUID;
 
 import static java.lang.System.currentTimeMillis;
@@ -59,7 +60,7 @@ public class StoreEntry {
         this.id = id;
         this.timestamp = timestamp;
 
-        this.tuples = new ArrayList<Tuple>();
+        this.tuples = new HashSet<Tuple>();
     }
 
     /**
