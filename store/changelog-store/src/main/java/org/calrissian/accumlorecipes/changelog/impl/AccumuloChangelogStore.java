@@ -30,7 +30,6 @@ import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.mango.accumulo.Scanners;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.calrissian.mango.json.tuple.TupleModule;

@@ -29,7 +29,6 @@ import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIntersectingIterator;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.query.validators.AndSingleDepthOnlyValidator;
-import org.calrissian.mango.accumulo.Scanners;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;

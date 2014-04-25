@@ -23,6 +23,7 @@ limitations under the License.
   <name>Accumulo Recipes - Parent</name>
   <modules>
     <module>commons</module>
+    <module>examples</module>
     <module>store</module>
   </modules>
   <properties>

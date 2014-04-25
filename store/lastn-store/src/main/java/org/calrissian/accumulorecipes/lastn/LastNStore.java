@@ -26,19 +26,19 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 public interface LastNStore {
 
     /**
-     * Puts a StoreEntry into the Last N store under the specified index. The Last N items returned are all grouped
-     * underneath the index.
-     * @param index
+     * Puts a StoreEntry into the Last N store under the specified grouping. The Last N items returned are all grouped
+     * by the group value.
+     * @param group
      * @param entry
      */
-    void put(String index, StoreEntry entry);
+    void put(String group, StoreEntry entry);
 
     /**
-     * Returns the last N store entries under the specified index- starting with the most recent.
-     * @param index
+     * Returns the last N store entries under the specified group- starting with the most recent.
+     * @param group
      * @param auths
      * @return
      */
-    Iterable<StoreEntry> get(String index, Auths auths);
+    Iterable<StoreEntry> get(String group, Auths auths);
 
 }

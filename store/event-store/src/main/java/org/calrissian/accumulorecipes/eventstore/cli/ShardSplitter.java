@@ -6,7 +6,6 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.eventstore.support.Constants;
 import org.calrissian.accumulorecipes.eventstore.support.ShardBuilder;
 import org.joda.time.DateTime;
-import sun.security.provider.SHA;
 
 import java.util.SortedSet;
 
