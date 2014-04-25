@@ -49,4 +49,15 @@ So now we have our events in the stored grouped logically by username and feed c
 
 ##Querying the events
 
-The events contained in the store will always be returned in chronological order. However, it's up to you how you want to ask for them.
+The events contained in the store will always be returned in chronological order. However, it's up to you how you want to ask for them. Events get queried for some list of groups.
+
+```java
+List<String> groups = Arrays.asList(new String[] { 'userName|blogUpdates', 'userName|worldNews', 'userName|emailUpdates' });
+
+// set our time range to the last hour
+Date start = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
+Date stop = new Date();
+Iterable<StoreEntry> lastNEntries = store.get(start, stop, groups, 100, new Auths());
+```
+
+In the example above, we are querying the last 100 events across the groups 'userName|blogUpdates', 'userName|worldNews', and 'userName|emailUpdates'. This will merge the last n feeds together and provide a holistic view.
