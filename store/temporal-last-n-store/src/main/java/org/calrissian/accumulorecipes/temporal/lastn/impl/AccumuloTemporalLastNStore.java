@@ -1,12 +1,10 @@
 package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
@@ -14,7 +12,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator;
-import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
+import org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIterator;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
 import org.calrissian.accumulorecipes.temporal.lastn.support.MergeJoinIterable;
@@ -127,7 +125,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), 1);
                 scanner.setRanges(singletonList(new Range(startKey, stopKey)));
 
-                IteratorSetting setting = new IteratorSetting(7, WholeColumnQualifierIterator.class);
+                IteratorSetting setting = new IteratorSetting(7, EventGroupingIterator.class);
                 scanner.addScanIterator(setting);
 
                 IteratorSetting setting2 = new IteratorSetting(15, FirstNEntriesInRowIterator.class);

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator.decodeRow;
+import static org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIterator.decodeRow;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
 import static org.calrissian.mango.collect.CloseableIterators.wrap;
