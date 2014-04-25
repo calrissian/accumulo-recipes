@@ -25,6 +25,8 @@ import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetri
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SummaryStatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SumFunction;
+import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.junit.Test;
 
 import java.util.Date;
@@ -33,14 +35,15 @@ import java.util.List;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStoreTest.generateTestData;
 import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStoreTest.getConnector;
+import static org.calrissian.mango.collect.CloseableIterables.autoClose;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloCustomMetricStoreTest {
 
 
 
-    private static void checkCustom(Iterable<CustomMetric<Long>> actual, int expectedNum, Long expectedVal) {
-        List<CustomMetric<Long>> actualList = newArrayList(actual);
+    private static void checkCustom(CloseableIterable<CustomMetric<Long>> actual, int expectedNum, Long expectedVal) {
+        List<CustomMetric<Long>> actualList = newArrayList(autoClose(actual));
 
         assertEquals(expectedNum, actualList.size());
 
@@ -97,7 +100,7 @@ public class AccumuloCustomMetricStoreTest {
 
         metricStore.save(testData);
 
-        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class,  MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class,  MetricTimeUnit.MINUTES, new Auths());
 
         checkCustom(actual, 60, 1L);
     }
@@ -112,7 +115,7 @@ public class AccumuloCustomMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class, MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class, MetricTimeUnit.MINUTES, new Auths());
 
         checkCustom(actual, 60, 3L);
     }

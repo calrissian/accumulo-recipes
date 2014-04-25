@@ -21,6 +21,8 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
+import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.junit.Test;
 
 import java.util.Date;
@@ -32,13 +34,14 @@ import static com.google.common.collect.Lists.transform;
 import static java.lang.Math.sqrt;
 import static java.util.Arrays.asList;
 import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStoreTest.*;
+import static org.calrissian.mango.collect.CloseableIterables.autoClose;
 import static org.junit.Assert.assertEquals;
 
 
 public class AccumuloStatsMetricStoreTest {
 
-    private static void checkStats(Iterable<Stats> actual, int expectedNum, int expectedVal) {
-        List<Stats> actualList = newArrayList(actual);
+    private static void checkStats(CloseableIterable<Stats> actual, int expectedNum, int expectedVal) {
+        List<Stats> actualList = newArrayList(autoClose(actual));
 
         assertEquals(expectedNum, actualList.size());
 
@@ -64,11 +67,11 @@ public class AccumuloStatsMetricStoreTest {
 
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 1);
 
-        Iterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkStats(stats, 60, 1);
     }
@@ -83,11 +86,11 @@ public class AccumuloStatsMetricStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
 
-        Iterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<Metric> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkMetrics(actual, 60, 3);
 
-        Iterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<Stats> stats = metricStore.queryStats(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, new Auths());
 
         checkStats(stats, 60, 3);
     }

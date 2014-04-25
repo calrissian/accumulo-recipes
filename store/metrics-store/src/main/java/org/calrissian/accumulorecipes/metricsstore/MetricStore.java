@@ -19,6 +19,7 @@ package org.calrissian.accumulorecipes.metricsstore;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
 
@@ -41,7 +42,7 @@ public interface MetricStore {
      * @param auths
      * @return
      */
-    Iterable<Metric> query(Date start, Date end, String group, String type, String name,
-                           MetricTimeUnit timeUnit, Auths auths);
+    CloseableIterable<Metric> query(Date start, Date end, String group, String type, String name,
+                                    MetricTimeUnit timeUnit, Auths auths);
 
 }

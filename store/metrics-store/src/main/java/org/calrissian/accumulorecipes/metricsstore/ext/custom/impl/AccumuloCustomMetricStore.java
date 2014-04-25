@@ -29,16 +29,18 @@ import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFun
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.iterator.FunctionCombiner;
 import org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
+import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.transform;
 import static java.lang.Long.parseLong;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 /**
  * This implementation of the metric service allows the caller to specify a custom function during query time.  No
@@ -80,7 +82,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
      * {@inheritDoc}
      */
     @Override
-    public Iterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
+    public CloseableIterable<Metric> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Auths auths) {
 
         ScannerBase scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
@@ -91,7 +93,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         scanner.addScanIterator(setting);
 
         return transform(
-                scanner,
+                wrap(scanner),
                 new MetricTransform<Metric>(timeUnit) {
                     @Override
                     protected Metric transform(long timestamp, String group, String type, String name, String visibility, Value value) {
@@ -105,7 +107,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
      * {@inheritDoc}
      */
     @Override
-    public <T> Iterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name, Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Auths
+    public <T> CloseableIterable<CustomMetric<T>> queryCustom(Date start, Date end, String group, String type, String name, Class<? extends MetricFunction<T>> function, MetricTimeUnit timeUnit, Auths
             auths) throws IllegalAccessException, InstantiationException {
         checkNotNull(function);
 
@@ -119,7 +121,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         FunctionCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         scanner.addScanIterator(setting);
 
-        return transform(scanner, new CustomMetricTransform<T>(timeUnit, impl));
+        return transform(wrap(scanner), new CustomMetricTransform<T>(timeUnit, impl));
     }
 
     /**
