@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.blobstore.example;
+package org.calrissian.accumulorecipes.examples.blobstore;
 
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
