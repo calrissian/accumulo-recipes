@@ -16,6 +16,9 @@ import org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIter
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
 import org.calrissian.accumulorecipes.temporal.lastn.support.MergeJoinIterable;
+import org.calrissian.mango.accumulo.Scanners;
+import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
@@ -26,6 +29,7 @@ import static java.util.Collections.singletonList;
 import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
@@ -95,7 +99,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     }
 
     @Override
-    public Iterable<StoreEntry> get(Date start, Date stop, Collection<String> groups, int n, Auths auths) {
+    public CloseableIterable<StoreEntry> get(Date start, Date stop, Collection<String> groups, int n, Auths auths) {
 
         List<Iterable<Map.Entry<Key,Value>>> cursors = new ArrayList<Iterable<Map.Entry<Key, Value>>>();
         String stopDay = generateTimestamp(start.getTime(), MetricTimeUnit.DAYS);
@@ -132,6 +136,6 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             }
 
         }
-        return new MergeJoinIterable(cursors);
+        return wrap(new MergeJoinIterable(cursors));
     }
 }
