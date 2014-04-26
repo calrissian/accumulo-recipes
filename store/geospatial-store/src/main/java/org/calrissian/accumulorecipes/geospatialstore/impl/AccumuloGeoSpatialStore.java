@@ -32,6 +32,7 @@ import java.util.Map;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.scalb;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
@@ -99,6 +100,10 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
         return String.format("%0" + getPartitionWidth() + "d%s%s", partition, PARTITION_DELIM, hash);
     }
 
+    protected String buildId(String id, long timestamp) {
+        return String.format("%s%s%s", id, DELIM, timestamp);
+    }
+
     protected String buildKeyValue(Tuple tuple) throws TypeEncodingException {
         return tuple.getKey() + DELIM + registry.getAlias(tuple.getValue()) + DELIM + registry.encode(tuple.getValue());
     }
@@ -114,7 +119,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
             for(Tuple tuple : entry.getTuples()) {
                 try {
                     // put in the forward mutation
-                    m.put(new Text(entry.getId()),
+                    m.put(new Text(buildId(entry.getId(), entry.getTimestamp())),
                           new Text(buildKeyValue(tuple)),
                           new ColumnVisibility(tuple.getVisibility()),
                           entry.getTimestamp(),
@@ -125,8 +130,11 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
             }
 
             try {
-                writer.addMutation(m);
-                writer.flush();
+
+                if(m.size() > 0) {
+                    writer.addMutation(m);
+                    writer.flush();
+                }
             } catch (MutationsRejectedException e) {
                 throw new RuntimeException(e);
             }
@@ -139,11 +147,12 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
         @Override
         public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
 
-            StoreEntry entry = new StoreEntry(keyValueEntry.getKey().getColumnFamily().toString(), keyValueEntry.getKey().getTimestamp());
+            String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), DELIM);
+            StoreEntry entry = new StoreEntry(cfParts[0], Long.parseLong(cfParts[1]));
             try {
                 Map<Key,Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
                 for(Map.Entry<Key,Value> curEntry : map.entrySet()) {
-                    String[] cqParts = StringUtils.splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
+                    String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
                     entry.put(new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), curEntry.getKey().getColumnVisibility().toString()));
                 }
                 return entry;
