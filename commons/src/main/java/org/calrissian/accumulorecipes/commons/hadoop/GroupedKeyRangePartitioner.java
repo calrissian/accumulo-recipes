@@ -34,7 +34,9 @@ import java.net.URI;
 import java.util.*;
 
 /**
- * Hadoop partitioner that uses ranges, and optionally sub-bins based on hashing.
+ * Hadoop partitioner that uses ranges, and optionally sub-bins based on hashing. This range partitioner will use mutliple
+ * groups to determine the partition, therefore allowing several reducers to represent several different writes to files
+ * for different tables. It could be used, for instance, for a multi-table bulk ingest.
  */
 public class GroupedKeyRangePartitioner extends Partitioner<GroupedKey,Writable> implements Configurable {
     private static final String PREFIX = GroupedKeyRangePartitioner.class.getName();
