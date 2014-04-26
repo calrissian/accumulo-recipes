@@ -4,6 +4,7 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.temporal.lastn.impl.AccumuloTemporalLastNStore;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.PeekingCloseableIterator;
 import org.calrissian.mango.domain.Tuple;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.temporal.lastn.impl.AccumuloTemporalLastNStore.DELIM;
 import static org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIterator.decodeRow;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
@@ -85,7 +87,7 @@ public class MergeJoinIterable implements Iterable<StoreEntry> {
             StoreEntry toReturn = null;
             try {
                 for(Map.Entry<Key,Value> tupleCol : entries) {
-                    String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), "\0");
+                    String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), DELIM);
                     if(toReturn == null) {
                         toReturn = new StoreEntry(splits[0], Long.parseLong(splits[1]));
                     }

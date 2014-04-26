@@ -35,7 +35,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     private static final String DEFAULT_TABLE_NAME = "temporalLastN";
 
     private static final String GROUP_DELIM = "____";
-    private static final String DELIM = "\0";
+    public static final String DELIM = "\0";
 
     private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000L, 10000L, 3);
     private final Connector connector;
@@ -59,14 +59,8 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         this.writer = this.connector.createBatchWriter(this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
-    protected Connector getConnector() {
-        return connector;
-    }
-
     @Override
     public void put(String group, StoreEntry entry) {
-
-
         try {
             for(Tuple tuple : entry.getTuples()) {
 
@@ -83,7 +77,6 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             }
 
             writer.flush();
-
 
         } catch(Exception e) {
             throw new RuntimeException(e);
