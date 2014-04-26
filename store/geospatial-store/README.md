@@ -4,7 +4,7 @@ It's often necessary to collapse multi-dimensional data down into a single dimen
 
 The purpose of the store is to find all of the possible events that are associated with 2-dimensional geo-points that lie within a given bounding box. 
 
-##Adding entries?
+##Adding entries
 
 You can specify mutliple entires to be added at a single location. That location is a 2-dimensional geo-coordinate represented with an x and a y value (longitude and latitude respectively). Let's make an example store entry and add it.
 
@@ -20,7 +20,7 @@ AccumuloGeoSpatialStore store = new AccumuloGeoSpatialStore(connector);
 store.put(Collections.singleton(entry), new Point2D.Double(76.7000, 39.0000));
 ```
 
-#Querying Entries
+##Querying Entries
 
 So now that we've indexed our entry, let's fetch it back out
 
