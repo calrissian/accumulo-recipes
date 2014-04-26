@@ -17,7 +17,6 @@ public class QuadTreeScanRange {
         this.maximum = getNextId(quad);
     }
 
-
     public boolean contains(BoundingBox quad) {
         return contains(quad.getId());
     }
@@ -50,16 +49,8 @@ public class QuadTreeScanRange {
         return minimum;
     }
 
-    public void setMinimum(String minimum) {
-        this.minimum = minimum;
-    }
-
     public String getMaximum() {
         return maximum;
-    }
-
-    public void setMaximum(String maximum) {
-        this.maximum = maximum;
     }
 
     @Override

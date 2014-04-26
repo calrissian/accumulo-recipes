@@ -22,21 +22,7 @@ public class QuadTreeHelper {
         return getInteriorQuads(boundingBox, MAX_QUAD_SCAN_RANGES, maxPrecision);
     }
 
-    public Collection<QuadTreeScanRange> buildQueryRangesForBounds(Point2D.Double lowerLeft, Point2D.Double upperRight, double maxPrecision) {
-
-        return buildQueryRangesForBoundingBox(
-                new Rectangle.Double(
-                        lowerLeft.getX(),
-                        lowerLeft.getY(),
-                        upperRight.getX() - lowerLeft.getX(),
-                        upperRight.getY() - lowerLeft.getY()
-                ), maxPrecision
-        );
-    }
-
-
     private boolean atMaxPrecision(BoundingBox quad, double maxPrecision) {
-
         return (quad.getCenterY() - quad.getMinY() < maxPrecision || quad.getCenterX() - quad.getMinX() < maxPrecision);
 
     }
@@ -44,11 +30,6 @@ public class QuadTreeHelper {
     /**
      * Recursively look through each node in a quad tree to identify the quad with the given lat lon,
      * stopping when the resolution of the quadrant is less than the maxPrecision provided.
-     *
-     * @param latLon
-     * @param quad
-     * @param maxPrecision
-     * @return
      */
     private String findQuad(Point2D.Double latLon, BoundingBox quad, double maxPrecision) {
         if (!quad.contains(latLon))
@@ -77,9 +58,6 @@ public class QuadTreeHelper {
 
     /**
      * Adds a quadrant a list of ranges.  Will merge the ranges to produce the smallest set of ranges possible.
-     *
-     * @param quad
-     * @param ranges
      */
     private void addRange(BoundingBox quad, List<QuadTreeScanRange> ranges) {
 
@@ -113,12 +91,6 @@ public class QuadTreeHelper {
      * Determines the best collection to place the supplied BoundingBox.  If all processing is done on the quad then it is
      * added to the list of completed {@link QuadTreeScanRange}s.  Otherwise it is added to the end of the toProcess queue for
      * further processing.
-     *
-     * @param quad
-     * @param boundingBox
-     * @param complete
-     * @param toProcess
-     * @param maxPrecision
      */
     private void placeQuad(BoundingBox quad, Rectangle2D.Double boundingBox, List<QuadTreeScanRange> complete, Queue<BoundingBox> toProcess, double maxPrecision) {
         //if the quad is fully contained or the quad is at the maximum precision then simply add to the completed ranges.
@@ -154,42 +126,4 @@ public class QuadTreeHelper {
 
         return complete;
     }
-
-    /**
-     * Recursive method to identify all quadrants that a particular bounding box contains or intersects.
-     *
-     * @param quad
-     * @param boundingBox
-     * @param maxPrecision
-     * @return
-     */
-    @Deprecated
-    private List<String> getInteriorQuads(BoundingBox quad, Rectangle2D.Double boundingBox, double maxPrecision) {
-
-
-        //If the quad is fully contained then simply return the entire quad.
-        if (boundingBox.contains(quad))
-            return Arrays.asList(quad.getId());
-
-        //If the quad intersects or fully contains the box then recurse to get a list of smaller quads.
-        if (quad.contains(boundingBox) || quad.intersects(boundingBox)) {
-
-            //if max depth has been reached then simply return the quad in question.
-            if (atMaxPrecision(quad, maxPrecision))
-                return Arrays.asList(quad.getId());
-
-            List<String> results = new ArrayList<String>();
-
-            results.addAll(getInteriorQuads(quad.getNEQuad(), boundingBox, maxPrecision));
-            results.addAll(getInteriorQuads(quad.getNWQuad(), boundingBox, maxPrecision));
-            results.addAll(getInteriorQuads(quad.getSEQuad(), boundingBox, maxPrecision));
-            results.addAll(getInteriorQuads(quad.getSWQuad(), boundingBox, maxPrecision));
-
-            return results;
-        }
-
-        return Collections.emptyList();
-    }
-
-
 }

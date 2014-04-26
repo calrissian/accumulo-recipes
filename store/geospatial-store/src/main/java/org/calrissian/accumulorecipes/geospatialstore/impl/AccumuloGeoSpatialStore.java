@@ -119,13 +119,6 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
                           new ColumnVisibility(tuple.getVisibility()),
                           entry.getTimestamp(),
                           new Value("".getBytes()));
-
-//                    // put in the field index mutation
-//                    m.put(new Text("fi" + DELIM + buildKeyValue(tuple)),
-//                          new Text(entry.getId()),
-//                          new ColumnVisibility(tuple.getVisibility()),
-//                          entry.getTimestamp(),
-//                          new Value("".getBytes()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -159,13 +152,6 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
             }
         }
     };
-
-    @Override
-    public CloseableIterable<StoreEntry> get(Point2D.Double location, Auths auths) {
-
-
-        return null;
-    }
 
     @Override
     public CloseableIterable<StoreEntry> get(Rectangle2D.Double location, Auths auths) {
