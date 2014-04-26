@@ -15,7 +15,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ import static java.util.Collections.singleton;
 import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore.DEFAULT_TABLE_NAME;
 import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore.combine;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.generateTimestamp;
+import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 
 public class MetricsInputFormat extends InputFormatBase<Key, MetricWritable> {
 

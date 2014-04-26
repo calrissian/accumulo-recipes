@@ -16,11 +16,10 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl;
 
 
-import com.google.common.collect.Iterables;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SummaryStatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;

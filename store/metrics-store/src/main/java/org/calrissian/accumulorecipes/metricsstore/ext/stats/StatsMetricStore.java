@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.metricsstore.ext.stats;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
 import org.calrissian.mango.collect.CloseableIterable;
 

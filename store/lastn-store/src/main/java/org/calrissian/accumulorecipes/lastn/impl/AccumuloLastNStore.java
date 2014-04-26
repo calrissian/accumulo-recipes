@@ -106,7 +106,6 @@ public class AccumuloLastNStore implements LastNStore {
         this.objectMapper = new ObjectMapper().withModule(new TupleModule(typeRegistry));
 
         if(!connector.tableOperations().exists(this.tableName)) {
-            //Create table without versioning iterator.
             connector.tableOperations().create(this.tableName, true);
             configureTable(connector, this.tableName, maxVersions);
         }
@@ -140,16 +139,16 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Add the index which will be managed by the versioning iterator and the data rows to scan from the index
-     * @param index
+     * @param group
      * @param entry
      */
     @Override
-    public void put(String index, StoreEntry entry) {
-        checkNotNull(index);
+    public void put(String group, StoreEntry entry) {
+        checkNotNull(group);
         checkNotNull(entry);
 
         // first put the main index pointing to the contextId (The column family is prefixed with the DELIM to guarantee it shows up first
-        Mutation indexMutation = new Mutation(index);
+        Mutation indexMutation = new Mutation(group);
         indexMutation.put(DELIM + "INDEX", "", new ColumnVisibility(), entry.getTimestamp(), new Value(entry.getId().getBytes()));
 
         for (Tuple tuple : entry.getTuples()) {
@@ -169,7 +168,7 @@ public class AccumuloLastNStore implements LastNStore {
         try {
             writer.addMutation(indexMutation);
         } catch (MutationsRejectedException ex) {
-            throw new RuntimeException("There was an error writing the mutation for [index=" + index + ",entryId=" + entry.getId() + "]", ex);
+            throw new RuntimeException("There was an error writing the mutation for [index=" + group + ",entryId=" + entry.getId() + "]", ex);
         }
     }
 

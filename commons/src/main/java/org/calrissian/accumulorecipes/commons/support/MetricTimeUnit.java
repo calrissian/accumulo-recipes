@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.metricsstore.domain;
+package org.calrissian.accumulorecipes.commons.support;
 
 public enum MetricTimeUnit {
     MINUTES,

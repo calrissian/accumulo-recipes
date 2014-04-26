@@ -29,7 +29,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 import org.calrissian.mango.collect.CloseableIterable;
 
@@ -47,7 +47,7 @@ import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.metricsstore.support.TimestampUtil.generateTimestamp;
+import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 

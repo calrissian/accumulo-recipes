@@ -30,5 +30,6 @@ limitations under the License.
     <module>lastn-store</module>
     <module>metrics-store</module>
     <module>range-store</module>
+    <module>temporal-last-n-store</module>
   </modules>
 </project>

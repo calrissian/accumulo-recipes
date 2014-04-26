@@ -22,7 +22,7 @@ import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
-import org.calrissian.accumulorecipes.metricsstore.domain.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.CustomMetricStore;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
