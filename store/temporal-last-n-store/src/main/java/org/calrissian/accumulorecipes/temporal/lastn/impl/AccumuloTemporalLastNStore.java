@@ -16,12 +16,9 @@ import org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIter
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
 import org.calrissian.accumulorecipes.temporal.lastn.support.MergeJoinIterable;
-import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.*;
 
@@ -70,7 +67,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                     new Text(""),
                     new ColumnVisibility(tuple.getVisibility()),
                     entry.getTimestamp(),
-                    new Value(buildEventQualifier(entry.getId(), entry.getTimestamp(), tuple).getBytes())
+                    new Value(buildEventValue(entry.getId(), entry.getTimestamp(), tuple).getBytes())
                 );
 
                 writer.addMutation(m);
@@ -83,7 +80,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         }
     }
 
-    private String buildEventQualifier(String id, long timestamp, Tuple tuple) throws TypeEncodingException {
+    private String buildEventValue(String id, long timestamp, Tuple tuple) throws TypeEncodingException {
 
         String[] fields = new String[] {
             id,
@@ -127,6 +124,8 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                     List<Map.Entry<Key, Value>> entries = decodeRow(entry.getKey(), entry.getValue());
                     cursors.add(entries);
                 }
+
+                scanner.close();
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
