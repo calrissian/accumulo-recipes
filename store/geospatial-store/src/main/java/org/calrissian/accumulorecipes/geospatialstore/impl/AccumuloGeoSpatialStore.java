@@ -1,33 +1,40 @@
 package org.calrissian.accumulorecipes.geospatialstore.impl;
 
+import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.geospatialstore.GeoSpatialStore;
-import org.calrissian.accumulorecipes.geospatialstore.model.BoundingBox;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeHelper;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeScanRange;
+import org.calrissian.mango.accumulo.Scanners;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.log;
+import static java.lang.Math.scalb;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
@@ -41,7 +48,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
     private double maxPrecision = .002;
 
-    private final TypeRegistry registry;
+    private static final TypeRegistry registry = ACCUMULO_TYPES;
 
     private final BatchWriter writer;
 
@@ -60,7 +67,6 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
         this.tableName = tableName;
 
-        this.registry = ACCUMULO_TYPES;
 
         if(!connector.tableOperations().exists(tableName))
             connector.tableOperations().create(tableName);
@@ -114,12 +120,12 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
                           entry.getTimestamp(),
                           new Value("".getBytes()));
 
-                    // put in the field index mutation
-                    m.put(new Text("fi" + DELIM + buildKeyValue(tuple)),
-                          new Text(entry.getId()),
-                          new ColumnVisibility(tuple.getVisibility()),
-                          entry.getTimestamp(),
-                          new Value("".getBytes()));
+//                    // put in the field index mutation
+//                    m.put(new Text("fi" + DELIM + buildKeyValue(tuple)),
+//                          new Text(entry.getId()),
+//                          new ColumnVisibility(tuple.getVisibility()),
+//                          entry.getTimestamp(),
+//                          new Value("".getBytes()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -135,6 +141,24 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
         }
     }
+
+    public static Function<Map.Entry<Key,Value>, StoreEntry> xform = new Function<Map.Entry<Key, Value>, StoreEntry>() {
+        @Override
+        public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
+
+            StoreEntry entry = new StoreEntry(keyValueEntry.getKey().getColumnFamily().toString(), keyValueEntry.getKey().getTimestamp());
+            try {
+                Map<Key,Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+                for(Map.Entry<Key,Value> curEntry : map.entrySet()) {
+                    String[] cqParts = StringUtils.splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
+                    entry.put(new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), curEntry.getKey().getColumnVisibility().toString()));
+                }
+                return entry;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
 
     @Override
     public CloseableIterable<StoreEntry> get(Point2D.Double location, Auths auths) {
@@ -153,21 +177,18 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
             Collection<Range> theRanges = new ArrayList<Range>();
             for(QuadTreeScanRange range : ranges) {
-                for(int i = 0; i < numPartitions; i++) {
+                for(int i = 0; i < numPartitions; i++)
                     theRanges.add(new Range(buildRow(i, range.getMinimum()), buildRow(i, range.getMaximum())));
-                }
             }
 
             scanner.setRanges(theRanges);
+            IteratorSetting setting = new IteratorSetting(7, WholeColumnFamilyIterator.class);
+            scanner.addScanIterator(setting);
 
-            for(Map.Entry<Key,Value> curEntry : scanner) {
-                System.out.println(curEntry);
-            }
-
+            return transform(closeableIterable(scanner), xform);
 
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
         }
-        return null;
     }
 }

@@ -7,6 +7,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -31,11 +32,9 @@ public class AccumuloGeoSpatialStoreTest {
 
         store.put(Collections.singleton(entry), new Point2D.Double(0, 0));
 
-
-        store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0 , 2.0), new Auths());
-        Scanner scanner = connector.createScanner("geoStore", new Authorizations());
-        for(Map.Entry<Key,Value> curEntry : scanner) {
-            System.out.println(curEntry);
+        CloseableIterable<StoreEntry> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), new Auths());
+        for(StoreEntry theEntry : entries) {
+            System.out.println(theEntry);
         }
     }
 
