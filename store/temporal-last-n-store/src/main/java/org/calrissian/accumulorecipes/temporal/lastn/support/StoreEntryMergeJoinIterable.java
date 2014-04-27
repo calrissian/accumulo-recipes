@@ -20,13 +20,13 @@ import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_
 import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
 import static org.calrissian.mango.collect.CloseableIterators.wrap;
 
-public class MergeJoinIterable implements Iterable<StoreEntry> {
+public class StoreEntryMergeJoinIterable implements Iterable<StoreEntry> {
 
     private TypeRegistry registry = ACCUMULO_TYPES;
 
     private Iterable<Iterable<StoreEntry>> cursors;
 
-    public MergeJoinIterable(Iterable<Iterable<StoreEntry>> cursors) {
+    public StoreEntryMergeJoinIterable(Iterable<Iterable<StoreEntry>> cursors) {
         this.cursors = cursors;
     }
 

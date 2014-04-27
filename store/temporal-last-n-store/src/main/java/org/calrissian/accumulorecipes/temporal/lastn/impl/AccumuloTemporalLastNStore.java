@@ -17,10 +17,8 @@ import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterat
 import org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIterator;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
-import org.calrissian.accumulorecipes.temporal.lastn.support.MergeJoinIterable;
-import org.calrissian.mango.accumulo.Scanners;
+import org.calrissian.accumulorecipes.temporal.lastn.support.StoreEntryMergeJoinIterable;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
@@ -33,7 +31,6 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
-import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
@@ -142,7 +139,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             }
 
         }
-        return wrap(new MergeJoinIterable(cursors));
+        return wrap(new StoreEntryMergeJoinIterable(cursors));
     }
 
     Function<List<Map.Entry<Key,Value>>, StoreEntry> entryXform = new Function<List<Map.Entry<Key, Value>>, StoreEntry>() {
