@@ -11,10 +11,7 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.temporal.lastn.impl.AccumuloTemporalLastNStore.DELIM;
@@ -27,26 +24,25 @@ public class MergeJoinIterable implements Iterable<StoreEntry> {
 
     private TypeRegistry registry = ACCUMULO_TYPES;
 
-    private List<Iterable<Map.Entry<Key,Value>>> cursors;
+    private Iterable<Iterable<StoreEntry>> cursors;
 
-    public MergeJoinIterable(List<Iterable<Map.Entry<Key,Value>>> cursors) {
+    public MergeJoinIterable(Iterable<Iterable<StoreEntry>> cursors) {
         this.cursors = cursors;
     }
 
     @Override
     public Iterator iterator() {
 
-        final List<PeekingCloseableIterator<Map.Entry<Key,Value>>> iterators =
-                new ArrayList<PeekingCloseableIterator<Map.Entry<Key,org.apache.accumulo.core.data.Value>>>();
-
-        for(Iterable<Map.Entry<Key,Value>> entries : cursors)
+        final List<PeekingCloseableIterator<StoreEntry>> iterators =
+                new LinkedList<PeekingCloseableIterator<StoreEntry>>();
+        for(Iterable<StoreEntry> entries : cursors)
             iterators.add(peekingIterator(wrap(entries.iterator())));
 
         return new Iterator<StoreEntry>() {
             @Override
             public boolean hasNext() {
 
-                for(Iterator<Map.Entry<Key,Value>> entry : iterators) {
+                for(Iterator<StoreEntry> entry : iterators) {
                     if(entry.hasNext())
                         return true;
                 }
@@ -56,25 +52,19 @@ public class MergeJoinIterable implements Iterable<StoreEntry> {
             @Override
             public StoreEntry next() {
 
-                PeekingCloseableIterator<Map.Entry<Key, Value>> curEntry = null;
-                for (PeekingCloseableIterator<Map.Entry<Key, Value>> itr : iterators) {
+                PeekingCloseableIterator<StoreEntry> curEntry = null;
+                for (PeekingCloseableIterator<StoreEntry> itr : iterators) {
                     if (itr.hasNext() && (curEntry == null ||
-                            (itr.peek()).getKey().getTimestamp() > curEntry.peek().getKey().getTimestamp()))
+                            (itr.peek()).getTimestamp() > curEntry.peek().getTimestamp()))
                         curEntry = itr;
                 }
 
-                Map.Entry<Key,Value> entry = curEntry.next();
-                try {
-                    StoreEntry toReturn = entryXform.apply(decodeRow(entry.getKey(), entry.getValue()));
-                    return toReturn;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                return curEntry.next();
             }
 
             @Override
             public void remove() {
-                for(Iterator<Map.Entry<Key, Value>> itr : iterators)
+                for(Iterator<StoreEntry> itr : iterators)
                     itr.remove();
             }
         };

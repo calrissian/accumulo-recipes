@@ -1,5 +1,7 @@
 package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -23,12 +25,15 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
+import java.io.IOException;
 import java.util.*;
 
 import static java.util.Collections.singletonList;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
@@ -101,7 +106,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     @Override
     public CloseableIterable<StoreEntry> get(Date start, Date stop, Collection<String> groups, int n, Auths auths) {
 
-        List<Iterable<Map.Entry<Key,Value>>> cursors = new ArrayList<Iterable<Map.Entry<Key, Value>>>();
+        List<Iterable<StoreEntry>> cursors = new LinkedList<Iterable<StoreEntry>>();
         String stopDay = generateTimestamp(start.getTime(), MetricTimeUnit.DAYS);
         String startDay = generateTimestamp(stop.getTime(), MetricTimeUnit.DAYS);
 
@@ -125,8 +130,9 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 scanner.addScanIterator(setting2);
 
                 for(Map.Entry<Key,Value> entry : scanner) {
-                    List<Map.Entry<Key, Value>> entries = decodeRow(entry.getKey(), entry.getValue());
-                    cursors.add(entries);
+                    List<Map.Entry<Key, Value>> topEntries = decodeRow(entry.getKey(), entry.getValue());
+                    Iterable<List<Map.Entry<Key,Value>>> entries = Iterables.transform(topEntries, rowDecodeXform);
+                    cursors.add(Iterables.transform(entries, entryXform));
                 }
 
                 scanner.close();
@@ -138,4 +144,37 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         }
         return wrap(new MergeJoinIterable(cursors));
     }
+
+    Function<List<Map.Entry<Key,Value>>, StoreEntry> entryXform = new Function<List<Map.Entry<Key, Value>>, StoreEntry>() {
+        @Override
+        public StoreEntry apply(List<Map.Entry<Key, Value>> entries) {
+            StoreEntry toReturn = null;
+            try {
+                for(Map.Entry<Key,Value> tupleCol : entries) {
+                    String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), DELIM);
+                    if(toReturn == null) {
+                        toReturn = new StoreEntry(splits[0], Long.parseLong(splits[1]));
+                    }
+                    toReturn.put(new Tuple(splits[2], typeRegistry.decode(splits[3], splits[4]), splits[5]));
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            return toReturn;
+        }
+    };
+
+    Function<Map.Entry<Key,Value>, List<Map.Entry<Key,Value>>> rowDecodeXform =
+            new Function<Map.Entry<Key, Value>, List<Map.Entry<Key,Value>>>() {
+        @Override
+        public List<Map.Entry<Key, Value>> apply(Map.Entry<Key, Value> keyValueEntry) {
+            try {
+                return EventGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
+
 }
