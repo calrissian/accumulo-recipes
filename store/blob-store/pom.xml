@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>blob-store</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Blob Store</name>
+  <description>Blob store allows bytes to be indexed and streamed into and out of Accumulo rows</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>

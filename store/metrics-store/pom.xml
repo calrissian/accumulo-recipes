@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>metrics-store</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Metrics Store</name>
+  <description>The metrics store rolls up counts and statistics for various units of time for different components.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>

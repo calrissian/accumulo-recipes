@@ -1,13 +1,13 @@
-package org.calrissian.accumulorecipes.temporal.lastn.support;
+package org.calrissian.accumulorecipes.commons.collect;
 
 import com.google.common.collect.Iterables;
+import org.calrissian.accumulorecipes.commons.collect.StoreEntryMergeJoinIterable;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;

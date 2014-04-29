@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.temporal.lastn.support;
+package org.calrissian.accumulorecipes.commons.collect;
 
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.PeekingCloseableIterator;

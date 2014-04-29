@@ -21,6 +21,7 @@ limitations under the License.
   <version>0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Accumulo Recipes - Parent</name>
+  <description>Parent pom for the Accumulo recipes project</description>
   <modules>
     <module>commons</module>
     <module>examples</module>

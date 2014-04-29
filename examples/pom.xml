@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>examples</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Examples</name>
+  <description>Examples project demonstrating various features of the recipes</description>
   <dependencies>
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>

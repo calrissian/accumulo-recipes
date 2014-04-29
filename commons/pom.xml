@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>commons</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Commons</name>
+  <description>Common code for recipe projects</description>
   <dependencies>
     <!-- Mango -->
     <dependency>

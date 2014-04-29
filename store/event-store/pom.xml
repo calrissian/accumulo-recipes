@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>event-store</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Event Store</name>
+  <description>The event store is a document store for time-based events.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>

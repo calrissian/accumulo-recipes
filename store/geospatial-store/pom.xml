@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>geospatial-store</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Geospatial Store</name>
+  <description>The Geospatial store allows events to be stored under geohashes so that they can be queried back when given rectangular geo-bounds.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>

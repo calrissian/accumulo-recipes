@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>lastn-store</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes LastN Store</name>
+  <description>The last-n store provides a window into data being stored that can is evicted by count.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>

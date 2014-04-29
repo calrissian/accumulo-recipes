@@ -23,6 +23,8 @@ limitations under the License.
   </parent>
   <artifactId>changelog-store</artifactId>
   <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Changelog Store</name>
+  <description>The changelog store summarizes differences between two systems that may contain extremely large datasets.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>
