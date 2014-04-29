@@ -18,7 +18,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.calrissian.accumulorecipes</groupId>
   <artifactId>accumulorecipes-parent</artifactId>
-  <version>0.1</version>
+  <version>0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Accumulo Recipes - Parent</name>
   <description>The Accumulo Recipes project aims to provide reusable services for architectures utilizing Apache Accumulo.</description>
@@ -229,7 +229,7 @@ limitations under the License.
   <scm>
     <connection>scm:git:git@github.com:calrissian/accumulo-recipes.git</connection>
     <developerConnection>scm:git:git@github.com:calrissian/accumulo-recipes.git</developerConnection>
-    <tag>accumulorecipes-parent-0.1</tag>
+    <tag>HEAD</tag>
     <url>git@github.com:calrissian/accumulo-recipes.git</url>
   </scm>
   <distributionManagement>
