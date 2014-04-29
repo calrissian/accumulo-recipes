@@ -112,6 +112,18 @@ limitations under the License.
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.4.2</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.scm</groupId>
+              <artifactId>maven-scm-provider-gitexe</artifactId>
+              <version>1.9</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>2.9</version>
           <configuration>
@@ -177,8 +189,23 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+  <url>http://www.calrissian.org</url>
   <organization>
     <name>Calrissian</name>
     <url>http://www.calrissian.org</url>
@@ -191,6 +218,14 @@ limitations under the License.
       <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
+  <developers>
+    <developer>
+      <name>Corey Nolet</name>
+    </developer>
+    <developer>
+      <name>Edward Wagner</name>
+    </developer>
+  </developers>
   <scm>
     <connection>scm:git:git@github.com:calrissian/mango.git</connection>
     <developerConnection>scm:git:git@github.com:calrissian/mango.git</developerConnection>
