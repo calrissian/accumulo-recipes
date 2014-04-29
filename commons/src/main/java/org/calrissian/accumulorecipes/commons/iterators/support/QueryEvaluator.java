@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.support;
+package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,8 +24,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 
-import org.calrissian.accumulorecipes.eventstore.iterator.support.EventFields.FieldValue;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.QueryTerm;
+import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
 import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlEngine;
@@ -59,7 +58,7 @@ public class QueryEvaluator {
   }
   private String query = null;
   private Set<String> literals = null;
-  private Multimap<String,QueryTerm> terms = null;
+  private Multimap<String,QueryParser.QueryTerm> terms = null;
   private String modifiedQuery = null;
   private JexlContext ctx = new MapContext();
   private boolean caseInsensitive = true;
@@ -144,14 +143,14 @@ public class QueryEvaluator {
     // Add the array to the context
     ctx.set(fieldName, values);
 
-    Collection<QueryTerm> qt = terms.get(fieldName);
+    Collection<QueryParser.QueryTerm> qt = terms.get(fieldName);
 
     // Add a script to the beginning of the criteria for this multi-valued field
     StringBuilder script = new StringBuilder();
     script.append("_").append(fieldName).append(" = false;\n");
     script.append("for (field : ").append(fieldName).append(") {\n");
 
-    for (QueryTerm t : qt) {
+    for (QueryParser.QueryTerm t : qt) {
       if (!t.getOperator().equals(JexlOperatorConstants.getOperator(ParserTreeConstants.JJTFUNCTIONNODE))) {
         script.append("\tif (_").append(fieldName).append(" == false && field ").append(t.getOperator()).append(" ").append(t.getValue()).append(") { \n");
       } else {
@@ -168,7 +167,7 @@ public class QueryEvaluator {
     StringBuilder newPredicate = new StringBuilder();
     newPredicate.append("_").append(fieldName).append(" == true");
 
-    for (QueryTerm t : qt) {
+    for (QueryParser.QueryTerm t : qt) {
       // Find the location of this term in the criteria
       StringBuilder predicate = new StringBuilder();
       int start = 0;

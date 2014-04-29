@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.support;
+package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import com.esotericsoftware.kryo.CustomSerialization;
 import com.esotericsoftware.kryo.Kryo;
@@ -26,7 +26,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.SetMultimap;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.EventFields.FieldValue;
+import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;

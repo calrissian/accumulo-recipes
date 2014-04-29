@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.support;
+package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import org.apache.accumulo.core.data.Key;
 
@@ -26,10 +26,10 @@ public class FieldIndexKeyParser extends KeyParser {
   public void parse(Key key) {
     super.parse(key);
 
-    String[] colFamParts = this.keyFields.get(BaseKeyParser.COLUMN_FAMILY_FIELD).split(DELIMITER);
+    String[] colFamParts = this.keyFields.get(COLUMN_FAMILY_FIELD).split(DELIMITER);
     this.keyFields.put(FIELDNAME_FIELD, colFamParts.length >= 2 ? colFamParts[1] : "");
 
-    String[] colQualParts = this.keyFields.get(BaseKeyParser.COLUMN_QUALIFIER_FIELD).split(DELIMITER);
+    String[] colQualParts = this.keyFields.get(COLUMN_QUALIFIER_FIELD).split(DELIMITER);
     this.keyFields.put(SELECTOR_FIELD, colQualParts.length >= 1 ? colQualParts[0] : "");
     this.keyFields.put(DATATYPE_FIELD,  "");
     this.keyFields.put(UID_FIELD, colQualParts.length >= 2 ? colQualParts[1] : "");

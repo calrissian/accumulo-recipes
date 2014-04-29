@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.support;
+package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,27 +63,27 @@ public class JexlOperatorConstants implements ParserTreeConstants {
     classMap.put("!~", ASTNRNode.class);
     classMap.put("f", ASTFunctionNode.class);
 
-    jjtOperatorMap.put(JJTEQNODE, "==");
-    jjtOperatorMap.put(JJTNENODE, "!=");
-    jjtOperatorMap.put(JJTLTNODE, "<");
-    jjtOperatorMap.put(JJTLENODE, "<=");
-    jjtOperatorMap.put(JJTGTNODE, ">");
-    jjtOperatorMap.put(JJTGENODE, ">=");
-    jjtOperatorMap.put(JJTERNODE, "=~");
-    jjtOperatorMap.put(JJTNRNODE, "!~");
-    jjtOperatorMap.put(JJTFUNCTIONNODE, "f");
-    jjtOperatorMap.put(JJTANDNODE, "and");
-    jjtOperatorMap.put(JJTORNODE, "or");
+    jjtOperatorMap.put(ParserTreeConstants.JJTEQNODE, "==");
+    jjtOperatorMap.put(ParserTreeConstants.JJTNENODE, "!=");
+    jjtOperatorMap.put(ParserTreeConstants.JJTLTNODE, "<");
+    jjtOperatorMap.put(ParserTreeConstants.JJTLENODE, "<=");
+    jjtOperatorMap.put(ParserTreeConstants.JJTGTNODE, ">");
+    jjtOperatorMap.put(ParserTreeConstants.JJTGENODE, ">=");
+    jjtOperatorMap.put(ParserTreeConstants.JJTERNODE, "=~");
+    jjtOperatorMap.put(ParserTreeConstants.JJTNRNODE, "!~");
+    jjtOperatorMap.put(ParserTreeConstants.JJTFUNCTIONNODE, "f");
+    jjtOperatorMap.put(ParserTreeConstants.JJTANDNODE, "and");
+    jjtOperatorMap.put(ParserTreeConstants.JJTORNODE, "or");
 
-    jjtTypeMap.put("==", JJTEQNODE);
-    jjtTypeMap.put("!=", JJTNENODE);
-    jjtTypeMap.put("<", JJTLTNODE);
-    jjtTypeMap.put("<=", JJTLENODE);
-    jjtTypeMap.put(">", JJTGTNODE);
-    jjtTypeMap.put(">=", JJTGENODE);
-    jjtTypeMap.put("=~", JJTERNODE);
-    jjtTypeMap.put("!~", JJTNRNODE);
-    jjtTypeMap.put("f", JJTFUNCTIONNODE);
+    jjtTypeMap.put("==", ParserTreeConstants.JJTEQNODE);
+    jjtTypeMap.put("!=", ParserTreeConstants.JJTNENODE);
+    jjtTypeMap.put("<", ParserTreeConstants.JJTLTNODE);
+    jjtTypeMap.put("<=", ParserTreeConstants.JJTLENODE);
+    jjtTypeMap.put(">", ParserTreeConstants.JJTGTNODE);
+    jjtTypeMap.put(">=", ParserTreeConstants.JJTGENODE);
+    jjtTypeMap.put("=~", ParserTreeConstants.JJTERNODE);
+    jjtTypeMap.put("!~", ParserTreeConstants.JJTNRNODE);
+    jjtTypeMap.put("f", ParserTreeConstants.JJTFUNCTIONNODE);
 
   }
 

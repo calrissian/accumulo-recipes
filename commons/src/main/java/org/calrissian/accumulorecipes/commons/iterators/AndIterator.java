@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator;
+package org.calrissian.accumulorecipes.commons.iterators;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -217,7 +217,7 @@ public class AndIterator implements SortedKeyValueIterator<Key,Value> {
   /**
    * Find the next key in the current TermSource that is at or beyond the cursor (currentRow, currentTerm, currentDocID).
    *
-   * @param sourceID
+   * @param ts
    *          The index of the current source in <code>sources</code>
    * @return True if the source advanced beyond the cursor
    * @throws IOException

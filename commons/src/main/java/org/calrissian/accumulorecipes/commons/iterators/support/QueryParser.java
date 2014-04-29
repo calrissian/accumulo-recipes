@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.support;
+package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -79,9 +79,6 @@ import org.apache.hadoop.util.hash.MurmurHash;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.JexlOperatorConstants;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.TreeBuilder;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.TreeNode;
 
 /**
  * Parses the criteria for the purposes of extracting terms, operators, and literals for criteria optimization. This class does not necessarily understand how to

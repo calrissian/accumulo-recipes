@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator;
+package org.calrissian.accumulorecipes.commons.iterators;
 
 import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -24,13 +24,13 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.*;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.QueryTerm;
-import org.calrissian.accumulorecipes.eventstore.iterator.support.RangeCalculator.RangeBounds;
 import org.apache.commons.jexl2.parser.*;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.calrissian.accumulorecipes.commons.iterators.support.*;
+import org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.QueryTerm;
+import org.calrissian.accumulorecipes.commons.iterators.support.RangeCalculator.RangeBounds;
 
 import java.io.IOException;
 import java.util.*;

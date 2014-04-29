@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.support;
+package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import java.io.StringReader;
 
@@ -74,12 +74,12 @@ import org.apache.commons.jexl2.parser.SimpleNode;
 
 import com.google.common.collect.Multimap;
 
-import static org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.QueryTerm;
-import static org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.ObjectHolder;
-import static org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.EvaluationContext;
-import static org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.FunctionResult;
-import static org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.TermResult;
-import static org.calrissian.accumulorecipes.eventstore.iterator.support.QueryParser.LiteralResult;
+import static org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.QueryTerm;
+import static org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.ObjectHolder;
+import static org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.EvaluationContext;
+import static org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.FunctionResult;
+import static org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.TermResult;
+import static org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.LiteralResult;
 
 /**
  * Class that parses the criteria and returns a tree of TreeNode's. This class rolls up clauses that are below like conjunctions (AND, OR) for the purposes of
