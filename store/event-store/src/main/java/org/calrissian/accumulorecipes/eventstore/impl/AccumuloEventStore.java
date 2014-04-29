@@ -18,14 +18,12 @@ package org.calrissian.accumulorecipes.eventstore.impl;
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
-import org.apache.tools.ant.util.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
@@ -39,9 +37,7 @@ import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
-import org.calrissian.mango.accumulo.Scanners;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
@@ -68,23 +64,24 @@ public class AccumuloEventStore implements EventStore {
 
     private static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
     private static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
+
     private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
-    private ShardBuilder shardBuilder = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
-
+    private ShardBuilder shardBuilder;
     private final  Connector connector;
     private final String indexTable;
     private final String shardTable;
+    private final StoreConfig config;
     private final MultiTableBatchWriter multiTableWriter;
 
     private final Kryo kryo = new Kryo();
 
-    private static final NodeToJexl nodeToJexl = new NodeToJexl();
+    private final NodeToJexl nodeToJexl;
 
     private static TypeRegistry<String> typeRegistry;
 
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, new StoreConfig());
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
     }
 
     public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
@@ -97,8 +94,14 @@ public class AccumuloEventStore implements EventStore {
         this.indexTable = indexTable;
         this.shardTable = shardTable;
         this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
+        this.config = config;
 
-        if(!connector.tableOperations().exists(this.indexTable)) {
+        this.nodeToJexl = new NodeToJexl();
+        this.shardBuilder = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
+
+
+
+      if(!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
             configureIndexTable(connector, this.indexTable);
         }
@@ -247,7 +250,7 @@ public class AccumuloEventStore implements EventStore {
       Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
 
       try {
-        BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+        BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
 
         Collection<Range> ranges = new HashSet<Range>();
         for(Text shard : shards)
@@ -311,7 +314,7 @@ public class AccumuloEventStore implements EventStore {
             /**
              * Should just be one index for the shard containing the uuid
              */
-            BatchScanner eventScanner = connector.createBatchScanner(shardTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+            BatchScanner eventScanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
             Collection<Range> eventRanges = new LinkedList<Range>();
             while(itr.hasNext()) {
                 Map.Entry<Key,Value> entry = itr.next();
@@ -333,7 +336,7 @@ public class AccumuloEventStore implements EventStore {
             IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
             eventScanner.addScanIterator(iteratorSetting);
 
-            return transform(Scanners.closeableIterable(eventScanner), wholeColFXForm);
+            return transform(closeableIterable(eventScanner), wholeColFXForm);
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
