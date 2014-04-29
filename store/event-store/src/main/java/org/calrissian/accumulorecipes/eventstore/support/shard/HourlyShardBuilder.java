@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.support;
+package org.calrissian.accumulorecipes.eventstore.support.shard;
 
 
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.eventstore.cli.ShardSplitter;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class ShardBuilder {
+public class HourlyShardBuilder implements ShardBuilder {
 
     protected final Integer numPartitions;
 
     protected String delimiter = "_";
 
-    /**
-     * A proper date format should be lexicographically sortable
-     */
     protected String dateFormat = "yyyyMMddHH";
 
-    public ShardBuilder(Integer numPartitions) {
+    public HourlyShardBuilder(Integer numPartitions) {
         this.numPartitions = numPartitions;
     }
 
@@ -63,32 +61,5 @@ public class ShardBuilder {
         }
 
         return shards;
-    }
-
-    public String[] getRange(Date start, Date end) {
-
-        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
-
-        return new String[] { sdf.format(start), sdf.format(end)};
-    }
-
-    public Integer getNumPartitions() {
-        return numPartitions;
-    }
-
-    public String getDelimiter() {
-        return delimiter;
-    }
-
-    public void setDelimiter(String delimiter) {
-        this.delimiter = delimiter;
-    }
-
-    public String getDateFormat() {
-        return dateFormat;
-    }
-
-    public void setDateFormat(String dateFormat) {
-        this.dateFormat = dateFormat;
     }
 }

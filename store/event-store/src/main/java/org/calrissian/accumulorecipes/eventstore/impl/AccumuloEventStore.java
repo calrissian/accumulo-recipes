@@ -28,13 +28,14 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
+import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
-import org.calrissian.accumulorecipes.eventstore.support.ShardBuilder;
+import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
+import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
@@ -64,7 +65,7 @@ public class AccumuloEventStore implements EventStore {
     private static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
     private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
-    private static final ShardBuilder shardBuilder = new ShardBuilder(DEFAULT_PARTITION_SIZE);
+    private ShardBuilder shardBuilder = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
 
     private final  Connector connector;
     private final String indexTable;
@@ -136,6 +137,15 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
+     * A new shard scheme can be plugged in fairly easily to shard to the day, for instance, instead of the hour.
+     * The number of partitions can also be changed and the event store provisioned with the new builder.
+     * @param shardBuilder
+     */
+    public void setShardBuilder(ShardBuilder shardBuilder) {
+      this.shardBuilder = shardBuilder;
+    }
+
+  /**
      * Events get save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
      * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
      * @param events
