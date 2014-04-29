@@ -29,7 +29,7 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.rangestore.support.Constants.DELIM;
 
 /**
- * Filters out all intervals that have a lower bound greater than the query lower bound.
+ * Filters out all intervals that have a lower bound greater than the criteria lower bound.
  * This should only be run against data that is upper bound indexed.
  */
 public class ReverseScanFilter extends Filter {
@@ -59,7 +59,7 @@ public class ReverseScanFilter extends Filter {
      * @param iterConfig
      *          Iterator settings to configure
      * @param queryLowBound
-     *          The normalized representation of the query low bound for a range.
+     *          The normalized representation of the criteria low bound for a range.
      */
     public static void setQueryLowBound(IteratorSetting iterConfig, String queryLowBound) {
         iterConfig.addOption(LOW_BOUND_OPTION, queryLowBound);

@@ -23,6 +23,7 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.FieldIndexKeyParser;
 
 import java.io.IOException;
 import java.util.ArrayList;

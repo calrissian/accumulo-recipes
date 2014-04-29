@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.collect.HashMultimap;
@@ -30,19 +30,19 @@ import java.util.*;
  * <h2>Overview</h2>
  * Query implementation that works with the JEXL grammar. This 
  * uses the metadata, global index, and partitioned table to return
- * results based on the query. Example queries:
+ * results based on the criteria. Example queries:
  *
  *  <b>Single Term Query</b>
- *  'foo' - looks in global index for foo, and if any entries are found, then the query
+ *  'foo' - looks in global index for foo, and if any entries are found, then the criteria
  *          is rewritten to be field1 == 'foo' or field2 == 'foo', etc. This is then passed
- *          down the optimized query path which uses the intersecting iterators on the partitioned
+ *          down the optimized criteria path which uses the intersecting iterators on the partitioned
  *          table.
  *
  *  <b>Boolean expression</b>        
  *  field == 'foo' - For fielded queries, those that contain a field, an operator, and a literal (string or number),
- *                   the query is parsed and the set of eventFields in the query that are indexed is determined by
- *                   querying the metadata table. Depending on the conjunctions in the query (or, and, not) and the
- *                   eventFields that are indexed, the query may be sent down the optimized path or the full scan path.
+ *                   the criteria is parsed and the set of eventFields in the criteria that are indexed is determined by
+ *                   querying the metadata table. Depending on the conjunctions in the criteria (or, and, not) and the
+ *                   eventFields that are indexed, the criteria may be sent down the optimized path or the full scan path.
  *
  *  We are not supporting all of the operators that JEXL supports at this time. We are supporting the following operators:
  *
@@ -54,15 +54,15 @@ import java.util.*;
  *
  *  <h2>Constraints on Query Structure</h2>
  *  Queries that are sent to this class need to be formatted such that there is a space on either side of the operator. We are
- *  rewriting the query in some cases and the current implementation is expecting a space on either side of the operator. If 
+ *  rewriting the criteria in some cases and the current implementation is expecting a space on either side of the operator. If
  *  an error occurs in the evaluation we are skipping the event.
  *
  *  <h2>Notes on Optimization</h2>
  *  Queries that meet any of the following criteria will perform a full scan of the events in the partitioned table:
  *
- *  1. An 'or' conjunction exists in the query but not all of the terms are indexed.
- *  2. No indexed terms exist in the query
- *  3. An unsupported operator exists in the query
+ *  1. An 'or' conjunction exists in the criteria but not all of the terms are indexed.
+ *  2. No indexed terms exist in the criteria
+ *  3. An unsupported operator exists in the criteria
  *
  * </pre>
  *
@@ -72,7 +72,7 @@ public abstract class AbstractQueryLogic {
   protected static Logger log = Logger.getLogger(AbstractQueryLogic.class);
 
   /**
-   * Set of datatypes to limit the query to.
+   * Set of datatypes to limit the criteria to.
    */
   public static final String DATATYPE_FILTER_SET = "datatype.filter.set";
 
@@ -262,7 +262,7 @@ public abstract class AbstractQueryLogic {
 //   * @param indexTableName
 //   * @param reverseIndexTableName
 //   * @param queryString
-//   *          original query string
+//   *          original criteria string
 //   * @param queryThreads
 //   * @param datatypes
 //   *          - optional list of types
@@ -390,9 +390,9 @@ public abstract class AbstractQueryLogic {
 //    return key.getKey().getColumnFamily().toString();
 //  }
 //
-//  public Results runQuery(Connector connector, List<String> authorizations, String query, Date beginDate, Date endDate, Set<String> types) {
+//  public Results runQuery(Connector connector, List<String> authorizations, String criteria, Date beginDate, Date endDate, Set<String> types) {
 //
-//    if (StringUtils.isEmpty(query)) {
+//    if (StringUtils.isEmpty(criteria)) {
 //      throw new IllegalArgumentException("NULL QueryNode reference passed to " + this.getClass().getSimpleName());
 //    }
 //
@@ -402,8 +402,8 @@ public abstract class AbstractQueryLogic {
 //    Authorizations auths = new Authorizations(array);
 //    Results results = new Results();
 //
-//    // Get the query string
-//    String queryString = query;
+//    // Get the criteria string
+//    String queryString = criteria;
 //
 //    StopWatch abstractQueryLogic = new StopWatch();
 //    StopWatch optimizedQuery = new StopWatch();
@@ -425,7 +425,7 @@ public abstract class AbstractQueryLogic {
 //      parser = new QueryParser();
 //      parser.execute(queryString);
 //    } catch (org.apache.commons.jexl2.parser.ParseException e1) {
-//      throw new IllegalArgumentException("Error parsing query", e1);
+//      throw new IllegalArgumentException("Error parsing criteria", e1);
 //    }
 //    int hash = parser.getHashValue();
 //    parseQuery.stop();
@@ -447,7 +447,7 @@ public abstract class AbstractQueryLogic {
 //    if (log.isDebugEnabled()) {
 //      log.debug("getQueryIdentifiers: " + parser.getQueryIdentifiers().toString());
 //    }
-//    // Get the mapping of field name to QueryTerm object from the query. The query term object
+//    // Get the mapping of field name to QueryTerm object from the criteria. The criteria term object
 //    // contains the operator, whether its negated or not, and the literal to test against.
 //    Multimap<String,QueryTerm> terms = parser.getQueryTerms();
 //
@@ -478,7 +478,7 @@ public abstract class AbstractQueryLogic {
 //
 //    Set<String> orTerms = parser.getOrTermsForOptimizer();
 //
-//    // Iterate over the query terms to get the operators specified in the query.
+//    // Iterate over the criteria terms to get the operators specified in the criteria.
 //    ArrayList<String> unevaluatedExpressions = new ArrayList<String>();
 //    boolean unsupportedOperatorSpecified = false;
 //    for (Entry<String,QueryTerm> entry : terms.entries()) {
@@ -507,14 +507,14 @@ public abstract class AbstractQueryLogic {
     // We can use the intersecting iterator over the field index as an optimization under the
     // following conditions
     //
-    // 1. No unsupported operators in the query.
+    // 1. No unsupported operators in the criteria.
     // 2. No 'or' operators and at least one term indexed
     // or
-    // 1. No unsupported operators in the query.
+    // 1. No unsupported operators in the criteria.
     // 2. and all terms indexed
     // or
     // 1. All or'd terms are indexed. NOTE, this will potentially skip some queries and push to a full table scan
-    // // WE should look into finding a better way to handle whether we do an optimized query or not.
+    // // WE should look into finding a better way to handle whether we do an optimized criteria or not.
 //    boolean optimizationSucceeded = false;
 //    boolean orsAllIndexed = false;
 //    if (orTerms.isEmpty()) {
@@ -544,12 +544,12 @@ public abstract class AbstractQueryLogic {
 //        if (fields.isEmpty()) {
 //          termIndexInfo = this.getTermIndexInformation(connector, auths, queryString, typeFilter);
 //          if (null != termIndexInfo && termIndexInfo.getRanges().isEmpty()) {
-//            // Then we didn't find anything in the index for this query. This may happen for an indexed term that has wildcards
+//            // Then we didn't find anything in the index for this criteria. This may happen for an indexed term that has wildcards
 //            // in unhandled locations.
 //            // Break out of here by throwing a named exception and do full scan
 //            throw new DoNotPerformOptimizedQueryException();
 //          }
-//          // We need to rewrite the query string here so that it's valid.
+//          // We need to rewrite the criteria string here so that it's valid.
 //          if (termIndexInfo instanceof UnionIndexRanges) {
 //            UnionIndexRanges union = (UnionIndexRanges) termIndexInfo;
 //            StringBuilder buf = new StringBuilder();
@@ -564,7 +564,7 @@ public abstract class AbstractQueryLogic {
 //              sep = " or ";
 //            }
 //            if (log.isDebugEnabled()) {
-//              log.debug("Rewrote query for non-fielded single term query: " + queryString + " to " + buf.toString());
+//              log.debug("Rewrote criteria for non-fielded single term criteria: " + queryString + " to " + buf.toString());
 //            }
 //            queryString = buf.toString();
 //          } else {
@@ -574,7 +574,7 @@ public abstract class AbstractQueryLogic {
 //          RangeCalculator calc = this.getTermIndexInformation(connector, auths, indexedTerms, terms, this.getIndexTableName(), this.getReverseIndexTableName(),
 //                  queryString, this.queryThreads, typeFilter);
 //          if (null == calc.getResult() || calc.getResult().isEmpty()) {
-//            // Then we didn't find anything in the index for this query. This may happen for an indexed term that has wildcards
+//            // Then we didn't find anything in the index for this criteria. This may happen for an indexed term that has wildcards
 //            // in unhandled locations.
 //            // Break out of here by throwing a named exception and do full scan
 //            throw new DoNotPerformOptimizedQueryException();
@@ -592,14 +592,14 @@ public abstract class AbstractQueryLogic {
 //        log.error(this.getIndexTableName() + "not found", e);
 //        throw new RuntimeException(this.getIndexTableName() + "not found", e);
 //      } catch (org.apache.commons.jexl2.parser.ParseException e) {
-//        throw new RuntimeException("Error determining ranges for query: " + queryString, e);
+//        throw new RuntimeException("Error determining ranges for criteria: " + queryString, e);
 //      } catch (DoNotPerformOptimizedQueryException e) {
 //        log.info("Indexed fields not found in index, performing full scan");
 //        termIndexInfo = null;
 //      }
 //      queryGlobalIndex.stop();
 //
-//      // Determine if we should proceed with optimized query based on results from the global index
+//      // Determine if we should proceed with optimized criteria based on results from the global index
 //      boolean proceed = false;
 //      if (null == termIndexInfo || termIndexInfo.getFieldNamesAndValues().values().size() == 0) {
 //        proceed = false;
@@ -613,7 +613,7 @@ public abstract class AbstractQueryLogic {
 //        proceed = false;
 //      }
 //      if (log.isDebugEnabled()) {
-//        log.debug("Proceed with optimized query: " + proceed);
+//        log.debug("Proceed with optimized criteria: " + proceed);
 //        if (null != termIndexInfo)
 //          log.debug("termIndexInfo.getTermsFound().size(): " + termIndexInfo.getFieldNamesAndValues().values().size() + " indexedTerms.size: "
 //                  + indexedTerms.size() + " fields.size: " + fields.size());
@@ -621,7 +621,7 @@ public abstract class AbstractQueryLogic {
 //      if (proceed) {
 //
 //        if (log.isDebugEnabled()) {
-//          log.debug(hash + " Performing optimized query");
+//          log.debug(hash + " Performing optimized criteria");
 //        }
 //        // Use the scan ranges from the GlobalIndexRanges object as the ranges for the batch scanner
 //        ranges = termIndexInfo.getRanges();
@@ -640,7 +640,7 @@ public abstract class AbstractQueryLogic {
 //          if (log.isDebugEnabled()) {
 //            log.debug("Setting scan option: " + EvaluatingIterator.QUERY_OPTION + " to " + queryString);
 //          }
-//          // Set the query option
+//          // Set the criteria option
 //          si.addOption(EvaluatingIterator.QUERY_OPTION, queryString);
 //          // Set the Indexed Terms List option. This is the field name and normalized field value pair separated
 //          // by a comma.
@@ -673,9 +673,9 @@ public abstract class AbstractQueryLogic {
 //              log.debug("runServerQuery, FieldIndex Query: " + q);
 //            }
 //          } catch (org.apache.commons.jexl2.parser.ParseException ex) {
-//            log.error("Could not parse query, Jexl ParseException: " + ex);
+//            log.error("Could not parse criteria, Jexl ParseException: " + ex);
 //          } catch (Exception ex) {
-//            log.error("Problem rewriting query, Exception: " + ex.getMessage());
+//            log.error("Problem rewriting criteria, Exception: " + ex.getMessage());
 //          }
 //          si.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, q);
 //
@@ -728,7 +728,7 @@ public abstract class AbstractQueryLogic {
 //            results.getResults().add(d);
 //            processResults.suspend();
 //          }
-//          log.info(count + " matching entries found in optimized query.");
+//          log.info(count + " matching entries found in optimized criteria.");
 //          optimizationSucceeded = true;
 //          processResults.stop();
 //        } catch (TableNotFoundException e) {
@@ -744,16 +744,16 @@ public abstract class AbstractQueryLogic {
 //      optimizedQuery.stop();
 //    }
 //
-//    // WE should look into finding a better way to handle whether we do an optimized query or not.
+//    // WE should look into finding a better way to handle whether we do an optimized criteria or not.
 //    // We are not setting up an else condition here because we may have aborted the logic early in the if statement.
 //    if (!optimizationSucceeded || ((null != orTerms && orTerms.size() > 0) && (indexedTerms.size() != fields.size()) && !orsAllIndexed)) {
 //      // if (!optimizationSucceeded || ((null != orTerms && orTerms.size() > 0) && (indexedTerms.size() != fields.size()))) {
 //      fullScanQuery.start();
 //      if (log.isDebugEnabled()) {
-//        log.debug(hash + " Performing full scan query");
+//        log.debug(hash + " Performing full scan criteria");
 //      }
 //
-//      // Set up a full scan using the date ranges from the query
+//      // Set up a full scan using the date ranges from the criteria
 //      // Create BatchScanner, set the ranges, and setup the iterators.
 //      BatchScanner bs = null;
 //      try {
@@ -812,7 +812,7 @@ public abstract class AbstractQueryLogic {
 //          processResults.suspend();
 //        }
 //        processResults.stop();
-//        log.info(count + " matching entries found in full scan query.");
+//        log.info(count + " matching entries found in full scan criteria.");
 //      } catch (TableNotFoundException e) {
 //        log.error(this.getTableName() + "not found", e);
 //      } finally {
@@ -824,12 +824,12 @@ public abstract class AbstractQueryLogic {
 //    }
 //
 //    log.info("AbstractQueryLogic: " + queryString + " " + timeString(abstractQueryLogic.getTime()));
-//    log.info("  1) parse query " + timeString(parseQuery.getTime()));
-//    log.info("  2) query metadata " + timeString(queryMetadata.getTime()));
-//    log.info("  3) full scan query " + timeString(fullScanQuery.getTime()));
-//    log.info("  3) optimized query " + timeString(optimizedQuery.getTime()));
+//    log.info("  1) parse criteria " + timeString(parseQuery.getTime()));
+//    log.info("  2) criteria metadata " + timeString(queryMetadata.getTime()));
+//    log.info("  3) full scan criteria " + timeString(fullScanQuery.getTime()));
+//    log.info("  3) optimized criteria " + timeString(optimizedQuery.getTime()));
 //    log.info("  1) process results " + timeString(processResults.getTime()));
-//    log.info("      1) query global index " + timeString(queryGlobalIndex.getTime()));
+//    log.info("      1) criteria global index " + timeString(queryGlobalIndex.getTime()));
 //    log.info(hash + " Query completed.");
 //
 //    return results;

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.support.query;
+package org.calrissian.accumulorecipes.eventstore.support.criteria;
 
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
-import org.calrissian.accumulorecipes.eventstore.support.query.validators.MultipleEqualsValidator;
-import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoAndOrValidator;
-import org.calrissian.accumulorecipes.eventstore.support.query.validators.NoOrNotEqualsValidator;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.MultipleEqualsValidator;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoAndOrValidator;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoOrNotEqualsValidator;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.criteria.visitor.CollapseParentClauseVisitor;
@@ -38,7 +38,7 @@ import static org.calrissian.mango.criteria.utils.NodeUtils.isLeaf;
 import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
 
 /**
- * Visit query to validate and transform to perform the query against the swift event service.
+ * Visit criteria to validate and transform to perform the criteria against the swift event service.
  */
 public class QueryResultsVisitor implements NodeVisitor {
 
@@ -72,7 +72,7 @@ public class QueryResultsVisitor implements NodeVisitor {
         query.accept(new NoOrNotEqualsValidator());
         query.accept(new MultipleEqualsValidator());
 
-        //develop query
+        //develop criteria
         query.accept(this);
     }
 

@@ -31,6 +31,8 @@ import org.apache.commons.jexl2.parser.ParserTreeConstants;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.FieldIndexKeyParser;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryFunctions;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 
 import org.apache.log4j.Logger;
@@ -24,19 +24,19 @@ import org.apache.log4j.Logger;
  * <h2>Overview</h2>
  * QueryTable implementation that works with the JEXL grammar. This QueryTable
  * uses the metadata, global index, and partitioned table to return
- * results based on the query. Example queries:
+ * results based on the criteria. Example queries:
  *
  *  <b>Single Term Query</b>
- *  'foo' - looks in global index for foo, and if any entries are found, then the query
+ *  'foo' - looks in global index for foo, and if any entries are found, then the criteria
  *          is rewritten to be field1 == 'foo' or field2 == 'foo', etc. This is then passed
- *          down the optimized query path which uses the intersecting iterators on the shard
+ *          down the optimized criteria path which uses the intersecting iterators on the shard
  *          table.
  *
  *  <b>Boolean expression</b>        
  *  field == 'foo' - For fielded queries, those that contain a field, an operator, and a literal (string or number),
- *                   the query is parsed and the set of eventFields in the query that are indexed is determined by
- *                   querying the metadata table. Depending on the conjunctions in the query (or, and, not) and the
- *                   eventFields that are indexed, the query may be sent down the optimized path or the full scan path.
+ *                   the criteria is parsed and the set of eventFields in the criteria that are indexed is determined by
+ *                   querying the metadata table. Depending on the conjunctions in the criteria (or, and, not) and the
+ *                   eventFields that are indexed, the criteria may be sent down the optimized path or the full scan path.
  *
  *  We are not supporting all of the operators that JEXL supports at this time. We are supporting the following operators:
  *
@@ -48,16 +48,16 @@ import org.apache.log4j.Logger;
  *
  *  <h2>Constraints on Query Structure</h2>
  *  Queries that are sent to this class need to be formatted such that there is a space on either side of the operator. We are
- *  rewriting the query in some cases and the current implementation is expecting a space on either side of the operator. Users
- *  should also be aware that the literals used in the query need to match the data in the table. If an error occurs in the evaluation 
+ *  rewriting the criteria in some cases and the current implementation is expecting a space on either side of the operator. Users
+ *  should also be aware that the literals used in the criteria need to match the data in the table. If an error occurs in the evaluation
  *  we are skipping the event.
  *
  *  <h2>Notes on Optimization</h2>
  *  Queries that meet any of the following criteria will perform a full scan of the events in the partitioned table:
  *
- *  1. An 'or' conjunction exists in the query but not all of the terms are indexed.
- *  2. No indexed terms exist in the query
- *  3. An unsupported operator exists in the query
+ *  1. An 'or' conjunction exists in the criteria but not all of the terms are indexed.
+ *  2. No indexed terms exist in the criteria
+ *  3. An unsupported operator exists in the criteria
  *
  * </pre>
  *
@@ -102,7 +102,7 @@ public class QueryLogic extends AbstractQueryLogic {
 //    Range r = new Range(fieldValue);
 //    scanner.setRange(r);
 //    if (log.isDebugEnabled()) {
-//      log.debug("Range for index query: " + r.toString());
+//      log.debug("Range for index criteria: " + r.toString());
 //    }
 //    for (Entry<Key,Value> entry : scanner) {
 //      if (log.isDebugEnabled()) {

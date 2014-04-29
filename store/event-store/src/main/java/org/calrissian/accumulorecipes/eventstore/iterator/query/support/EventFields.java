@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -23,7 +23,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.EventFields.FieldValue;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.EventFields.FieldValue;
 
 import com.esotericsoftware.kryo.CustomSerialization;
 import com.esotericsoftware.kryo.Kryo;

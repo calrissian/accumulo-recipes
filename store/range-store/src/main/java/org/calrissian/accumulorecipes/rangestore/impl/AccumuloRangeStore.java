@@ -188,7 +188,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     }
 
     /**
-     * This will only get ranges who's low value is within the query range.
+     * This will only get ranges who's low value is within the criteria range.
      */
     private Iterable<ValueRange<T>> forwardScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
@@ -202,8 +202,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     }
 
     /**
-     * This will only get ranges who's high value is within the query range, ignoring ranges that are fully contained
-     * in the query range via the use of a filter.
+     * This will only get ranges who's high value is within the criteria range, ignoring ranges that are fully contained
+     * in the criteria range via the use of a filter.
      */
     private Iterable<ValueRange<T>> reverseScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
@@ -213,7 +213,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
 
-        //Configure filter to remove any ranges that are fully contained in the query range, as they
+        //Configure filter to remove any ranges that are fully contained in the criteria range, as they
         //have already been picked up by the forward scan.
         IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, ReverseScanFilter.class);
         ReverseScanFilter.setQueryLowBound(setting, helper.encode(queryRange.getStart()));
@@ -223,19 +223,19 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     }
 
     /**
-     * This iterator is looking through all the ranges surrounding the query range to see if it is inside.
-     * It uses the knowledge of the max range to limit the query to the ranges closest to the range using the following
+     * This iterator is looking through all the ranges surrounding the criteria range to see if it is inside.
+     * It uses the knowledge of the max range to limit the criteria to the ranges closest to the range using the following
      * logic to generate an efficient scan
      *
      * [(high - maxdistance) -> low]
      *
-     * It will then ignore all ranges that don't overlap the query range, via the use of a filter.
+     * It will then ignore all ranges that don't overlap the criteria range, via the use of a filter.
      */
     private Iterable<ValueRange<T>> overlappingScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
 
         T maxDistance = getMaxDistance(auths);
 
-        //No point of running this check if the query range has spanned the max distance.
+        //No point of running this check if the criteria range has spanned the max distance.
         if (maxDistance == null || helper.distance(queryRange).compareTo(maxDistance) >= 0)
             return emptyIterable();
 
@@ -247,8 +247,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, false
         ));
 
-        //Configure Filter to filter out any ranges that don't overlap the query range as they
-        //either are outside the query range or have already been picked up by the forward and reverse scans.
+        //Configure Filter to filter out any ranges that don't overlap the criteria range as they
+        //either are outside the criteria range or have already been picked up by the forward and reverse scans.
         IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, OverlappingScanFilter.class);
         OverlappingScanFilter.setQueryUpperBound(setting, helper.encode(queryRange.getStop()));
         scanner.addScanIterator(setting);

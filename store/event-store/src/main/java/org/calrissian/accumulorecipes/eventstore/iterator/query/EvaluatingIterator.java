@@ -20,7 +20,8 @@ import org.apache.accumulo.core.data.*;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.EventFields.FieldValue;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.EventFields;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.EventFields.FieldValue;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.hadoop.io.Text;
 

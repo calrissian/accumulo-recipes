@@ -47,8 +47,8 @@ public class OptimizedQueryIterator implements SortedKeyValueIterator<Key,Value>
 
   public IteratorOptions describeOptions() {
     Map<String,String> options = new HashMap<String,String>();
-    options.put(EvaluatingIterator.QUERY_OPTION, "full query expression");
-    options.put(BooleanLogicIterator.FIELD_INDEX_QUERY, "modified query for the field index query portion");
+    options.put(EvaluatingIterator.QUERY_OPTION, "full criteria expression");
+    options.put(BooleanLogicIterator.FIELD_INDEX_QUERY, "modified criteria for the field index criteria portion");
     options.put(ReadAheadIterator.QUEUE_SIZE, "parallel queue size");
     options.put(ReadAheadIterator.TIMEOUT, "parallel iterator timeout");
     return new IteratorOptions(getClass().getSimpleName(), "evaluates event objects against an expression using the field index", options, null);

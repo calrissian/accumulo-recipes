@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 import java.io.StringReader;
 
@@ -74,15 +74,15 @@ import org.apache.commons.jexl2.parser.SimpleNode;
 
 import com.google.common.collect.Multimap;
 
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.QueryTerm;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.ObjectHolder;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.EvaluationContext;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.FunctionResult;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.TermResult;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.LiteralResult;
+import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.QueryTerm;
+import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.ObjectHolder;
+import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.EvaluationContext;
+import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.FunctionResult;
+import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.TermResult;
+import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.LiteralResult;
 
 /**
- * Class that parses the query and returns a tree of TreeNode's. This class rolls up clauses that are below like conjunctions (AND, OR) for the purposes of
+ * Class that parses the criteria and returns a tree of TreeNode's. This class rolls up clauses that are below like conjunctions (AND, OR) for the purposes of
  * creating intersecting iterators.
  *
  */
@@ -108,7 +108,7 @@ public class TreeBuilder implements ParserVisitor {
     Parser p = new Parser(new StringReader(";"));
     ASTJexlScript script = p.parse(new StringReader(query), null);
     // Check to see if the child node is an AND or OR. If not, then
-    // there must be just a single value in the query expression
+    // there must be just a single value in the criteria expression
     rootNode = new TreeNode();
     rootNode.setType(RootNode.class);
     currentNode = rootNode;
@@ -118,7 +118,7 @@ public class TreeBuilder implements ParserVisitor {
 
   public TreeBuilder(ASTJexlScript script) {
     // Check to see if the child node is an AND or OR. If not, then
-    // there must be just a single value in the query expression
+    // there must be just a single value in the criteria expression
     rootNode = new TreeNode();
     rootNode.setType(RootNode.class);
     currentNode = rootNode;
@@ -188,7 +188,7 @@ public class TreeBuilder implements ParserVisitor {
    *
    * @param parent
    * @param parent
-   * @return Map of field names to query terms or null
+   * @return Map of field names to criteria terms or null
    */
   private Multimap<String,QueryTerm> checkChildren(JexlNode parent, EvaluationContext ctx) {
     // If the current node is an AND, then make sure that there is no
@@ -334,7 +334,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -357,7 +357,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -380,7 +380,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -403,7 +403,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -426,7 +426,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -449,7 +449,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -472,7 +472,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -495,7 +495,7 @@ public class TreeBuilder implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -670,7 +670,7 @@ public class TreeBuilder implements ParserVisitor {
       }
 
     } else {
-      throw new IllegalArgumentException("No Term specified in query");
+      throw new IllegalArgumentException("No Term specified in criteria");
     }
   }
 }

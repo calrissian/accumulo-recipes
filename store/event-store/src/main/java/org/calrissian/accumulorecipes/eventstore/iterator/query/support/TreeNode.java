@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Vector;
 
-import org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.QueryTerm;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.QueryTerm;
 import org.apache.commons.jexl2.parser.JexlNode;
 
 

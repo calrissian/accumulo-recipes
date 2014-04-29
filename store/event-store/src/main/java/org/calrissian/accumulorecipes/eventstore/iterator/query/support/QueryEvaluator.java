@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,10 +24,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 
-import org.calrissian.accumulorecipes.eventstore.iterator.query.QueryFunctions;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.Arithmetic;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.EventFields.FieldValue;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.QueryTerm;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.EventFields.FieldValue;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.QueryTerm;
 import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlEngine;
@@ -43,7 +41,7 @@ import com.google.common.collect.Multimap;
 
 
 /**
- * This class evaluates events against a query. The query is passed to the constructor and then parsed. It is evaluated against an event in the evaluate method.
+ * This class evaluates events against a criteria. The criteria is passed to the constructor and then parsed. It is evaluated against an event in the evaluate method.
  */
 public class QueryEvaluator {
 
@@ -124,13 +122,13 @@ public class QueryEvaluator {
       log.debug("rewriteQuery");
     }
     // Here we have a field that has multiple values. In this case we need to put
-    // all values into the jexl context as an array and rewrite the query to account for all
+    // all values into the jexl context as an array and rewrite the criteria to account for all
     // of the fields.
     if (caseInsensitive) {
       fieldName = fieldName.toLowerCase();
     }
     if (log.isDebugEnabled()) {
-      log.debug("Modifying original query: " + query);
+      log.debug("Modifying original criteria: " + query);
     }
     // Pull the values out of the FieldValue object
     String[] values = new String[fieldValues.size()];
@@ -148,7 +146,7 @@ public class QueryEvaluator {
 
     Collection<QueryTerm> qt = terms.get(fieldName);
 
-    // Add a script to the beginning of the query for this multi-valued field
+    // Add a script to the beginning of the criteria for this multi-valued field
     StringBuilder script = new StringBuilder();
     script.append("_").append(fieldName).append(" = false;\n");
     script.append("for (field : ").append(fieldName).append(") {\n");
@@ -164,14 +162,14 @@ public class QueryEvaluator {
     }
     script.append("}\n");
 
-    // Add the script to the beginning of the query
+    // Add the script to the beginning of the criteria
     query.insert(0, script.toString());
 
     StringBuilder newPredicate = new StringBuilder();
     newPredicate.append("_").append(fieldName).append(" == true");
 
     for (QueryTerm t : qt) {
-      // Find the location of this term in the query
+      // Find the location of this term in the criteria
       StringBuilder predicate = new StringBuilder();
       int start = 0;
       if (!t.getOperator().equals(JexlOperatorConstants.getOperator(ParserTreeConstants.JJTFUNCTIONNODE))) {
@@ -183,11 +181,11 @@ public class QueryEvaluator {
         start = query.indexOf(predicate.toString());
       }
       if (-1 == start) {
-        log.warn("Unable to find predicate: " + predicate.toString() + " in rewritten query: " + query.toString());
+        log.warn("Unable to find predicate: " + predicate.toString() + " in rewritten criteria: " + query.toString());
       }
       int length = predicate.length();
 
-      // Now modify the query to check the value of my.fieldName
+      // Now modify the criteria to check the value of my.fieldName
       query.replace(start, start + length, newPredicate.toString());
     }
 
@@ -198,7 +196,7 @@ public class QueryEvaluator {
   }
 
   /**
-   * Evaluates the query against an event.
+   * Evaluates the criteria against an event.
    *
    * @param eventFields
    */
@@ -207,11 +205,11 @@ public class QueryEvaluator {
     this.modifiedQuery = null;
     boolean rewritten = false;
 
-    // Copy the query
+    // Copy the criteria
     StringBuilder q = new StringBuilder(query);
     // Copy the literals, we are going to remove elements from this set
     // when they are added to the JEXL context. This will allow us to
-    // determine which items in the query where *NOT* in the data.
+    // determine which items in the criteria where *NOT* in the data.
     HashSet<String> literalsCopy = new HashSet<String>(literals);
 
     // Loop through the event fields and add them to the JexlContext.
@@ -246,14 +244,14 @@ public class QueryEvaluator {
 
     }// End of loop
 
-    // For any literals in the query that were not found in the data, add them to the context
+    // For any literals in the criteria that were not found in the data, add them to the context
     // with a null value.
     for (String lit : literalsCopy) {
       ctx.set(lit, null);
     }
 
     if (log.isDebugEnabled()) {
-      log.debug("Evaluating query: " + q.toString());
+      log.debug("Evaluating criteria: " + q.toString());
     }
 
     this.modifiedQuery = q.toString();
@@ -283,7 +281,7 @@ public class QueryEvaluator {
 
   /**
    *
-   * @return rewritten query that was evaluated against the most recent event
+   * @return rewritten criteria that was evaluated against the most recent event
    */
   public String getModifiedQuery() {
     return this.modifiedQuery;

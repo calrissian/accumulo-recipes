@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -79,10 +79,13 @@ import org.apache.hadoop.util.hash.MurmurHash;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.JexlOperatorConstants;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.TreeBuilder;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.TreeNode;
 
 /**
- * Parses the query for the purposes of extracting terms, operators, and literals for query optimization. This class does not necessarily understand how to
- * parse all of the possible combinations of the JEXL syntax, but that does not mean that the query will not evaluate against the event objects. It means that
+ * Parses the criteria for the purposes of extracting terms, operators, and literals for criteria optimization. This class does not necessarily understand how to
+ * parse all of the possible combinations of the JEXL syntax, but that does not mean that the criteria will not evaluate against the event objects. It means that
  * the unsupported operators will not be parsed and included in the optimization step.
  *
  */
@@ -249,7 +252,7 @@ public class QueryParser implements ParserVisitor {
   private Set<String> orTerms = new HashSet<String>();
 
   /**
-   * List of String, Integer, Float, etc literals that were passed in the query
+   * List of String, Integer, Float, etc literals that were passed in the criteria
    */
   private Set<Object> literals = new HashSet<Object>();
 
@@ -357,7 +360,7 @@ public class QueryParser implements ParserVisitor {
 
   /**
    *
-   * @return String, Integer, and Float literals used in the query.
+   * @return String, Integer, and Float literals used in the criteria.
    */
   public Set<Object> getQueryLiterals() {
     return literals;
@@ -365,7 +368,7 @@ public class QueryParser implements ParserVisitor {
 
   /**
    *
-   * @return Set of all identifiers (field names) in the query.
+   * @return Set of all identifiers (field names) in the criteria.
    */
   public Set<String> getQueryIdentifiers() {
     return terms.keySet();
@@ -471,7 +474,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -494,7 +497,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -519,7 +522,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -542,7 +545,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -565,7 +568,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -588,7 +591,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -611,7 +614,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -634,7 +637,7 @@ public class QueryParser implements ParserVisitor {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -839,7 +842,7 @@ public class QueryParser implements ParserVisitor {
       }
 
     } else {
-      throw new IllegalArgumentException("No Term specified in query");
+      throw new IllegalArgumentException("No Term specified in criteria");
     }
   }
 }

@@ -24,8 +24,9 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.QueryParser.QueryTerm;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.RangeCalculator.RangeBounds;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.*;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.QueryTerm;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.RangeCalculator.RangeBounds;
 import org.apache.commons.jexl2.parser.*;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
@@ -121,14 +122,14 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key,Value>, 
         }
       }
 
-      // Step 1: Parse the query
+      // Step 1: Parse the criteria
       if (log.isDebugEnabled()) {
         log.debug("QueryParser");
       }
       QueryParser qp = new QueryParser();
       qp.execute(this.updatedQuery); // validateOptions updates the updatedQuery
 
-      // need to build the query tree based on jexl parsing.
+      // need to build the criteria tree based on jexl parsing.
       // Step 2: refactor QueryTree - inplace modification
       if (log.isDebugEnabled()) {
         log.debug("transformTreeNode");
@@ -156,7 +157,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key,Value>, 
 
     } catch (ParseException ex) {
       log.error("ParseException in init: " + ex);
-      throw new IllegalArgumentException("Failed to parse query", ex);
+      throw new IllegalArgumentException("Failed to parse criteria", ex);
     } catch (Exception ex) {
       initfailed = true;
 //      throw new IllegalArgumentException("probably had no indexed terms", ex);
@@ -636,7 +637,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key,Value>, 
   /* *************************************************************************
    * Utility methods.
    */
-  // Transforms the TreeNode tree of query.parser into the
+  // Transforms the TreeNode tree of criteria.parser into the
   // BooleanLogicTreeNodeJexl form.
   public BooleanLogicTreeNode transformTreeNode(TreeNode node) throws ParseException {
     if (node.getType().equals(ASTEQNode.class) || node.getType().equals(ASTNENode.class)) {
@@ -1908,7 +1909,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key,Value>, 
 
   public IteratorOptions describeOptions() {
     return new IteratorOptions(getClass().getSimpleName(), "evaluates event objects against an expression", Collections.singletonMap(QUERY_OPTION,
-            "query expression"), null);
+            "criteria expression"), null);
   }
 
   public boolean validateOptions(Map<String,String> options) {

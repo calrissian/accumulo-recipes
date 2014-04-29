@@ -23,6 +23,8 @@ import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.log4j.Logger;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.EventFields;
+import org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryEvaluator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,7 +37,7 @@ import java.util.*;
  * columns with the same key), the EventFields object will be compared against the supplied expression. If the expression returns true, then the return key and
  * return value can be retrieved via getTopKey() and getTopValue().
  *
- * Optionally, the caller can set an expression (field operator value) that should not be evaluated against the event. For example, if the query is
+ * Optionally, the caller can set an expression (field operator value) that should not be evaluated against the event. For example, if the criteria is
  * "A == 'foo' and B == 'bar'", but for some reason B may not be in the data, then setting the UNEVALUATED_EXPRESSIONS option to "B == 'bar'" will allow the
  * events to be evaluated against the remainder of the expression and still return as true.
  *
@@ -79,7 +81,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
   public abstract PartialKey getKeyComparator();
 
   /**
-   * When the query expression evaluates to true against the event, the event fields will be serialized into the Value and returned up the iterator stack.
+   * When the criteria expression evaluates to true against the event, the event fields will be serialized into the Value and returned up the iterator stack.
    * Implemenations will need to provide a key to be used with the event.
    *
    * @param k
@@ -89,7 +91,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
 
   /**
    * Implementations will need to fill the map with field visibilities, names, and values. When all fields have been aggregated the event will be evaluated
-   * against the query expression.
+   * against the criteria expression.
    *
    * @param event
    *          Multimap of event names and fields.
@@ -274,14 +276,14 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
       }
       this.evaluator = new QueryEvaluator(this.expression);
     } catch (ParseException e) {
-      throw new IllegalArgumentException("Failed to parse query", e);
+      throw new IllegalArgumentException("Failed to parse criteria", e);
     }
     EventFields.initializeKryo(kryo);
   }
 
   public IteratorOptions describeOptions() {
     Map<String,String> options = new HashMap<String,String>();
-    options.put(QUERY_OPTION, "query expression");
+    options.put(QUERY_OPTION, "criteria expression");
     options.put(UNEVALUTED_EXPRESSIONS, "comma separated list of expressions to skip");
     return new IteratorOptions(getClass().getSimpleName(), "evaluates event objects against an expression", options, null);
   }

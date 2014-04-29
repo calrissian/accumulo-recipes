@@ -14,26 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
 
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.EvaluatingIterator;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.AbstractQueryLogic;
 import org.apache.commons.jexl2.parser.ASTAndNode;
 import org.apache.commons.jexl2.parser.ASTEQNode;
 import org.apache.commons.jexl2.parser.ASTERNode;
@@ -48,7 +40,6 @@ import org.apache.commons.jexl2.parser.ASTNRNode;
 import org.apache.commons.jexl2.parser.ASTNullLiteral;
 import org.apache.commons.jexl2.parser.ASTOrNode;
 import org.apache.commons.jexl2.parser.ASTTrueNode;
-import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.hadoop.io.Text;
@@ -56,11 +47,10 @@ import org.apache.log4j.Logger;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
- * This class is used to query the global indices to determine that set of ranges to use when querying the shard table. The RangeCalculator looks at each term
- * in the query to determine if it is a equivalence, range, or wildcard comparison, and queries the appropriate index to find the ranges for the terms which are
+ * This class is used to criteria the global indices to determine that set of ranges to use when querying the shard table. The RangeCalculator looks at each term
+ * in the criteria to determine if it is a equivalence, range, or wildcard comparison, and queries the appropriate index to find the ranges for the terms which are
  * then cached. The final set of ranges is computed as the AST is traversed.
  */
 public class RangeCalculator extends QueryParser {
@@ -259,9 +249,9 @@ public class RangeCalculator extends QueryParser {
   protected Set<Range> result = null;
   /* map of field names to values found in the index */
   protected Multimap<String,String> indexEntries = HashMultimap.create();
-  /* map of value in the index to the original query values */
+  /* map of value in the index to the original criteria values */
   protected Map<String,String> indexValues = new HashMap<String,String>();
-  /* map of values in the query to map keys used */
+  /* map of values in the criteria to map keys used */
   protected Multimap<String,MapKey> originalQueryValues = HashMultimap.create();
   /* map of field name to cardinality */
   protected Map<String,Long> termCardinalities = new HashMap<String,Long>();
@@ -274,14 +264,14 @@ public class RangeCalculator extends QueryParser {
 //   * @param auths
 //   * @param indexedTerms
 //   * @param terms
-//   * @param query
+//   * @param criteria
 //   * @param logic
 //   * @param typeFilter
 //   * @throws ParseException
 //   */
-//  public void execute(Connector c, Authorizations auths, Multimap<String,Normalizer> indexedTerms, Multimap<String,QueryTerm> terms, String query,
+//  public void execute(Connector c, Authorizations auths, Multimap<String,Normalizer> indexedTerms, Multimap<String,QueryTerm> terms, String criteria,
 //                      AbstractQueryLogic logic, Set<String> typeFilter) throws ParseException {
-//    super.execute(query);
+//    super.execute(criteria);
 //    this.c = c;
 //    this.auths = auths;
 //    this.indexedTerms = indexedTerms;
@@ -295,7 +285,7 @@ public class RangeCalculator extends QueryParser {
 //    Map<MapKey,Set<Range>> leadingWildcardRanges = new HashMap<MapKey,Set<Range>>();
 //    Map<Text,RangeBounds> rangeMap = new HashMap<Text,RangeBounds>();
 //
-//    // Here we iterate over all of the terms in the query to determine if they are an equivalence,
+//    // Here we iterate over all of the terms in the criteria to determine if they are an equivalence,
 //    // wildcard, or range type operator
 //    for (Entry<String,QueryTerm> entry : terms.entries()) {
 //      if (entry.getValue().getOperator().equals(JexlOperatorConstants.getOperator(ASTEQNode.class))
@@ -309,7 +299,7 @@ public class RangeCalculator extends QueryParser {
 //          termCardinalities.put(entry.getKey().toUpperCase(), 0L);
 //          continue;
 //        }
-//        // In the case of function calls, the query term could be null. Dont query the index for it.
+//        // In the case of function calls, the criteria term could be null. Dont criteria the index for it.
 //        if (null == entry.getValue()) {
 //          termCardinalities.put(entry.getKey().toUpperCase(), 0L);
 //          continue;
@@ -345,14 +335,14 @@ public class RangeCalculator extends QueryParser {
 //            indexRanges.get(key).add(r);
 //            // WILDCARD
 //          } else if (entry.getValue().getOperator().equals(JexlOperatorConstants.getOperator(ASTERNode.class))) {
-//            // This is a wildcard query using regex. We can only support leading and trailing wildcards at this time. Leading
+//            // This is a wildcard criteria using regex. We can only support leading and trailing wildcards at this time. Leading
 //            // wildcards will need be reversed and sent to the global reverse index. Trailing wildcard queries will be sent to the
 //            // global index. In all cases, the range for the wilcard will be the range of possible UNICODE codepoints, hex 0 to 10FFFF.
 //            int loc = normalizedFieldValue.indexOf(WILDCARD);
 //            if (-1 == loc)
 //              loc = normalizedFieldValue.indexOf(SINGLE_WILDCARD);
 //            if (-1 == loc) {
-//              // Then no wildcard in the query? Treat like the equals case above.
+//              // Then no wildcard in the criteria? Treat like the equals case above.
 //              Key startRange = new Key(fieldValue, fieldName);
 //              Range r = new Range(startRange, true, startRange.followingKey(PartialKey.ROW), true);
 //
@@ -392,21 +382,21 @@ public class RangeCalculator extends QueryParser {
 //                trailingWildcardRanges.get(key).add(r);
 //              } else {
 //                // throw new RuntimeException("Unsupported wildcard location. Only trailing or leading wildcards are supported: " + normalizedFieldValue);
-//                // Don't throw an exception, there must be a wildcard in the query, we'll treat it as a filter on the results since it is not
+//                // Don't throw an exception, there must be a wildcard in the criteria, we'll treat it as a filter on the results since it is not
 //                // leading or trailing.
 //              }
 //            }
 //            // RANGES
 //          } else if (entry.getValue().getOperator().equals(JexlOperatorConstants.getOperator(ASTGTNode.class))
 //                  || entry.getValue().getOperator().equals(JexlOperatorConstants.getOperator(ASTGENode.class))) {
-//            // Then we have a lower bound to a range query
+//            // Then we have a lower bound to a range criteria
 //            if (!rangeMap.containsKey(fieldName))
 //              rangeMap.put(fieldName, new RangeBounds());
 //            rangeMap.get(fieldName).setLower(fieldValue);
 //            rangeMap.get(fieldName).setOriginalLower(value);
 //          } else if (entry.getValue().getOperator().equals(JexlOperatorConstants.getOperator(ASTLTNode.class))
 //                  || entry.getValue().getOperator().equals(JexlOperatorConstants.getOperator(ASTLENode.class))) {
-//            // Then we have an upper bound to a range query
+//            // Then we have an upper bound to a range criteria
 //            if (!rangeMap.containsKey(fieldName))
 //              rangeMap.put(fieldName, new RangeBounds());
 //            rangeMap.get(fieldName).setUpper(fieldValue);
@@ -433,7 +423,7 @@ public class RangeCalculator extends QueryParser {
 //        Key startRange = new Key(lower, entry.getKey());
 //        Key endRange = new Key(upper, entry.getKey());
 //        Range r = new Range(startRange, true, endRange, true);
-//        // For the range queries we need to query the global index and then handle the results a little differently.
+//        // For the range queries we need to criteria the global index and then handle the results a little differently.
 //        Map<MapKey,Set<Range>> ranges = new HashMap<MapKey,Set<Range>>();
 //        MapKey key = new MapKey(entry.getKey().toString(), entry.getValue().getLower().toString());
 //        key.setOriginalQueryValue(entry.getValue().getOriginalLower().toString());
@@ -441,7 +431,7 @@ public class RangeCalculator extends QueryParser {
 //        ranges.put(key, new HashSet<Range>());
 //        ranges.get(key).add(r);
 //
-//        // Now query the global index and override the field value used in the results map
+//        // Now criteria the global index and override the field value used in the results map
 //        try {
 //          Map<MapKey,TermRange> lowerResults = queryGlobalIndex(ranges, entry.getKey().toString(), this.indexTableName, false, key, typeFilter);
 //          // Add the results to the global index results for both the upper and lower field values.
@@ -462,10 +452,10 @@ public class RangeCalculator extends QueryParser {
 //          throw new RuntimeException(" index table not found", e);
 //        }
 //      } else {
-//        log.warn("Unbounded range detected, not querying index for it. Field  " + entry.getKey().toString() + " in query: " + query);
+//        log.warn("Unbounded range detected, not querying index for it. Field  " + entry.getKey().toString() + " in criteria: " + criteria);
 //      }
 //    }
-//    // Now that we have calculated all of the ranges, query the global index.
+//    // Now that we have calculated all of the ranges, criteria the global index.
 //    try {
 //
 //      // Query for the trailing wildcards if we have any
@@ -473,7 +463,7 @@ public class RangeCalculator extends QueryParser {
 //        Map<MapKey,Set<Range>> m = new HashMap<MapKey,Set<Range>>();
 //        m.put(trailing.getKey(), trailing.getValue());
 //        if (log.isDebugEnabled())
-//          log.debug("Ranges for Wildcard Global Index query: " + m.toString());
+//          log.debug("Ranges for Wildcard Global Index criteria: " + m.toString());
 //        this.globalIndexResults.putAll(queryGlobalIndex(m, trailing.getKey().getFieldName(), this.indexTableName, false, trailing.getKey(), typeFilter));
 //      }
 //
@@ -482,7 +472,7 @@ public class RangeCalculator extends QueryParser {
 //        Map<MapKey,Set<Range>> m = new HashMap<MapKey,Set<Range>>();
 //        m.put(leading.getKey(), leading.getValue());
 //        if (log.isDebugEnabled())
-//          log.debug("Ranges for Wildcard Global Reverse Index query: " + m.toString());
+//          log.debug("Ranges for Wildcard Global Reverse Index criteria: " + m.toString());
 //        this.globalIndexResults.putAll(queryGlobalIndex(m, leading.getKey().getFieldName(), this.reverseIndexTableName, true, leading.getKey(), typeFilter));
 //      }
 //
@@ -491,7 +481,7 @@ public class RangeCalculator extends QueryParser {
 //        Map<MapKey,Set<Range>> m = new HashMap<MapKey,Set<Range>>();
 //        m.put(equals.getKey(), equals.getValue());
 //        if (log.isDebugEnabled())
-//          log.debug("Ranges for Global Index query: " + m.toString());
+//          log.debug("Ranges for Global Index criteria: " + m.toString());
 //        this.globalIndexResults.putAll(queryGlobalIndex(m, equals.getKey().getFieldName(), this.indexTableName, false, equals.getKey(), typeFilter));
 //      }
 //    } catch (TableNotFoundException e) {
@@ -500,7 +490,7 @@ public class RangeCalculator extends QueryParser {
 //    }
 //
 //    if (log.isDebugEnabled())
-//      log.debug("Ranges from Global Index query: " + globalIndexResults.toString());
+//      log.debug("Ranges from Global Index criteria: " + globalIndexResults.toString());
 //
 //    // Now traverse the AST
 //    EvaluationContext ctx = new EvaluationContext();
@@ -560,7 +550,7 @@ public class RangeCalculator extends QueryParser {
 //
 //    // The results map where the key is the field name and field value and the
 //    // value is a set of ranges. The mapkey will always be the field name
-//    // and field value that was passed in the original query. The TermRange
+//    // and field value that was passed in the original criteria. The TermRange
 //    // will contain the field name and field value found in the index.
 //    Map<MapKey,TermRange> results = new HashMap<MapKey,TermRange>();
 //
@@ -785,7 +775,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -806,7 +796,7 @@ public class RangeCalculator extends QueryParser {
       termValue = ((String) term.getValue()).substring(1, ((String) term.getValue()).length() - 1);
     else
       termValue = (String) term.getValue();
-    // Get the values found in the index for this query term
+    // Get the values found in the index for this criteria term
     TermRange ranges = null;
     for (MapKey key : this.originalQueryValues.get(termValue)) {
       if (key.getFieldName().equalsIgnoreCase(fieldName.toString())) {
@@ -833,7 +823,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -866,7 +856,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -887,7 +877,7 @@ public class RangeCalculator extends QueryParser {
       termValue = ((String) term.getValue()).substring(1, ((String) term.getValue()).length() - 1);
     else
       termValue = (String) term.getValue();
-    // Get the values found in the index for this query term
+    // Get the values found in the index for this criteria term
     TermRange ranges = null;
     for (MapKey key : this.originalQueryValues.get(termValue)) {
       if (key.getFieldName().equalsIgnoreCase(fieldName.toString())) {
@@ -914,7 +904,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -935,7 +925,7 @@ public class RangeCalculator extends QueryParser {
       termValue = ((String) term.getValue()).substring(1, ((String) term.getValue()).length() - 1);
     else
       termValue = (String) term.getValue();
-    // Get the values found in the index for this query term
+    // Get the values found in the index for this criteria term
     TermRange ranges = null;
     for (MapKey key : this.originalQueryValues.get(termValue)) {
       if (key.getFieldName().equalsIgnoreCase(fieldName.toString())) {
@@ -962,7 +952,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -983,7 +973,7 @@ public class RangeCalculator extends QueryParser {
       termValue = ((String) term.getValue()).substring(1, ((String) term.getValue()).length() - 1);
     else
       termValue = (String) term.getValue();
-    // Get the values found in the index for this query term
+    // Get the values found in the index for this criteria term
     TermRange ranges = null;
     for (MapKey key : this.originalQueryValues.get(termValue)) {
       if (key.getFieldName().equalsIgnoreCase(fieldName.toString())) {
@@ -1010,7 +1000,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -1031,7 +1021,7 @@ public class RangeCalculator extends QueryParser {
       termValue = ((String) term.getValue()).substring(1, ((String) term.getValue()).length() - 1);
     else
       termValue = (String) term.getValue();
-    // Get the values found in the index for this query term
+    // Get the values found in the index for this criteria term
     TermRange ranges = null;
     for (MapKey key : this.originalQueryValues.get(termValue)) {
       if (key.getFieldName().equalsIgnoreCase(fieldName.toString())) {
@@ -1058,7 +1048,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);
@@ -1079,7 +1069,7 @@ public class RangeCalculator extends QueryParser {
       termValue = ((String) term.getValue()).substring(1, ((String) term.getValue()).length() - 1);
     else
       termValue = (String) term.getValue();
-    // Get the values found in the index for this query term
+    // Get the values found in the index for this criteria term
     TermRange ranges = null;
     for (MapKey key : this.originalQueryValues.get(termValue)) {
       if (key.getFieldName().equalsIgnoreCase(fieldName.toString())) {
@@ -1107,7 +1097,7 @@ public class RangeCalculator extends QueryParser {
     // Process both sides of this node.
     Object left = node.jjtGetChild(0).jjtAccept(this, data);
     Object right = node.jjtGetChild(1).jjtAccept(this, data);
-    // Ignore functions in the query
+    // Ignore functions in the criteria
     if (left instanceof FunctionResult || right instanceof FunctionResult)
       return null;
     decodeResults(left, right, fieldName, value);

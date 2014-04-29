@@ -30,7 +30,7 @@ import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
 import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.ShardBuilder;
-import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.QueryResultsVisitor;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;

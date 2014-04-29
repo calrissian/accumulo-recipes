@@ -34,7 +34,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
 /**
- * An iterator that handles "OR" query constructs on the server side. This code has been adapted/merged from Heap and Multi Iterators.
+ * An iterator that handles "OR" criteria constructs on the server side. This code has been adapted/merged from Heap and Multi Iterators.
  */
 public class OrIterator implements SortedKeyValueIterator<Key,Value> {
 

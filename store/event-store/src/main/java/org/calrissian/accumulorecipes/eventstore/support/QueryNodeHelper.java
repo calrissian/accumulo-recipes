@@ -29,7 +29,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIntersectingIterator;
 import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
-import org.calrissian.accumulorecipes.eventstore.support.query.validators.AndSingleDepthOnlyValidator;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.AndSingleDepthOnlyValidator;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
@@ -98,7 +98,7 @@ public class QueryNodeHelper {
             scanner.addScanIterator(is);
 
         } else {
-            throw new IllegalArgumentException("You must have 2 or more items to query.");
+            throw new IllegalArgumentException("You must have 2 or more items to criteria.");
         }
 
         scanner.setRanges(singleton(new Range(range[0], range[1] + DELIM_END)));
@@ -129,11 +129,11 @@ public class QueryNodeHelper {
                         DELIM + typeRegistry.getAlias(equalsLeaf.getValue()) +
                         DELIM + typeRegistry.encode(equalsLeaf.getValue())));
             } else {
-                throw new IllegalArgumentException("The query " + query + " was not supported");
+                throw new IllegalArgumentException("The criteria " + query + " was not supported");
             }
 
         } else {
-            throw new RuntimeException("Need to have a query and/or leaves of the query");
+            throw new RuntimeException("Need to have a criteria and/or leaves of the criteria");
         }
 
         scanner.setRanges(singleton(new Range(range[0], range[1] + DELIM_END)));

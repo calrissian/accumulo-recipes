@@ -72,7 +72,7 @@ public class AccumuloChangelogStoreTest {
         /**
          * We are querying both trees for the same time period (the exact timestamp doesn't need to be exact, though it
          * needs to be within the same set of buckets (the same 5 minute period). This is easy to accomplish as the
-         * system requesting the changes can send the target systems the time range for which to query.
+         * system requesting the changes can send the target systems the time range for which to criteria.
          */
 
         MerkleTree targetTree = buildTree();

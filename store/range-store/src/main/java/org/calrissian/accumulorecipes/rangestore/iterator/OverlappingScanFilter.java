@@ -30,7 +30,7 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.rangestore.support.Constants.DELIM;
 
 /**
- * Filters out all intervals that have an upper bound less than or equal to the query upper bound.
+ * Filters out all intervals that have an upper bound less than or equal to the criteria upper bound.
  * This should only be run against data that is lower bound indexed.
  */
 public class OverlappingScanFilter extends Filter {
@@ -60,7 +60,7 @@ public class OverlappingScanFilter extends Filter {
      * @param iterConfig
      *          Iterator settings to configure
      * @param queryLowBound
-     *          The normalized representation of the query low bound for a range.
+     *          The normalized representation of the criteria low bound for a range.
      */
     public static void setQueryUpperBound(IteratorSetting iterConfig, String queryLowBound) {
         iterConfig.addOption(UPPER_BOUND_OPTION, queryLowBound);
