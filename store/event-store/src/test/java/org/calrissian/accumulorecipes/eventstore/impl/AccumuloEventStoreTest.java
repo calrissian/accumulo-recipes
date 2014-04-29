@@ -90,20 +90,20 @@ public class AccumuloEventStoreTest {
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event.getTuples()));
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event2.getTuples()));
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event.getTuples()));
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event2.getTuples()));
         }
     }
 
@@ -164,20 +164,20 @@ public class AccumuloEventStoreTest {
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
     }
 
@@ -223,22 +223,6 @@ public class AccumuloEventStoreTest {
 
         }
         assertEquals(1, x);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testQuery_MultEqInAnd() throws Exception {
-        AccumuloEventStore store = new AccumuloEventStore(getConnector());
-
-        Node query = new QueryBuilder()
-                .and()
-                .eq("id", "1")
-                .eq("id", "2")
-                .endStatement().build();
-
-        store.query(
-                new Date(currentTimeMillis() - 5000), new Date(), query,
-                new Auths()).iterator();
-
     }
 
 }
