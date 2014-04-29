@@ -16,14 +16,14 @@
 package org.calrissian.accumulorecipes.blobstore.impl.ext;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.blobstore.ext.impl.ExtendedAccumuloBlobStore;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.junit.Test;
 
 import java.io.InputStream;

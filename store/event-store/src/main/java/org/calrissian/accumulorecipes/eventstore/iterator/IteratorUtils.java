@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.eventstore.iterator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -25,7 +26,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,7 +82,7 @@ public class IteratorUtils {
             if(tuples.size() > 0)
                 event.putAll(tuples);
 
-            return new Value(new ObjectMapper().withModule(new TupleModule(typeRegistry)).writeValueAsBytes(event));
+            return new Value(new ObjectMapper().registerModule(new TupleModule(typeRegistry)).writeValueAsBytes(event));
 
         } catch (RuntimeException re) {
             throw re;
