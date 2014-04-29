@@ -46,8 +46,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.ByteBuffer.wrap;
-import static org.apache.commons.lang.StringUtils.endsWith;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.eventstore.iterator.support.EventFields.initializeKryo;

@@ -11,7 +11,7 @@ import java.util.Set;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.DEFAULT_PARTITION_SIZE;
 import static org.junit.Assert.assertEquals;
 
-public class ShardTest {
+public class ShardBuilderTest {
 
     ShardBuilder shardBuilder;
 
