@@ -36,6 +36,7 @@ import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.model.EventIndex;
 import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
 import org.calrissian.mango.accumulo.Scanners;
@@ -240,7 +241,9 @@ public class AccumuloEventStore implements EventStore {
      */
     @Override
     public CloseableIterable<StoreEntry> query(Date start, final Date end, Node node, Auths auths) {
-      String jexl = nodeToJexl.transform(node);
+
+      QueryOptimizer optimizer = new QueryOptimizer(node);
+      String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
       Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
 
       try {

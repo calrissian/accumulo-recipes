@@ -41,47 +41,44 @@ import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLe
  */
 public class QueryOptimizer implements NodeVisitor {
 
-    protected Date start, end;
-    protected Authorizations auths;
+    protected Node node;
 
-    public QueryOptimizer(Node query, Date start, Date end, Authorizations auths) {
-        checkNotNull(query);
-        checkNotNull(start);
-        checkNotNull(end);
-        checkNotNull(auths);
+    public QueryOptimizer(Node query) {
+      checkNotNull(query);
 
-        this.start = start;
-        this.end = end;
-        this.auths = auths;
+      this.node = query;  // TODO: Really, this should be cloned all the way
 
-        init(query);
+      init(query);
     }
 
     protected void init(Node query) {
-        query.accept(new SingleClauseCollapseVisitor());
-        query.accept(new EmptyParentCollapseVisitor());
-        query.accept(new CollapseParentClauseVisitor());
+      query.accept(new SingleClauseCollapseVisitor());
+      query.accept(new EmptyParentCollapseVisitor());
+      query.accept(new CollapseParentClauseVisitor());
 
-        //validators
-        query.accept(new NoAndOrValidator());
-        query.accept(new NoOrNotEqualsValidator());
-        query.accept(new MultipleEqualsValidator());
+      //validators
+      query.accept(new NoAndOrValidator());
+      query.accept(new NoOrNotEqualsValidator());
+      query.accept(new MultipleEqualsValidator());
 
-        //develop criteria
-        query.accept(this);
+      //develop criteria
+      query.accept(this);
+    }
+
+    public Node getOptimizedQuery() {
+      return this.node;
     }
 
     @Override
     public void begin(ParentNode node) {
     }
 
-  @Override
-  public void end(ParentNode parentNode) {
+    @Override
+    public void end(ParentNode parentNode) {
 
-  }
+    }
 
-
-  @Override
+    @Override
     public void visit(Leaf node) {
     }
 }
