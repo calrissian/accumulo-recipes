@@ -240,12 +240,14 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
-     * {@inheritDoc}
+     * Shard ids for which to scan are generated from the given start and end time. The given query specifies
+     * which events to return. It is propagated all the way down to the iterators so that the query is run in parallel
+     * on each tablet that needs to be scanned.
      */
     @Override
-    public CloseableIterable<StoreEntry> query(Date start, final Date end, Node node, Auths auths) {
+    public CloseableIterable<StoreEntry> query(Date start, Date end, Node query, Auths auths) {
 
-      QueryOptimizer optimizer = new QueryOptimizer(node);
+      QueryOptimizer optimizer = new QueryOptimizer(query);
       String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
       Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
 
@@ -290,7 +292,10 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
-     * {@inheritDoc}
+     * This method will batch get a bunch of events by uuid (and optionally timestamp). If another store is used to
+     * index into events in this store in a specially designed way (i.e. getting the last-n events, etc...) then
+     * the most optimal way to store the index would be the UUID and the timestamp. However, if all that is known
+     * about an event is the uuid, this method will do the extra fetch of the timestamp from the index table.
      */
     @Override
     public CloseableIterable<StoreEntry> get(Collection<EventIndex> uuids, Auths auths) {
