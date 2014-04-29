@@ -19,7 +19,7 @@ limitations under the License.
   <parent>
     <groupId>org.calrissian.accumulorecipes</groupId>
     <artifactId>accumulorecipes-parent</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
   </parent>
   <artifactId>examples</artifactId>
   <packaging>jar</packaging>
@@ -29,7 +29,7 @@ limitations under the License.
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
       <artifactId>blob-store</artifactId>
-      <version>0.2-SNAPSHOT</version>
+      <version>0.1-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>

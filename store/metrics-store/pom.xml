@@ -19,7 +19,7 @@ limitations under the License.
   <parent>
     <groupId>org.calrissian.accumulorecipes</groupId>
     <artifactId>store</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
   </parent>
   <artifactId>metrics-store</artifactId>
   <packaging>jar</packaging>
