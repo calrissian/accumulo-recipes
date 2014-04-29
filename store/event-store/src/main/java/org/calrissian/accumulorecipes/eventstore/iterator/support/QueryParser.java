@@ -14,10 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
+package org.calrissian.accumulorecipes.eventstore.iterator.support;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.jexl2.parser.ASTAdditiveNode;
 import org.apache.commons.jexl2.parser.ASTAdditiveOperator;
 import org.apache.commons.jexl2.parser.ASTAmbiguous;
@@ -65,69 +70,316 @@ import org.apache.commons.jexl2.parser.ASTTernaryNode;
 import org.apache.commons.jexl2.parser.ASTTrueNode;
 import org.apache.commons.jexl2.parser.ASTUnaryMinusNode;
 import org.apache.commons.jexl2.parser.ASTWhileStatement;
-import org.apache.commons.jexl2.parser.JexlNode;
 import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.commons.jexl2.parser.Parser;
 import org.apache.commons.jexl2.parser.ParserVisitor;
 import org.apache.commons.jexl2.parser.SimpleNode;
+import org.apache.hadoop.util.hash.Hash;
+import org.apache.hadoop.util.hash.MurmurHash;
 
-
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.QueryTerm;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.ObjectHolder;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.EvaluationContext;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.FunctionResult;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.TermResult;
-import static org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryParser.LiteralResult;
+import org.calrissian.accumulorecipes.eventstore.iterator.support.JexlOperatorConstants;
+import org.calrissian.accumulorecipes.eventstore.iterator.support.TreeBuilder;
+import org.calrissian.accumulorecipes.eventstore.iterator.support.TreeNode;
 
 /**
- * Class that parses the criteria and returns a tree of TreeNode's. This class rolls up clauses that are below like conjunctions (AND, OR) for the purposes of
- * creating intersecting iterators.
+ * Parses the criteria for the purposes of extracting terms, operators, and literals for criteria optimization. This class does not necessarily understand how to
+ * parse all of the possible combinations of the JEXL syntax, but that does not mean that the criteria will not evaluate against the event objects. It means that
+ * the unsupported operators will not be parsed and included in the optimization step.
  *
  */
-public class TreeBuilder implements ParserVisitor {
+public class QueryParser implements ParserVisitor {
 
-  class RootNode extends JexlNode {
+  public static class QueryTerm {
+    private boolean negated = false;
+    private String operator = null;
+    private Object value = null;
 
-    public RootNode(int id) {
-      super(id);
+    public QueryTerm(boolean negated, String operator, Object value) {
+      super();
+      this.negated = negated;
+      this.operator = operator;
+      this.value = value;
     }
 
-    public RootNode(Parser p, int id) {
-      super(p, id);
+    public boolean isNegated() {
+      return negated;
+    }
+
+    public String getOperator() {
+      return operator;
+    }
+
+    public Object getValue() {
+      return value;
+    }
+
+    public void setNegated(boolean negated) {
+      this.negated = negated;
+    }
+
+    public void setOperator(String operator) {
+      this.operator = operator;
+    }
+
+    public void setValue(Object value) {
+      this.value = value;
+    }
+
+    public String toString() {
+      StringBuilder buf = new StringBuilder();
+      buf.append("negated: ").append(negated).append(", operator: ").append(operator).append(", value: ").append(value);
+      return buf.toString();
+    }
+  }
+
+  /**
+   * Holder object
+   */
+  static class ObjectHolder {
+    Object object;
+
+    public Object getObject() {
+      return object;
+    }
+
+    public void setObject(Object object) {
+      this.object = object;
+    }
+  }
+
+  static class FunctionResult {
+    private List<TermResult> terms = new ArrayList<TermResult>();
+
+    public List<TermResult> getTerms() {
+      return terms;
+    }
+  }
+
+  /**
+   * Holder object for a term (i.e. field name)
+   */
+  static class TermResult {
+    Object value;
+
+    public TermResult(Object value) {
+      this.value = value;
+    }
+  }
+
+  /**
+   * Holder object for a literal (integer, float, string, or null literal) value
+   */
+  static class LiteralResult {
+    Object value;
+
+    public LiteralResult(Object value) {
+      this.value = value;
+    }
+  }
+
+  /**
+   * Object used to store context information as the AST is being iterated over.
+   */
+  static class EvaluationContext {
+    boolean inOrContext = false;
+    boolean inNotContext = false;
+    boolean inAndContext = false;
+  }
+
+  /**
+   * Object to store information from previously parsed queries.
+   */
+  private static class CacheEntry {
+    private Set<String> negatedTerms = null;
+    private Set<String> andTerms = null;
+    private Set<String> orTerms = null;
+    private Set<Object> literals = null;
+    private Multimap<String,QueryTerm> terms = null;
+    private ASTJexlScript rootNode = null;
+    private TreeNode tree = null;
+
+    public CacheEntry(Set<String> negatedTerms, Set<String> andTerms, Set<String> orTerms, Set<Object> literals, Multimap<String,QueryTerm> terms,
+                      ASTJexlScript rootNode, TreeNode tree) {
+      super();
+      this.negatedTerms = negatedTerms;
+      this.andTerms = andTerms;
+      this.orTerms = orTerms;
+      this.literals = literals;
+      this.terms = terms;
+      this.rootNode = rootNode;
+      this.tree = tree;
+    }
+
+    public Set<String> getNegatedTerms() {
+      return negatedTerms;
+    }
+
+    public Set<String> getAndTerms() {
+      return andTerms;
+    }
+
+    public Set<String> getOrTerms() {
+      return orTerms;
+    }
+
+    public Set<Object> getLiterals() {
+      return literals;
+    }
+
+    public Multimap<String,QueryTerm> getTerms() {
+      return terms;
+    }
+
+    public ASTJexlScript getRootNode() {
+      return rootNode;
+    }
+
+    public TreeNode getTree() {
+      return tree;
+    }
+  }
+
+  private static final int SEED = 650567;
+
+  private static LRUMap cache = new LRUMap();
+
+  protected Set<String> negatedTerms = new HashSet<String>();
+
+  private Set<String> andTerms = new HashSet<String>();
+
+  private Set<String> orTerms = new HashSet<String>();
+
+  /**
+   * List of String, Integer, Float, etc literals that were passed in the criteria
+   */
+  private Set<Object> literals = new HashSet<Object>();
+
+  /**
+   * Map of terms (field names) to QueryTerm objects.
+   */
+  private Multimap<String,QueryTerm> terms = HashMultimap.create();
+
+  private ASTJexlScript rootNode = null;
+
+  private TreeNode tree = null;
+
+  private int hashVal = 0;
+
+  public QueryParser() {}
+
+  private void reset() {
+    this.negatedTerms.clear();
+    this.andTerms.clear();
+    this.orTerms.clear();
+    this.literals.clear();
+    this.terms = HashMultimap.create();
+  }
+
+  public void execute(String query) throws ParseException {
+    reset();
+    query = query.replaceAll("\\s+AND\\s+", " and ");
+    query = query.replaceAll("\\s+OR\\s+", " or ");
+    query = query.replaceAll("\\s+NOT\\s+", " not ");
+
+    // Check to see if its in the cache
+    Hash hash = MurmurHash.getInstance();
+    this.hashVal = hash.hash(query.getBytes(), SEED);
+    CacheEntry entry = null;
+    synchronized (cache) {
+      entry = (CacheEntry) cache.get(hashVal);
+    }
+    if (entry != null) {
+      this.negatedTerms = entry.getNegatedTerms();
+      this.andTerms = entry.getAndTerms();
+      this.orTerms = entry.getOrTerms();
+      this.literals = entry.getLiterals();
+      this.terms = entry.getTerms();
+      this.rootNode = entry.getRootNode();
+      this.tree = entry.getTree();
+    } else {
+      Parser p = new Parser(new StringReader(";"));
+      rootNode = p.parse(new StringReader(query), null);
+      rootNode.childrenAccept(this, null);
+      TreeBuilder builder = new TreeBuilder(rootNode);
+      tree = builder.getRootNode();
+      entry = new CacheEntry(this.negatedTerms, this.andTerms, this.orTerms, this.literals, this.terms, rootNode, tree);
+      synchronized (cache) {
+        cache.put(hashVal, entry);
+      }
     }
 
   }
 
-  private TreeNode rootNode = null;
-  private TreeNode currentNode = null;
-  private boolean currentlyInCheckChildren = false;
-
-  public TreeBuilder(String query) throws ParseException {
-    Parser p = new Parser(new StringReader(";"));
-    ASTJexlScript script = p.parse(new StringReader(query), null);
-    // Check to see if the child node is an AND or OR. If not, then
-    // there must be just a single value in the criteria expression
-    rootNode = new TreeNode();
-    rootNode.setType(RootNode.class);
-    currentNode = rootNode;
-    EvaluationContext ctx = new EvaluationContext();
-    script.childrenAccept(this, ctx);
+  /**
+   *
+   * @return this queries hash value
+   */
+  public int getHashValue() {
+    return this.hashVal;
   }
 
-  public TreeBuilder(ASTJexlScript script) {
-    // Check to see if the child node is an AND or OR. If not, then
-    // there must be just a single value in the criteria expression
-    rootNode = new TreeNode();
-    rootNode.setType(RootNode.class);
-    currentNode = rootNode;
-    EvaluationContext ctx = new EvaluationContext();
-    script.childrenAccept(this, ctx);
+  public TreeNode getIteratorTree() {
+    return this.tree;
   }
 
-  public TreeNode getRootNode() {
+  /**
+   *
+   * @return JEXL abstract syntax tree
+   */
+  public ASTJexlScript getAST() {
     return this.rootNode;
+  }
+
+  /**
+   *
+   * @return Set of field names to use in the optimizer for nots. As a general rule none of these terms should be used to find an event and should they should
+   *         be evaluated on each event after being found.
+   */
+  public Set<String> getNegatedTermsForOptimizer() {
+    return negatedTerms;
+  }
+
+  /**
+   *
+   * @return Set of field names to use in the optimizer for ands. As a general rule any one term of an and clause can be used to find associated events.
+   */
+  public Set<String> getAndTermsForOptimizer() {
+    return andTerms;
+  }
+
+  /**
+   *
+   * @return Set of field names to use in the optimizer for ors. As a general rule any terms that are part of an or clause need to be searched to find the
+   *         associated events.
+   */
+  public Set<String> getOrTermsForOptimizer() {
+    return orTerms;
+  }
+
+  /**
+   *
+   * @return String, Integer, and Float literals used in the criteria.
+   */
+  public Set<Object> getQueryLiterals() {
+    return literals;
+  }
+
+  /**
+   *
+   * @return Set of all identifiers (field names) in the criteria.
+   */
+  public Set<String> getQueryIdentifiers() {
+    return terms.keySet();
+  }
+
+  /**
+   *
+   * @return map of term (field name) to QueryTerm object
+   */
+  public Multimap<String,QueryTerm> getQueryTerms() {
+    return terms;
   }
 
   public Object visit(SimpleNode node, Object data) {
@@ -166,67 +418,6 @@ public class TreeBuilder implements ParserVisitor {
     return null;
   }
 
-  /**
-   * @param node
-   * @param failClass
-   * @return false if any of the nodes equals the fail class or contain a NOT in the subtree
-   */
-  private boolean nodeCheck(JexlNode node, Class<?> failClass) {
-    if (node.getClass().equals(failClass) || node.getClass().equals(ASTNotNode.class))
-      return false;
-    else {
-      for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-        if (!nodeCheck(node.jjtGetChild(i), failClass))
-          return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Checks to see if all of the child nodes are of the same type (AND/OR) and if so then aggregates all of the child terms. If not returns null.
-   *
-   * @param parent
-   * @param parent
-   * @return Map of field names to criteria terms or null
-   */
-  private Multimap<String,QueryTerm> checkChildren(JexlNode parent, EvaluationContext ctx) {
-    // If the current node is an AND, then make sure that there is no
-    // OR descendant node, and vice versa. If this is true, then we call
-    // roll up all of the descendent values.
-    this.currentlyInCheckChildren = true;
-    Multimap<String,QueryTerm> rolledUpTerms = null;
-    boolean result = false;
-    if (parent.getClass().equals(ASTOrNode.class)) {
-      for (int i = 0; i < parent.jjtGetNumChildren(); i++) {
-        result = nodeCheck(parent.jjtGetChild(i), ASTAndNode.class);
-        if (!result)
-          break;
-      }
-    } else {
-      for (int i = 0; i < parent.jjtGetNumChildren(); i++) {
-        result = nodeCheck(parent.jjtGetChild(i), ASTOrNode.class);
-        if (!result)
-          break;
-      }
-    }
-    if (result) {
-      // Set current node to a fake node and
-      // roll up the children from this node using the visitor pattern.
-      TreeNode rollupFakeNode = new TreeNode();
-      TreeNode previous = this.currentNode;
-      this.currentNode = rollupFakeNode;
-      // Run the visitor with the fake node.
-      parent.childrenAccept(this, ctx);
-      // Get the terms from the fake node
-      rolledUpTerms = this.currentNode.getTerms();
-      // Reset the current node pointer
-      this.currentNode = previous;
-    }
-    this.currentlyInCheckChildren = false;
-    return rolledUpTerms;
-  }
-
   public Object visit(ASTOrNode node, Object data) {
     boolean previouslyInOrContext = false;
     EvaluationContext ctx = null;
@@ -237,35 +428,9 @@ public class TreeBuilder implements ParserVisitor {
       ctx = new EvaluationContext();
     }
     ctx.inOrContext = true;
-    // Are we being called from the checkChildren method? If so, then we
-    // are rolling up terms. If not, then we need to call check children.
-    if (currentlyInCheckChildren) {
-      // Process both sides of this node.
-      node.jjtGetChild(0).jjtAccept(this, data);
-      node.jjtGetChild(1).jjtAccept(this, data);
-    } else {
-      // Create a new OR node under the current node.
-      TreeNode orNode = new TreeNode();
-      orNode.setType(ASTOrNode.class);
-      orNode.setParent(this.currentNode);
-      this.currentNode.getChildren().add(orNode);
-      Multimap<String,QueryTerm> terms = checkChildren(node, ctx);
-      if (terms == null) {
-        // Then there was no rollup, set the current node to the orNode
-        // and process the children. Be sure to set the current Node to
-        // the or node in between calls because we could be processing
-        // an AND node below and the current node will have been switched.
-        // Process both sides of this node.
-        currentNode = orNode;
-        node.jjtGetChild(0).jjtAccept(this, data);
-        currentNode = orNode;
-        node.jjtGetChild(1).jjtAccept(this, data);
-      } else {
-        // There was a rollup, don't process the children and set the terms
-        // on the or node.
-        orNode.setTerms(terms);
-      }
-    }
+    // Process both sides of this node.
+    node.jjtGetChild(0).jjtAccept(this, ctx);
+    node.jjtGetChild(1).jjtAccept(this, ctx);
     // reset the state
     if (null != data && !previouslyInOrContext)
       ctx.inOrContext = false;
@@ -282,35 +447,10 @@ public class TreeBuilder implements ParserVisitor {
       ctx = new EvaluationContext();
     }
     ctx.inAndContext = true;
-    // Are we being called from the checkChildren method? If so, then we
-    // are rolling up terms. If not, then we need to call check children.
-    if (currentlyInCheckChildren) {
-      // Process both sides of this node.
-      node.jjtGetChild(0).jjtAccept(this, data);
-      node.jjtGetChild(1).jjtAccept(this, data);
-    } else {
-      // Create a new And node under the current node.
-      TreeNode andNode = new TreeNode();
-      andNode.setType(ASTAndNode.class);
-      andNode.setParent(this.currentNode);
-      this.currentNode.getChildren().add(andNode);
-      Multimap<String,QueryTerm> terms = checkChildren(node, ctx);
-      if (terms == null) {
-        // Then there was no rollup, set the current node to the orNode
-        // and process the children. Be sure to set the current Node to
-        // the and node in between calls because we could be processing
-        // an OR node below and the current node will have been switched.
-        // Process both sides of this node.
-        currentNode = andNode;
-        node.jjtGetChild(0).jjtAccept(this, data);
-        currentNode = andNode;
-        node.jjtGetChild(1).jjtAccept(this, data);
-      } else {
-        // There was a rollup, don't process the children and set the terms
-        // on the or node.
-        andNode.setTerms(terms);
-      }
-    }
+    // Process both sides of this node.
+    node.jjtGetChild(0).jjtAccept(this, ctx);
+    node.jjtGetChild(1).jjtAccept(this, ctx);
+    // reset the state
     if (null != data && !previouslyInAndContext)
       ctx.inAndContext = false;
     return null;
@@ -347,7 +487,7 @@ public class TreeBuilder implements ParserVisitor {
         negated = !negated;
     }
     QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -369,8 +509,10 @@ public class TreeBuilder implements ParserVisitor {
       if (ctx.inNotContext)
         negated = !negated;
     }
+    if (negated)
+      negatedTerms.add(fieldName.toString());
     QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -393,7 +535,7 @@ public class TreeBuilder implements ParserVisitor {
         negated = !negated;
     }
     QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -416,7 +558,7 @@ public class TreeBuilder implements ParserVisitor {
         negated = !negated;
     }
     QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -439,7 +581,7 @@ public class TreeBuilder implements ParserVisitor {
         negated = !negated;
     }
     QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -462,7 +604,7 @@ public class TreeBuilder implements ParserVisitor {
         negated = !negated;
     }
     QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -485,7 +627,7 @@ public class TreeBuilder implements ParserVisitor {
         negated = !negated;
     }
     QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -507,8 +649,10 @@ public class TreeBuilder implements ParserVisitor {
       if (ctx.inNotContext)
         negated = !negated;
     }
-    QueryTerm term = new QueryTerm(negated, "!~", value.getObject());
-    this.currentNode.getTerms().put(fieldName.toString(), term);
+    if (negated)
+      negatedTerms.add(fieldName.toString());
+    QueryTerm term = new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), value.getObject());
+    terms.put(fieldName.toString(), term);
     return null;
   }
 
@@ -550,13 +694,6 @@ public class TreeBuilder implements ParserVisitor {
       ctx = new EvaluationContext();
     }
     ctx.inNotContext = true;
-    // Create a new node in the tree to represent the NOT
-    // Create a new And node under the current node.
-    TreeNode notNode = new TreeNode();
-    notNode.setType(ASTNotNode.class);
-    notNode.setParent(this.currentNode);
-    this.currentNode.getChildren().add(notNode);
-    this.currentNode = notNode;
     // Process both sides of this node.
     node.jjtGetChild(0).jjtAccept(this, ctx);
     // reset the state
@@ -566,10 +703,20 @@ public class TreeBuilder implements ParserVisitor {
   }
 
   public Object visit(ASTIdentifier node, Object data) {
+    if (data instanceof EvaluationContext) {
+      EvaluationContext ctx = (EvaluationContext) data;
+      if (ctx.inAndContext)
+        andTerms.add(node.image);
+      if (ctx.inNotContext)
+        negatedTerms.add(node.image);
+      if (ctx.inOrContext)
+        orTerms.add(node.image);
+    }
     return new TermResult(node.image);
   }
 
   public Object visit(ASTNullLiteral node, Object data) {
+    literals.add(node.image);
     return new LiteralResult(node.image);
   }
 
@@ -582,14 +729,17 @@ public class TreeBuilder implements ParserVisitor {
   }
 
   public Object visit(ASTIntegerLiteral node, Object data) {
+    literals.add(node.image);
     return new LiteralResult(node.image);
   }
 
   public Object visit(ASTFloatLiteral node, Object data) {
+    literals.add(node.image);
     return new LiteralResult(node.image);
   }
 
   public Object visit(ASTStringLiteral node, Object data) {
+    literals.add("'" + node.image + "'");
     return new LiteralResult("'" + node.image + "'");
   }
 
@@ -614,8 +764,21 @@ public class TreeBuilder implements ParserVisitor {
   }
 
   public Object visit(ASTFunctionNode node, Object data) {
+    // We need to check to see if we are in a NOT context. If so,
+    // then we need to reverse the negation.
+    boolean negated = true;
+    if (null != data && data instanceof EvaluationContext) {
+      EvaluationContext ctx = (EvaluationContext) data;
+      if (ctx.inNotContext)
+        negated = !negated;
+    }
+    // used to rebuild function call from the AST
+    StringBuilder buf = new StringBuilder();
+    String sep = "";
     // objectNode 0 is the prefix
+    buf.append(node.jjtGetChild(0).image).append(":");
     // objectNode 1 is the identifier , the others are parameters.
+    buf.append(node.jjtGetChild(1).image).append("(");
     // process the remaining arguments
     FunctionResult fr = new FunctionResult();
     int argc = node.jjtGetNumChildren() - 2;
@@ -625,8 +788,17 @@ public class TreeBuilder implements ParserVisitor {
       if (result instanceof TermResult) {
         TermResult tr = (TermResult) result;
         fr.getTerms().add(tr);
+        buf.append(sep).append(tr.value);
+        sep = ", ";
+      } else {
+        buf.append(sep).append(node.jjtGetChild(i + 2).image);
+        sep = ", ";
       }
     }
+    buf.append(")");
+    // Capture the entire function call for each function parameter
+    for (TermResult tr : fr.terms)
+      terms.put((String) tr.value, new QueryTerm(negated, JexlOperatorConstants.getOperator(node.getClass()), buf.toString()));
     return fr;
   }
 
@@ -650,7 +822,7 @@ public class TreeBuilder implements ParserVisitor {
     return node.jjtGetChild(0).jjtAccept(this, data);
   }
 
-  private void decodeResults(Object left, Object right, StringBuilder fieldName, ObjectHolder holder) {
+  protected void decodeResults(Object left, Object right, StringBuilder fieldName, ObjectHolder holder) {
     if (left instanceof TermResult) {
       TermResult tr = (TermResult) left;
       fieldName.append((String) tr.value);

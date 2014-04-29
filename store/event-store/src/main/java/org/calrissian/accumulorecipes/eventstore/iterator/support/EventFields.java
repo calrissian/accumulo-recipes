@@ -14,16 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
-
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.apache.accumulo.core.security.ColumnVisibility;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.support.EventFields.FieldValue;
+package org.calrissian.accumulorecipes.eventstore.iterator.support;
 
 import com.esotericsoftware.kryo.CustomSerialization;
 import com.esotericsoftware.kryo.Kryo;
@@ -34,6 +25,14 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.SetMultimap;
+import org.apache.accumulo.core.security.ColumnVisibility;
+import org.calrissian.accumulorecipes.eventstore.iterator.support.EventFields.FieldValue;
+
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Object used to hold the fields in an event. This is a multimap because fields can be repeated.
@@ -72,7 +71,7 @@ public class EventFields implements SetMultimap<String,FieldValue>, CustomSerial
     }
 
     public int size() {
-      return visibility.flatten().length + value.length;
+      return visibility.getExpression().length > 0 ? visibility.flatten().length + value.length : 0;
     }
 
     @Override
@@ -219,7 +218,8 @@ public class EventFields implements SetMultimap<String,FieldValue>, CustomSerial
       // Write the key
       StringSerializer.put(buf, entry.getKey());
       // Write the fields in the value
-      valueSerializer.writeObjectData(buf, entry.getValue().getVisibility().flatten());
+
+      valueSerializer.writeObjectData(buf, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : new byte[]{});
       valueSerializer.writeObjectData(buf, entry.getValue().getValue());
     }
   }

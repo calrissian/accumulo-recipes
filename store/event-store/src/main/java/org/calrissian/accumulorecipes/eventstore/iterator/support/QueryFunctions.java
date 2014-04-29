@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query.support;
+package org.calrissian.accumulorecipes.eventstore.iterator.support;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;

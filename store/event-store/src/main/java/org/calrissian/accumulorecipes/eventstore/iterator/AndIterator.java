@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator;
 
 import java.io.IOException;
 import java.util.Collection;

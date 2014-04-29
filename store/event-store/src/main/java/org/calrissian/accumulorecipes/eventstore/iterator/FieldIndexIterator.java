@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator.query;
+package org.calrissian.accumulorecipes.eventstore.iterator;
 
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -31,8 +31,8 @@ import org.apache.commons.jexl2.parser.ParserTreeConstants;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.support.FieldIndexKeyParser;
-import org.calrissian.accumulorecipes.eventstore.iterator.query.support.QueryFunctions;
+import org.calrissian.accumulorecipes.eventstore.iterator.support.FieldIndexKeyParser;
+import org.calrissian.accumulorecipes.eventstore.iterator.support.QueryFunctions;
 
 import java.io.IOException;
 import java.util.ArrayList;

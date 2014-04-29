@@ -18,7 +18,11 @@ package org.calrissian.accumulorecipes.eventstore.impl;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
@@ -26,9 +30,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.UUID;
+import java.util.*;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
@@ -43,7 +45,9 @@ public class AccumuloEventStoreTest {
 
     @Test
     public void testGet() throws Exception {
-        AccumuloEventStore store = new AccumuloEventStore(getConnector());
+
+        Connector connector = getConnector();
+        AccumuloEventStore store = new AccumuloEventStore(connector);
 
         StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
         event.put(new Tuple("key1", "val1", ""));
@@ -54,6 +58,11 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key2", "val2", ""));
 
         store.save(asList(event, event2));
+
+        Scanner scanner = connector.createScanner("eventStore_index", new Authorizations());
+        for(Map.Entry<Key,Value> entry : scanner) {
+          System.out.println(entry);
+        }
 
         StoreEntry actualEvent = store.get(event.getId(), new Auths());
 
@@ -119,20 +128,18 @@ public class AccumuloEventStoreTest {
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
-
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
-
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
     }
 

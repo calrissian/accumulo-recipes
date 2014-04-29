@@ -16,15 +16,20 @@
 package org.calrissian.accumulorecipes.eventstore.support;
 
 
+import org.apache.accumulo.core.data.Value;
+
 public class Constants {
 
     public static final int DEFAULT_PARTITION_SIZE = 7;
 
-    public static final String SHARD_PREFIX_B = "b";    // backwards index (key/value:uuid)
-    public static final String SHARD_PREFIX_F = "f";    // forwards index (uuid:key/value)
-    public static final String SHARD_PREFIX_V = "v";    // value index    (value:key/uuid)
+    public static final String PREFIX_FI = "fi";         // field index index
+    public static final String INDEX_V = "v";           // key index
+    public static final String INDEX_K = "k";           // value index prefix
 
     public static final String DELIM = "\u0000";
+    public static final String INNER_DELIM = "\u0001";
     public static final String DELIM_END = "\uffff";
+
+    public static final Value EMPTY_VALUE = new Value("".getBytes());
 
 }

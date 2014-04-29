@@ -17,7 +17,6 @@ package org.calrissian.accumulorecipes.eventstore.support.criteria;
 
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.MultipleEqualsValidator;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoOrNotEqualsValidator;
@@ -40,21 +39,18 @@ import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLe
 /**
  * Visit criteria to validate and transform to perform the criteria against the swift event service.
  */
-public class QueryResultsVisitor implements NodeVisitor {
+public class QueryOptimizer implements NodeVisitor {
 
     protected Date start, end;
     protected Authorizations auths;
     protected CloseableIterable<StoreEntry> iterable = null;
-    private QueryNodeHelper queryHelper;
 
-    public QueryResultsVisitor(Node query, QueryNodeHelper queryHelper, Date start, Date end, Authorizations auths) {
+    public QueryOptimizer(Node query, Date start, Date end, Authorizations auths) {
         checkNotNull(query);
-        checkNotNull(queryHelper);
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
 
-        this.queryHelper = queryHelper;
         this.start = start;
         this.end = end;
         this.auths = auths;
@@ -80,73 +76,13 @@ public class QueryResultsVisitor implements NodeVisitor {
     public void begin(ParentNode node) {
     }
 
-    @Override
-    public void end(ParentNode node) {
-        try {
-            if (parentContainsOnlyLeaves(node)) {
-                Node n = node;
-                //trim and(eq) to eq
-                if (node instanceof AndNode && node.children() != null && node.children().size() == 1) {
-                    Node child = node.children().get(0);
-                    if(isLeaf(child)) {
-                        n = child;
-                    }
-                }
-                populateIterable(n);
-            }
-        } catch (RuntimeException re) {
-            throw re;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+  @Override
+  public void end(ParentNode parentNode) {
 
-    protected void populateIterable(Node node) throws IOException {
-        if (node instanceof AndNode) {
-            CloseableIterable<StoreEntry> query = andResults((AndNode) node);
-            if (iterable != null) {
-                //assume OR
-                iterable = chain(newArrayList(query, iterable));
+  }
 
-            } else {
-                iterable = query;
-            }
-        } else if (node instanceof OrNode) {
-            for (Node child : node.children()) {
-                populateIterable(child);
-            }
-        } else if (node instanceof Leaf) {
-            CloseableIterable<StoreEntry> query = leafResults((Leaf) node);
-            if (iterable != null) {
-                //assume OR
-                iterable = chain(newArrayList(query, iterable));
-            } else {
-                iterable = query;
-            }
-        }
-    }
 
-    @Override
+  @Override
     public void visit(Leaf node) {
-    }
-
-    public CloseableIterable<StoreEntry> getResults() {
-        return iterable;
-    }
-
-    protected CloseableIterable<StoreEntry> andResults(AndNode andNode) throws IOException {
-        try {
-            return queryHelper.queryAndNode(start, end, andNode, auths);
-        } catch (Exception e) {
-            throw new IOException(e);
-        }
-    }
-
-    protected CloseableIterable<StoreEntry> leafResults(Leaf node) throws IOException {
-        try {
-            return queryHelper.querySingleLeaf(start, end, node, auths);
-        } catch (Exception e) {
-            throw new IOException(e);
-        }
     }
 }
