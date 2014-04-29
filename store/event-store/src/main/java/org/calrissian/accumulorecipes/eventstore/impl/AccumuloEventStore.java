@@ -25,6 +25,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
+import org.apache.tools.ant.util.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
@@ -33,10 +34,13 @@ import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
+import org.calrissian.accumulorecipes.eventstore.model.EventIndex;
 import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
+import org.calrissian.mango.accumulo.Scanners;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
@@ -283,13 +287,20 @@ public class AccumuloEventStore implements EventStore {
      * {@inheritDoc}
      */
     @Override
-    public StoreEntry get(String uuid, Auths auths) {
-        checkNotNull(uuid);
+    public CloseableIterable<StoreEntry> get(Collection<EventIndex> uuids, Auths auths) {
+        checkNotNull(uuids);
         checkNotNull(auths);
         try {
 
-            Scanner scanner = connector.createScanner(indexTable, auths.getAuths());
-            scanner.setRange(new Range(INDEX_V + "_string" + INNER_DELIM + uuid));
+            BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+
+            Collection<Range> ranges = new LinkedList<Range>();
+            for(EventIndex uuid : uuids) {
+              if(uuid.getTimestamp() == null)
+               ranges.add(new Range(INDEX_V + "_string" + INNER_DELIM + uuid.getUuid()));
+            }
+
+            scanner.setRanges(ranges);
             scanner.fetchColumnFamily(new Text("@id"));
 
             Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
@@ -297,24 +308,29 @@ public class AccumuloEventStore implements EventStore {
             /**
              * Should just be one index for the shard containing the uuid
              */
-            if(itr.hasNext()) {
-
+            BatchScanner eventScanner = connector.createBatchScanner(shardTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+            Collection<Range> eventRanges = new LinkedList<Range>();
+            while(itr.hasNext()) {
                 Map.Entry<Key,Value> entry = itr.next();
                 String shardId = entry.getKey().getColumnQualifier().toString();
-
-                Scanner eventScanner = connector.createScanner(shardTable, auths.getAuths());
-                eventScanner.setRange(new Range(shardId));
-                eventScanner.fetchColumnFamily(new Text(uuid));
-
-                IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-                eventScanner.addScanIterator(iteratorSetting);
-
-                itr = eventScanner.iterator();
-                if(itr.hasNext())
-                  return wholeColFXForm.apply(itr.next());
+                String[] rowParts = org.apache.commons.lang.StringUtils.splitPreserveAllTokens(entry.getKey().getRow().toString(), INNER_DELIM);
+                eventRanges.add(Range.prefix(shardId, rowParts[1]));
             }
 
-            return null;
+            scanner.close();
+            for(EventIndex curIndex : uuids) {
+              if(curIndex.getTimestamp() != null) {
+                String shardId = shardBuilder.buildShard(curIndex.getTimestamp(), curIndex.getUuid());
+                ranges.add(Range.prefix(shardId, curIndex.getUuid()));
+              }
+            }
+
+            eventScanner.setRanges(eventRanges);
+
+            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+            eventScanner.addScanIterator(iteratorSetting);
+
+            return transform(Scanners.closeableIterable(eventScanner), wholeColFXForm);
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {

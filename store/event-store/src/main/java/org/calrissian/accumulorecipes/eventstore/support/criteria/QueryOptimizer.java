@@ -43,7 +43,6 @@ public class QueryOptimizer implements NodeVisitor {
 
     protected Date start, end;
     protected Authorizations auths;
-    protected CloseableIterable<StoreEntry> iterable = null;
 
     public QueryOptimizer(Node query, Date start, Date end, Authorizations auths) {
         checkNotNull(query);

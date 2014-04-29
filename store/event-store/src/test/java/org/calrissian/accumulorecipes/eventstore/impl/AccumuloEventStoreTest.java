@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -25,6 +26,8 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.eventstore.model.EventIndex;
+import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
@@ -64,9 +67,10 @@ public class AccumuloEventStoreTest {
           System.out.println(entry);
         }
 
-        StoreEntry actualEvent = store.get(event.getId(), new Auths());
+        CloseableIterable<StoreEntry> actualEvent = store.get(Collections.singletonList(new EventIndex(event.getId())), new Auths());
 
-        assertEquals(actualEvent, event);
+        assertEquals(1, Iterables.size(actualEvent));
+        assertEquals(actualEvent.iterator().next(), event);
     }
 
     @Test
