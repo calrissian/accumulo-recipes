@@ -227,10 +227,10 @@ limitations under the License.
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:git@github.com:calrissian/mango.git</connection>
-    <developerConnection>scm:git:git@github.com:calrissian/mango.git</developerConnection>
+    <connection>scm:git:git@github.com:calrissian/accumulo-recipes.git</connection>
+    <developerConnection>scm:git:git@github.com:calrissian/accumulo-recipes.git</developerConnection>
     <tag>HEAD</tag>
-    <url>git@github.com:calrissian/mango.git</url>
+    <url>git@github.com:calrissian/accumulo-recipes.git</url>
   </scm>
   <distributionManagement>
     <repository>
