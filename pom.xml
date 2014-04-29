@@ -21,7 +21,7 @@ limitations under the License.
   <version>0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Accumulo Recipes - Parent</name>
-  <description>Parent pom for the Accumulo recipes project</description>
+  <description>The Accumulo Recipes project aims to provide reusable services for architectures utilizing Apache Accumulo.</description>
   <modules>
     <module>commons</module>
     <module>examples</module>
@@ -34,7 +34,7 @@ limitations under the License.
     <jackson.version>1.9.2</jackson.version>
     <joda.time.version>2.2</joda.time.version>
     <junit.version>4.11</junit.version>
-    <mango.version>1.0.3-SNAPSHOT</mango.version>
+    <mango.version>1.1.0</mango.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <zookeeper.version>3.3.5</zookeeper.version>
   </properties>
@@ -179,6 +179,36 @@ limitations under the License.
       </plugin>
     </plugins>
   </build>
+  <organization>
+    <name>Calrissian</name>
+    <url>http://www.calrissian.org</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:git:git@github.com:calrissian/mango.git</connection>
+    <developerConnection>scm:git:git@github.com:calrissian/mango.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>git@github.com:calrissian/mango.git</url>
+  </scm>
+  <distributionManagement>
+    <repository>
+      <id>sonatype-nexus-staging</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+      <layout>default</layout>
+    </repository>
+    <snapshotRepository>
+      <id>sonatype-nexus-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <layout>default</layout>
+    </snapshotRepository>
+  </distributionManagement>
 
   <profiles>
     <profile>
