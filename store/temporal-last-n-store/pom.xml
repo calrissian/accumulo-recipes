@@ -19,7 +19,7 @@ limitations under the License.
   <parent>
     <groupId>org.calrissian.accumulorecipes</groupId>
     <artifactId>store</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
   </parent>
   <artifactId>temporal-lastn-store</artifactId>
   <packaging>jar</packaging>
@@ -34,11 +34,11 @@ limitations under the License.
     </dependency>
     <!-- Mango -->
     <dependency>
-      <groupId>org.calrissian</groupId>
+      <groupId>org.calrissian.mango</groupId>
       <artifactId>mango-accumulo</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.calrissian</groupId>
+      <groupId>org.calrissian.mango</groupId>
       <artifactId>mango-json</artifactId>
     </dependency>
     <!-- Hadoop / Accumulo -->

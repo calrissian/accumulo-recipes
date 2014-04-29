@@ -18,7 +18,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.calrissian.accumulorecipes</groupId>
   <artifactId>accumulorecipes-parent</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Accumulo Recipes - Parent</name>
   <description>The Accumulo Recipes project aims to provide reusable services for architectures utilizing Apache Accumulo.</description>
@@ -42,17 +42,17 @@ limitations under the License.
     <dependencies>
       <!-- Mango -->
       <dependency>
-        <groupId>org.calrissian</groupId>
+        <groupId>org.calrissian.mango</groupId>
         <artifactId>mango-core</artifactId>
         <version>${mango.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.calrissian</groupId>
+        <groupId>org.calrissian.mango</groupId>
         <artifactId>mango-accumulo</artifactId>
         <version>${mango.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.calrissian</groupId>
+        <groupId>org.calrissian.mango</groupId>
         <artifactId>mango-json</artifactId>
         <version>${mango.version}</version>
       </dependency>
