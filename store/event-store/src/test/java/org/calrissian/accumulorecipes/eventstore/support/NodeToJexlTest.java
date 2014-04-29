@@ -10,7 +10,7 @@ public class NodeToJexlTest {
   @Test
   public void testSimpleEquals() {
 
-    System.out.println(nodeToJexl.transform(new QueryBuilder().eq("key1", true).build()));
+    System.out.println(nodeToJexl.transform(new QueryBuilder().and().eq("hello", "goodbye").eq("key1", true).endStatement().build()));
 
   }
 }

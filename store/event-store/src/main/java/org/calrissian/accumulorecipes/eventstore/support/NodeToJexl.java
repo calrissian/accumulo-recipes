@@ -22,22 +22,28 @@ public class NodeToJexl {
 
   private String processParent(Node node) throws Exception {
 
-    StringBuilder builder = new StringBuilder();
-    for(Node child : node.children()) {
+    StringBuilder builder = new StringBuilder("(");
+    for(int i = 0; i < node.children().size(); i++) {
 
+      Node child = node.children().get(i);
       String newJexl;
       if(child instanceof ParentNode)
         newJexl = processParent(child);
       else
         newJexl = processChild(child);
 
-      if(node instanceof AndNode)
-        builder.append(" and ").append(newJexl);
-      else if(node instanceof OrNode)
-        builder.append(" or ").append(newJexl);
+      builder.append(newJexl);
+
+      if(i < node.children().size() - 1) {
+        if(node instanceof AndNode)
+          builder.append(" and ");
+        else if(node instanceof OrNode)
+          builder.append(" or ");
+      }
     }
 
-    return builder.toString();
+    return builder.append(")").toString();
+
   }
 
   private String processChild(Node node) throws Exception {
