@@ -42,17 +42,17 @@ limitations under the License.
     <dependencies>
       <!-- Mango -->
       <dependency>
-        <groupId>org.calrissian.mango</groupId>
+        <groupId>org.calrissian</groupId>
         <artifactId>mango-core</artifactId>
         <version>${mango.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.calrissian.mango</groupId>
+        <groupId>org.calrissian</groupId>
         <artifactId>mango-accumulo</artifactId>
         <version>${mango.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.calrissian.mango</groupId>
+        <groupId>org.calrissian</groupId>
         <artifactId>mango-json</artifactId>
         <version>${mango.version}</version>
       </dependency>
