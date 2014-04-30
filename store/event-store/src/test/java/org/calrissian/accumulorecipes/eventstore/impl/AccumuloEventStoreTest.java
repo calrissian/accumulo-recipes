@@ -15,24 +15,32 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
+import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.UUID;
+import java.util.*;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class AccumuloEventStoreTest {
 
@@ -43,7 +51,9 @@ public class AccumuloEventStoreTest {
 
     @Test
     public void testGet() throws Exception {
-        AccumuloEventStore store = new AccumuloEventStore(getConnector());
+
+        Connector connector = getConnector();
+        AccumuloEventStore store = new AccumuloEventStore(connector);
 
         StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
         event.put(new Tuple("key1", "val1", ""));
@@ -55,9 +65,68 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        StoreEntry actualEvent = store.get(event.getId(), new Auths());
+        Scanner scanner = connector.createScanner("eventStore_index", new Authorizations());
+        for(Map.Entry<Key,Value> entry : scanner) {
+          System.out.println(entry);
+        }
 
-        assertEquals(actualEvent, event);
+        CloseableIterable<StoreEntry> actualEvent = store.get(singletonList(new EventIndex(event.getId())), null, new Auths());
+
+        assertEquals(1, Iterables.size(actualEvent));
+        assertEquals(actualEvent.iterator().next(), event);
+    }
+
+    @Test
+    public void testGet_withSelection() throws Exception {
+
+      Connector connector = getConnector();
+      AccumuloEventStore store = new AccumuloEventStore(connector);
+
+      StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event.put(new Tuple("key1", "val1", ""));
+      event.put(new Tuple("key2", "val2", ""));
+
+      StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event2.put(new Tuple("key1", "val1", ""));
+      event2.put(new Tuple("key2", "val2", ""));
+
+      store.save(asList(event, event2));
+
+      CloseableIterable<StoreEntry> actualEvent = store.get(singletonList(new EventIndex(event.getId())),
+              Collections.singleton("key1"), new Auths());
+
+      assertEquals(1, Iterables.size(actualEvent));
+      assertNull(actualEvent.iterator().next().get("key2"));
+      assertNotNull(actualEvent.iterator().next().get("key1"));
+    }
+
+
+    @Test
+    public void testQuery_withSelection() throws Exception {
+      AccumuloEventStore store = new AccumuloEventStore(getConnector());
+
+      StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event.put(new Tuple("key1", "val1", ""));
+      event.put(new Tuple("key2", "val2", ""));
+
+      StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event2.put(new Tuple("key1", "val1", ""));
+      event2.put(new Tuple("key2", "val2", ""));
+
+      store.save(asList(event, event2));
+
+      Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
+
+      Iterable<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
+              new Date(), query, Collections.singleton("key1"), new Auths());
+
+      int count = 0;
+      for(StoreEntry entry : itr) {
+        count++;
+        assertNull(entry.get("key2"));
+        assertNotNull(entry.get("key1"));
+      }
+      assertEquals(2, count);
     }
 
     @Test
@@ -77,24 +146,24 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
 
         Iterator<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
-                new Date(), query, new Auths()).iterator();
+                new Date(), query, null, new Auths()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event.getTuples()));
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event2.getTuples()));
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(actualEvent, event);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event.getTuples()));
         }
 
         else {
-            assertEquals(actualEvent, event2);
+            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(event2.getTuples()));
         }
     }
 
@@ -115,24 +184,22 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").endStatement().build();
 
         Iterator<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
-                new Date(), query, new Auths()).iterator();
+                new Date(), query, null, new Auths()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
-
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
-
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
     }
 
@@ -153,24 +220,24 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
         Iterator<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
-                new Date(), query, new Auths()).iterator();
+                new Date(), query, null, new Auths()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
-            assertEquals(event, actualEvent);
+            assertEquals(new HashSet(event.getTuples()), new HashSet(actualEvent.getTuples()));
         }
 
         else {
-            assertEquals(event2, actualEvent);
+            assertEquals(new HashSet(event2.getTuples()), new HashSet(actualEvent.getTuples()));
         }
     }
 
@@ -205,7 +272,7 @@ public class AccumuloEventStoreTest {
 
         Iterator<StoreEntry> itr = store.query(
                 new Date(currentTimeMillis() - 5000), new Date(), query,
-                new Auths()).iterator();
+                null, new Auths()).iterator();
 
         int x = 0;
 
@@ -216,22 +283,6 @@ public class AccumuloEventStoreTest {
 
         }
         assertEquals(1, x);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testQuery_MultEqInAnd() throws Exception {
-        AccumuloEventStore store = new AccumuloEventStore(getConnector());
-
-        Node query = new QueryBuilder()
-                .and()
-                .eq("id", "1")
-                .eq("id", "2")
-                .endStatement().build();
-
-        store.query(
-                new Date(currentTimeMillis() - 5000), new Date(), query,
-                new Auths()).iterator();
-
     }
 
 }

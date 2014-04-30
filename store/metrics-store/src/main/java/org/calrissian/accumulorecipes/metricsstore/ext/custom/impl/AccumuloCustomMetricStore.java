@@ -43,9 +43,9 @@ import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
- * This implementation of the metric service allows the caller to specify a custom function during query time.  No
+ * This implementation of the metric service allows the caller to specify a custom function during criteria time.  No
  * table configured iterators are setup for this table, as this might skew the results for any custom function.
- * This means that during a compaction, the table is not able to consolidate data possibly increasing the query times for
+ * This means that during a compaction, the table is not able to consolidate data possibly increasing the criteria times for
  * metric data.
  *
  *
@@ -73,7 +73,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
      */
     @Override
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        //do nothing as scan time iterators are attached at query time for a specific custom metric.
+        //do nothing as scan time iterators are attached at criteria time for a specific custom metric.
         //this prevents the values in the table from getting squashed, so that different types of
         //metric calculations can be run at any time.
     }

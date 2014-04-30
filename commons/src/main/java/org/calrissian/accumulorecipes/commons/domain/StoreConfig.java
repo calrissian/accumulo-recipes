@@ -51,7 +51,7 @@ public class StoreConfig {
     }
 
     /**
-     * Allows the user to set the query and write options for the store.
+     * Allows the user to set the criteria and write options for the store.
      *
      * @param maxQueryThreads
      * @param maxMemory size in bytes of the maximum memory to batch before writing

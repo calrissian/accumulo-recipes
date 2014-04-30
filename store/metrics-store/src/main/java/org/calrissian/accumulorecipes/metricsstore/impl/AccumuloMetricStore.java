@@ -53,7 +53,7 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
- * but are available immediately to query.
+ * but are available immediately to criteria.
  *
  * Format of the table:
  * Rowid                CF                  CQ                  Value

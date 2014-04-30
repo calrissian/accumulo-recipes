@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 
 /**
- * Custom function for defining the aggregation behavior of metrics for a query.
+ * Custom function for defining the aggregation behavior of metrics for a criteria.
  * @param <T>
  */
 public interface MetricFunction<T> {

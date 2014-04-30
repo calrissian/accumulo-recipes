@@ -4,7 +4,7 @@ package org.calrissian.accumulorecipes.eventstore.cli;
 import org.apache.accumulo.core.client.*;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.eventstore.support.Constants;
-import org.calrissian.accumulorecipes.eventstore.support.ShardBuilder;
+import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.joda.time.DateTime;
 
 import java.util.SortedSet;
@@ -30,7 +30,7 @@ public class ShardSplitter {
         Instance accInst = new ZooKeeperInstance(instance, zookeepers);
         Connector connector = accInst.getConnector(username, password.getBytes());
 
-        SortedSet<Text> shards = new ShardBuilder(Constants.DEFAULT_PARTITION_SIZE)
+        SortedSet<Text> shards = new HourlyShardBuilder(Constants.DEFAULT_PARTITION_SIZE)
                 .buildShardsInRange(start.toDate(), stop.toDate());
 
         connector.tableOperations().addSplits(tableName, shards);

@@ -1,23 +1,23 @@
 package org.calrissian.accumulorecipes.eventstore.support;
 
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.DEFAULT_PARTITION_SIZE;
 import static org.junit.Assert.assertEquals;
 
-public class ShardTest {
+public class ShardBuilderTest {
 
-    ShardBuilder shardBuilder;
+    HourlyShardBuilder shardBuilder;
 
     @Before
     public void setUp() {
-        this.shardBuilder = new ShardBuilder(DEFAULT_PARTITION_SIZE);
+        this.shardBuilder = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
     }
 
     @Test

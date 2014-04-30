@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.eventstore.support.query.validators;
+package org.calrissian.accumulorecipes.eventstore.support.criteria.validators;
 
 
 import org.calrissian.mango.criteria.domain.*;

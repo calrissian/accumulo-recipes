@@ -15,7 +15,8 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.esotericsoftware.kryo.Kryo;
+import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -26,24 +27,36 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
+import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
+import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
+import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
-import org.calrissian.accumulorecipes.eventstore.iterator.EventIterator;
-import org.calrissian.accumulorecipes.eventstore.support.QueryNodeHelper;
-import org.calrissian.accumulorecipes.eventstore.support.ShardBuilder;
-import org.calrissian.accumulorecipes.eventstore.support.query.QueryResultsVisitor;
+import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
+import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
+import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
+import org.calrissian.mango.types.exception.TypeDecodingException;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Sets.union;
+import static org.apache.commons.lang.StringUtils.join;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
  * The Accumulo implementation of the EventStore which uses deterministic sharding to distribute ingest/queries over
@@ -51,22 +64,28 @@ import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_
  */
 public class AccumuloEventStore implements EventStore {
 
-    private static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
-    private static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
-    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+    public static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
+    public static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
 
-    private static final ShardBuilder shard = new ShardBuilder(DEFAULT_PARTITION_SIZE);
+    public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
+    public static final ShardBuilder DEFAULT_SHARD_BUILDER = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
+
+    private ShardBuilder shardBuilder;
     private final  Connector connector;
     private final String indexTable;
     private final String shardTable;
+    private final StoreConfig config;
     private final MultiTableBatchWriter multiTableWriter;
 
-    private final TypeRegistry<String> typeRegistry;
-    private final QueryNodeHelper queryHelper;
+    private static final Kryo kryo = new Kryo();
+
+    private final NodeToJexl nodeToJexl;
+
+    private static TypeRegistry<String> typeRegistry;
 
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, new StoreConfig());
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
     }
 
     public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
@@ -78,18 +97,24 @@ public class AccumuloEventStore implements EventStore {
         this.connector = connector;
         this.indexTable = indexTable;
         this.shardTable = shardTable;
-        this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
+        this.typeRegistry = ACCUMULO_TYPES;
+        this.config = config;
+        this.shardBuilder = DEFAULT_SHARD_BUILDER;
 
-        if(!connector.tableOperations().exists(this.indexTable)) {
+        this.nodeToJexl = new NodeToJexl();
+
+
+
+      if(!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
             configureIndexTable(connector, this.indexTable);
         }
         if(!connector.tableOperations().exists(this.shardTable)) {
             connector.tableOperations().create(this.shardTable);
-            configureShardTable(connector, this.indexTable);
+            configureShardTable(connector, this.shardTable);
         }
 
-        this.queryHelper = new QueryNodeHelper(connector, this.shardTable, config.getMaxQueryThreads(), shard, typeRegistry);
+        initializeKryo(kryo);
         this.multiTableWriter = connector.createMultiTableBatchWriter(config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
@@ -105,7 +130,7 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
-     * Utility method to update the correct iterators to the shard table.
+     * Utility method to update the correct iterators to the shardBuilder table.
      * @param connector
      * @throws AccumuloSecurityException
      * @throws AccumuloException
@@ -124,6 +149,15 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
+     * A new shard scheme can be plugged in fairly easily to shard to the day, for instance, instead of the hour.
+     * The number of partitions can also be changed and the event store provisioned with the new builder.
+     * @param shardBuilder
+     */
+    public void setShardBuilder(ShardBuilder shardBuilder) {
+      this.shardBuilder = shardBuilder;
+    }
+
+  /**
      * Events get save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
      * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
      * @param events
@@ -138,42 +172,65 @@ public class AccumuloEventStore implements EventStore {
                 //If there are no tuples then don't write anything to the data store.
                 if(event.getTuples() != null && !event.getTuples().isEmpty()) {
 
-                    String shardId = shard.buildShard(event.getTimestamp(), event.getId());
+                    String shardId = shardBuilder.buildShard(event.getTimestamp(), event.getId());
 
-                    Mutation indexMutation = new Mutation(event.getId());
-                    indexMutation.put(new Text(shardId), new Text(""), event.getTimestamp(), new Value("".getBytes()));
+                    // key
+                    Set<String> indexCache = new HashSet<String>();
 
                     Mutation shardMutation = new Mutation(shardId);
 
                     for(Tuple tuple : event.getTuples()) {
 
+                        String aliasValue = typeRegistry.getAlias(tuple.getValue()) + INNER_DELIM +
+                                typeRegistry.encode(tuple.getValue());
+
                         // forward mutation
-                        shardMutation.put(new Text(SHARD_PREFIX_F + DELIM + event.getId()),
-                                new Text(tuple.getKey() + DELIM + typeRegistry.getAlias(tuple.getValue()) + DELIM +
-                                        typeRegistry.encode(tuple.getValue())),
+                        shardMutation.put(new Text(event.getId()),
+                                new Text(tuple.getKey() + DELIM + aliasValue),
                                 new ColumnVisibility(tuple.getVisibility()),
                                 event.getTimestamp(),
-                                new Value("".getBytes()));
+                                EMPTY_VALUE);
 
                         // reverse mutation
-                        shardMutation.put(new Text(SHARD_PREFIX_B + DELIM + tuple.getKey() + DELIM +
-                                typeRegistry.getAlias(tuple.getValue()) + DELIM +
-                                typeRegistry.encode(tuple.getValue())),
-                                new Text(event.getId()),
+                        shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
+                                new Text(aliasValue + DELIM + event.getId()),
                                 new ColumnVisibility(tuple.getVisibility()),
                                 event.getTimestamp(),
-                                new Value("".getBytes()));  // forward mutation
+                                EMPTY_VALUE);  // forward mutation
 
-                        // value mutation
-                        shardMutation.put(new Text(SHARD_PREFIX_V + DELIM + typeRegistry.getAlias(tuple.getValue()) +
-                                DELIM + typeRegistry.encode(tuple.getValue())),
-                                new Text(tuple.getKey() + DELIM + event.getId()),
-                                new ColumnVisibility(tuple.getVisibility()),
-                                event.getTimestamp(),
-                                new Value("".getBytes()));  // forward mutation
+                        String[] strings = new String[] {
+                          shardId,
+                          tuple.getKey(),
+                          typeRegistry.getAlias(tuple.getValue()),
+                          typeRegistry.encode(tuple.getValue()),
+                          tuple.getVisibility()
+                        };
+
+                        indexCache.add(join(strings, INNER_DELIM));
                     }
 
-                    multiTableWriter.getBatchWriter(indexTable).addMutation(indexMutation);
+                    String[] idIndex = new String[] {
+                      shardBuilder.buildShard(event.getTimestamp(), event.getId()),
+                      "@id",
+                      "string",
+                      event.getId(),
+                      ""
+                    };
+
+                    indexCache.add(join(idIndex, INNER_DELIM));
+
+                    for(String indexCacheKey : indexCache) {
+
+                      String[] indexParts = splitPreserveAllTokens(indexCacheKey, INNER_DELIM);
+                      Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
+                      Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + INNER_DELIM + indexParts[3]);
+
+                      keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), event.getTimestamp(), EMPTY_VALUE);
+                      valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), event.getTimestamp(), EMPTY_VALUE);
+                      multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
+                      multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
+                    }
+
                     multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
                 }
             }
@@ -187,55 +244,163 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
-     * {@inheritDoc}
+     * Shard ids for which to scan are generated from the given start and end time. The given query specifies
+     * which events to return. It is propagated all the way down to the iterators so that the query is run in parallel
+     * on each tablet that needs to be scanned.
      */
     @Override
-    public CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Auths auths) {
-        return new QueryResultsVisitor(node, queryHelper, start, end, auths.getAuths()).getResults();
+    public CloseableIterable<StoreEntry> query(Date start, Date end, Node query, final Set<String> selectFields, Auths auths) {
+
+      QueryOptimizer optimizer = new QueryOptimizer(query);
+
+      String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+      Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
+
+      try {
+        BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
+
+        Collection<Range> ranges = new HashSet<Range>();
+        for(Text shard : shards)
+          ranges.add(new Range(shard));
+
+        scanner.setRanges(ranges);
+
+        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+        setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
+        setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+
+        scanner.addScanIterator(setting);
+
+        if(selectFields != null && selectFields.size() > 0) {
+          setting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+          EventFieldsFilteringIterator.setSelectFields(setting, union(selectFields, optimizer.getKeysInQuery()));
+          scanner.addScanIterator(setting);
+        }
+
+        return transform(closeableIterable(scanner), new QueryXform(selectFields));
+
+      } catch (TableNotFoundException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     /**
-     * {@inheritDoc}
+     * This method will batch get a bunch of events by uuid (and optionally timestamp). If another store is used to
+     * index into events in this store in a specially designed way (i.e. getting the last-n events, etc...) then
+     * the most optimal way to store the index would be the UUID and the timestamp. However, if all that is known
+     * about an event is the uuid, this method will do the extra fetch of the timestamp from the index table.
      */
     @Override
-    public StoreEntry get(String uuid, Auths auths) {
-        checkNotNull(uuid);
+    public CloseableIterable<StoreEntry> get(Collection<EventIndex> uuids, Set<String> selectFields, Auths auths) {
+        checkNotNull(uuids);
         checkNotNull(auths);
         try {
 
-            Scanner scanner = connector.createScanner(indexTable, auths.getAuths());
-            scanner.setRange(new Range(uuid, uuid + DELIM_END));
+            BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+
+            Collection<Range> ranges = new LinkedList<Range>();
+            for(EventIndex uuid : uuids) {
+              if(uuid.getTimestamp() == null)
+               ranges.add(new Range(INDEX_V + "_string" + INNER_DELIM + uuid.getUuid()));
+            }
+
+            scanner.setRanges(ranges);
+            scanner.fetchColumnFamily(new Text("@id"));
 
             Iterator<Map.Entry<Key,Value>> itr = scanner.iterator();
 
-            if(itr.hasNext()) {
-
+            /**
+             * Should just be one index for the shard containing the uuid
+             */
+            BatchScanner eventScanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
+            Collection<Range> eventRanges = new LinkedList<Range>();
+            while(itr.hasNext()) {
                 Map.Entry<Key,Value> entry = itr.next();
-                String shardId = entry.getKey().getColumnFamily().toString();
-
-                Scanner eventScanner = connector.createScanner(shardTable, auths.getAuths());
-                eventScanner.setRange(new Range(shardId));
-                eventScanner.fetchColumnFamily(new Text(SHARD_PREFIX_F + DELIM + uuid));
-
-                IteratorSetting iteratorSetting = new IteratorSetting(16, "eventIterator", EventIterator.class);
-                eventScanner.addScanIterator(iteratorSetting);
-
-                itr = eventScanner.iterator();
-
-                if(itr.hasNext()) {
-                    Map.Entry<Key,Value> event = itr.next();
-
-                    return new ObjectMapper().registerModule(new TupleModule(typeRegistry))
-                            .readValue(new String(event.getValue().get()), StoreEntry.class);
-                }
-
+                String shardId = entry.getKey().getColumnQualifier().toString();
+                String[] rowParts = org.apache.commons.lang.StringUtils.splitPreserveAllTokens(entry.getKey().getRow().toString(), INNER_DELIM);
+                eventRanges.add(Range.prefix(shardId, rowParts[1]));
             }
 
-            return null;
+            scanner.close();
+            for(EventIndex curIndex : uuids) {
+              if(curIndex.getTimestamp() != null) {
+                String shardId = shardBuilder.buildShard(curIndex.getTimestamp(), curIndex.getUuid());
+                ranges.add(Range.prefix(shardId, curIndex.getUuid()));
+              }
+            }
+
+            eventScanner.setRanges(eventRanges);
+
+            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+            eventScanner.addScanIterator(iteratorSetting);
+
+            if(selectFields != null && selectFields.size() > 0) {
+              iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+              EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+              eventScanner.addScanIterator(iteratorSetting);
+            }
+
+            return transform(closeableIterable(eventScanner), new WholeColFXForm());
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    public static class QueryXform implements Function<Map.Entry<Key, Value>, StoreEntry>{
+
+      Set<String> selectFields;
+      public QueryXform(Set<String> selectFields) {
+        this.selectFields = selectFields;
+      }
+
+      @Override
+      public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
+        EventFields eventFields = new EventFields();
+        eventFields.readObjectData(kryo, ByteBuffer.wrap(keyValueEntry.getValue().get()));
+        StoreEntry entry = new StoreEntry(keyValueEntry.getKey().getColumnFamily().toString(), keyValueEntry.getKey().getTimestamp());
+        for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
+          if(selectFields == null || selectFields.contains(fieldValue.getKey())) {
+            String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
+            try {
+              Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
+              String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? fieldValue.getValue().getVisibility().toString() : "";
+              entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
+            } catch (TypeDecodingException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+        return entry;
+      }
+    }
+
+    public static class WholeColFXForm implements Function<Map.Entry<Key, Value>, StoreEntry> {
+
+      @Override
+      public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
+        try {
+          Map<Key,Value> keyValues = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+          StoreEntry entry = null;
+
+          for(Map.Entry<Key,Value> curEntry : keyValues.entrySet()) {
+            if(entry == null)
+              entry = new StoreEntry(curEntry.getKey().getColumnFamily().toString(), curEntry.getKey().getTimestamp());
+            String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
+            String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
+            String visibility = keyValueEntry.getKey().getColumnVisibility().toString();
+            try {
+              entry.put(new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), visibility));
+            } catch (TypeDecodingException e) {
+              throw new RuntimeException(e);
+            }
+          }
+
+          return entry;
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
 }

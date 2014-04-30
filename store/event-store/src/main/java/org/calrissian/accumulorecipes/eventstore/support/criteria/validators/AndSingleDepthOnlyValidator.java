@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.support.query.validators;
+package org.calrissian.accumulorecipes.eventstore.support.criteria.validators;
 
 import com.google.common.base.Predicate;
 import org.calrissian.mango.criteria.domain.*;
@@ -25,7 +25,7 @@ import static com.google.common.collect.Collections2.filter;
 import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
 
 /**
- * Will validate that the query is only And with 2 or more leaves.
+ * Will validate that the criteria is only And with 2 or more leaves.
  * <p/>
  * Date: 12/18/12
  * Time: 8:21 AM
@@ -37,7 +37,7 @@ public class AndSingleDepthOnlyValidator implements NodeVisitor {
 
         int size = node.getNodes().size();
         if (node.getNodes() == null || size < 2)
-            throw new IllegalArgumentException("At least 2 query leaves expected");
+            throw new IllegalArgumentException("At least 2 criteria leaves expected");
 
         if (!parentContainsOnlyLeaves(node))
             throw new IllegalArgumentException("Only Leaf nodes expected. Not a single depth node");

@@ -26,7 +26,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import java.util.Date;
 
 /**
- * Allows a caller to define a custom metric function at query time for aggregating data.
+ * Allows a caller to define a custom metric function at criteria time for aggregating data.
  */
 public interface CustomMetricStore extends MetricStore {
 
