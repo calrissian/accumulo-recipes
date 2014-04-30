@@ -45,7 +45,7 @@ public interface EventStore {
      * @param auths
      * @return
      */
-    CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Auths auths);
+    CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Set<String> selectFields, Auths auths);
 
     /**
      * If an event is already being indexed in another store, it's often useful to query a bunch
@@ -55,5 +55,5 @@ public interface EventStore {
      * @param auths
      * @return
      */
-    CloseableIterable<StoreEntry> get(Collection<EventIndex> indexes, Auths auths);
+    CloseableIterable<StoreEntry> get(Collection<EventIndex> indexes, Set<String> selectFields, Auths auths);
 }

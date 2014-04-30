@@ -20,6 +20,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.MultipleEqualsValidator;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoAndOrValidator;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoOrNotEqualsValidator;
+import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.QueryKeysExtractorVisitor;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.criteria.visitor.CollapseParentClauseVisitor;
@@ -29,6 +30,7 @@ import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
@@ -42,6 +44,7 @@ import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLe
 public class QueryOptimizer implements NodeVisitor {
 
     protected Node node;
+    protected Set<String> keysInQuery;
 
     public QueryOptimizer(Node query) {
       checkNotNull(query);
@@ -61,12 +64,20 @@ public class QueryOptimizer implements NodeVisitor {
       query.accept(new NoOrNotEqualsValidator());
       query.accept(new MultipleEqualsValidator());
 
+      QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
+      query.accept(extractKeysVisitor);
+      keysInQuery = extractKeysVisitor.getKeysFound();
+
       //develop criteria
       query.accept(this);
     }
 
     public Node getOptimizedQuery() {
       return this.node;
+    }
+
+    public Set<String> getKeysInQuery() {
+      return keysInQuery;
     }
 
     @Override

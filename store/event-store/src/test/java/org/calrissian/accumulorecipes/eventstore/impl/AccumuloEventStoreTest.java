@@ -37,7 +37,11 @@ import java.util.*;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
+import static java.util.Collections.newSetFromMap;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class AccumuloEventStoreTest {
 
@@ -67,10 +71,63 @@ public class AccumuloEventStoreTest {
           System.out.println(entry);
         }
 
-        CloseableIterable<StoreEntry> actualEvent = store.get(Collections.singletonList(new EventIndex(event.getId())), new Auths());
+        CloseableIterable<StoreEntry> actualEvent = store.get(singletonList(new EventIndex(event.getId())), null, new Auths());
 
         assertEquals(1, Iterables.size(actualEvent));
         assertEquals(actualEvent.iterator().next(), event);
+    }
+
+    @Test
+    public void testGet_withSelection() throws Exception {
+
+      Connector connector = getConnector();
+      AccumuloEventStore store = new AccumuloEventStore(connector);
+
+      StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event.put(new Tuple("key1", "val1", ""));
+      event.put(new Tuple("key2", "val2", ""));
+
+      StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event2.put(new Tuple("key1", "val1", ""));
+      event2.put(new Tuple("key2", "val2", ""));
+
+      store.save(asList(event, event2));
+
+      CloseableIterable<StoreEntry> actualEvent = store.get(singletonList(new EventIndex(event.getId())),
+              Collections.singleton("key1"), new Auths());
+
+      assertEquals(1, Iterables.size(actualEvent));
+      assertNull(actualEvent.iterator().next().get("key2"));
+      assertNotNull(actualEvent.iterator().next().get("key1"));
+    }
+
+
+    @Test
+    public void testQuery_withSelection() throws Exception {
+      AccumuloEventStore store = new AccumuloEventStore(getConnector());
+
+      StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event.put(new Tuple("key1", "val1", ""));
+      event.put(new Tuple("key2", "val2", ""));
+
+      StoreEntry event2 = new StoreEntry(UUID.randomUUID().toString(), currentTimeMillis());
+      event2.put(new Tuple("key1", "val1", ""));
+      event2.put(new Tuple("key2", "val2", ""));
+
+      store.save(asList(event, event2));
+
+      Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
+
+      Iterable<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
+              new Date(), query, Collections.singleton("key1"), new Auths());
+
+      int count = 0;
+      for(StoreEntry entry : itr) {
+        count++;
+        assertNull(entry.get("key2"));
+        assertNotNull(entry.get("key1"));
+      }
+      assertEquals(2, count);
     }
 
     @Test
@@ -90,7 +147,7 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
 
         Iterator<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
-                new Date(), query, new Auths()).iterator();
+                new Date(), query, null, new Auths()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
@@ -128,7 +185,7 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").endStatement().build();
 
         Iterator<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
-                new Date(), query, new Auths()).iterator();
+                new Date(), query, null, new Auths()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
@@ -164,7 +221,7 @@ public class AccumuloEventStoreTest {
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
         Iterator<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
-                new Date(), query, new Auths()).iterator();
+                new Date(), query, null, new Auths()).iterator();
 
         StoreEntry actualEvent = itr.next();
         if(actualEvent.getId().equals(event.getId())) {
@@ -216,7 +273,7 @@ public class AccumuloEventStoreTest {
 
         Iterator<StoreEntry> itr = store.query(
                 new Date(currentTimeMillis() - 5000), new Date(), query,
-                new Auths()).iterator();
+                null, new Auths()).iterator();
 
         int x = 0;
 
