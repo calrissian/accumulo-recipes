@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.eventstore.model;
+package org.calrissian.accumulorecipes.eventstore.support;
 
 public class EventIndex {
 

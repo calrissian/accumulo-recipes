@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.eventstore;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.eventstore.model.EventIndex;
+import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 

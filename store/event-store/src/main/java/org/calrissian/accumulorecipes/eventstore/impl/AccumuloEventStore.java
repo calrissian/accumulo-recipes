@@ -17,7 +17,6 @@ package org.calrissian.accumulorecipes.eventstore.impl;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
-import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -34,7 +33,7 @@ import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
-import org.calrissian.accumulorecipes.eventstore.model.EventIndex;
+import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
@@ -65,10 +64,12 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
  */
 public class AccumuloEventStore implements EventStore {
 
-    private static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
-    private static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
+    public static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
+    public static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
 
-    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+    public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+
+    public static final ShardBuilder DEFAULT_SHARD_BUILDER = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
 
     private ShardBuilder shardBuilder;
     private final  Connector connector;
@@ -77,7 +78,7 @@ public class AccumuloEventStore implements EventStore {
     private final StoreConfig config;
     private final MultiTableBatchWriter multiTableWriter;
 
-    private final Kryo kryo = new Kryo();
+    private static final Kryo kryo = new Kryo();
 
     private final NodeToJexl nodeToJexl;
 
@@ -96,11 +97,11 @@ public class AccumuloEventStore implements EventStore {
         this.connector = connector;
         this.indexTable = indexTable;
         this.shardTable = shardTable;
-        this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
+        this.typeRegistry = ACCUMULO_TYPES;
         this.config = config;
+        this.shardBuilder = DEFAULT_SHARD_BUILDER;
 
         this.nodeToJexl = new NodeToJexl();
-        this.shardBuilder = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
 
 
 
@@ -276,27 +277,7 @@ public class AccumuloEventStore implements EventStore {
           scanner.addScanIterator(setting);
         }
 
-        return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, StoreEntry>() {
-          @Override
-          public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
-            EventFields eventFields = new EventFields();
-            eventFields.readObjectData(kryo, ByteBuffer.wrap(keyValueEntry.getValue().get()));
-            StoreEntry entry = new StoreEntry(keyValueEntry.getKey().getColumnFamily().toString(), keyValueEntry.getKey().getTimestamp());
-            for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
-              if(selectFields == null || selectFields.contains(fieldValue.getKey())) {
-                String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
-                try {
-                  Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
-                  String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? fieldValue.getValue().getVisibility().toString() : "";
-                  entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
-                } catch (TypeDecodingException e) {
-                  throw new RuntimeException(e);
-                }
-              }
-            }
-            return entry;
-          }
-        });
+        return transform(closeableIterable(scanner), new QueryXform(selectFields));
 
       } catch (TableNotFoundException e) {
         throw new RuntimeException(e);
@@ -359,7 +340,7 @@ public class AccumuloEventStore implements EventStore {
               eventScanner.addScanIterator(iteratorSetting);
             }
 
-            return transform(closeableIterable(eventScanner), new WholeColFXForm(null));
+            return transform(closeableIterable(eventScanner), new WholeColFXForm());
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
@@ -367,12 +348,35 @@ public class AccumuloEventStore implements EventStore {
         }
     }
 
-    public class WholeColFXForm implements Function<Map.Entry<Key, Value>, StoreEntry> {
+    public static class QueryXform implements Function<Map.Entry<Key, Value>, StoreEntry>{
 
       Set<String> selectFields;
-      public WholeColFXForm(Set<String> selectFields) {
+      public QueryXform(Set<String> selectFields) {
         this.selectFields = selectFields;
       }
+
+      @Override
+      public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
+        EventFields eventFields = new EventFields();
+        eventFields.readObjectData(kryo, ByteBuffer.wrap(keyValueEntry.getValue().get()));
+        StoreEntry entry = new StoreEntry(keyValueEntry.getKey().getColumnFamily().toString(), keyValueEntry.getKey().getTimestamp());
+        for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
+          if(selectFields == null || selectFields.contains(fieldValue.getKey())) {
+            String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
+            try {
+              Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
+              String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? fieldValue.getValue().getVisibility().toString() : "";
+              entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
+            } catch (TypeDecodingException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+        return entry;
+      }
+    }
+
+    public static class WholeColFXForm implements Function<Map.Entry<Key, Value>, StoreEntry> {
 
       @Override
       public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
@@ -384,14 +388,12 @@ public class AccumuloEventStore implements EventStore {
             if(entry == null)
               entry = new StoreEntry(curEntry.getKey().getColumnFamily().toString(), curEntry.getKey().getTimestamp());
             String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
-            if(selectFields == null || selectFields.contains(colQParts[0])) {
-              String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
-              String visibility = keyValueEntry.getKey().getColumnVisibility().toString();
-              try {
-                entry.put(new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), visibility));
-              } catch (TypeDecodingException e) {
-                throw new RuntimeException(e);
-              }
+            String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
+            String visibility = keyValueEntry.getKey().getColumnVisibility().toString();
+            try {
+              entry.put(new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), visibility));
+            } catch (TypeDecodingException e) {
+              throw new RuntimeException(e);
             }
           }
 
