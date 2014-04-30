@@ -191,12 +191,13 @@ public class AccumuloEntityStore implements EntityStore {
     checkNotNull(auths);
     try {
 
-      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
 
       Collection<Range> ranges = new LinkedList<Range>();
       for(EntityIndex curIndex : typesAndIds) {
         String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
-        ranges.add(prefix(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
+        ranges.add(new Range(new Key(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()),
+                new Key(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId() + DELIM)));
       }
 
       scanner.setRanges(ranges);

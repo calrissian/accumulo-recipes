@@ -17,7 +17,7 @@ public class Entity implements TupleCollection{
 
   private Map<String,Set<Tuple>> tuples;
 
-  public Entity(String id, String type) {
+  public Entity(String type, String id) {
     this.id = id;
     this.type = type;
     this.tuples = new HashMap<String, Set<Tuple>>();
