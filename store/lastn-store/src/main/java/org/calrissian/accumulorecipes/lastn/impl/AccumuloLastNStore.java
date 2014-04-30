@@ -173,7 +173,7 @@ public class AccumuloLastNStore implements LastNStore {
     }
 
     /**
-     * Pull back the last N entries. EntryIterator will group entry tuples into a single object on the server side.
+     * Pull back the last N entries. EntryIterator will group entry getTuples into a single object on the server side.
      * @param index
      * @param auths
      * @return

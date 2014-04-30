@@ -29,7 +29,7 @@ import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 
 /**
- * A cleanup filtering iterator to get rid of tuples that should not exist after the versioning iterator evicts an
+ * A cleanup filtering iterator to get rid of getTuples that should not exist after the versioning iterator evicts an
  * index. NOTE: This iterator needs to run after the versioning iterator and should run on all scopes (majc,minc,scan).
  */
 public class IndexEntryFilteringIterator extends Filter {

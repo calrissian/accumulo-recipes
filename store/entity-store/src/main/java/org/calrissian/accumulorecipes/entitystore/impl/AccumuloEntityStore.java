@@ -5,13 +5,11 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.domain.TupleCollection;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
@@ -113,8 +111,8 @@ public class AccumuloEntityStore implements EntityStore {
     try {
       for(Entity entity : entities) {
 
-        //If there are no tuples then don't write anything to the data store.
-        if(entity.tuples() != null) {
+        //If there are no getTuples then don't write anything to the data store.
+        if(entity.getTuples() != null) {
 
           String shardId = shardBuilder.buildShard(entity.getType(), entity.getId());
           String typeId = entity.getType() + INNER_DELIM + entity.getId();
@@ -124,7 +122,7 @@ public class AccumuloEntityStore implements EntityStore {
 
           Mutation shardMutation = new Mutation(shardId);
 
-          for(Tuple tuple : entity.tuples()) {
+          for(Tuple tuple : entity.getTuples()) {
 
             String aliasValue = typeRegistry.getAlias(tuple.getValue()) + INNER_DELIM +
                     typeRegistry.encode(tuple.getValue());

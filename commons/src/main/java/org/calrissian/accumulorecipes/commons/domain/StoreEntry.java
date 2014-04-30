@@ -28,7 +28,7 @@ import static java.lang.System.currentTimeMillis;
  * A store entry acts as a useful common business object for representing different types of models. An optional time
  * dimension can be set directly or left untouched (defaulting in current time).
  */
-public class StoreEntry {
+public class StoreEntry implements TupleCollection {
 
     protected final String id;
     protected final long timestamp; // in Millis
@@ -63,7 +63,7 @@ public class StoreEntry {
     }
 
     /**
-     * Put multiple tuples at the same time
+     * Put multiple getTuples at the same time
      * @param tuples
      */
     public void putAll(Collection<Tuple> tuples) {
@@ -81,8 +81,14 @@ public class StoreEntry {
         this.tuples.add(tuple);
     }
 
-    /**
-     * Used for single valued tuples. Returns the first tuple with the specified key
+  @Override
+  public void putAll(Iterable<Tuple> tuples) {
+    for(Tuple tuple : tuples)
+      put(tuple);
+  }
+
+  /**
+     * Used for single valued getTuples. Returns the first tuple with the specified key
      * @param key
      * @return null if tuple with key does not exist
      */
@@ -98,9 +104,9 @@ public class StoreEntry {
     }
 
     /**
-     * Used for multi-valued tuples. Returns all tuples with the specified key
+     * Used for multi-valued getTuples. Returns all getTuples with the specified key
      * @param key
-     * @return empty collection if no tuples with key exist
+     * @return empty collection if no getTuples with key exist
      */
     public Collection<Tuple> getAll(String key) {
         Collection<Tuple> retTuples = new ArrayList<Tuple>();
@@ -130,7 +136,7 @@ public class StoreEntry {
     }
 
     /**
-     * Accessor for tuples
+     * Accessor for getTuples
      * @return
      */
     public Collection<Tuple> getTuples() {
@@ -164,7 +170,7 @@ public class StoreEntry {
         return "StoreEntry{" +
                 "id='" + id + '\'' +
                 ", timestamp=" + timestamp +
-                ", tuples=" + tuples +
+                ", getTuples=" + tuples +
                 '}';
     }
 }

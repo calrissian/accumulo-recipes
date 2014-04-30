@@ -16,7 +16,6 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -31,7 +30,8 @@ import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
+import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
+import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
@@ -42,10 +42,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeDecodingException;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -169,7 +166,7 @@ public class AccumuloEventStore implements EventStore {
         try {
             for(StoreEntry event : events) {
 
-                //If there are no tuples then don't write anything to the data store.
+                //If there are no getTuples then don't write anything to the data store.
                 if(event.getTuples() != null && !event.getTuples().isEmpty()) {
 
                     String shardId = shardBuilder.buildShard(event.getTimestamp(), event.getId());
@@ -348,59 +345,26 @@ public class AccumuloEventStore implements EventStore {
         }
     }
 
-    public static class QueryXform implements Function<Map.Entry<Key, Value>, StoreEntry>{
+    public static class QueryXform extends KeyToTupleCollectionQueryXform<StoreEntry>{
 
-      Set<String> selectFields;
       public QueryXform(Set<String> selectFields) {
-        this.selectFields = selectFields;
+        super(kryo, typeRegistry, selectFields);
       }
 
       @Override
-      public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
-        EventFields eventFields = new EventFields();
-        eventFields.readObjectData(kryo, ByteBuffer.wrap(keyValueEntry.getValue().get()));
-        StoreEntry entry = new StoreEntry(keyValueEntry.getKey().getColumnFamily().toString(), keyValueEntry.getKey().getTimestamp());
-        for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
-          if(selectFields == null || selectFields.contains(fieldValue.getKey())) {
-            String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
-            try {
-              Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
-              String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? fieldValue.getValue().getVisibility().toString() : "";
-              entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
-            } catch (TypeDecodingException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        }
-        return entry;
+      protected StoreEntry buildTupleCollectionFromKey(Key k) {
+        return new StoreEntry(k.getColumnFamily().toString(), k.getTimestamp());
       }
     }
 
-    public static class WholeColFXForm implements Function<Map.Entry<Key, Value>, StoreEntry> {
+    public static class WholeColFXForm extends KeyToTupleCollectionWholeColFXform<StoreEntry> {
+      public WholeColFXForm() {
+        super(kryo, typeRegistry, null);
+      }
 
       @Override
-      public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
-        try {
-          Map<Key,Value> keyValues = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
-          StoreEntry entry = null;
-
-          for(Map.Entry<Key,Value> curEntry : keyValues.entrySet()) {
-            if(entry == null)
-              entry = new StoreEntry(curEntry.getKey().getColumnFamily().toString(), curEntry.getKey().getTimestamp());
-            String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
-            String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
-            String visibility = keyValueEntry.getKey().getColumnVisibility().toString();
-            try {
-              entry.put(new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), visibility));
-            } catch (TypeDecodingException e) {
-              throw new RuntimeException(e);
-            }
-          }
-
-          return entry;
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      protected StoreEntry buildEntryFromKey(Key k) {
+        return new StoreEntry(k.getColumnFamily().toString(), k.getTimestamp());
       }
     };
 }

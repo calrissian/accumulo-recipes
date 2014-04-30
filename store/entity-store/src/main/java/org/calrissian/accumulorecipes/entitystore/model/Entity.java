@@ -1,14 +1,14 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import com.google.common.collect.Iterables;
 import org.calrissian.accumulorecipes.commons.domain.TupleCollection;
 import org.calrissian.mango.domain.Tuple;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import static com.google.common.collect.Iterables.addAll;
 import static com.google.common.collect.Iterables.concat;
+import static java.util.Collections.unmodifiableCollection;
 
 public class Entity implements TupleCollection{
 
@@ -47,16 +47,18 @@ public class Entity implements TupleCollection{
 
 
   /**
-   * Returns all the tuples set on the current entity
+   * Returns all the getTuples set on the current entity
    */
-  public Iterable<Tuple> tuples() {
-    return concat(tuples.values());
+  public Collection<Tuple> getTuples() {
+    Collection<Tuple> tupleCollection = new LinkedList<Tuple>();
+    addAll(tupleCollection, concat(tuples.values()));
+    return unmodifiableCollection(tupleCollection);
   }
 
   /**
    * A get operation for multi-valued keys
    */
-  public Iterable<Tuple> getAll(String key) {
+  public Collection<Tuple> getAll(String key) {
     return tuples.get(key);
   }
 
