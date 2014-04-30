@@ -22,6 +22,14 @@ public class Entity {
     this.tuples = new HashMap<String, Set<Tuple>>();
   }
 
+  public String getId() {
+    return id;
+  }
+
+  public String getType() {
+    return type;
+  }
+
   public void put(Tuple tuple) {
     Set<Tuple> keyedTuples = tuples.get(tuple.getKey());
     if(keyedTuples == null) {

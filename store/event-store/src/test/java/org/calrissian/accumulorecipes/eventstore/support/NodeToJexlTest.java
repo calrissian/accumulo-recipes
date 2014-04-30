@@ -1,5 +1,6 @@
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.junit.Test;
 

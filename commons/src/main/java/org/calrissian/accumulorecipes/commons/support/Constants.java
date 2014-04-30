@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.support;
+package org.calrissian.accumulorecipes.commons.support;
 
 
 import org.apache.accumulo.core.data.Value;

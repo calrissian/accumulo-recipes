@@ -34,7 +34,7 @@ import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterato
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
-import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.eventstore.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
@@ -53,7 +53,7 @@ import static com.google.common.collect.Sets.union;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
-import static org.calrissian.accumulorecipes.eventstore.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;

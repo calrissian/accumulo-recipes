@@ -19,5 +19,5 @@ public interface EntityStore {
 
   CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths);
 
-  void shutdown();
+  void shutdown() throws Exception;
 }
