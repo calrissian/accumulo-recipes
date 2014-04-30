@@ -3,7 +3,7 @@ package org.calrissian.accumulorecipes.eventstore.cli;
 
 import org.apache.accumulo.core.client.*;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.eventstore.support.Constants;
+import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.joda.time.DateTime;
 

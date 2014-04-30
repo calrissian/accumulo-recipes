@@ -73,7 +73,10 @@ public class AccumuloEventStoreTest {
         CloseableIterable<StoreEntry> actualEvent = store.get(singletonList(new EventIndex(event.getId())), null, new Auths());
 
         assertEquals(1, Iterables.size(actualEvent));
-        assertEquals(actualEvent.iterator().next(), event);
+        StoreEntry actual = actualEvent.iterator().next();
+        assertEquals(new HashSet(actual.getTuples()), new HashSet(event.getTuples()));
+        assertEquals(actual.getId(), event.getId());
+        assertEquals(actual.getTimestamp(), event.getTimestamp());
     }
 
     @Test

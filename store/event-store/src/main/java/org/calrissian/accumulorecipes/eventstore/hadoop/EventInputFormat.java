@@ -16,8 +16,8 @@ import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
-import org.calrissian.accumulorecipes.eventstore.support.NodeToJexl;
-import org.calrissian.accumulorecipes.eventstore.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
+import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.google.common.collect.Sets.union;
+import static java.util.Arrays.asList;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.*;
 
 public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
@@ -68,7 +69,7 @@ public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
 
     final StoreEntryWritable sharedWritable = new StoreEntryWritable();
     final String[] selectFields = context.getConfiguration().getStrings("selectFields");
-    final QueryXform xform = new QueryXform(selectFields != null ? new HashSet<String>(Arrays.asList(selectFields)) : null);
+    final QueryXform xform = new QueryXform(selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
 
     return new RecordReaderBase<Key, StoreEntryWritable>() {
       @Override

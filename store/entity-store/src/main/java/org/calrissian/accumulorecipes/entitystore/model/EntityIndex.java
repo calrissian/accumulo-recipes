@@ -1,11 +1,17 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import com.google.common.base.Preconditions;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class EntityIndex {
 
   private String type;
   private String id;
 
   public EntityIndex(String type, String id) {
+    checkNotNull(type);
+    checkNotNull(id);
     this.type = type;
     this.id = id;
   }

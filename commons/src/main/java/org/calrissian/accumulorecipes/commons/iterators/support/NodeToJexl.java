@@ -1,9 +1,9 @@
-package org.calrissian.accumulorecipes.eventstore.support;
+package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.calrissian.accumulorecipes.eventstore.support.Constants.INNER_DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 
 public class NodeToJexl {

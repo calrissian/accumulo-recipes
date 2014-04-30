@@ -1,25 +1,34 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import com.google.common.collect.Iterables;
+import org.calrissian.accumulorecipes.commons.domain.TupleCollection;
 import org.calrissian.mango.domain.Tuple;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import static com.google.common.collect.Iterables.addAll;
 import static com.google.common.collect.Iterables.concat;
+import static java.util.Collections.unmodifiableCollection;
 
-public class Entity {
+public class Entity implements TupleCollection{
 
   private String id;
   private String type;
 
   private Map<String,Set<Tuple>> tuples;
 
-  public Entity(String id, String type) {
+  public Entity(String type, String id) {
     this.id = id;
     this.type = type;
     this.tuples = new HashMap<String, Set<Tuple>>();
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getType() {
+    return type;
   }
 
   public void put(Tuple tuple) {
@@ -38,16 +47,18 @@ public class Entity {
 
 
   /**
-   * Returns all the tuples set on the current entity
+   * Returns all the getTuples set on the current entity
    */
-  public Iterable<Tuple> tuples() {
-    return concat(tuples.values());
+  public Collection<Tuple> getTuples() {
+    Collection<Tuple> tupleCollection = new LinkedList<Tuple>();
+    addAll(tupleCollection, concat(tuples.values()));
+    return unmodifiableCollection(tupleCollection);
   }
 
   /**
    * A get operation for multi-valued keys
    */
-  public Iterable<Tuple> getAll(String key) {
+  public Collection<Tuple> getAll(String key) {
     return tuples.get(key);
   }
 

@@ -58,7 +58,7 @@ public class EntryIterator extends WrappingIterator {
     }
 
     /**
-     * For each index row in the lastN store, grab the associated tuples (further down in the tablet) and construct
+     * For each index row in the lastN store, grab the associated getTuples (further down in the tablet) and construct
      * the entry to be returned.
      * @return
      */

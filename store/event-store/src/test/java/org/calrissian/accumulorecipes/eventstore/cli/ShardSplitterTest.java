@@ -8,7 +8,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 
-import static org.calrissian.accumulorecipes.eventstore.support.Constants.DEFAULT_PARTITION_SIZE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
 import static org.junit.Assert.assertEquals;
 
 public class ShardSplitterTest {

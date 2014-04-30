@@ -44,6 +44,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Map.Entry;
 import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestamp;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
@@ -133,7 +134,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
 
                 Mutation m = new Mutation(Long.toString(truncatedReverseTimestamp(change.getTimestamp(), bucketSize)));
                 try {
-                    Text reverseTimestamp = new Text(Long.toString(Utils.reverseTimestamp(change.getTimestamp())));
+                    Text reverseTimestamp = new Text(Long.toString(reverseTimestamp(change.getTimestamp())));
                     m.put(reverseTimestamp, new Text(change.getId()), change.getTimestamp(),
                             new Value(objectMapper.writeValueAsBytes(change)));
                     writer.addMutation(m);

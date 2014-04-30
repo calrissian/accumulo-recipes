@@ -2,11 +2,7 @@ package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.domain.Tuple;
