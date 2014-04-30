@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.support.criteria;
+package org.calrissian.accumulorecipes.commons.support.criteria;
 
-import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.MultipleEqualsValidator;
-import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoAndOrValidator;
-import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.NoOrNotEqualsValidator;
-import org.calrissian.accumulorecipes.eventstore.support.criteria.validators.QueryKeysExtractorVisitor;
-import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.accumulorecipes.commons.support.criteria.validators.MultipleEqualsValidator;
+import org.calrissian.accumulorecipes.commons.support.criteria.validators.NoAndOrValidator;
+import org.calrissian.accumulorecipes.commons.support.criteria.validators.NoOrNotEqualsValidator;
+import org.calrissian.accumulorecipes.commons.support.criteria.validators.QueryKeysExtractorVisitor;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.criteria.visitor.CollapseParentClauseVisitor;
 import org.calrissian.mango.criteria.visitor.EmptyParentCollapseVisitor;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
 
-import java.io.IOException;
-import java.util.Date;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.calrissian.mango.collect.CloseableIterables.chain;
-import static org.calrissian.mango.criteria.utils.NodeUtils.isLeaf;
-import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
 
 /**
  * Visit criteria to validate and transform to perform the criteria against the swift event service.

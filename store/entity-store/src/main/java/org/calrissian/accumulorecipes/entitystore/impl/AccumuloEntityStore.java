@@ -2,14 +2,24 @@ package org.calrissian.accumulorecipes.entitystore.impl;
 
 import com.esotericsoftware.kryo.Kryo;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.domain.TupleCollection;
+import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
+import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
+import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.Constants;
+import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
+import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.Entity;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
@@ -19,15 +29,19 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Sets.union;
+import static java.util.Collections.singleton;
+import static org.apache.accumulo.core.data.Range.prefix;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 public class AccumuloEntityStore implements EntityStore {
 
@@ -175,16 +189,130 @@ public class AccumuloEntityStore implements EntityStore {
 
   @Override
   public CloseableIterable<Entity> get(Iterable<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths) {
-    return null;
+    checkNotNull(typesAndIds);
+    checkNotNull(auths);
+    try {
+
+      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+
+      Collection<Range> ranges = new LinkedList<Range>();
+      for(EntityIndex curIndex : typesAndIds) {
+        String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
+        ranges.add(prefix(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
+      }
+
+      scanner.setRanges(ranges);
+
+      IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+      scanner.addScanIterator(iteratorSetting);
+
+      if(selectFields != null && selectFields.size() > 0) {
+        iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+        EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+        scanner.addScanIterator(iteratorSetting);
+      }
+
+      return transform(closeableIterable(scanner), new WholeColFXform(selectFields));
+    } catch (RuntimeException re) {
+      throw re;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public CloseableIterable<Entity> getAllByType(Set<String> types, Set<String> selectFields, Auths auths) {
-    return null;
+    checkNotNull(types);
+    checkNotNull(auths);
+    try {
+
+      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+
+      Collection<Range> ranges = new LinkedList<Range>();
+      for(String type : types) {
+        Set<Text> shards = shardBuilder.buildShardsForTypes(singleton(type));
+        for(Text shard : shards) 
+          ranges.add(prefix(shard.toString(), type));
+      }
+
+      scanner.setRanges(ranges);
+
+      IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+      scanner.addScanIterator(iteratorSetting);
+
+      if(selectFields != null && selectFields.size() > 0) {
+        iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+        EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+        scanner.addScanIterator(iteratorSetting);
+      }
+
+      return transform(closeableIterable(scanner), new WholeColFXform(selectFields));
+    } catch (RuntimeException re) {
+      throw re;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths) {
-    return null;
+
+    QueryOptimizer optimizer = new QueryOptimizer(query);
+
+    String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+    Set<Text> shards = shardBuilder.buildShardsForTypes(types);
+
+    try {
+      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
+
+      Collection<Range> ranges = new HashSet<Range>();
+      for(Text shard : shards)
+        ranges.add(new Range(shard));
+
+      scanner.setRanges(ranges);
+
+      IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+      setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
+      setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+
+      scanner.addScanIterator(setting);
+
+      if(selectFields != null && selectFields.size() > 0) {
+        setting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+        EventFieldsFilteringIterator.setSelectFields(setting, union(selectFields, optimizer.getKeysInQuery()));
+        scanner.addScanIterator(setting);
+      }
+
+      return transform(closeableIterable(scanner), new QueryXform(selectFields));
+
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }  }
+
+  public static class QueryXform extends KeyToTupleCollectionQueryXform<Entity> {
+
+    public QueryXform(Set<String> selectFields) {
+      super(kryo, typeRegistry, selectFields);
+    }
+
+    @Override
+    protected Entity buildTupleCollectionFromKey(Key k) {
+      String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
+      return new Entity(typeId[0], typeId[1]);
+    }
   }
+
+  public static class WholeColFXform extends KeyToTupleCollectionWholeColFXform<Entity> {
+    public WholeColFXform(Set<String> selectFields) {
+      super(kryo, typeRegistry, selectFields);
+    }
+
+    @Override
+    protected Entity buildEntryFromKey(Key k) {
+      String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
+      return new Entity(typeId[0], typeId[1]);
+    }
+
+  }
+
 }

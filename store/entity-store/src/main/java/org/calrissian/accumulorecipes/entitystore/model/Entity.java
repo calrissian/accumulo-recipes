@@ -1,5 +1,6 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import org.calrissian.accumulorecipes.commons.domain.TupleCollection;
 import org.calrissian.mango.domain.Tuple;
 
 import java.util.HashMap;
@@ -9,7 +10,7 @@ import java.util.Set;
 
 import static com.google.common.collect.Iterables.concat;
 
-public class Entity {
+public class Entity implements TupleCollection{
 
   private String id;
   private String type;
