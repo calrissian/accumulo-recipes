@@ -231,7 +231,7 @@ public class AccumuloEntityStore implements EntityStore {
       Collection<Range> ranges = new LinkedList<Range>();
       for(String type : types) {
         Set<Text> shards = shardBuilder.buildShardsForTypes(singleton(type));
-        for(Text shard : shards) 
+        for(Text shard : shards)
           ranges.add(prefix(shard.toString(), type));
       }
 
