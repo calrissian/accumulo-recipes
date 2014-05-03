@@ -32,6 +32,11 @@ limitations under the License.
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>entity-store</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <!-- Mango -->
     <dependency>
       <groupId>org.calrissian.mango</groupId>
