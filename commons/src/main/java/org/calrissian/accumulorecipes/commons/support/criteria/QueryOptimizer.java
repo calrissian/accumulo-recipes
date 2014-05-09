@@ -63,11 +63,12 @@ public class QueryOptimizer implements NodeVisitor {
       query.accept(new SingleClauseCollapseVisitor());
       query.accept(new EmptyParentCollapseVisitor());
       query.accept(new CollapseParentClauseVisitor());
+      query.accept(new RangeSplitterVisitor());
 
       //visitors
       query.accept(new NoAndOrValidator());
       query.accept(new NoOrNotEqualsValidator());
-      query.accept(new MultipleEqualsValidator());
+      query.accept(new MultipleEqualsValidator());    // this is questionable. Multivalued keys make this possible...
 
       QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
       query.accept(extractKeysVisitor);

@@ -19,7 +19,7 @@ public class MultipleEqualsValidator implements NodeVisitor {
                     EqualsLeaf leaf = (EqualsLeaf) child;
 
                     if (!keys.add(leaf.getKey()))
-                        throw new IllegalArgumentException("Can not have equals with same key in an and clause");
+                        throw new IllegalArgumentException("Can not have equals with same key in an AND clause");
                 }
             }
         }
