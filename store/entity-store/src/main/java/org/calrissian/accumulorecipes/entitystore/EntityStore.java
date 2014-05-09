@@ -19,5 +19,7 @@ public interface EntityStore {
 
   CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths);
 
+  void delete(Iterable<EntityIndex> typesAndIds, Auths auths);
+
   void shutdown() throws Exception;
 }

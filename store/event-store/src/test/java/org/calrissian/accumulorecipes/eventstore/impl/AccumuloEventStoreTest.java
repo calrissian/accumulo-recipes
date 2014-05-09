@@ -116,6 +116,7 @@ public class AccumuloEventStoreTest {
       event2.put(new Tuple("key1", "val1", ""));
       event2.put(new Tuple("key2", "val2", ""));
 
+
       store.save(asList(event, event2));
 
       Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();

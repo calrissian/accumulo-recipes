@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.support.criteria.validators;
+package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
+import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.criteria.domain.OrNode;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 
-
-public class NoOrNotEqualsValidator implements NodeVisitor {
+/**
+ * Date: 11/13/12
+ * Time: 3:24 PM
+ */
+public class NoAndOrValidator implements NodeVisitor {
 
     @Override
     public void begin(ParentNode node) {
+        if (node instanceof OrNode && node.parent() instanceof AndNode)
+            throw new IllegalArgumentException("And Node cannot contain an Or Node");
     }
 
     @Override
@@ -35,8 +40,6 @@ public class NoOrNotEqualsValidator implements NodeVisitor {
 
     @Override
     public void visit(Leaf node) {
-        if (node instanceof NotEqualsLeaf && node.parent() instanceof OrNode) {
-            throw new IllegalArgumentException("Cannot have a not equals under an or node");
-        }
+
     }
 }

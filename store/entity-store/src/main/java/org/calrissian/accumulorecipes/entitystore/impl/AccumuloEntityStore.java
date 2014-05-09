@@ -26,6 +26,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
@@ -82,8 +83,6 @@ public class AccumuloEntityStore implements EntityStore {
     this.shardBuilder = DEFAULT_SHARD_BUILDER;
 
     this.nodeToJexl = new NodeToJexl();
-
-
 
     if(!connector.tableOperations().exists(this.indexTable)) {
       connector.tableOperations().create(this.indexTable);
@@ -286,7 +285,13 @@ public class AccumuloEntityStore implements EntityStore {
 
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
-    }  }
+    }
+  }
+
+  @Override
+  public void delete(Iterable<EntityIndex> typesAndIds, Auths auths) {
+    throw new NotImplementedException();
+  }
 
   public static class QueryXform extends KeyToTupleCollectionQueryXform<Entity> {
 

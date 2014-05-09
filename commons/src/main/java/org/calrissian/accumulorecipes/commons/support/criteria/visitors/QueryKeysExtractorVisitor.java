@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.commons.support.criteria.validators;
+package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;

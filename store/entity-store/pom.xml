@@ -55,6 +55,17 @@ limitations under the License.
       <artifactId>zookeeper</artifactId>
       <version>3.3.6</version>
     </dependency>
+    <dependency>
+      <groupId>com.netflix.curator</groupId>
+      <artifactId>curator-recipes</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.netflix.curator</groupId>
+      <artifactId>curator-recipes</artifactId>
+      <version>1.0.20</version>
+    </dependency>
+
 
     <!-- JUNIT -->
     <dependency>

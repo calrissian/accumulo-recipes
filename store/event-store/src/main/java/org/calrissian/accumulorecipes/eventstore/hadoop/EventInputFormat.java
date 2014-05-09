@@ -1,6 +1,6 @@
 package org.calrissian.accumulorecipes.eventstore.hadoop;
 
-import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -18,6 +18,8 @@ import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIter
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 
@@ -34,20 +36,30 @@ public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
     setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
   }
 
-  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields) {
+  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     setQueryInfo(config, start, end, query, selectFields, DEFAULT_SHARD_BUILDER);
   }
 
-  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, ShardBuilder shardBuilder) {
+  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, ShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-    Collection<Text> shards = shardBuilder.buildShardsInRange(start, end);
-    Collection<Range> ranges = new LinkedList<Range>();
-    for(Text shard : shards)
-      ranges.add(new Range(shard));
+    try {
+      validateOptions(config);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
-    QueryOptimizer optimizer = new QueryOptimizer(query);
+    Instance instance = getInstance(config);
+    Connector connector = instance.getConnector(getUsername(config), getPassword(config));
+    BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
+    GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
+    QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
     NodeToJexl nodeToJexl = new NodeToJexl();
     String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+
+    Collection<Range> ranges = new ArrayList<Range>();
+    for(String shard : optimizer.getShards())
+      ranges.add(new Range(shard));
+
 
     setRanges(config, ranges);
 

@@ -48,9 +48,9 @@ public class EventInputFormatTest {
     job.setMapOutputValueClass(Text.class);
     job.setInputFormatClass(EventInputFormat.class);
     EventInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
+    EventInputFormat.setMockInstance(job.getConfiguration(), "instName");
     EventInputFormat.setQueryInfo(job.getConfiguration(), new Date(System.currentTimeMillis() - 50000), new Date(),
             new QueryBuilder().eq("key1", "val1").build(), null);
-    EventInputFormat.setMockInstance(job.getConfiguration(), "instName");
     job.setOutputFormatClass(NullOutputFormat.class);
 
     job.submit();

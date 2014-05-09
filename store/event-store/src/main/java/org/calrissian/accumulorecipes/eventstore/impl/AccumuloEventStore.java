@@ -21,6 +21,9 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.IteratorUtil;
+import org.apache.accumulo.core.iterators.LongCombiner;
+import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
@@ -30,9 +33,11 @@ import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
+import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
@@ -47,7 +52,13 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.union;
+import static java.lang.System.currentTimeMillis;
+import static java.lang.System.in;
+import static java.util.EnumSet.allOf;
+import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
+import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.apache.commons.lang.StringUtils.join;
+import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
@@ -100,11 +111,16 @@ public class AccumuloEventStore implements EventStore {
 
         this.nodeToJexl = new NodeToJexl();
 
-
-
-      if(!connector.tableOperations().exists(this.indexTable)) {
+        if(!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
             configureIndexTable(connector, this.indexTable);
+        }
+
+        if(connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
+          IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
+          SummingCombiner.setCombineAllColumns(setting, true);
+          SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
+          connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorScope.class));
         }
         if(!connector.tableOperations().exists(this.shardTable)) {
             connector.tableOperations().create(this.shardTable);
@@ -164,15 +180,15 @@ public class AccumuloEventStore implements EventStore {
     public void save(Iterable<StoreEntry> events) {
         checkNotNull(events);
         try {
-            for(StoreEntry event : events) {
+          // key
+          Map<String, Long> indexCache = new HashMap<String, Long>();
+
+          for(StoreEntry event : events) {
 
                 //If there are no getTuples then don't write anything to the data store.
                 if(event.getTuples() != null && !event.getTuples().isEmpty()) {
 
                     String shardId = shardBuilder.buildShard(event.getTimestamp(), event.getId());
-
-                    // key
-                    Set<String> indexCache = new HashSet<String>();
 
                     Mutation shardMutation = new Mutation(shardId);
 
@@ -203,7 +219,12 @@ public class AccumuloEventStore implements EventStore {
                           tuple.getVisibility()
                         };
 
-                        indexCache.add(join(strings, INNER_DELIM));
+                      String cacheKey = join(strings, INNER_DELIM);
+                      Long count = indexCache.get(cacheKey);
+                      if(count == null)
+                        count = 0l;
+                      indexCache.put(cacheKey, ++count);
+
                     }
 
                     String[] idIndex = new String[] {
@@ -214,25 +235,29 @@ public class AccumuloEventStore implements EventStore {
                       ""
                     };
 
-                    indexCache.add(join(idIndex, INNER_DELIM));
-
-                    for(String indexCacheKey : indexCache) {
-
-                      String[] indexParts = splitPreserveAllTokens(indexCacheKey, INNER_DELIM);
-                      Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
-                      Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + INNER_DELIM + indexParts[3]);
-
-                      keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), event.getTimestamp(), EMPTY_VALUE);
-                      valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), event.getTimestamp(), EMPTY_VALUE);
-                      multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
-                      multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
-                    }
+                    indexCache.put(join(idIndex, INNER_DELIM), 1l);
 
                     multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
                 }
+
+            }
+
+            for(Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
+
+              String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
+              Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
+              Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
+
+              keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
+                      new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
+              valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
+                      new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
+              multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
+              multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
             }
 
             multiTableWriter.flush();
+
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
@@ -248,16 +273,21 @@ public class AccumuloEventStore implements EventStore {
     @Override
     public CloseableIterable<StoreEntry> query(Date start, Date end, Node query, final Set<String> selectFields, Auths auths) {
 
-      QueryOptimizer optimizer = new QueryOptimizer(query);
-
-      String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-      Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
 
       try {
+
+        BatchScanner indexScanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
+
+        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+        Set<String> shards = optimizer.getShards();
+
+
         BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
 
         Collection<Range> ranges = new HashSet<Range>();
-        for(Text shard : shards)
+        for(String shard : shards)
           ranges.add(new Range(shard));
 
         scanner.setRanges(ranges);
@@ -298,7 +328,7 @@ public class AccumuloEventStore implements EventStore {
             Collection<Range> ranges = new LinkedList<Range>();
             for(EventIndex uuid : uuids) {
               if(uuid.getTimestamp() == null)
-               ranges.add(new Range(INDEX_V + "_string" + INNER_DELIM + uuid.getUuid()));
+               ranges.add(new Range(INDEX_V + "_string__" + uuid.getUuid()));
             }
 
             scanner.setRanges(ranges);
@@ -314,7 +344,7 @@ public class AccumuloEventStore implements EventStore {
             while(itr.hasNext()) {
                 Map.Entry<Key,Value> entry = itr.next();
                 String shardId = entry.getKey().getColumnQualifier().toString();
-                String[] rowParts = org.apache.commons.lang.StringUtils.splitPreserveAllTokens(entry.getKey().getRow().toString(), INNER_DELIM);
+                String[] rowParts = splitByWholeSeparatorPreserveAllTokens(entry.getKey().getRow().toString(), "__");
                 eventRanges.add(Range.prefix(shardId, rowParts[1]));
             }
 
