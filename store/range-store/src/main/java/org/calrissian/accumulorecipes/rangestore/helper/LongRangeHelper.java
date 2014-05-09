@@ -20,7 +20,7 @@ import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
-import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.longEncoder;
+import static org.calrissian.mango.types.LexiTypeEncoders.longEncoder;
 
 public class LongRangeHelper implements RangeHelper<Long> {
 

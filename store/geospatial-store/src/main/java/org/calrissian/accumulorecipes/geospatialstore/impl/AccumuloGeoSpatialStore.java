@@ -28,11 +28,10 @@ import java.util.Collection;
 import java.util.Map;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.scalb;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
-import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
@@ -47,7 +46,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
     private double maxPrecision = .002;
 
-    private static final TypeRegistry registry = ACCUMULO_TYPES;
+    private static final TypeRegistry registry = LEXI_TYPES;
 
     private final BatchWriter writer;
 
@@ -118,10 +117,10 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
                 try {
                     // put in the forward mutation
                     m.put(new Text(buildId(entry.getId(), entry.getTimestamp(), location)),
-                          new Text(buildKeyValue(tuple)),
-                          new ColumnVisibility(tuple.getVisibility()),
-                          entry.getTimestamp(),
-                          new Value("".getBytes()));
+                            new Text(buildKeyValue(tuple)),
+                            new ColumnVisibility(tuple.getVisibility()),
+                            entry.getTimestamp(),
+                            new Value("".getBytes()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

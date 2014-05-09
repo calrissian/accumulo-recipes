@@ -21,7 +21,6 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -33,14 +32,14 @@ import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
+import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
-import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -53,18 +52,15 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.union;
 import static java.lang.System.currentTimeMillis;
-import static java.lang.System.in;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
-import static org.apache.commons.lang.StringUtils.join;
-import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.apache.commons.lang.StringUtils.*;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
-import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
  * The Accumulo implementation of the EventStore which uses deterministic sharding to distribute ingest/queries over
@@ -105,7 +101,7 @@ public class AccumuloEventStore implements EventStore {
         this.connector = connector;
         this.indexTable = indexTable;
         this.shardTable = shardTable;
-        this.typeRegistry = ACCUMULO_TYPES;
+        this.typeRegistry = LEXI_TYPES;
         this.config = config;
         this.shardBuilder = DEFAULT_SHARD_BUILDER;
 
@@ -117,10 +113,10 @@ public class AccumuloEventStore implements EventStore {
         }
 
         if(connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
-          IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
-          SummingCombiner.setCombineAllColumns(setting, true);
-          SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
-          connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorScope.class));
+            IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
+            SummingCombiner.setCombineAllColumns(setting, true);
+            SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
+            connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorScope.class));
         }
         if(!connector.tableOperations().exists(this.shardTable)) {
             connector.tableOperations().create(this.shardTable);
@@ -167,10 +163,10 @@ public class AccumuloEventStore implements EventStore {
      * @param shardBuilder
      */
     public void setShardBuilder(ShardBuilder shardBuilder) {
-      this.shardBuilder = shardBuilder;
+        this.shardBuilder = shardBuilder;
     }
 
-  /**
+    /**
      * Events get save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
      * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
      * @param events
@@ -180,10 +176,10 @@ public class AccumuloEventStore implements EventStore {
     public void save(Iterable<StoreEntry> events) {
         checkNotNull(events);
         try {
-          // key
-          Map<String, Long> indexCache = new HashMap<String, Long>();
+            // key
+            Map<String, Long> indexCache = new HashMap<String, Long>();
 
-          for(StoreEntry event : events) {
+            for(StoreEntry event : events) {
 
                 //If there are no getTuples then don't write anything to the data store.
                 if(event.getTuples() != null && !event.getTuples().isEmpty()) {
@@ -212,27 +208,27 @@ public class AccumuloEventStore implements EventStore {
                                 EMPTY_VALUE);  // forward mutation
 
                         String[] strings = new String[] {
-                          shardId,
-                          tuple.getKey(),
-                          typeRegistry.getAlias(tuple.getValue()),
-                          typeRegistry.encode(tuple.getValue()),
-                          tuple.getVisibility()
+                                shardId,
+                                tuple.getKey(),
+                                typeRegistry.getAlias(tuple.getValue()),
+                                typeRegistry.encode(tuple.getValue()),
+                                tuple.getVisibility()
                         };
 
-                      String cacheKey = join(strings, INNER_DELIM);
-                      Long count = indexCache.get(cacheKey);
-                      if(count == null)
-                        count = 0l;
-                      indexCache.put(cacheKey, ++count);
+                        String cacheKey = join(strings, INNER_DELIM);
+                        Long count = indexCache.get(cacheKey);
+                        if(count == null)
+                            count = 0l;
+                        indexCache.put(cacheKey, ++count);
 
                     }
 
                     String[] idIndex = new String[] {
-                      shardBuilder.buildShard(event.getTimestamp(), event.getId()),
-                      "@id",
-                      "string",
-                      event.getId(),
-                      ""
+                            shardBuilder.buildShard(event.getTimestamp(), event.getId()),
+                            "@id",
+                            "string",
+                            event.getId(),
+                            ""
                     };
 
                     indexCache.put(join(idIndex, INNER_DELIM), 1l);
@@ -244,16 +240,16 @@ public class AccumuloEventStore implements EventStore {
 
             for(Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
 
-              String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
-              Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
-              Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
+                String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
+                Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
+                Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
 
-              keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
-                      new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
-              valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
-                      new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
-              multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
-              multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
+                keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
+                        new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
+                valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
+                        new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
+                multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
+                multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
             }
 
             multiTableWriter.flush();
@@ -274,41 +270,41 @@ public class AccumuloEventStore implements EventStore {
     public CloseableIterable<StoreEntry> query(Date start, Date end, Node query, final Set<String> selectFields, Auths auths) {
 
 
-      try {
+        try {
 
-        BatchScanner indexScanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
-        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
+            BatchScanner indexScanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+            GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
+            QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
 
-        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-        Set<String> shards = optimizer.getShards();
+            String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+            Set<String> shards = optimizer.getShards();
 
 
-        BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
+            BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
 
-        Collection<Range> ranges = new HashSet<Range>();
-        for(String shard : shards)
-          ranges.add(new Range(shard));
+            Collection<Range> ranges = new HashSet<Range>();
+            for(String shard : shards)
+                ranges.add(new Range(shard));
 
-        scanner.setRanges(ranges);
+            scanner.setRanges(ranges);
 
-        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-        setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
-        setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+            IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+            setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
+            setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
-        scanner.addScanIterator(setting);
+            scanner.addScanIterator(setting);
 
-        if(selectFields != null && selectFields.size() > 0) {
-          setting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-          EventFieldsFilteringIterator.setSelectFields(setting, union(selectFields, optimizer.getKeysInQuery()));
-          scanner.addScanIterator(setting);
+            if(selectFields != null && selectFields.size() > 0) {
+                setting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+                EventFieldsFilteringIterator.setSelectFields(setting, union(selectFields, optimizer.getKeysInQuery()));
+                scanner.addScanIterator(setting);
+            }
+
+            return transform(closeableIterable(scanner), new QueryXform(selectFields));
+
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
         }
-
-        return transform(closeableIterable(scanner), new QueryXform(selectFields));
-
-      } catch (TableNotFoundException e) {
-        throw new RuntimeException(e);
-      }
     }
 
     /**
@@ -327,8 +323,8 @@ public class AccumuloEventStore implements EventStore {
 
             Collection<Range> ranges = new LinkedList<Range>();
             for(EventIndex uuid : uuids) {
-              if(uuid.getTimestamp() == null)
-               ranges.add(new Range(INDEX_V + "_string__" + uuid.getUuid()));
+                if(uuid.getTimestamp() == null)
+                    ranges.add(new Range(INDEX_V + "_string__" + uuid.getUuid()));
             }
 
             scanner.setRanges(ranges);
@@ -350,10 +346,10 @@ public class AccumuloEventStore implements EventStore {
 
             scanner.close();
             for(EventIndex curIndex : uuids) {
-              if(curIndex.getTimestamp() != null) {
-                String shardId = shardBuilder.buildShard(curIndex.getTimestamp(), curIndex.getUuid());
-                ranges.add(Range.prefix(shardId, curIndex.getUuid()));
-              }
+                if(curIndex.getTimestamp() != null) {
+                    String shardId = shardBuilder.buildShard(curIndex.getTimestamp(), curIndex.getUuid());
+                    ranges.add(Range.prefix(shardId, curIndex.getUuid()));
+                }
             }
 
             eventScanner.setRanges(eventRanges);
@@ -362,9 +358,9 @@ public class AccumuloEventStore implements EventStore {
             eventScanner.addScanIterator(iteratorSetting);
 
             if(selectFields != null && selectFields.size() > 0) {
-              iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-              EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
-              eventScanner.addScanIterator(iteratorSetting);
+                iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+                EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+                eventScanner.addScanIterator(iteratorSetting);
             }
 
             return transform(closeableIterable(eventScanner), new WholeColFXForm());
@@ -377,24 +373,24 @@ public class AccumuloEventStore implements EventStore {
 
     public static class QueryXform extends KeyToTupleCollectionQueryXform<StoreEntry>{
 
-      public QueryXform(Set<String> selectFields) {
-        super(kryo, typeRegistry, selectFields);
-      }
+        public QueryXform(Set<String> selectFields) {
+            super(kryo, typeRegistry, selectFields);
+        }
 
-      @Override
-      protected StoreEntry buildTupleCollectionFromKey(Key k) {
-        return new StoreEntry(k.getColumnFamily().toString(), k.getTimestamp());
-      }
+        @Override
+        protected StoreEntry buildTupleCollectionFromKey(Key k) {
+            return new StoreEntry(k.getColumnFamily().toString(), k.getTimestamp());
+        }
     }
 
     public static class WholeColFXForm extends KeyToTupleCollectionWholeColFXform<StoreEntry> {
-      public WholeColFXForm() {
-        super(kryo, typeRegistry, null);
-      }
+        public WholeColFXForm() {
+            super(kryo, typeRegistry, null);
+        }
 
-      @Override
-      protected StoreEntry buildEntryFromKey(Key k) {
-        return new StoreEntry(k.getColumnFamily().toString(), k.getTimestamp());
-      }
+        @Override
+        protected StoreEntry buildEntryFromKey(Key k) {
+            return new StoreEntry(k.getColumnFamily().toString(), k.getTimestamp());
+        }
     };
 }

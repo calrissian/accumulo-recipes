@@ -38,7 +38,7 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.Validate.*;
-import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.integerEncoder;
+import static org.calrissian.mango.types.LexiTypeEncoders.integerEncoder;
 
 /**
  * An accumulo representation of the blob store. For purposes of simplicity, current implementation only stores data

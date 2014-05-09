@@ -27,7 +27,6 @@ import org.calrissian.accumlorecipes.changelog.ChangelogStore;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.iterator.BucketHashIterator;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
-import org.calrissian.accumlorecipes.changelog.support.Utils;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
@@ -44,12 +43,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Map.Entry;
 import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
-import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestamp;
-import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
-import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.*;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
-import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
  * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent
@@ -101,7 +98,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
         this.tableName = tableName;
         this.config = config;
         this.bucketSize = bucketSize;
-        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(ACCUMULO_TYPES)); //TODO allow caller to pass in types.
+        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(LEXI_TYPES)); //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);

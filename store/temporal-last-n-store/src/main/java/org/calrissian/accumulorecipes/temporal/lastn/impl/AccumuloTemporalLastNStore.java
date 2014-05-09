@@ -30,8 +30,8 @@ import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
-import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
@@ -54,7 +54,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     public AccumuloTemporalLastNStore(Connector connector, String tableName, StoreConfig config) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         this.connector = connector;
         this.tableName = tableName;
-        this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
+        this.typeRegistry = LEXI_TYPES; //TODO allow caller to pass in types.
 
         if(!connector.tableOperations().exists(this.tableName))
             connector.tableOperations().create(this.tableName, false);
