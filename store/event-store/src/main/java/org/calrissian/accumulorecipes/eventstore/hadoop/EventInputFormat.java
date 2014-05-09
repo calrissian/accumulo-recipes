@@ -60,7 +60,6 @@ public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
     for(String shard : optimizer.getShards())
       ranges.add(new Range(shard));
 
-
     setRanges(config, ranges);
 
     IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);

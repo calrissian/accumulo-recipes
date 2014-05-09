@@ -28,7 +28,7 @@ public class CriteriaReorderVisitorTest {
     cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
 
     Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
-            .endStatement().endStatement().build();
+            .end().end().build();
 
     node.accept(new CardinalityReorderVisitor(cardinalities));
 

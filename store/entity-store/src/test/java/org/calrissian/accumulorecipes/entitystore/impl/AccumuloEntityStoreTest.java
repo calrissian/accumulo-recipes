@@ -118,7 +118,7 @@ public class AccumuloEntityStoreTest {
 
     store.save(asList(entity, entity2));
 
-    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
+    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
     Iterable<Entity> itr = store.query(singleton("type"), query, singleton("key1"), new Auths());
 
@@ -145,7 +145,7 @@ public class AccumuloEntityStoreTest {
 
     store.save(asList(entity, entity2));
 
-    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").endStatement().build();
+    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
     Iterator<Entity> itr = store.query(singleton("type"), query, null, new Auths()).iterator();
 
@@ -182,7 +182,7 @@ public class AccumuloEntityStoreTest {
 
     store.save(asList(entity, entity2));
 
-    Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").endStatement().build();
+    Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").end().build();
 
     Iterator<Entity> itr = store.query(singleton("type"), query, null, new Auths()).iterator();
 
@@ -264,7 +264,7 @@ public class AccumuloEntityStoreTest {
             .notEq("ip", "2.2.2.2")
             .notEq("ip", "4.4.4.4")
             .eq("hasIp", "true")
-            .endStatement().build();
+            .end().build();
 
     Iterator<Entity> itr = store.query(singleton("type"), query, null, new Auths()).iterator();
 
