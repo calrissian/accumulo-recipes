@@ -43,7 +43,7 @@ import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
-import static org.calrissian.mango.accumulo.types.AccumuloTypeEncoders.ACCUMULO_TYPES;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
  * Accumulo implementation of the LastN Store. This will try to create and configure the necessary table and properties
@@ -102,7 +102,7 @@ public class AccumuloLastNStore implements LastNStore {
 
         this.connector = connector;
         this.tableName = tableName;
-        this.typeRegistry = ACCUMULO_TYPES; //TODO allow caller to pass in types.
+        this.typeRegistry = LEXI_TYPES; //TODO allow caller to pass in types.
         this.objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
 
         if(!connector.tableOperations().exists(this.tableName)) {
