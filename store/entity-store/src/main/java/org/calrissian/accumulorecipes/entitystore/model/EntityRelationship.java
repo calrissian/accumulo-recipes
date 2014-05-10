@@ -1,5 +1,7 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import org.calrissian.mango.domain.Entity;
+
 /**
  * Models a relationship to an entity.
  */

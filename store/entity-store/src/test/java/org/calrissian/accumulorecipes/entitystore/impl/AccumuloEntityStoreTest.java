@@ -25,11 +25,12 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.entitystore.model.Entity;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.BaseEntity;
+import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -55,11 +56,11 @@ public class AccumuloEntityStoreTest {
     Connector connector = getConnector();
     AccumuloEntityStore store = new AccumuloEntityStore(connector);
 
-    Entity entity = new Entity("type", "id");
+    Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
 
-    Entity entity2 = new Entity("type", "id2");
+    Entity entity2 = new BaseEntity("type", "id2");
     entity2.put(new Tuple("key1", "val1", ""));
     entity2.put(new Tuple("key2", "val2", ""));
 
@@ -85,11 +86,11 @@ public class AccumuloEntityStoreTest {
     Connector connector = getConnector();
     AccumuloEntityStore store = new AccumuloEntityStore(connector);
 
-    Entity entity = new Entity("type", "id");
+    Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
 
-    Entity entity2 = new Entity("type", "id2");
+    Entity entity2 = new BaseEntity("type", "id2");
     entity2.put(new Tuple("key1", "val1", ""));
     entity2.put(new Tuple("key2", "val2", ""));
 
@@ -108,11 +109,11 @@ public class AccumuloEntityStoreTest {
   public void testQuery_withSelection() throws Exception {
     AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
 
-    Entity entity = new Entity("type", "id");
+    Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
 
-    Entity entity2 = new Entity("type", "id2");
+    Entity entity2 = new BaseEntity("type", "id2");
     entity2.put(new Tuple("key1", "val1", ""));
     entity2.put(new Tuple("key2", "val2", ""));
 
@@ -135,11 +136,11 @@ public class AccumuloEntityStoreTest {
   public void testQuery_AndQuery() throws Exception {
     AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
 
-    Entity entity = new Entity("type", "id");
+    Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
 
-    Entity entity2 = new Entity("type", "id2");
+    Entity entity2 = new BaseEntity("type", "id2");
     entity2.put(new Tuple("key1", "val1", ""));
     entity2.put(new Tuple("key2", "val2", ""));
 
@@ -172,11 +173,11 @@ public class AccumuloEntityStoreTest {
   public void testQuery_OrQuery() throws Exception {
     AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
 
-    Entity entity = new Entity("type", "id");
+    Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
 
-    Entity entity2 = new Entity("type", "id3");
+    Entity entity2 = new BaseEntity("type", "id3");
     entity2.put(new Tuple("key1", "val1", ""));
     entity2.put(new Tuple("key3", "val3", ""));
 
@@ -207,11 +208,11 @@ public class AccumuloEntityStoreTest {
   public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
     AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
 
-    Entity entity = new Entity("type", "id");
+    Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
 
-    Entity entity2 = new Entity("type", "id2");
+    Entity entity2 = new BaseEntity("type", "id2");
     entity2.put(new Tuple("key1", "val1", ""));
     entity2.put(new Tuple("key3", "val3", ""));
 
@@ -244,15 +245,15 @@ public class AccumuloEntityStoreTest {
   public void testQuery_MultipleNotInQuery() throws Exception {
     AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
 
-    Entity entity = new Entity("type", "id");
+    Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("hasIp", "true", ""));
     entity.put(new Tuple("ip", "1.1.1.1", ""));
 
-    Entity entity2 = new Entity("type", "id2");
+    Entity entity2 = new BaseEntity("type", "id2");
     entity2.put(new Tuple("hasIp", "true", ""));
     entity2.put(new Tuple("ip", "2.2.2.2", ""));
 
-    Entity entity3 = new Entity("type", "id3");
+    Entity entity3 = new BaseEntity("type", "id3");
     entity3.put(new Tuple("hasIp", "true", ""));
     entity3.put(new Tuple("ip", "3.3.3.3", ""));
 

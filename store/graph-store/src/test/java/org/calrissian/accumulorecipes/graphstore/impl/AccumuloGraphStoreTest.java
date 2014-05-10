@@ -5,21 +5,25 @@ import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
-import org.calrissian.accumulorecipes.entitystore.model.Entity;
-import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
+import org.calrissian.accumulorecipes.graphstore.model.Direction;
+import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
+import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.domain.BaseEntity;
+import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
-
-import static org.calrissian.accumulorecipes.graphstore.model.Edge.*;
 
 public class AccumuloGraphStoreTest {
 
-  private AccumuloEntityStore graphStore;
+  private AccumuloEntityGraphStore graphStore;
   private Connector connector;
 
   @Before
@@ -32,17 +36,13 @@ public class AccumuloGraphStoreTest {
   @Test
   public void testSave() throws TableNotFoundException {
 
-    Entity vertex1 = new Entity("vertex", "id1");
-    Entity edge = new Entity("edge", "edgeId");
-    Entity vertex2 = new Entity("vertex", "id2");
+    Entity vertex1 = new BaseEntity("vertex", "id1");
+    Entity vertex2 = new BaseEntity("vertex", "id2");
+    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, vertex2, "label1");
 
     vertex1.put(new Tuple("key1", "val1", ""));
     vertex1.put(new Tuple("key2", "val2", ""));
-    edge.put(new Tuple(HEAD, new EntityRelationship(vertex1), ""));
-    edge.put(new Tuple(TAIL, new EntityRelationship(vertex2), ""));
-    edge.put(new Tuple(LABEL, "label1", ""));
     vertex2.put(new Tuple("key3", "val3", ""));
-
     vertex2.put(new Tuple("key4", "val4", ""));
 
     graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
@@ -51,7 +51,36 @@ public class AccumuloGraphStoreTest {
     for(Map.Entry<Key,Value> entry : scanner) {
       System.out.println(entry);
     }
+  }
 
+  @Test
+  public void testAdjacentEdges_withLabels() throws TableNotFoundException {
 
+    Entity vertex1 = new BaseEntity("vertex", "id1");
+    Entity vertex2 = new BaseEntity("vertex", "id2");
+    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, vertex2, "label1");
+
+    vertex1.put(new Tuple("key1", "val1", ""));
+    vertex1.put(new Tuple("key2", "val2", ""));
+    vertex2.put(new Tuple("key3", "val3", ""));
+    vertex2.put(new Tuple("key4", "val4", ""));
+
+    graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
+
+    CloseableIterable<Entity> results = graphStore.adjacentEdges(Arrays.asList(new Entity[] {vertex1}),
+      new QueryBuilder().eq("edgeLabel", "label1").build(),
+      Direction.OUT,
+      Collections.singleton("label1"),
+      new Auths()
+    );
+
+    for(Entity entity : results) {
+      System.out.println(entity);
+    }
+
+    Scanner scanner = connector.createScanner("entityStore_graph", new Authorizations());
+    for(Map.Entry<Key,Value> entry : scanner) {
+      System.out.println(entry);
+    }
   }
 }

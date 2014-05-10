@@ -9,9 +9,11 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 
 public class RelationshipTypeEncoder implements TypeEncoder<EntityRelationship, String>{
 
+  public static final String ALIAS = "entityRelationship";
+
   @Override
   public String getAlias() {
-    return "entityRelationship";
+    return ALIAS;
   }
 
   @Override
@@ -26,7 +28,7 @@ public class RelationshipTypeEncoder implements TypeEncoder<EntityRelationship, 
 
   @Override
   public EntityRelationship decode(String s) throws TypeDecodingException {
-    String rel = s.substring(s.indexOf("entity://"), s.length());
+    String rel = s.substring(9, s.length());
     String[] parts = splitPreserveAllTokens(rel, "#");
     return new EntityRelationship(parts[0], parts[1]);
   }

@@ -19,12 +19,13 @@ import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
-import org.calrissian.accumulorecipes.entitystore.model.Entity;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.BaseEntity;
+import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -315,7 +316,7 @@ public class AccumuloEntityStore implements EntityStore {
     @Override
     protected Entity buildTupleCollectionFromKey(Key k) {
       String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
-      return new Entity(typeId[0], typeId[1]);
+      return new BaseEntity(typeId[0], typeId[1]);
     }
   }
 
@@ -327,7 +328,7 @@ public class AccumuloEntityStore implements EntityStore {
     @Override
     protected Entity buildEntryFromKey(Key k) {
       String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
-      return new Entity(typeId[0], typeId[1]);
+      return new BaseEntity(typeId[0], typeId[1]);
     }
 
   }

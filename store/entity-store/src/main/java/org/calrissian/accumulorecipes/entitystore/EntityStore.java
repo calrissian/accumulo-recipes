@@ -2,10 +2,10 @@ package org.calrissian.accumulorecipes.entitystore;
 
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.entitystore.model.Entity;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Entity;
 
 import java.util.Set;
 

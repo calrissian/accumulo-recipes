@@ -1,6 +1,8 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
 import org.apache.hadoop.io.WritableComparable;
+import org.calrissian.mango.domain.BaseEntity;
+import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;
@@ -47,7 +49,7 @@ public class EntityWritable implements WritableComparable {
         String entityType = dataInput.readUTF();
         String id = dataInput.readUTF();
 
-        entity = new Entity(id, entityType);
+        entity = new BaseEntity(entityType, id);
         for(int i = 0; i < dataInput.readInt(); i++) {
             String key = dataInput.readUTF();
             String type = dataInput.readUTF();
