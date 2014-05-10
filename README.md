@@ -15,6 +15,7 @@ Be sure to check the README files at the root of each store's folder to get deta
 - Changelog Store: This store is for distributed systems that need to be able to summarize data for determining how it may differ from other data.
 - Event Store: This is a document store for time-based events that shards the data to make it very scalable to store. It provides a query language for finding events of interest.
 - Geospatial Store: This store indexes events under geohashes. The data is partitioned in a way where even geopoints that are geographically close to each other can be spread evenly across the cluster. The events can be queried back using rectangular "bounding boxes" representing a space on the earth.
+- Graph Store: This store indexes edges of a graph so that they can be easily traversed by their vertices. It allows for breadth-first traversal and filtering.
 - Last N store: This store is essentially a window that allows events to be grouped together and evicted by count.
 - Metrics Store: Useful for aggregating counts and other statistical algorithms that can be applied associatively over units of time (minutes, hours, days, months, etc...).
 - Range Store: Allows intervals (start and stop ranges) to be indexed so that overlapping intervals can be queried back easily.
