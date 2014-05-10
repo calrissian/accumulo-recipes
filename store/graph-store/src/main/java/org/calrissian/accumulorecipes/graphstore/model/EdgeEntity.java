@@ -5,6 +5,8 @@ import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class EdgeEntity extends BaseEntity {
 
   public static final String HEAD = "head";
@@ -13,6 +15,12 @@ public class EdgeEntity extends BaseEntity {
 
   public EdgeEntity(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
     super(type, id);
+
+    checkNotNull(head);
+    checkNotNull(headVis);
+    checkNotNull(tail);
+    checkNotNull(tailVis);
+    checkNotNull(label);
 
     put(new Tuple(HEAD, new EntityRelationship(head), headVis));
     put(new Tuple(TAIL, new EntityRelationship(tail), tailVis));
