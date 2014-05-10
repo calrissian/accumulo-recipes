@@ -174,6 +174,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
   }
 
+  /**
+   * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex
+   */
   private class EdgeRowXform implements Function<Map.Entry<Key, Value>, EntityIndex> {
 
     private boolean edges;
@@ -190,7 +193,6 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
       String edge = cq.substring(startIdx, endIdx);
       try {
         EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-        System.out.println(rel);
         return new EntityIndex(rel.getTargetType(), rel.getTargetId());
       } catch (TypeDecodingException e) {
         throw new RuntimeException(e);
@@ -216,7 +218,6 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
           String edgeEncoded = ENTITY_TYPES.encode(edgeRelationship);
           Mutation forward = new Mutation(fromEncoded);
           Mutation reverse = new Mutation(toEncoded);
-
 
           // todo: the visibility tree needs to be combined for the LABEL, TAIL, and HEAD
 
