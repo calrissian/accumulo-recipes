@@ -5,7 +5,6 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.Entity;
 import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
@@ -13,13 +12,8 @@ import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.Edge;
 import org.calrissian.accumulorecipes.graphstore.model.Vertex;
-import org.calrissian.mango.accumulo.types.AccumuloTypeEncoders;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.types.TypeEncoder;
-import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
-import org.mortbay.component.Container;
 
 import java.util.Set;
 
@@ -27,9 +21,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
-import static org.calrissian.accumulorecipes.graphstore.model.Edge.HEAD;
-import static org.calrissian.accumulorecipes.graphstore.model.Edge.LABEL;
-import static org.calrissian.accumulorecipes.graphstore.model.Edge.TAIL;
+import static org.calrissian.accumulorecipes.graphstore.model.Edge.*;
 
 public class AccumuloEntityGraphStore extends AccumuloEntityStore implements GraphStore {
 
@@ -67,6 +59,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                                                Direction direction,
                                                Set<String> labels,
                                                Auths auths) {
+
+    // this one is fairly easy- return the adjacent edges\
     return null;
   }
 
