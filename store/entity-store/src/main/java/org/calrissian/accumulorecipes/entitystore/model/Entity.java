@@ -65,7 +65,7 @@ public class Entity implements TupleCollection{
   /**
    * A get operation for single-valued keys
    */
-  public Tuple get(String key) {
+  public <T>Tuple<T> get(String key) {
     return tuples.get(key) != null ? tuples.get(key).iterator().next() : null;
   }
  }

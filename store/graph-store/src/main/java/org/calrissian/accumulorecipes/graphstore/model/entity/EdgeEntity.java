@@ -8,4 +8,6 @@ public class EdgeEntity extends Entity implements Edge {
   public EdgeEntity(String type, String id) {
     super(type, id);
   }
+
+
 }
