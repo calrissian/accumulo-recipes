@@ -245,6 +245,12 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
   }
 
+  @Override
+  public void shutdown() throws MutationsRejectedException {
+    super.shutdown();
+    writer.close();
+  }
+
   private boolean isEdge(Entity entity) {
     return entity.get(HEAD) != null &&
            entity.get(TAIL) != null &&
