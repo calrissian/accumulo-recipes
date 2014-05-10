@@ -16,17 +16,16 @@ import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.support.TupleCollectionCriteriaPredicate;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 
 import java.util.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.partition;
 import static com.google.common.collect.Iterables.transform;
+import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder.ALIAS;
@@ -73,8 +72,33 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                                                  Direction direction,
                                                  Set<String> labels,
                                                  final Auths auths) {
-
     checkNotNull(labels);
+    return adjacencies(fromVertices, query, direction, labels, auths, true);
+  }
+
+  @Override
+  public CloseableIterable<Entity> adjacentEdges(Iterable<Entity> fromVertices, Node query, Direction direction, final Auths auths) {
+    return adjacencies(fromVertices, query, direction, null, auths, true);
+  }
+
+  @Override
+  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices,
+                                               Node query, Direction direction,
+                                               Set<String> labels,
+                                               final Auths auths) {
+    checkNotNull(labels);
+    return adjacencies(fromVertices, query, direction, labels, auths, false);
+  }
+
+  @Override
+  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices, Node query, Direction direction, final Auths auths) {
+    return adjacencies(fromVertices, query, direction, null, auths, false);
+  }
+
+  private CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices,
+                                                Node query, Direction direction,
+                                                Set<String> labels,
+                                                final Auths auths, final boolean edges) {
     checkNotNull(fromVertices);
     checkNotNull(auths);
 
@@ -89,26 +113,27 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
       for(Entity entity : fromVertices) {
 
         String row = ENTITY_TYPES.encode(new EntityRelationship(entity));
-        for(String label : labels) {
-          if(direction == Direction.IN || direction == Direction.BOTH)
-            ranges.add(Range.prefix(row, Direction.IN.toString() + DELIM + label));
-          if(direction == Direction.OUT || direction == Direction.BOTH)
-            ranges.add(Range.prefix(row, Direction.OUT.toString() + DELIM + label));
-        }
+        if(labels != null) {
+          for(String label : labels)
+            populateRange(ranges, row, direction, label);
+        } else
+          populateRange(ranges, row, direction, null);
+
       }
 
       scanner.setRanges(ranges);
 
       CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), 50),
           new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
-
             @Override
             public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
               return get(transform(entries, new Function<Map.Entry<Key, Value>, EntityIndex>() {
                 @Override
                 public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
                   String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-                  String edge = cq.substring(0, cq.indexOf(DELIM));
+                  int idx = cq.indexOf(DELIM);
+                  if(!edges) idx++;
+                  String edge = cq.substring(idx, cq.length());
                   try {
                     EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
                     return new EntityIndex(rel.getTargetType(), rel.getTargetId());
@@ -132,181 +157,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
   }
 
-  @Override
-  public CloseableIterable<Entity> adjacentEdges(Iterable<Entity> fromVertices, Node query, Direction direction, final Auths auths) {
-    checkNotNull(fromVertices);
-    checkNotNull(auths);
-
-    TupleCollectionCriteriaPredicate filter =
-            query != null ? new TupleCollectionCriteriaPredicate(criteriaFromNode(query)) : null;
-
-    // this one is fairly easy- return the adjacent edges that match the given query
-    try {
-      BatchScanner scanner = getConnector().createBatchScanner(table, auths.getAuths(), getConfig().getMaxQueryThreads());
-
-      Collection<Range> ranges = new ArrayList<Range>();
-      for(Entity entity : fromVertices) {
-
-        String row = ENTITY_TYPES.encode(new EntityRelationship(entity));
-        if(direction == Direction.IN || direction == Direction.BOTH)
-          ranges.add(Range.prefix(row, Direction.IN.toString()));
-        if(direction == Direction.OUT || direction == Direction.BOTH)
-          ranges.add(Range.prefix(row, Direction.OUT.toString()));
-      }
-
-      scanner.setRanges(ranges);
-
-      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), 50),
-                      new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
-
-                        @Override
-                        public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-                          return get(transform(entries, new Function<Map.Entry<Key, Value>, EntityIndex>() {
-                            @Override
-                            public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
-                              String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-                              String edge = cq.substring(0, cq.indexOf(DELIM));
-                              try {
-                                EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-                                return new EntityIndex(rel.getTargetType(), rel.getTargetId());
-                              } catch (TypeDecodingException e) {
-                                throw new RuntimeException(e);
-                              }
-                            }
-                          }), null, auths);
-                        }
-                      }
-              )
-      ));
-
-      if(filter != null)
-        return filter(entities, filter);
-      else
-        return entities;
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices,
-                                               Node query, Direction direction,
-                                               Set<String> labels,
-                                               final Auths auths) {
-
-    checkNotNull(fromVertices);
-    checkNotNull(auths);
-
-    TupleCollectionCriteriaPredicate filter =
-            query != null ? new TupleCollectionCriteriaPredicate(criteriaFromNode(query)) : null;
-
-    // this one is fairly easy- return the adjacent edges that match the given query
-    try {
-      BatchScanner scanner = getConnector().createBatchScanner(table, auths.getAuths(), getConfig().getMaxQueryThreads());
-
-      Collection<Range> ranges = new ArrayList<Range>();
-      for(Entity entity : fromVertices) {
-
-        for(String label : labels) {
-          String row = ENTITY_TYPES.encode(new EntityRelationship(entity));
-          if(direction == Direction.IN || direction == Direction.BOTH)
-            ranges.add(Range.prefix(row, Direction.IN.toString() + DELIM + label));
-          if(direction == Direction.OUT || direction == Direction.BOTH) {
-            ranges.add(Range.prefix(row, Direction.OUT.toString() + DELIM + label));
-          }
-        }
-      }
-
-      scanner.setRanges(ranges);
-
-      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), 50),
-                      new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
-
-                        @Override
-                        public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-                          return get(transform(entries, new Function<Map.Entry<Key, Value>, EntityIndex>() {
-                            @Override
-                            public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
-                              String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-                              String edge = cq.substring(cq.indexOf(DELIM)+1, cq.length());
-                              try {
-                                EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-                                return new EntityIndex(rel.getTargetType(), rel.getTargetId());
-                              } catch (TypeDecodingException e) {
-                                throw new RuntimeException(e);
-                              }
-                            }
-                          }), null, auths);
-                        }
-                      }
-              )
-      ));
-
-      if(filter != null)
-        return filter(entities, filter);
-      else
-        return entities;
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }    }
-
-  @Override
-  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices, Node query, Direction direction, final Auths auths) {
-    checkNotNull(fromVertices);
-    checkNotNull(auths);
-
-    TupleCollectionCriteriaPredicate filter =
-            query != null ? new TupleCollectionCriteriaPredicate(criteriaFromNode(query)) : null;
-
-    // this one is fairly easy- return the adjacent edges that match the given query
-    try {
-      BatchScanner scanner = getConnector().createBatchScanner(table, auths.getAuths(), getConfig().getMaxQueryThreads());
-
-      Collection<Range> ranges = new ArrayList<Range>();
-      for(Entity entity : fromVertices) {
-
-        String row = ENTITY_TYPES.encode(new EntityRelationship(entity));
-        if(direction == Direction.IN || direction == Direction.BOTH)
-          ranges.add(Range.prefix(row, Direction.IN.toString()));
-        if(direction == Direction.OUT || direction == Direction.BOTH) {
-          ranges.add(Range.prefix(row, Direction.OUT.toString()));
-        }
-      }
-
-      scanner.setRanges(ranges);
-
-      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), 50),
-        new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
-
-          @Override
-          public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-            return get(transform(entries, new Function<Map.Entry<Key, Value>, EntityIndex>() {
-              @Override
-              public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
-                String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-                String edge = cq.substring(cq.indexOf(DELIM)+1, cq.length());
-                try {
-                  EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-                  return new EntityIndex(rel.getTargetType(), rel.getTargetId());
-                } catch (TypeDecodingException e) {
-                  throw new RuntimeException(e);
-                }
-              }
-            }), null, auths);
-          }
-        }
-      )
-      ));
-
-      if(filter != null)
-        return filter(entities, filter);
-      else
-        return entities;
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+  private void populateRange(Collection<Range> ranges, String row, Direction direction, String label) {
+    if(direction == Direction.IN || direction == Direction.BOTH)
+      ranges.add(Range.prefix(row, Direction.IN.toString() + DELIM + defaultString(label)));
+    if(direction == Direction.OUT || direction == Direction.BOTH) {
+      ranges.add(Range.prefix(row, Direction.OUT.toString() + DELIM + defaultString(label)));
     }
   }
 
