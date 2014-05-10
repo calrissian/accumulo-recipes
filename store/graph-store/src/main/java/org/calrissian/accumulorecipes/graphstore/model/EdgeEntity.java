@@ -11,12 +11,16 @@ public class EdgeEntity extends BaseEntity {
   public static final String TAIL = "tail";
   public static final String LABEL = "edgeLabel";
 
-  public EdgeEntity(String type, String id, Entity head, Entity tail, String label) {
+  public EdgeEntity(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
     super(type, id);
 
-    put(new Tuple(HEAD, new EntityRelationship(head)));
-    put(new Tuple(TAIL, new EntityRelationship(tail)));
+    put(new Tuple(HEAD, new EntityRelationship(head), headVis));
+    put(new Tuple(TAIL, new EntityRelationship(tail), tailVis));
     put(new Tuple(LABEL, label));
+  }
+
+  public EdgeEntity(String type, String id, Entity head, Entity tail, String label) {
+    this(type, id, head, "", tail, "", label);
   }
 
   public EdgeEntity(Entity entity) {

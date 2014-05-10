@@ -46,16 +46,16 @@ public class AccumuloGraphStoreTest {
 
     Entity vertex1 = new BaseEntity("vertex", "id1");
     Entity vertex2 = new BaseEntity("vertex", "id2");
-    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, vertex2, "label1");
+    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, "ADMIN", vertex2, "ADMIN", "label1");
 
-    vertex1.put(new Tuple("key1", "val1", ""));
-    vertex1.put(new Tuple("key2", "val2", ""));
-    vertex2.put(new Tuple("key3", "val3", ""));
-    vertex2.put(new Tuple("key4", "val4", ""));
+    vertex1.put(new Tuple("key1", "val1", "U"));
+    vertex1.put(new Tuple("key2", "val2", "U"));
+    vertex2.put(new Tuple("key3", "val3", "U"));
+    vertex2.put(new Tuple("key4", "val4", "U"));
 
     graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
 
-    Scanner scanner = connector.createScanner("entityStore_graph", new Authorizations());
+    Scanner scanner = connector.createScanner("entityStore_graph", new Authorizations("ADMIN,U".getBytes()));
     for(Map.Entry<Key,Value> entry : scanner) {
       System.out.println(entry);
     }

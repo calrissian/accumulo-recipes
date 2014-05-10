@@ -6,6 +6,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
@@ -211,6 +212,10 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         EntityRelationship edgeRelationship = new EntityRelationship(entity);
         EntityRelationship toVertex = entity.<EntityRelationship>get(TAIL).getValue();
         EntityRelationship fromVertex = entity.<EntityRelationship>get(HEAD).getValue();
+
+        String toVertexVis = entity.get(TAIL).getVisibility();
+        String fromVertexVis = entity.get(HEAD).getVisibility();
+
         String label = entity.<String>get(LABEL).getValue();
         try {
           String fromEncoded = ENTITY_TYPES.encode(fromVertex);
@@ -219,10 +224,10 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
           Mutation forward = new Mutation(fromEncoded);
           Mutation reverse = new Mutation(toEncoded);
 
-          // todo: the visibility tree needs to be combined for the LABEL, TAIL, and HEAD
-
-          forward.put(new Text(OUT.toString() + DELIM + label), new Text(edgeEncoded + DELIM + toEncoded), EMPTY_VALUE);
-          reverse.put(new Text(IN.toString() + DELIM + label), new Text(edgeEncoded + DELIM + fromEncoded), EMPTY_VALUE);
+          forward.put(new Text(OUT.toString() + DELIM + label), new Text(edgeEncoded + DELIM + toEncoded),
+                  new ColumnVisibility(toVertexVis), EMPTY_VALUE);
+          reverse.put(new Text(IN.toString() + DELIM + label), new Text(edgeEncoded + DELIM + fromEncoded),
+                  new ColumnVisibility(fromVertexVis), EMPTY_VALUE);
 
           writer.addMutation(forward);
           writer.addMutation(reverse);
