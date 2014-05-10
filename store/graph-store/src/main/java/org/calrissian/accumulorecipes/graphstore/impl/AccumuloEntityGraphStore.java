@@ -1,6 +1,7 @@
 package org.calrissian.accumulorecipes.graphstore.impl;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -18,7 +19,6 @@ import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.support.TupleCollectionCriteriaPredicate;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.types.exception.TypeDecodingException;
@@ -26,8 +26,6 @@ import org.calrissian.mango.types.exception.TypeDecodingException;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.partition;
-import static com.google.common.collect.Iterables.transform;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
@@ -84,7 +82,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                                                  final Auths auths) {
     checkNotNull(labels);
     final CloseableIterable<Entity> entities = adjacencies(fromVertices, query, direction, labels, auths, true);
-    return CloseableIterables.transform(entities, new Function<Entity, EdgeEntity>() {
+    return transform(entities, new Function<Entity, EdgeEntity>() {
       @Override
       public EdgeEntity apply(Entity entity) {
         return new EdgeEntity(entity);
@@ -95,7 +93,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   @Override
   public CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
     final CloseableIterable<Entity> entities = adjacencies(fromVertices, query, direction, null, auths, true);
-    return CloseableIterables.transform(entities, new Function<Entity, EdgeEntity>() {
+    return transform(entities, new Function<Entity, EdgeEntity>() {
       @Override
       public EdgeEntity apply(Entity entity) {
         return new EdgeEntity(entity);
@@ -147,15 +145,15 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
        * This partitions the initial Accumulo rows in the scanner into buffers of <bufferSize> so that the full entities
        * can be grabbed from the server in batches instead of one at a time.
        */
-      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), bufferSize),
+      CloseableIterable<Entity> entities = concat(transform(partition(closeableIterable(scanner), bufferSize),
           new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
             @Override
             public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-              return get(transform(entries, new EdgeRowXform(edges)), null, auths);
+              return get(Iterables.transform(entries, new EdgeRowXform(edges)), null, auths);
             }
           }
         )
-      ));
+      );
 
       if(filter != null)
         return filter(entities, filter);
