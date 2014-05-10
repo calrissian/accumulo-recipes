@@ -4,10 +4,9 @@ import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.apache.commons.lang.StringUtils;
-import org.calrissian.accumulorecipes.commons.domain.TupleCollection;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.TupleCollection;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 

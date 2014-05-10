@@ -29,6 +29,7 @@ limitations under the License.
     <module>entity-store</module>
     <module>event-store</module>
     <module>geospatial-store</module>
+    <module>graph-store</module>
     <module>lastn-store</module>
     <module>metrics-store</module>
     <module>range-store</module>

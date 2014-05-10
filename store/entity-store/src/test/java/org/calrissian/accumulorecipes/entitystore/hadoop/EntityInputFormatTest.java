@@ -10,9 +10,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
-import org.calrissian.accumulorecipes.entitystore.model.Entity;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.domain.BaseEntity;
+import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -34,7 +35,7 @@ public class EntityInputFormatTest {
     Instance instance = new MockInstance("instName");
     Connector connector = instance.getConnector("root", "".getBytes());
     AccumuloEntityStore store = new AccumuloEntityStore(connector);
-    entity = new Entity("type", "id");
+    entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", false, ""));
     store.save(singleton(entity));
