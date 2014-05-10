@@ -14,7 +14,7 @@ public interface GraphStore {
   CloseableIterable<Entity> adjacentEdges(Iterable<Entity> fromVertices, Node query, Direction direction,
                                           Set<String> labels, Auths auths);
 
-  CloseableIterable<EdgeEntity> adjacentEdges(Iterable<Entity> fromVertices, Node query, Direction direction, Auths auths);
+  CloseableIterable<Entity> adjacentEdges(Iterable<Entity> fromVertices, Node query, Direction direction, Auths auths);
 
   CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices, Node query, Direction direction,
                                         Set<String> labels, Auths auths);
