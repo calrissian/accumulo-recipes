@@ -123,4 +123,67 @@ public class AccumuloGraphStoreTest {
 
     results.closeQuietly();
   }
+
+  @Test
+  public void testAdjacencies_withLabels() throws TableNotFoundException {
+
+    Entity vertex1 = new BaseEntity("vertex", "id1");
+    Entity vertex2 = new BaseEntity("vertex", "id2");
+    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, vertex2, "label1");
+    edge.put(new Tuple("edgeProp1", "edgeVal1"));
+
+    vertex1.put(new Tuple("key1", "val1", ""));
+    vertex1.put(new Tuple("key2", "val2", ""));
+    vertex2.put(new Tuple("key3", "val3", ""));
+    vertex2.put(new Tuple("key4", "val4", ""));
+
+    graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
+
+    CloseableIterable<Entity> results = graphStore.adjacencies(Arrays.asList(new Entity[] {vertex1}),
+            new QueryBuilder().eq("key3", "val3").build(),
+            Direction.OUT,
+            Collections.singleton("label1"),
+            new Auths()
+    );
+
+    assertEquals(1, size(results));
+
+    Entity actualVertex2 = get(results, 0);
+    assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
+    assertEquals(vertex2.getType(), actualVertex2.getType());
+    assertEquals(vertex2.getId(), actualVertex2.getId());
+
+    results.closeQuietly();
+  }
+
+  @Test
+  public void testAdjacencies_noLabels() throws TableNotFoundException {
+
+    Entity vertex1 = new BaseEntity("vertex", "id1");
+    Entity vertex2 = new BaseEntity("vertex", "id2");
+    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, vertex2, "label1");
+    edge.put(new Tuple("edgeProp1", "edgeVal1"));
+
+    vertex1.put(new Tuple("key1", "val1", ""));
+    vertex1.put(new Tuple("key2", "val2", ""));
+    vertex2.put(new Tuple("key3", "val3", ""));
+    vertex2.put(new Tuple("key4", "val4", ""));
+
+    graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
+
+    CloseableIterable<Entity> results = graphStore.adjacencies(Arrays.asList(new Entity[] {vertex1}),
+            new QueryBuilder().eq("key3", "val3").build(),
+            Direction.OUT,
+            new Auths()
+    );
+
+    assertEquals(1, size(results));
+
+    Entity actualVertex2 = get(results, 0);
+    assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
+    assertEquals(vertex2.getType(), actualVertex2.getType());
+    assertEquals(vertex2.getId(), actualVertex2.getId());
+
+    results.closeQuietly();
+  }
 }

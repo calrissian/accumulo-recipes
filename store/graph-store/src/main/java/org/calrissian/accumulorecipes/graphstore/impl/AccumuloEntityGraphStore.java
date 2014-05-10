@@ -123,7 +123,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
       ));
 
       if(filter != null)
-        return CloseableIterables.filter(entities, filter);
+        return filter(entities, filter);
       else
         return entities;
 
@@ -180,7 +180,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
       ));
 
       if(filter != null)
-        return CloseableIterables.filter(entities, filter);
+        return filter(entities, filter);
       else
         return entities;
 
@@ -193,13 +193,121 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices,
                                                Node query, Direction direction,
                                                Set<String> labels,
-                                               Auths auths) {
-    return null;
-  }
+                                               final Auths auths) {
+
+    checkNotNull(fromVertices);
+    checkNotNull(auths);
+
+    TupleCollectionCriteriaPredicate filter =
+            query != null ? new TupleCollectionCriteriaPredicate(criteriaFromNode(query)) : null;
+
+    // this one is fairly easy- return the adjacent edges that match the given query
+    try {
+      BatchScanner scanner = getConnector().createBatchScanner(table, auths.getAuths(), getConfig().getMaxQueryThreads());
+
+      Collection<Range> ranges = new ArrayList<Range>();
+      for(Entity entity : fromVertices) {
+
+        for(String label : labels) {
+          String row = ENTITY_TYPES.encode(new EntityRelationship(entity));
+          if(direction == Direction.IN || direction == Direction.BOTH)
+            ranges.add(Range.prefix(row, Direction.IN.toString() + DELIM + label));
+          if(direction == Direction.OUT || direction == Direction.BOTH) {
+            ranges.add(Range.prefix(row, Direction.OUT.toString() + DELIM + label));
+          }
+        }
+      }
+
+      scanner.setRanges(ranges);
+
+      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), 50),
+                      new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
+
+                        @Override
+                        public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
+                          return get(transform(entries, new Function<Map.Entry<Key, Value>, EntityIndex>() {
+                            @Override
+                            public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
+                              String cq = keyValueEntry.getKey().getColumnQualifier().toString();
+                              String edge = cq.substring(cq.indexOf(DELIM)+1, cq.length());
+                              try {
+                                EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+                                return new EntityIndex(rel.getTargetType(), rel.getTargetId());
+                              } catch (TypeDecodingException e) {
+                                throw new RuntimeException(e);
+                              }
+                            }
+                          }), null, auths);
+                        }
+                      }
+              )
+      ));
+
+      if(filter != null)
+        return filter(entities, filter);
+      else
+        return entities;
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }    }
 
   @Override
-  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices, Node query, Direction direction, Auths auths) {
-    return null;
+  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices, Node query, Direction direction, final Auths auths) {
+    checkNotNull(fromVertices);
+    checkNotNull(auths);
+
+    TupleCollectionCriteriaPredicate filter =
+            query != null ? new TupleCollectionCriteriaPredicate(criteriaFromNode(query)) : null;
+
+    // this one is fairly easy- return the adjacent edges that match the given query
+    try {
+      BatchScanner scanner = getConnector().createBatchScanner(table, auths.getAuths(), getConfig().getMaxQueryThreads());
+
+      Collection<Range> ranges = new ArrayList<Range>();
+      for(Entity entity : fromVertices) {
+
+        String row = ENTITY_TYPES.encode(new EntityRelationship(entity));
+        if(direction == Direction.IN || direction == Direction.BOTH)
+          ranges.add(Range.prefix(row, Direction.IN.toString()));
+        if(direction == Direction.OUT || direction == Direction.BOTH) {
+          ranges.add(Range.prefix(row, Direction.OUT.toString()));
+        }
+      }
+
+      scanner.setRanges(ranges);
+
+      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), 50),
+        new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
+
+          @Override
+          public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
+            return get(transform(entries, new Function<Map.Entry<Key, Value>, EntityIndex>() {
+              @Override
+              public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
+                String cq = keyValueEntry.getKey().getColumnQualifier().toString();
+                String edge = cq.substring(cq.indexOf(DELIM)+1, cq.length());
+                try {
+                  EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+                  return new EntityIndex(rel.getTargetType(), rel.getTargetId());
+                } catch (TypeDecodingException e) {
+                  throw new RuntimeException(e);
+                }
+              }
+            }), null, auths);
+          }
+        }
+      )
+      ));
+
+      if(filter != null)
+        return filter(entities, filter);
+      else
+        return entities;
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
