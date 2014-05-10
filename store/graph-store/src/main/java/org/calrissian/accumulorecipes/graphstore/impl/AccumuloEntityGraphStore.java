@@ -40,7 +40,10 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
   public static final String DEFAULT_TABLE_NAME = "entityStore_graph";
 
+  public static final int DEFAULT_BUFFER_SIZE = 50;
+
   protected String table;
+  protected int bufferSize = DEFAULT_BUFFER_SIZE;
 
   protected BatchWriter writer;
 
@@ -64,6 +67,10 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
     writer = getConnector().createBatchWriter(table, getConfig().getMaxMemory(), getConfig().getMaxLatency(),
             getConfig().getMaxWriteThreads());
+  }
+
+  public void setBufferSize(int bufferSize) {
+    this.bufferSize = bufferSize;
   }
 
   @Override
@@ -123,25 +130,15 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
       scanner.setRanges(ranges);
 
-      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), 50),
+      /**
+       * This partitions the initial Accumulo rows in the scanner into buffers of <bufferSize> so that the full entities
+       * can be grabbed from the server in batches instead of one at a time. 
+       */
+      CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), bufferSize),
           new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
             @Override
             public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-              return get(transform(entries, new Function<Map.Entry<Key, Value>, EntityIndex>() {
-                @Override
-                public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
-                  String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-                  int idx = cq.indexOf(DELIM);
-                  if(!edges) idx++;
-                  String edge = cq.substring(idx, cq.length());
-                  try {
-                    EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-                    return new EntityIndex(rel.getTargetType(), rel.getTargetId());
-                  } catch (TypeDecodingException e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-              }), null, auths);
+              return get(transform(entries, new EdgeRowXform(edges)), null, auths);
             }
           }
         )
@@ -164,6 +161,29 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
       ranges.add(Range.prefix(row, Direction.OUT.toString() + DELIM + defaultString(label)));
     }
   }
+
+  private class EdgeRowXform implements Function<Map.Entry<Key, Value>, EntityIndex> {
+
+    private boolean edges;
+
+    private EdgeRowXform(boolean edges) {
+      this.edges = edges;
+    }
+
+    @Override
+    public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
+      String cq = keyValueEntry.getKey().getColumnQualifier().toString();
+      int idx = cq.indexOf(DELIM);
+      if(!edges) idx++;
+      String edge = cq.substring(idx, cq.length());
+      try {
+        EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+        return new EntityIndex(rel.getTargetType(), rel.getTargetId());
+      } catch (TypeDecodingException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  });
 
   @Override
   public void save(Iterable<Entity> entities) {
