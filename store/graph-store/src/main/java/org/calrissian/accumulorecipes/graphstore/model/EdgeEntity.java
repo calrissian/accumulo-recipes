@@ -19,6 +19,11 @@ public class EdgeEntity extends BaseEntity {
     put(new Tuple(LABEL, label));
   }
 
+  public EdgeEntity(Entity entity) {
+    super(entity.getType(), entity.getId());
+    putAll(entity.getTuples());
+  }
+
   public EntityRelationship getHead() {
     if(this.get(HEAD) != null)
       return this.<EntityRelationship>get(HEAD).getValue();

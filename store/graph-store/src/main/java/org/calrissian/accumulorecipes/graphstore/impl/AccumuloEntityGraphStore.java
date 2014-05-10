@@ -14,8 +14,10 @@ import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
+import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.support.TupleCollectionCriteriaPredicate;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.types.exception.TypeDecodingException;
@@ -74,22 +76,34 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   }
 
   @Override
-  public CloseableIterable<Entity> adjacentEdges(Iterable<Entity> fromVertices,
+  public CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices,
                                                  Node query,
                                                  Direction direction,
                                                  Set<String> labels,
                                                  final Auths auths) {
     checkNotNull(labels);
-    return adjacencies(fromVertices, query, direction, labels, auths, true);
+    final CloseableIterable<Entity> entities = adjacencies(fromVertices, query, direction, labels, auths, true);
+    return CloseableIterables.transform(entities, new Function<Entity, EdgeEntity>() {
+      @Override
+      public EdgeEntity apply(Entity entity) {
+        return new EdgeEntity(entity);
+      }
+    });
   }
 
   @Override
-  public CloseableIterable<Entity> adjacentEdges(Iterable<Entity> fromVertices, Node query, Direction direction, final Auths auths) {
-    return adjacencies(fromVertices, query, direction, null, auths, true);
+  public CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
+    final CloseableIterable<Entity> entities = adjacencies(fromVertices, query, direction, null, auths, true);
+    return CloseableIterables.transform(entities, new Function<Entity, EdgeEntity>() {
+      @Override
+      public EdgeEntity apply(Entity entity) {
+        return new EdgeEntity(entity);
+      }
+    });
   }
 
   @Override
-  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices,
+  public CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices,
                                                Node query, Direction direction,
                                                Set<String> labels,
                                                final Auths auths) {
@@ -98,11 +112,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   }
 
   @Override
-  public CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices, Node query, Direction direction, final Auths auths) {
+  public CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
     return adjacencies(fromVertices, query, direction, null, auths, false);
   }
 
-  private CloseableIterable<Entity> adjacencies(Iterable<Entity> fromVertices,
+  private CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices,
                                                 Node query, Direction direction,
                                                 Set<String> labels,
                                                 final Auths auths, final boolean edges) {
@@ -117,22 +131,20 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
       BatchScanner scanner = getConnector().createBatchScanner(table, auths.getAuths(), getConfig().getMaxQueryThreads());
 
       Collection<Range> ranges = new ArrayList<Range>();
-      for(Entity entity : fromVertices) {
-
-        String row = ENTITY_TYPES.encode(new EntityRelationship(entity));
+      for(EntityIndex entity : fromVertices) {
+        String row = ENTITY_TYPES.encode(new EntityRelationship(entity.getType(), entity.getId()));
         if(labels != null) {
           for(String label : labels)
             populateRange(ranges, row, direction, label);
         } else
           populateRange(ranges, row, direction, null);
-
       }
 
       scanner.setRanges(ranges);
 
       /**
        * This partitions the initial Accumulo rows in the scanner into buffers of <bufferSize> so that the full entities
-       * can be grabbed from the server in batches instead of one at a time. 
+       * can be grabbed from the server in batches instead of one at a time.
        */
       CloseableIterable<Entity> entities = concat(wrap(transform(partition(closeableIterable(scanner), bufferSize),
           new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
@@ -173,17 +185,18 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     @Override
     public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
       String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-      int idx = cq.indexOf(DELIM);
-      if(!edges) idx++;
-      String edge = cq.substring(idx, cq.length());
+      int startIdx = edges ? 0 : cq.indexOf(DELIM)+1;
+      int endIdx = edges ? cq.indexOf(DELIM) : cq.length();
+      String edge = cq.substring(startIdx, endIdx);
       try {
         EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+        System.out.println(rel);
         return new EntityIndex(rel.getTargetType(), rel.getTargetId());
       } catch (TypeDecodingException e) {
         throw new RuntimeException(e);
       }
     }
-  });
+  };
 
   @Override
   public void save(Iterable<Entity> entities) {

@@ -8,6 +8,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
+import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -75,7 +76,7 @@ public class AccumuloGraphStoreTest {
 
     graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
 
-    CloseableIterable<Entity> results = graphStore.adjacentEdges(Arrays.asList(new Entity[] {vertex1}),
+    CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(Arrays.asList(new EntityIndex[] {new EntityIndex(vertex1.getType(), vertex1.getId())}),
       new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
       Direction.OUT,
       singleton("label1"),
@@ -108,7 +109,7 @@ public class AccumuloGraphStoreTest {
 
     graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
 
-    CloseableIterable<Entity> results = graphStore.adjacentEdges(Arrays.asList(new Entity[] {vertex1}),
+    CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(Arrays.asList(new EntityIndex[] {new EntityIndex(vertex1.getType(), vertex1.getId())}),
             new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
             Direction.OUT,
             new Auths()
@@ -139,7 +140,7 @@ public class AccumuloGraphStoreTest {
 
     graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
 
-    CloseableIterable<Entity> results = graphStore.adjacencies(Arrays.asList(new Entity[] {vertex1}),
+    CloseableIterable<Entity> results = graphStore.adjacencies(Arrays.asList(new EntityIndex[] {new EntityIndex(vertex1.getType(), vertex1.getId())}),
             new QueryBuilder().eq("key3", "val3").build(),
             Direction.OUT,
             Collections.singleton("label1"),
@@ -171,7 +172,7 @@ public class AccumuloGraphStoreTest {
 
     graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
 
-    CloseableIterable<Entity> results = graphStore.adjacencies(Arrays.asList(new Entity[] {vertex1}),
+    CloseableIterable<Entity> results = graphStore.adjacencies(Arrays.asList(new EntityIndex[] {new EntityIndex(vertex1.getType(), vertex1.getId())}),
             new QueryBuilder().eq("key3", "val3").build(),
             Direction.OUT,
             new Auths()
