@@ -1,5 +1,7 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import org.calrissian.mango.domain.Entity;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EntityIndex {
@@ -12,6 +14,10 @@ public class EntityIndex {
     checkNotNull(id);
     this.type = type;
     this.id = id;
+  }
+
+  public EntityIndex(Entity entity) {
+    this(entity.getType(), entity.getId());
   }
 
   public String getType() {
