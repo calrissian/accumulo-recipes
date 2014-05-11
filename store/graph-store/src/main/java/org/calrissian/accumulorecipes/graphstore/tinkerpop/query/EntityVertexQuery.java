@@ -167,7 +167,7 @@ public class EntityVertexQuery implements VertexQuery{
             new Function<List<Edge>, CloseableIterable<Vertex>>() {
       @Override
       public CloseableIterable<Vertex> apply(List<Edge> edges) {
-        Iterable<EntityIndex> indexes = Iterables.transform(edges, new EntityIndexXform());
+        Iterable<EntityIndex> indexes = Iterables.transform(edges, new EdgeToVertexIndexXform());
         return transform(graphStore.get(indexes, null, auths), new VertexEntityXform(graphStore,auths));
       }
     }));

@@ -4,7 +4,9 @@ import com.google.common.base.*;
 import com.tinkerpop.blueprints.*;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
+import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
+import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityElement;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
@@ -19,6 +21,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.TAIL;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 public class BlueprintsGraphStore implements Graph {
@@ -196,10 +199,12 @@ public class BlueprintsGraphStore implements Graph {
     }
   }
 
-  public static class EdgeToVertexIndexXform implements Function<Element, EntityIndex> {
+  public static class EdgeToVertexIndexXform implements Function<Edge, EntityIndex> {
+
     @Override
-    public EntityIndex apply(Element element) {
-      return new EntityIndex(((EntityElement) element).getEntity());
+    public EntityIndex apply(Edge element) {
+      EntityRelationship tail = (((EntityEdge)element).getEntity().<EntityRelationship>get(TAIL)).getValue();
+      return new EntityIndex(tail.getTargetType(), tail.getTargetId());
     }
   }
 

@@ -74,15 +74,34 @@ public class EntityVertexQueryTest {
   }
 
   @Test
-  public void testVertexIds_noQuery() {
+  public void testVertexIds_noQuery_noLabels() {
     EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
     CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().vertexIds();
+    System.out.println(vertexIds);
     assertEquals(2, Iterables.size(vertexIds));
-    assertEquals(new EntityIndex(edge), Iterables.get(vertexIds, 0));
-    assertEquals(new EntityIndex(edge2), Iterables.get(vertexIds, 1));
+    // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
+    assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 0));
+    assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 1));
+  }
+
+  @Test
+  public void testVertexIds_withLabels() {
+    EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+    CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().labels("label1").vertexIds();
+    assertEquals(1, Iterables.size(vertexIds));
+    // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
+    assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 0));
   }
 
 
+  @Test
+  public void testVertexIds_query_withLabels() {
+    EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+    CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().has("edgeProp1").labels("label1").vertexIds();
+    assertEquals(1, Iterables.size(vertexIds));
+    // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
+    assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 0));
+  }
 
   private void assertEntitiesEqual(Entity expected, Entity actual) {
 
