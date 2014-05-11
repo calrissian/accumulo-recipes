@@ -6,6 +6,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
+import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityElement;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.query.EntityGraphQuery;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -186,6 +187,14 @@ public class BlueprintsGraphStore implements Graph{
       return new EntityVertex(entity,graphStore, auths);
     }
   }
+
+  public static class EntityIndexXform implements Function<Element, EntityIndex> {
+    @Override
+    public EntityIndex apply(Element element) {
+      return new EntityIndex(((EntityElement) element).getEntity());
+    }
+  }
+
 
   @Override
   public String toString() {

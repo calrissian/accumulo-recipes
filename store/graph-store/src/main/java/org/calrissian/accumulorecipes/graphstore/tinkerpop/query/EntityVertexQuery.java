@@ -7,18 +7,17 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
-import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.Entity;
 
 import java.util.Collection;
 import java.util.List;
 
 import static com.tinkerpop.blueprints.Query.Compare.*;
 import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 
 /**
@@ -66,13 +65,7 @@ public class EntityVertexQuery implements VertexQuery{
 
   @Override
   public CloseableIterable<EntityIndex> vertexIds() {
-
-    return transform(vertices(), new Function<Vertex, EntityIndex>() {
-      @Override
-      public EntityIndex apply(Vertex vertex) {
-        return new EntityIndex(((EntityVertex) vertex).getEntity());
-      }
-    });
+    return transform(vertices(), new EntityIndexXform());
   }
 
   @Override
@@ -143,12 +136,7 @@ public class EntityVertexQuery implements VertexQuery{
     org.calrissian.accumulorecipes.graphstore.model.Direction dir =
             org.calrissian.accumulorecipes.graphstore.model.Direction.valueOf(direction.toString());
     CloseableIterable<EdgeEntity> entityEdgies = graphStore.adjacentEdges(vertexIndex, queryBuilder.build(), dir, auths);
-    CloseableIterable<Edge> finalEdges = transform(entityEdgies, new Function<EdgeEntity, Edge>() {
-      @Override
-      public Edge apply(EdgeEntity edgeEntity) {
-        return new EntityEdge(edgeEntity, graphStore, auths);
-      }
-    });
+    CloseableIterable<Edge> finalEdges = transform(entityEdgies, new EdgeEntityXform(graphStore, auths));
 
     if(limit > -1)
       return CloseableIterables.limit(finalEdges, limit);
@@ -164,19 +152,8 @@ public class EntityVertexQuery implements VertexQuery{
             new Function<List<Edge>, CloseableIterable<Vertex>>() {
       @Override
       public CloseableIterable<Vertex> apply(List<Edge> edges) {
-        Iterable<EntityIndex> indexes = Iterables.transform(edges, new Function<Edge, EntityIndex>() {
-          @Override
-          public EntityIndex apply(Edge edge) {
-            return new EntityIndex(((EntityEdge) edge).getEntity());
-          }
-        });
-
-        return transform(graphStore.get(indexes, null, auths), new Function<Entity, Vertex>() {
-          @Override
-          public Vertex apply(Entity entity) {
-            return new EntityVertex(entity, graphStore, auths);
-          }
-        });
+        Iterable<EntityIndex> indexes = Iterables.transform(edges, new EntityIndexXform());
+        return transform(graphStore.get(indexes, null, auths), new VertexEntityXform(graphStore,auths));
       }
 
     }));

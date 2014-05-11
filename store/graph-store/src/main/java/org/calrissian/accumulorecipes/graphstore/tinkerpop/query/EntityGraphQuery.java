@@ -1,14 +1,11 @@
 package org.calrissian.accumulorecipes.graphstore.tinkerpop.query;
 
-import com.google.common.base.Function;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Predicate;
 import com.tinkerpop.blueprints.Vertex;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
-import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
-import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Entity;
@@ -16,6 +13,8 @@ import org.calrissian.mango.domain.Entity;
 import java.util.Set;
 
 import static com.tinkerpop.blueprints.Query.Compare.*;
+import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.EdgeEntityXform;
+import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.VertexEntityXform;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 public class EntityGraphQuery implements GraphQuery {
@@ -100,24 +99,13 @@ public class EntityGraphQuery implements GraphQuery {
 
   @Override
   public Iterable<Edge> edges() {
-
     CloseableIterable<Entity> entities = graphStore.query(edgeTypes, queryBuilder.build(), null, auths);
-    return transform(entities, new Function<Entity, Edge>() {
-      @Override
-      public Edge apply(Entity entity) {
-        return new EntityEdge(entity, graphStore, auths);
-      }
-    });
+    return transform(entities, new EdgeEntityXform(graphStore, auths));
   }
 
   @Override
   public Iterable<Vertex> vertices() {
     CloseableIterable<Entity> entities = graphStore.query(vertexTypes, queryBuilder.build(), null, auths);
-    return transform(entities, new Function<Entity, Vertex>() {
-      @Override
-      public Vertex apply(Entity entity) {
-        return new EntityVertex(entity, graphStore, auths);
-      }
-    });
+    return transform(entities, new VertexEntityXform(graphStore, auths));
   }
 }
