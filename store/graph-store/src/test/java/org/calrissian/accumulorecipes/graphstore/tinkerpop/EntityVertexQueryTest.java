@@ -93,7 +93,6 @@ public class EntityVertexQueryTest {
     assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 0));
   }
 
-
   @Test
   public void testVertexIds_query_withLabels() {
     EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
