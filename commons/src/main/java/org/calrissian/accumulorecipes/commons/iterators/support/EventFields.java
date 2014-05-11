@@ -71,7 +71,7 @@ public class EventFields implements SetMultimap<String,FieldValue>, CustomSerial
     }
 
     public int size() {
-      return visibility.getExpression().length > 0 ? visibility.flatten().length + value.length : 0;
+      return visibility.getExpression().length > 0 ? visibility.flatten().length + value.length : value.length;
     }
 
     @Override
@@ -219,7 +219,7 @@ public class EventFields implements SetMultimap<String,FieldValue>, CustomSerial
       StringSerializer.put(buf, entry.getKey());
       // Write the fields in the value
 
-      valueSerializer.writeObjectData(buf, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : new byte[]{});
+      valueSerializer.writeObjectData(buf, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : entry.getValue().getVisibility().getExpression());
       valueSerializer.writeObjectData(buf, entry.getValue().getValue());
     }
   }

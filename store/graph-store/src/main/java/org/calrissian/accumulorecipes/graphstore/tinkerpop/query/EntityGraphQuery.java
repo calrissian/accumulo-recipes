@@ -7,6 +7,7 @@ import com.tinkerpop.blueprints.Vertex;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Entity;
 
@@ -100,12 +101,23 @@ public class EntityGraphQuery implements GraphQuery {
   @Override
   public Iterable<Edge> edges() {
     CloseableIterable<Entity> entities = graphStore.query(edgeTypes, queryBuilder.build(), null, auths);
-    return transform(entities, new EdgeEntityXform(graphStore, auths));
+    CloseableIterable<Edge> edges = transform(entities, new EdgeEntityXform(graphStore, auths));
+
+    if(limit > -1)
+      return CloseableIterables.limit(edges, limit);
+    else
+      return edges;
+
   }
 
   @Override
   public Iterable<Vertex> vertices() {
     CloseableIterable<Entity> entities = graphStore.query(vertexTypes, queryBuilder.build(), null, auths);
-    return transform(entities, new VertexEntityXform(graphStore, auths));
+    CloseableIterable<Vertex> vertices = transform(entities, new VertexEntityXform(graphStore, auths));
+
+    if(limit > -1)
+      return CloseableIterables.limit(vertices, limit);
+    else
+      return vertices;
   }
 }
