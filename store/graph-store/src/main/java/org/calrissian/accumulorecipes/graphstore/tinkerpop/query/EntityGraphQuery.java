@@ -6,21 +6,16 @@ import com.tinkerpop.blueprints.Predicate;
 import com.tinkerpop.blueprints.Vertex;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
-import org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.utils.NodeUtils;
 import org.calrissian.mango.domain.Entity;
 
 import java.util.Set;
 
 import static com.tinkerpop.blueprints.Query.Compare.*;
-import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.EdgeEntityXform;
-import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.EntityFilterPredicate;
-import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.VertexEntityXform;
-import static org.calrissian.mango.collect.CloseableIterables.filter;
+import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.*;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
 
@@ -105,12 +100,12 @@ public class EntityGraphQuery implements GraphQuery {
   }
 
   @Override
-  public Iterable<Edge> edges() {
+  public CloseableIterable<Edge> edges() {
     Node query = queryBuilder.end().build();
     Node filter = filters.end().build();
 
     CloseableIterable<Entity> entities = query.children().size() > 0 ?
-            graphStore.query(edgeTypes, queryBuilder.end().build(), null, auths) :
+            graphStore.query(edgeTypes, query, null, auths) :
             graphStore.getAllByType(edgeTypes, null, auths);
     CloseableIterable<Edge> edges = transform(entities, new EdgeEntityXform(graphStore, auths));
 
@@ -125,7 +120,7 @@ public class EntityGraphQuery implements GraphQuery {
   }
 
   @Override
-  public Iterable<Vertex> vertices() {
+  public CloseableIterable<Vertex> vertices() {
     Node query = queryBuilder.end().build();
     Node filter = filters.end().build();
 
@@ -142,6 +137,4 @@ public class EntityGraphQuery implements GraphQuery {
     else
       return vertices;
   }
-
-
 }

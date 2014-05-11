@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singleton;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
-public class BlueprintsGraphStore implements Graph{
+public class BlueprintsGraphStore implements Graph {
 
   protected GraphStore graphStore;
   protected Set<String> vertexTypes;
@@ -82,10 +82,10 @@ public class BlueprintsGraphStore implements Graph{
   @Override
   public Vertex getVertex(Object o) {
     checkArgument(o instanceof EntityIndex);
-    if(vertexTypes.contains(((EntityIndex)o).getType()));
+    if (vertexTypes.contains(((EntityIndex) o).getType())) ;
     CloseableIterable<Entity> entities = graphStore.get(singleton((EntityIndex) o), null, auths);
     Iterator<Entity> itr = entities.iterator();
-    if(itr.hasNext()) {
+    if (itr.hasNext()) {
       EntityVertex toReturn = new EntityVertex(itr.next(), graphStore, auths);
       entities.closeQuietly();
       return toReturn;
@@ -99,13 +99,13 @@ public class BlueprintsGraphStore implements Graph{
   }
 
   @Override
-  public Iterable<Vertex> getVertices() {
+  public CloseableIterable<Vertex> getVertices() {
     CloseableIterable<Entity> entities = graphStore.getAllByType(vertexTypes, null, auths);
     return transform(entities, new VertexEntityXform(graphStore, auths));
   }
 
   @Override
-  public Iterable<Vertex> getVertices(String s, Object o) {
+  public CloseableIterable<Vertex> getVertices(String s, Object o) {
     CloseableIterable<Entity> entities = graphStore.query(vertexTypes, new QueryBuilder().eq(s, o).build(), null, auths);
     return transform(entities, new VertexEntityXform(graphStore, auths));
   }
@@ -118,10 +118,10 @@ public class BlueprintsGraphStore implements Graph{
   @Override
   public Edge getEdge(Object o) {
     checkArgument(o instanceof EntityIndex);
-    if(edgeTypes.contains(((EntityIndex)o).getType()));
+    if (edgeTypes.contains(((EntityIndex) o).getType())) ;
     CloseableIterable<Entity> entities = graphStore.get(singleton((EntityIndex) o), null, auths);
     Iterator<Entity> itr = entities.iterator();
-    if(itr.hasNext()) {
+    if (itr.hasNext()) {
       EntityEdge toReturn = new EntityEdge(itr.next(), graphStore, auths);
       entities.closeQuietly();
       return toReturn;
@@ -168,7 +168,7 @@ public class BlueprintsGraphStore implements Graph{
 
     @Override
     public Edge apply(Entity entity) {
-      return new EntityEdge(entity,graphStore, auths);
+      return new EntityEdge(entity, graphStore, auths);
     }
   }
 
@@ -185,7 +185,7 @@ public class BlueprintsGraphStore implements Graph{
 
     @Override
     public Vertex apply(Entity entity) {
-      return new EntityVertex(entity,graphStore, auths);
+      return new EntityVertex(entity, graphStore, auths);
     }
   }
 
@@ -206,7 +206,7 @@ public class BlueprintsGraphStore implements Graph{
 
     @Override
     public boolean apply(Element element) {
-      return criteria.matches(((EntityElement)element).getEntity());
+      return criteria.matches(((EntityElement) element).getEntity());
     }
   }
 
