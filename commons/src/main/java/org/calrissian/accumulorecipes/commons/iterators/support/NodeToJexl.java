@@ -1,6 +1,7 @@
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.domain.criteria.HasNotCriteria;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
@@ -49,21 +50,24 @@ public class NodeToJexl {
 
   private String processChild(Node node) throws Exception {
 
-    StringBuilder builder = new StringBuilder("(");
+    StringBuilder builder = new StringBuilder();
 
     if (node instanceof EqualsLeaf) {
+      builder.append("(");
       EqualsLeaf leaf = (EqualsLeaf) node;
       return builder.append(leaf.getKey()).append(" == '")
               .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
               .append(registry.encode(leaf.getValue())).append("')")
               .toString();
     } else if (node instanceof NotEqualsLeaf) {
+      builder.append("(");
       NotEqualsLeaf leaf = (NotEqualsLeaf) node;
       return builder.append(leaf.getKey()).append(" != '")
               .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
               .append(registry.encode(leaf.getValue())).append("')")
               .toString();
     } else if (node instanceof RangeLeaf) {
+      builder.append("(");
       RangeLeaf leaf = (RangeLeaf) node;
       return builder.append(leaf.getKey()).append(" >= '")
               .append(registry.getAlias(leaf.getStart())).append(INNER_DELIM)
@@ -73,34 +77,43 @@ public class NodeToJexl {
               .append(registry.encode(leaf.getEnd())).append("')")
               .toString();
     } else if (node instanceof GreaterThanLeaf) {
+      builder.append("(");
       GreaterThanLeaf leaf = (GreaterThanLeaf) node;
       return builder.append(leaf.getKey()).append(" > '")
               .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
               .append(registry.encode(leaf.getValue())).append("')")
               .toString();
     } else if (node instanceof GreaterThanEqualsLeaf) {
+      builder.append("(");
       GreaterThanEqualsLeaf leaf = (GreaterThanEqualsLeaf) node;
       return builder.append(leaf.getKey()).append(" >= '")
               .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
               .append(registry.encode(leaf.getValue())).append("')")
               .toString();
     } else if (node instanceof LessThanLeaf) {
+      builder.append("(");
       LessThanLeaf leaf = (LessThanLeaf) node;
       return builder.append(leaf.getKey()).append(" < '")
               .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
               .append(registry.encode(leaf.getValue())).append("')")
               .toString();
     } else if (node instanceof LessThanEqualsLeaf) {
+      builder.append("(");
       LessThanEqualsLeaf leaf = (LessThanEqualsLeaf) node;
       return builder.append(leaf.getKey()).append(" <= '")
               .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
               .append(registry.encode(leaf.getValue())).append("')")
               .toString();
     } else if (node instanceof HasLeaf) {
+      builder.append("(");
       HasLeaf leaf = (HasLeaf) node;
-      return builder.append(leaf.getKey()).append(" >= '\u0000'")
+      return builder.append(leaf.getKey()).append(" >= '\u0000')")
               .toString();
-
+    } else if (node instanceof HasNotLeaf) {
+      builder.append("(");
+      HasNotLeaf leaf = (HasNotLeaf) node;
+      return builder.append(leaf.getKey()).append(" < '\u0000')")
+              .toString();
     } else {
       throw new RuntimeException("An unsupported leaf type was encountered: " + node.getClass().getName());
     }

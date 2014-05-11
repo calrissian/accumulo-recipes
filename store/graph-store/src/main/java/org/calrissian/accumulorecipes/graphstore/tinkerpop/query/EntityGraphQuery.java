@@ -6,17 +6,23 @@ import com.tinkerpop.blueprints.Predicate;
 import com.tinkerpop.blueprints.Vertex;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
+import org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.utils.NodeUtils;
 import org.calrissian.mango.domain.Entity;
 
 import java.util.Set;
 
 import static com.tinkerpop.blueprints.Query.Compare.*;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.EdgeEntityXform;
+import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.EntityFilterPredicate;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.VertexEntityXform;
+import static org.calrissian.mango.collect.CloseableIterables.filter;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
 
 public class EntityGraphQuery implements GraphQuery {
 
@@ -25,10 +31,10 @@ public class EntityGraphQuery implements GraphQuery {
   private Set<String> edgeTypes;
   private Auths auths;
 
-
   private int limit = -1;
 
   private QueryBuilder queryBuilder = new QueryBuilder().and();
+  private QueryBuilder filters = new QueryBuilder().and();
 
   public EntityGraphQuery(GraphStore graphStore, Set<String> vertexTypes, Set<String> edgeTypes, Auths auths) {
     this.graphStore = graphStore;
@@ -45,7 +51,7 @@ public class EntityGraphQuery implements GraphQuery {
 
   @Override
   public GraphQuery hasNot(String s) {
-    queryBuilder = queryBuilder.hasNot(s);
+    filters = filters.hasNot(s);
     return this;
   }
 
@@ -100,8 +106,16 @@ public class EntityGraphQuery implements GraphQuery {
 
   @Override
   public Iterable<Edge> edges() {
-    CloseableIterable<Entity> entities = graphStore.query(edgeTypes, queryBuilder.build(), null, auths);
+    Node query = queryBuilder.end().build();
+    Node filter = filters.end().build();
+
+    CloseableIterable<Entity> entities = query.children().size() > 0 ?
+            graphStore.query(edgeTypes, queryBuilder.end().build(), null, auths) :
+            graphStore.getAllByType(edgeTypes, null, auths);
     CloseableIterable<Edge> edges = transform(entities, new EdgeEntityXform(graphStore, auths));
+
+    if(filter.children().size() > 0)
+      edges = CloseableIterables.filter(edges, new EntityFilterPredicate(criteriaFromNode(filter)));
 
     if(limit > -1)
       return CloseableIterables.limit(edges, limit);
@@ -112,12 +126,22 @@ public class EntityGraphQuery implements GraphQuery {
 
   @Override
   public Iterable<Vertex> vertices() {
-    CloseableIterable<Entity> entities = graphStore.query(vertexTypes, queryBuilder.build(), null, auths);
+    Node query = queryBuilder.end().build();
+    Node filter = filters.end().build();
+
+    CloseableIterable<Entity> entities = query.children().size() > 0 ?
+            graphStore.query(vertexTypes, query, null, auths) :
+            graphStore.getAllByType(vertexTypes, null, auths);
     CloseableIterable<Vertex> vertices = transform(entities, new VertexEntityXform(graphStore, auths));
+
+    if(filter.children().size() > 0)
+      vertices = CloseableIterables.filter(vertices, new EntityFilterPredicate(criteriaFromNode(filter)));
 
     if(limit > -1)
       return CloseableIterables.limit(vertices, limit);
     else
       return vertices;
   }
+
+
 }

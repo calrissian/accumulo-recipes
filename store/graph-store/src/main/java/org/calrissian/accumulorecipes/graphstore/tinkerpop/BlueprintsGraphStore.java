@@ -1,6 +1,6 @@
 package org.calrissian.accumulorecipes.graphstore.tinkerpop;
 
-import com.google.common.base.Function;
+import com.google.common.base.*;
 import com.tinkerpop.blueprints.*;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
@@ -11,6 +11,7 @@ import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.query.EntityGraphQuery;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.criteria.domain.criteria.Criteria;
 import org.calrissian.mango.domain.Entity;
 
 import java.util.Iterator;
@@ -192,6 +193,20 @@ public class BlueprintsGraphStore implements Graph{
     @Override
     public EntityIndex apply(Element element) {
       return new EntityIndex(((EntityElement) element).getEntity());
+    }
+  }
+
+  public static class EntityFilterPredicate implements com.google.common.base.Predicate<Element> {
+
+    Criteria criteria;
+
+    public EntityFilterPredicate(Criteria criteria) {
+      this.criteria = criteria;
+    }
+
+    @Override
+    public boolean apply(Element element) {
+      return criteria.matches(((EntityElement)element).getEntity());
     }
   }
 
