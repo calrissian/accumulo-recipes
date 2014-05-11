@@ -196,6 +196,13 @@ public class BlueprintsGraphStore implements Graph {
     }
   }
 
+  public static class EdgeToVertexIndexXform implements Function<Element, EntityIndex> {
+    @Override
+    public EntityIndex apply(Element element) {
+      return new EntityIndex(((EntityElement) element).getEntity());
+    }
+  }
+
   public static class EntityFilterPredicate implements com.google.common.base.Predicate<Element> {
 
     Criteria criteria;

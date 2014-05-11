@@ -76,7 +76,7 @@ public class BlueprintsGraphStoreTest {
   @Test
   public void testVertices() {
 
-    CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) graph.getVertices();
+    CloseableIterable<Vertex> vertices = graph.getVertices();
     assertEquals(2, Iterables.size(vertices));
 
     EntityVertex entity1 = (EntityVertex) Iterables.get(vertices, 0);
@@ -89,7 +89,7 @@ public class BlueprintsGraphStoreTest {
   @Test
   public void testEdges() {
 
-    CloseableIterable<Edge> edges = (CloseableIterable<Edge>)graph.getEdges();
+    CloseableIterable<Edge> edges = graph.getEdges();
 
     assertEquals(1, Iterables.size(edges));
 

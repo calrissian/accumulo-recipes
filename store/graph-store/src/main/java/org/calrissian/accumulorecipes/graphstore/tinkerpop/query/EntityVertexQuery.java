@@ -136,8 +136,8 @@ public class EntityVertexQuery implements VertexQuery{
   @Override
   public CloseableIterable<Edge> edges() {
 
-    Node query = queryBuilder.build();
-    Node filter = filters.build();
+    Node query = queryBuilder.end().build();
+    Node filter = filters.end().build();
 
     Collection<EntityIndex> vertexIndex = singleton(new EntityIndex(vertex.getEntity()));
 
