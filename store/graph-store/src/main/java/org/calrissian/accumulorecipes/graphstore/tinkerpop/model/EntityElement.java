@@ -1,6 +1,7 @@
-package org.calrissian.accumulorecipes.graphstore.tinkerpop;
+package org.calrissian.accumulorecipes.graphstore.tinkerpop.model;
 
 import com.tinkerpop.blueprints.Element;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.mango.domain.Entity;
@@ -14,12 +15,22 @@ public class EntityElement implements Element {
 
   protected Entity entity;
   protected GraphStore graphStore;
+  protected Auths auths;
 
-  public EntityElement(Entity entity, GraphStore graphStore) {
+  public EntityElement(Entity entity, GraphStore graphStore, Auths auths) {
     checkNotNull(entity);
     checkNotNull(graphStore);
     this.entity = entity;
     this.graphStore = graphStore;
+    this.auths = auths;
+  }
+
+  public Entity getEntity() {
+    return entity;
+  }
+
+  public GraphStore getGraphStore() {
+    return graphStore;
   }
 
   @Override

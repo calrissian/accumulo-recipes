@@ -1,78 +1,158 @@
 package org.calrissian.accumulorecipes.graphstore.tinkerpop;
 
+import com.google.common.base.Function;
 import com.tinkerpop.blueprints.*;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
+import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
+import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
+import org.calrissian.accumulorecipes.graphstore.tinkerpop.query.EntityGraphQuery;
+import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.domain.Entity;
+
+import java.util.Iterator;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Collections.singleton;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 public class AccumuloEntityGraph implements Graph{
 
   protected GraphStore graphStore;
+  protected Set<String> vertexTypes;
+  protected Set<String> edgeTypes;
 
-  public AccumuloEntityGraph(GraphStore graphStore) {
+  protected Auths auths;
+
+  public AccumuloEntityGraph(GraphStore graphStore, Set<String> vertexTypes, Set<String> edgeTypes, Auths auths) {
     this.graphStore = graphStore;
+    this.vertexTypes = vertexTypes;
+    this.edgeTypes = edgeTypes;
+    this.auths = auths;
   }
 
   @Override
   public Features getFeatures() {
-    return null;
+    Features features = new Features();
+    features.supportsTransactions = false;
+    return features;
   }
 
   @Override
   public Vertex addVertex(Object o) {
-    return null;
+    throw new UnsupportedOperationException("The Calrissian EntityGraph is immutable. Use the GraphStore API to modify the graph.");
   }
 
   @Override
   public Vertex getVertex(Object o) {
+    checkArgument(o instanceof EntityIndex);
+    if(vertexTypes.contains(((EntityIndex)o).getType()));
+    CloseableIterable<Entity> entities = graphStore.get(singleton((EntityIndex) o), null, auths);
+    Iterator<Entity> itr = entities.iterator();
+    if(itr.hasNext()) {
+      EntityVertex toReturn = new EntityVertex(itr.next(), graphStore, auths);
+      entities.closeQuietly();
+      return toReturn;
+    }
     return null;
   }
 
   @Override
   public void removeVertex(Vertex vertex) {
-
+    throw new UnsupportedOperationException("The Calrissian EntityGraph is immutable. Use the GraphStore API to modify the graph.");
   }
 
   @Override
   public Iterable<Vertex> getVertices() {
-    return null;
+    CloseableIterable<Entity> entities = graphStore.getAllByType(vertexTypes, null, auths);
+    return transform(entities, new VertexEntityXform(graphStore, auths));
   }
 
   @Override
   public Iterable<Vertex> getVertices(String s, Object o) {
-    return null;
+    CloseableIterable<Entity> entities = graphStore.query(vertexTypes, new QueryBuilder().eq(s, o).build(), null, auths);
+    return transform(entities, new VertexEntityXform(graphStore, auths));
   }
 
   @Override
   public Edge addEdge(Object o, Vertex vertex, Vertex vertex2, String s) {
-    return null;
+    throw new UnsupportedOperationException("The Calrissian EntityGraph is immutable. Use the GraphStore API to modify the graph.");
   }
 
   @Override
   public Edge getEdge(Object o) {
+    checkArgument(o instanceof EntityIndex);
+    if(edgeTypes.contains(((EntityIndex)o).getType()));
+    CloseableIterable<Entity> entities = graphStore.get(singleton((EntityIndex) o), null, auths);
+    Iterator<Entity> itr = entities.iterator();
+    if(itr.hasNext()) {
+      EntityEdge toReturn = new EntityEdge(itr.next(), graphStore, auths);
+      entities.closeQuietly();
+      return toReturn;
+    }
     return null;
   }
 
   @Override
   public void removeEdge(Edge edge) {
-
+    throw new UnsupportedOperationException("The Calrissian EntityGraph is immutable. Use the GraphStore API to modify the graph.");
   }
 
   @Override
-  public Iterable<Edge> getEdges() {
-    return null;
+  public CloseableIterable<Edge> getEdges() {
+    CloseableIterable<Entity> entities = graphStore.getAllByType(edgeTypes, null, auths);
+    return transform(entities, new EdgeEntityXform(graphStore, auths));
   }
 
   @Override
-  public Iterable<Edge> getEdges(String s, Object o) {
-    return null;
+  public CloseableIterable<Edge> getEdges(String s, Object o) {
+    CloseableIterable<Entity> entities = graphStore.query(edgeTypes, new QueryBuilder().eq(s, o).build(), null, auths);
+    return transform(entities, new EdgeEntityXform(graphStore, auths));
   }
 
   @Override
   public GraphQuery query() {
-    return null;
+    return new EntityGraphQuery(graphStore, vertexTypes, edgeTypes, auths);
   }
 
   @Override
   public void shutdown() {
 
+  }
+
+  public static class EdgeEntityXform implements Function<Entity, Edge> {
+
+    private GraphStore graphStore;
+    private Auths auths;
+
+    public EdgeEntityXform(GraphStore graphStore, Auths auths) {
+      this.graphStore = graphStore;
+      this.auths = auths;
+    }
+
+    @Override
+    public Edge apply(Entity entity) {
+      return new EntityEdge(entity,graphStore, auths);
+    }
+  }
+
+
+  public static class VertexEntityXform implements Function<Entity, Vertex> {
+
+    private GraphStore graphStore;
+    private Auths auths;
+
+    public VertexEntityXform(GraphStore graphStore, Auths auths) {
+      this.graphStore = graphStore;
+      this.auths = auths;
+    }
+
+    @Override
+    public Vertex apply(Entity entity) {
+      return new EntityVertex(entity,graphStore, auths);
+    }
   }
 }
