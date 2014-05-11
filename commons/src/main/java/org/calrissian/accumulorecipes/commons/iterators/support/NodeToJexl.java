@@ -96,8 +96,8 @@ public class NodeToJexl {
               .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
               .append(registry.encode(leaf.getValue())).append("')")
               .toString();
-    } else if (node instanceof HasKeyLeaf) {
-      HasKeyLeaf leaf = (HasKeyLeaf) node;
+    } else if (node instanceof HasLeaf) {
+      HasLeaf leaf = (HasLeaf) node;
       return builder.append(leaf.getKey()).append(" >= '\u0000'")
               .toString();
 

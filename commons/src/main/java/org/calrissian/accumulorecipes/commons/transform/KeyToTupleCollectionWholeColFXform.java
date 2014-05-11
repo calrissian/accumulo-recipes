@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 
@@ -43,15 +44,16 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleCollecti
   @Override
   public V apply(Map.Entry<Key, Value> keyValueEntry) {
     try {
-      Map<Key,Value> keyValues = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+      Map<Key,Value> keyValues = decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
       V entry = null;
 
       for(Map.Entry<Key,Value> curEntry : keyValues.entrySet()) {
         if(entry == null)
           entry = buildEntryFromKey(curEntry.getKey());
+        System.out.println(curEntry);
         String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
         String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
-        String visibility = keyValueEntry.getKey().getColumnVisibility().toString();
+        String visibility = curEntry.getKey().getColumnVisibility().toString();
         try {
           entry.put(new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), visibility));
         } catch (TypeDecodingException e) {
