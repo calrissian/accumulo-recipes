@@ -25,6 +25,8 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
+import org.calrissian.accumulorecipes.commons.support.WritableUtils2;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -45,8 +48,8 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 public class EntryIterator extends WrappingIterator {
 
     private TypeRegistry<String> typeRegistry;
-    private ObjectMapper objectMapper;
     private SortedKeyValueIterator<Key,Value> sourceItr;
+    private StoreEntryWritable writable;
 
     public void init(SortedKeyValueIterator<Key,Value> source, java.util.Map<String,String> options,
                      IteratorEnvironment env) throws IOException {
@@ -54,7 +57,7 @@ public class EntryIterator extends WrappingIterator {
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
         this.typeRegistry = LEXI_TYPES; //TODO make types configurable.
-        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
+        this.writable = new StoreEntryWritable();
     }
 
     /**
@@ -107,11 +110,12 @@ public class EntryIterator extends WrappingIterator {
                 }
 
                 StoreEntry entry = new StoreEntry(entryId, timestamp);
+                writable.set(entry);
 
                 if(tuples.size() > 0)
                     entry.putAll(tuples);
 
-                return new Value(objectMapper.writeValueAsBytes(entry));
+                return new Value(serialize(writable));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);

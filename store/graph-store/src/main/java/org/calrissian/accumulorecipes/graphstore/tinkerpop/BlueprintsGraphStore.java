@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singleton;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
-public class AccumuloEntityGraph implements Graph{
+public class BlueprintsGraphStore implements Graph{
 
   protected GraphStore graphStore;
   protected Set<String> vertexTypes;
@@ -27,7 +27,7 @@ public class AccumuloEntityGraph implements Graph{
 
   protected Auths auths;
 
-  public AccumuloEntityGraph(GraphStore graphStore, Set<String> vertexTypes, Set<String> edgeTypes, Auths auths) {
+  public BlueprintsGraphStore(GraphStore graphStore, Set<String> vertexTypes, Set<String> edgeTypes, Auths auths) {
     this.graphStore = graphStore;
     this.vertexTypes = vertexTypes;
     this.edgeTypes = edgeTypes;
@@ -38,7 +38,38 @@ public class AccumuloEntityGraph implements Graph{
   public Features getFeatures() {
     Features features = new Features();
     features.supportsTransactions = false;
+    features.supportsDuplicateEdges = false;
+    features.supportsSelfLoops = true;
+    features.supportsSerializableObjectProperty = true;
+    features.supportsBooleanProperty = true;
+    features.supportsDoubleProperty = true;
+    features.supportsFloatProperty = true;
+    features.supportsIntegerProperty = true;
+    features.supportsPrimitiveArrayProperty = false;
+    features.supportsUniformListProperty = false;
+    features.supportsMixedListProperty = false;
+    features.supportsLongProperty = true;
+    features.supportsMapProperty = false;
+    features.supportsStringProperty = true;
+    features.ignoresSuppliedIds = false;
+    features.isPersistent = true;
+    features.isWrapper = true;
+    features.supportsIndices = true;
+    features.supportsVertexIndex = true;
+    features.supportsEdgeIndex = true;
+    features.supportsKeyIndices = true;
+    features.supportsVertexKeyIndex = true;
+    features.supportsEdgeKeyIndex = true;
+    features.supportsEdgeIteration = true;
+    features.supportsVertexIteration = true;
+    features.supportsEdgeRetrieval = true;
+    features.supportsVertexProperties = true;
+    features.supportsEdgeProperties = true;
+    features.supportsThreadedTransactions = false;
+    features.supportsTransactions = false;
+
     return features;
+
   }
 
   @Override
@@ -154,5 +185,15 @@ public class AccumuloEntityGraph implements Graph{
     public Vertex apply(Entity entity) {
       return new EntityVertex(entity,graphStore, auths);
     }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName().toLowerCase() + "{" +
+            "graphStore=" + graphStore +
+            ", vertexTypes=" + vertexTypes +
+            ", edgeTypes=" + edgeTypes +
+            ", auths=" + auths +
+            '}';
   }
 }

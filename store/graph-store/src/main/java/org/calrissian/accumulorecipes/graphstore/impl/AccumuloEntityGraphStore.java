@@ -254,4 +254,13 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
            entity.get(TAIL) != null &&
            entity.get(LABEL) != null;
   }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName().toLowerCase() + "{" +
+            "table='" + table + '\'' +
+            ", bufferSize=" + bufferSize +
+            ", writer=" + writer +
+            '}';
+  }
 }

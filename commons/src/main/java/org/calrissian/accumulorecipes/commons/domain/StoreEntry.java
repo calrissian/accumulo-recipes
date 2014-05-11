@@ -108,6 +108,7 @@ public class StoreEntry extends AbstractTupleCollection {
     return "StoreEntry{" +
             "id='" + id + '\'' +
             ", timestamp=" + timestamp +
+            ", tuples=" + getTuples() +
             '}';
   }
 }
