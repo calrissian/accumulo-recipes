@@ -11,7 +11,9 @@ Connector connector = instance.getConnector("root", "".getBytes());
 EntityStore entityStore = new AccumuloEntityStore(connector);
 ```
 
-Entities be modeled be modeled using the following:
+###Modelling and saving
+
+Entities can be modeled using the following:
 ```java
 Entity entity = new BaseEntity("Person", "1");
 entity.put(new Tuple("name", "John Smith"));
@@ -23,6 +25,8 @@ Saving an entity to the store is pretty simple:
 ```java
 entityStore.save(Collections.singleton(entity));
 ```
+
+###Fetching and querying
 
 There are a few different get and query options for entities. 
 
