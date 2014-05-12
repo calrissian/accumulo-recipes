@@ -33,76 +33,76 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class QueryOptimizer implements NodeVisitor {
 
-    protected Node node;
-    protected Set<String> keysInQuery;
-    protected GlobalIndexVisitor indexVisitor;
+  protected Node node;
+  protected Set<String> keysInQuery;
+  protected GlobalIndexVisitor indexVisitor;
 
-    public QueryOptimizer(Node query, GlobalIndexVisitor indexVisitor) {
-      checkNotNull(query);
+  public QueryOptimizer(Node query, GlobalIndexVisitor indexVisitor) {
+    checkNotNull(query);
 
-      this.node = query;  // TODO: Really, this needs to be cloned all the way down so that it can be modified
-      this.indexVisitor = indexVisitor;
+    this.node = query.clone(null);  // cloned so that original is not modified during optimization
+    this.indexVisitor = indexVisitor;
 
-      init(query);
+    init(query);
+  }
+
+  public QueryOptimizer(Node query) {
+    this(query, null);
+  }
+
+  protected void init(Node query) {
+
+    /**
+     * This performs a cardinality optimization
+     */
+    if (indexVisitor != null) {
+      query.accept(indexVisitor);
+      query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities()));
     }
 
-    public QueryOptimizer(Node query) {
-      this(query, null);
-    }
+    query.accept(new SingleClauseCollapseVisitor());
+    query.accept(new EmptyParentCollapseVisitor());
+    query.accept(new CollapseParentClauseVisitor());
+    query.accept(new RangeSplitterVisitor());
 
-    protected void init(Node query) {
+    //visitors
+    query.accept(new NoAndOrValidator());
+    query.accept(new NoOrNotEqualsValidator());
+    query.accept(new MultipleEqualsValidator());    // this is questionable. Multivalued keys make this possible...
 
-      /**
-       * This performs a cardinality optimization
-       */
-      if(indexVisitor != null) {
-        query.accept(indexVisitor);
-        query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities()));
-      }
+    QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
+    query.accept(extractKeysVisitor);
+    keysInQuery = extractKeysVisitor.getKeysFound();
 
-      query.accept(new SingleClauseCollapseVisitor());
-      query.accept(new EmptyParentCollapseVisitor());
-      query.accept(new CollapseParentClauseVisitor());
-      query.accept(new RangeSplitterVisitor());
+    //develop criteria
+    query.accept(this);
+  }
 
-      //visitors
-      query.accept(new NoAndOrValidator());
-      query.accept(new NoOrNotEqualsValidator());
-      query.accept(new MultipleEqualsValidator());    // this is questionable. Multivalued keys make this possible...
+  public Node getOptimizedQuery() {
+    return this.node;
+  }
 
-      QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
-      query.accept(extractKeysVisitor);
-      keysInQuery = extractKeysVisitor.getKeysFound();
+  public Set<String> getKeysInQuery() {
+    return keysInQuery;
+  }
 
-      //develop criteria
-      query.accept(this);
-    }
+  @Override
+  public void begin(ParentNode node) {
+  }
 
-    public Node getOptimizedQuery() {
-      return this.node;
-    }
+  @Override
+  public void end(ParentNode parentNode) {
 
-    public Set<String> getKeysInQuery() {
-      return keysInQuery;
-    }
+  }
 
-    @Override
-    public void begin(ParentNode node) {
-    }
+  @Override
+  public void visit(Leaf node) {
+  }
 
-    @Override
-    public void end(ParentNode parentNode) {
-
-    }
-
-    @Override
-    public void visit(Leaf node) {
-    }
-
-    public Set<String> getShards() {
-      if(indexVisitor != null)
-        return indexVisitor.getShards();
-      else
-        throw new RuntimeException("A global index visitor was not configured on this optimizer.");
-    }
+  public Set<String> getShards() {
+    if (indexVisitor != null)
+      return indexVisitor.getShards();
+    else
+      throw new RuntimeException("A global index visitor was not configured on this optimizer.");
+  }
 }
