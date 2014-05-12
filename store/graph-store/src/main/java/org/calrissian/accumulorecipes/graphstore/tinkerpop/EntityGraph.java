@@ -25,7 +25,7 @@ import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.HEAD;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.TAIL;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
-public class BlueprintsGraphStore implements Graph {
+public class EntityGraph implements Graph {
 
   protected GraphStore graphStore;
   protected Set<String> vertexTypes;
@@ -33,7 +33,7 @@ public class BlueprintsGraphStore implements Graph {
 
   protected Auths auths;
 
-  public BlueprintsGraphStore(GraphStore graphStore, Set<String> vertexTypes, Set<String> edgeTypes, Auths auths) {
+  public EntityGraph(GraphStore graphStore, Set<String> vertexTypes, Set<String> edgeTypes, Auths auths) {
     this.graphStore = graphStore;
     this.vertexTypes = vertexTypes;
     this.edgeTypes = edgeTypes;

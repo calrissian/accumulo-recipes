@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 public class BlueprintsGraphStoreTest {
 
   AccumuloEntityGraphStore entityGraphStore;
-  BlueprintsGraphStore graph;
+  EntityGraph graph;
   Connector connector;
 
   Entity vertex1 = new BaseEntity("vertexType1", "id1");
@@ -39,7 +39,7 @@ public class BlueprintsGraphStoreTest {
     Instance instance = new MockInstance();
     connector = instance.getConnector("root", "".getBytes());
     entityGraphStore = new AccumuloEntityGraphStore(connector);
-    graph = new BlueprintsGraphStore(entityGraphStore, newHashSet("vertexType1", "vertexType2"),
+    graph = new EntityGraph(entityGraphStore, newHashSet("vertexType1", "vertexType2"),
             newHashSet("edgeType1", "edgeType2"),
             new Auths("U,ADMIN"));
 

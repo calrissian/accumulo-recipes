@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
 public class EntityVertexQueryTest {
 
   AccumuloEntityGraphStore entityGraphStore;
-  BlueprintsGraphStore graph;
+  EntityGraph graph;
   Connector connector;
   GraphQuery query;
 
@@ -51,7 +51,7 @@ public class EntityVertexQueryTest {
     Instance instance = new MockInstance();
     connector = instance.getConnector("root", "".getBytes());
     entityGraphStore = new AccumuloEntityGraphStore(connector);
-    graph = new BlueprintsGraphStore(entityGraphStore, newHashSet("vertexType1", "vertexType2"),
+    graph = new EntityGraph(entityGraphStore, newHashSet("vertexType1", "vertexType2"),
             newHashSet("edgeType1", "edgeType2"),
             new Auths("U,ADMIN"));
 

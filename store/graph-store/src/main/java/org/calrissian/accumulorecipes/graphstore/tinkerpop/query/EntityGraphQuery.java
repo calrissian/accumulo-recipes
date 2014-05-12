@@ -15,7 +15,7 @@ import org.calrissian.mango.domain.Entity;
 import java.util.Set;
 
 import static com.tinkerpop.blueprints.Query.Compare.*;
-import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.*;
+import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
 

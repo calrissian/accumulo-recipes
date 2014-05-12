@@ -19,7 +19,7 @@ import java.util.List;
 import static com.google.common.collect.Sets.newHashSet;
 import static com.tinkerpop.blueprints.Query.Compare.*;
 import static java.util.Collections.singleton;
-import static org.calrissian.accumulorecipes.graphstore.tinkerpop.BlueprintsGraphStore.*;
+import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
 
