@@ -282,7 +282,6 @@ public class AccumuloEventStore implements EventStore {
       String originalJexl = nodeToJexl.transform(query);
       Set<String> shards = optimizer.getShards();
 
-
       BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
 
       Collection<Range> ranges = new HashSet<Range>();
