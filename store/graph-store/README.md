@@ -4,7 +4,17 @@ Graphs are popular methods for modelling the connectivity of things. How are sys
 
 Specifically, the Calrissian graph store implementation allows the modelling of property graphs. Property graphs are simple to comprehend and conceptualize because they give both vertices and edges their own set of defining properties which can be queried and traversed. What this also does for edges is creates multiple possible values that can be used as weights. One weight could be a cardinality while another weight on the same edge could represent proximal geographic distance between the two vertices in which it is connecting. Property graphs model Entities very well. Because of this, the Entity store is used as the backing store while an optimized edge index is used for breadth-first traversal of edges through the graph from any set of vertices.
 
-##Modelling and saving vertices and edges
+##Using the Graph Store
+
+First, create a graph store:
+```java
+Instance instance = new MockInstance();
+Connector connector = instance.getConnector("root", "".getBytes());
+GraphStore graphStore = new AccumuloEntityGraphStore(connector);
+```
+
+
+###Modelling and saving vertices and edges
 
 As described above, modelling isn't too complicated at all. Any entity can be a vertex. Edges are just entities with 3 necessary properties describing the vertices they are connecting and the nature of the connection. I will elaborate on the model from the Calrissian entity store implementation and show how the same brother relationship would be modelled using the graph store.
 
@@ -22,8 +32,12 @@ vertex2.put(new Tuple("location", "Virginia"));
 EdgeEntity edge = new EdgeEntity("Relative", "1:2", vertex1, "", vertex2, "", "brother");
 edge.put(new Tuple("biological", true));
 ```
+What's convenient about this way of modelling entities is that the vertices are only associated with each other through an edge. This means when an edge is added or removed, the vertices do not need to be updated. This allows edges to be "enriched" at later times via system-level analytics and user enrichment.
 
-
+We add the entities to the graph store in the same way we'd add them to the entity store:
+```java
+graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
+```
 
 
 
