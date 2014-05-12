@@ -115,10 +115,11 @@ public class EntityVertexQueryTest {
     EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
     CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().vertexIds();
     System.out.println(vertexIds);
-    assertEquals(2, Iterables.size(vertexIds));
+    assertEquals(3, Iterables.size(vertexIds));
     // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
-    assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 0));
+    assertEquals(new EntityIndex(vertex3), Iterables.get(vertexIds, 0));
     assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 1));
+    assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 2));
   }
 
   @Test

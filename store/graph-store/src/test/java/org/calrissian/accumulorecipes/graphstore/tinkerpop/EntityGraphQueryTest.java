@@ -138,7 +138,7 @@ public class EntityGraphQueryTest {
   @Test
   public void testEdges_HasKeys_resultsReturned() {
     query = graph.query();
-    CloseableIterable<Edge> edges = (CloseableIterable<Edge>) query.has("edgeProp1").has("edgeProp2").edges();
+    CloseableIterable<Edge> edges = (CloseableIterable<Edge>) query.has("edgeProp1").edges();
     assertEquals(1, Iterables.size(edges));
     assertEntitiesEqual(edge, ((EntityEdge)get(edges, 0)).getEntity());
 
