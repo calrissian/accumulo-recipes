@@ -39,6 +39,24 @@ We add the entities to the graph store in the same way we'd add them to the enti
 graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
 ```
 
+###Traversing the graph
+
+Graph traversals start at some number of vertices and propagate through edges to the vertices on the opposite sides. Sometimes it's important to make several jumps through the graph and sometimes it's just important to know which edges sit directly adjacent. Either way, we generally start a traversal by querying for vertices of interest.
+
+```java
+Node query = new QueryBuilder().eq("name", "John Smith").build();
+CloseableIterable<Entity> vertices = graphStore.query(Collections.singleton("Person"), query, null, new Auths());
+```
+
+After we've found the vertices of interest, we can find the adjacent out edges connected to those vertices with the following:
+```java
+Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
+CloseableIterable<Entity> edges = graphStore.adjacentEdges(indexes, null, Direction.OUT, new Auths());
+```
+
+
+
+
 
 
 
