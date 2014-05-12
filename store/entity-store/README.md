@@ -19,6 +19,7 @@ Entity entity = new BaseEntity("Person", "1");
 entity.put(new Tuple("name", "John Smith"));
 entity.put(new Tuple("age", 36));
 entity.put(new Tuple("location", "Maryland"));
+entity.put(new Tuple("brother", new EntityRelationship("Person", "2"));
 ```
 
 Saving an entity to the store is pretty simple:
