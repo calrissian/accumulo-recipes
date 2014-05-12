@@ -272,6 +272,7 @@ public class AccumuloEntityStore implements EntityStore {
     QueryOptimizer optimizer = new QueryOptimizer(query);
 
     String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+    String originalJexl = nodeToJexl.transform(query);
     Set<Text> shards = shardBuilder.buildShardsForTypes(types);
 
     try {
@@ -284,7 +285,7 @@ public class AccumuloEntityStore implements EntityStore {
       scanner.setRanges(ranges);
 
       IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-      setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
+      setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
       setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
       scanner.addScanIterator(setting);
