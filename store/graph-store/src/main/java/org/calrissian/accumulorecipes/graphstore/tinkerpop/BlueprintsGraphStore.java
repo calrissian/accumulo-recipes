@@ -21,6 +21,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.HEAD;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.TAIL;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
@@ -201,10 +202,19 @@ public class BlueprintsGraphStore implements Graph {
 
   public static class EdgeToVertexIndexXform implements Function<Edge, EntityIndex> {
 
+    private EntityVertex v;
+
+    public EdgeToVertexIndexXform(EntityVertex v) {
+      this.v = v;
+    }
+
     @Override
     public EntityIndex apply(Edge element) {
       EntityRelationship tail = (((EntityEdge)element).getEntity().<EntityRelationship>get(TAIL)).getValue();
-      return new EntityIndex(tail.getTargetType(), tail.getTargetId());
+      EntityRelationship head = (((EntityEdge)element).getEntity().<EntityRelationship>get(HEAD)).getValue();
+      EntityRelationship finalRelationship = (tail.getTargetType().equals(v.getEntity().getType()) &&
+              tail.getTargetId().equals(v.getEntity().getId())) ? head : tail;
+      return new EntityIndex(finalRelationship.getTargetType(), finalRelationship.getTargetId());
     }
   }
 

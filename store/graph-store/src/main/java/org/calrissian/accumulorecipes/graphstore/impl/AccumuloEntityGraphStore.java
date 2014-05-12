@@ -23,6 +23,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 
+import java.io.Closeable;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -149,7 +150,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
           new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
             @Override
             public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-              return get(Iterables.transform(entries, new EdgeRowXform(edges)), null, auths);
+              CloseableIterable<Entity> entites = get(Iterables.transform(entries, new EdgeRowXform(edges)), null, auths);
+              return entites;
             }
           }
         )
