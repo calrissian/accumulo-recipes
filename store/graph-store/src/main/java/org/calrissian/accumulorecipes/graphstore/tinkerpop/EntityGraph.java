@@ -1,12 +1,11 @@
 package org.calrissian.accumulorecipes.graphstore.tinkerpop;
 
-import com.google.common.base.*;
+import com.google.common.base.Function;
 import com.tinkerpop.blueprints.*;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
-import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityElement;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
