@@ -1,5 +1,6 @@
 package org.calrissian.accumulorecipes.graphstore.tinkerpop.query;
 
+import com.google.common.base.Function;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Predicate;
@@ -17,7 +18,7 @@ import java.util.Set;
 import static com.tinkerpop.blueprints.Query.Compare.*;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
+import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
 
 public class EntityGraphQuery implements GraphQuery {
 
@@ -101,40 +102,30 @@ public class EntityGraphQuery implements GraphQuery {
 
   @Override
   public CloseableIterable<Edge> edges() {
-    Node query = queryBuilder.end().build();
-    Node filter = filters.end().build();
-
-    CloseableIterable<Entity> entities = query.children().size() > 0 ?
-            graphStore.query(edgeTypes, query, null, auths) :
-            graphStore.getAllByType(edgeTypes, null, auths);
-    CloseableIterable<Edge> edges = transform(entities, new EdgeEntityXform(graphStore, auths));
-
-    if(filter.children().size() > 0)
-      edges = CloseableIterables.filter(edges, new EntityFilterPredicate(criteriaFromNode(filter)));
-
-    if(limit > -1)
-      return CloseableIterables.limit(edges, limit);
-    else
-      return edges;
-
+    return queryElements(edgeTypes, new EdgeEntityXform(graphStore, auths));
   }
 
   @Override
   public CloseableIterable<Vertex> vertices() {
+    return queryElements(vertexTypes, new VertexEntityXform(graphStore, auths));
+  }
+
+  private <T>CloseableIterable<T> queryElements(Set<String> elementTypes, Function<Entity, T> function) {
+
     Node query = queryBuilder.end().build();
     Node filter = filters.end().build();
 
     CloseableIterable<Entity> entities = query.children().size() > 0 ?
-            graphStore.query(vertexTypes, query, null, auths) :
-            graphStore.getAllByType(vertexTypes, null, auths);
-    CloseableIterable<Vertex> vertices = transform(entities, new VertexEntityXform(graphStore, auths));
+            graphStore.query(elementTypes, query, null, auths) :
+            graphStore.getAllByType(elementTypes, null, auths);
+    CloseableIterable<T> elements = transform(entities, function);
 
     if(filter.children().size() > 0)
-      vertices = CloseableIterables.filter(vertices, new EntityFilterPredicate(criteriaFromNode(filter)));
+      elements = CloseableIterables.filter(elements, new EntityFilterPredicate(criteriaFromNode(filter)));
 
     if(limit > -1)
-      return CloseableIterables.limit(vertices, limit);
+      return CloseableIterables.limit(elements, limit);
     else
-      return vertices;
+      return elements;
   }
 }

@@ -23,7 +23,6 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 
-import java.io.Closeable;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -36,7 +35,7 @@ import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.*;
-import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
+import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
 
 public class AccumuloEntityGraphStore extends AccumuloEntityStore implements GraphStore {
 

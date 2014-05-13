@@ -217,7 +217,7 @@ public class EntityGraph implements Graph {
     }
   }
 
-  public static class EntityFilterPredicate implements com.google.common.base.Predicate<Element> {
+  public static class EntityFilterPredicate<T extends Element> implements com.google.common.base.Predicate<T> {
 
     Criteria criteria;
 
@@ -226,8 +226,8 @@ public class EntityGraph implements Graph {
     }
 
     @Override
-    public boolean apply(Element element) {
-      return criteria.matches(((EntityElement) element).getEntity());
+    public boolean apply(T element) {
+      return criteria.apply(((EntityElement) element).getEntity());
     }
   }
 

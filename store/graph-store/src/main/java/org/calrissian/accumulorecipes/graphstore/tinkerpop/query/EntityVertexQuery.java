@@ -12,6 +12,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.support.NodeUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,7 +22,6 @@ import static com.tinkerpop.blueprints.Query.Compare.*;
 import static java.util.Collections.singleton;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
-import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
 
 /**
  * This builder class allows a set of vertices and/or edges to be queried matching the given criteria. This class
@@ -151,7 +151,7 @@ public class EntityVertexQuery implements VertexQuery{
     CloseableIterable<Edge> finalEdges = transform(entityEdgies, new EdgeEntityXform(graphStore, auths));
 
     if(filter.children().size() > 0)
-      finalEdges = filter(finalEdges, new EntityFilterPredicate(criteriaFromNode(filter)));
+      finalEdges = filter(finalEdges, new EntityFilterPredicate(NodeUtils.criteriaFromNode(filter)));
 
     if(limit > -1)
       return CloseableIterables.limit(finalEdges, limit);
@@ -163,14 +163,15 @@ public class EntityVertexQuery implements VertexQuery{
 
     CloseableIterable<Edge> edges = edges();
 
-    CloseableIterable<Vertex> vertices = concat(transform(partition(edges, 50),
+    CloseableIterable<Vertex> vertices = chain(transform(partition(edges, 50),
             new Function<List<Edge>, CloseableIterable<Vertex>>() {
-      @Override
-      public CloseableIterable<Vertex> apply(List<Edge> edges) {
-        Iterable<EntityIndex> indexes = Iterables.transform(edges, new EdgeToVertexIndexXform(vertex));
-        return transform(graphStore.get(indexes, null, auths), new VertexEntityXform(graphStore,auths));
-      }
-    }));
+              @Override
+              public CloseableIterable<Vertex> apply(List<Edge> edges) {
+                Iterable<EntityIndex> indexes = Iterables.transform(edges, new EdgeToVertexIndexXform(vertex));
+                return transform(graphStore.get(indexes, null, auths), new VertexEntityXform(graphStore, auths));
+              }
+            }
+    ));
 
     return vertices;
   }
