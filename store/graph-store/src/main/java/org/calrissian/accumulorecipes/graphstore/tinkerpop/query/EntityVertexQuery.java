@@ -13,8 +13,10 @@ import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
+import org.calrissian.mango.domain.Entity;
 
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.google.common.collect.Sets.newHashSet;
@@ -161,16 +163,18 @@ public class EntityVertexQuery implements VertexQuery{
   @Override
   public CloseableIterable<Vertex> vertices() {
 
-    CloseableIterable<Edge> edges = edges();
-
-    CloseableIterable<Vertex> vertices = chain(transform(partition(edges, 50),
-            new Function<List<Edge>, CloseableIterable<Vertex>>() {
-              @Override
-              public CloseableIterable<Vertex> apply(List<Edge> edges) {
-                Iterable<EntityIndex> indexes = Iterables.transform(edges, new EdgeToVertexIndexXform(vertex));
-                return transform(graphStore.get(indexes, null, auths), new VertexEntityXform(graphStore, auths));
-              }
-            }
+    CloseableIterable<EntityIndex> indexes = CloseableIterables.transform(edges(), new EdgeToVertexIndexXform(vertex));
+    CloseableIterable<Vertex> vertices = concat(transform(partition(indexes, 50),
+      new Function<List<EntityIndex>, Iterable<Vertex>>() {
+        @Override
+        public Iterable<Vertex> apply(List<EntityIndex> entityIndexes) {
+          Collection<Entity> entityCollection = new LinkedList<Entity>();
+          CloseableIterable<Entity> entities = graphStore.get(entityIndexes, null, auths);
+          Iterables.addAll(entityCollection, entities);
+          entities.closeQuietly();
+          return Iterables.transform(entityCollection, new VertexEntityXform(graphStore, auths));
+        }
+      }
     ));
 
     return vertices;
