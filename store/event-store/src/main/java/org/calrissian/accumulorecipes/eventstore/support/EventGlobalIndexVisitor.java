@@ -16,7 +16,7 @@ import org.calrissian.mango.types.exception.TypeEncodingException;
 import java.util.*;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
-import static org.calrissian.mango.criteria.utils.NodeUtils.isRangeLeaf;
+import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EventGlobalIndexVisitor implements GlobalIndexVisitor {

@@ -22,7 +22,7 @@ import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import java.util.Collection;
 
 import static com.google.common.collect.Collections2.filter;
-import static org.calrissian.mango.criteria.utils.NodeUtils.parentContainsOnlyLeaves;
+import static org.calrissian.mango.criteria.support.NodeUtils.parentContainsOnlyLeaves;
 
 /**
  * Will validate that the criteria is only And with 2 or more leaves.

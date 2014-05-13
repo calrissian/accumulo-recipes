@@ -2,7 +2,55 @@
 
 Entities are objects that can be modeled like things in the real world. They have a type, an id, and some number of tuples (key/value/visiblity) that describe their state. A person can be an entity. A system can be an entity. Entities can reference each other by creating first-class relationships to other entities (or, through the pluggable type system, to anything- events, metrics, etc...). The unique thing about the entity store vs. the event store is that, unlike events, entities are not assumed to have occurred at some discrete point in time. That is, where an Event is defined by its timestamp, an Entity is defined by its type. 
 
-## Entities vs Events
+##Using the Entity Store
+
+First, you will need to create an entity store instance
+```java
+Instance instance = new MockInstance();
+Connector connector = instance.getConnector("root", "".getBytes());
+EntityStore entityStore = new AccumuloEntityStore(connector);
+```
+
+###Modelling and saving
+
+Entities can be modeled using the following:
+```java
+Entity entity = new BaseEntity("Person", "1");
+entity.put(new Tuple("name", "John Smith"));
+entity.put(new Tuple("age", 36));
+entity.put(new Tuple("location", "Maryland"));
+entity.put(new Tuple("brother", new EntityRelationship("Person", "2"));
+```
+
+Saving an entity to the store is pretty simple:
+```java
+entityStore.save(Collections.singleton(entity));
+```
+
+###Fetching and querying
+
+There are a few different get and query options for entities. 
+
+- You can stream a single or a bunch of entities in a batch by their types and ids:
+```java
+EntityIndex index = new EntityIndex("Person", "1");
+CloseableIterable<Entity> entities = entityStore.get(Collections.singleton(index), null, new Auths());
+```
+
+- You can stream all the entities of a collection of types:
+```java
+CloseableIterable<Entity> entities = entityStore.getAllByType(Collections.singleton("Person"), null, new Auths());
+```
+
+- Or you can query for the entities of interest for a collection of types:
+```java
+Node query = new QueryBuilder().and().eq("age", 36).eq("name", "John Smith").end().build();
+CloseableIterable<Entity> entities = entityStore.query(Collections.singleton("Person"), query, null, new Auths());
+```
+
+## Concepts
+
+### Entities vs Events
 
 Really, the difference between the two comes down to the scheme that's used to shard them because they have very different expected query patterns. Because of the different query patterns, it makes sense to give each an optimized storage structure. While events are defined by their timestamp and sharded by time, Entities are sharded by their type. This minimizes the cross chatter from entities of varying types when specific types are being targeted for query. That is not to say that they couldn't be sharded differently- in fact, you could extend the EntityShardBuilder class and set it on the AccumuloEntityStore instance to provide whatever sharding scheme you'd like. 
 
@@ -11,7 +59,7 @@ By default, entities of each type are sharded into a predefined number of partit
 Another defining factor for events vs. entities is that events tend to be immutable while entities can represent both immutable and user-generated mutable data. With the help of Zookeeper, you could also make sure mutually-exclusive locks are held down to an entity's type and id when being updated so that user's don't run the risk of having stale data at any point. Because distributed locking is an expensive operation, however, it's not something that many scenarios would choose to use as a default. Rather, what makes an entity store useful is that it follows the same shared-nothing paradigm as most distributed document stores today. That is, it guarantees nothing about referential integrity. An entity can point to another entity that doesn't exist. Sometimes it's more important to know about the link than it is to know about what's on the other side- even if it no longer or never has existed in the data store.
 
 
-##The pains of forced referential integrity
+###The pains of forced referential integrity
 
 The referential integrity bit is quite important to what makes this store useful. Many graph databases tend to want to control the identifier creation layer to guarantee referential integrity. This often forces users to make very bad design decisions as they need to query 2 vertices before they can link an edge to them. Further, if they know they may need those vertices further, they end up writing caching mechanisms to stick as many of the vertices in memory as possible. This breaks down with large graphs and eliminates the possiblity for bulk ingest in most cases (in fact, many graph databases like Titan and Neo4j allow you to turn off referential integrity so you can bulk ingest but you are still stuck using their identification scheme).
 

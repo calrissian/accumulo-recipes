@@ -15,7 +15,6 @@
  */
 package org.calrissian.accumlorecipes.changelog.iterator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -27,7 +26,7 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.mango.json.tuple.TupleModule;
+import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
@@ -39,11 +38,11 @@ import java.util.Map;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.hashEntry;
+import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class BucketHashIterator extends WrappingIterator {
 
-    private ObjectMapper objectMapper;
     private TypeRegistry<String> typeRegistry;
 
     protected  String currentBucket;
@@ -58,7 +57,6 @@ public class BucketHashIterator extends WrappingIterator {
 
         super.init(source, options, env);
         typeRegistry = LEXI_TYPES;   //TODO make types configurable.
-        objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
         hashes = new ArrayList<String>();
     }
 
@@ -113,7 +111,7 @@ public class BucketHashIterator extends WrappingIterator {
 
                 super.next();
 
-                StoreEntry entry = objectMapper.readValue(new String(value.get()), StoreEntry.class);
+                StoreEntry entry = asWritable(value.get(), StoreEntryWritable.class).get();
                 hashes.add(new String(hashEntry(entry, typeRegistry)));
             }
 

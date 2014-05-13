@@ -14,6 +14,6 @@ public class TupleCollectionCriteriaPredicate implements Predicate<TupleCollecti
 
   @Override
   public boolean apply(TupleCollection storeEntry) {
-    return criteria.matches(storeEntry);
+    return criteria.apply(storeEntry);
   }
 }

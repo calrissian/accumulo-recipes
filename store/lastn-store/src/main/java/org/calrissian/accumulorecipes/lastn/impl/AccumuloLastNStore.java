@@ -27,6 +27,8 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
+import org.calrissian.accumulorecipes.commons.support.WritableUtils2;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
@@ -41,6 +43,7 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.EnumSet.allOf;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
+import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -62,13 +65,12 @@ public class AccumuloLastNStore implements LastNStore {
     private final String tableName;
     private final BatchWriter writer;
     private final TypeRegistry<String> typeRegistry;
-    private final ObjectMapper objectMapper;
 
     private Function<Entry<Key, Value>, StoreEntry> storeTransform = new Function<Entry<Key, Value>, StoreEntry>() {
         @Override
         public StoreEntry apply(Entry<Key, Value> entry) {
             try {
-                return objectMapper.readValue(entry.getValue().get(), StoreEntry.class);
+                return asWritable(entry.getValue().get(), StoreEntryWritable.class).get();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -103,7 +105,6 @@ public class AccumuloLastNStore implements LastNStore {
         this.connector = connector;
         this.tableName = tableName;
         this.typeRegistry = LEXI_TYPES; //TODO allow caller to pass in types.
-        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(typeRegistry));
 
         if(!connector.tableOperations().exists(this.tableName)) {
             connector.tableOperations().create(this.tableName, true);

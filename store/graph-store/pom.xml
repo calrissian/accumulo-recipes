@@ -60,6 +60,11 @@ limitations under the License.
       <artifactId>zookeeper</artifactId>
       <version>3.3.6</version>
     </dependency>
+    <dependency>
+      <groupId>com.tinkerpop.blueprints</groupId>
+      <artifactId>blueprints-core</artifactId>
+      <version>2.5.0</version>
+    </dependency>
 
     <!-- JUNIT -->
     <dependency>
@@ -72,6 +77,12 @@ limitations under the License.
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
       <version>2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.tinkerpop.blueprints</groupId>
+      <artifactId>blueprints-test</artifactId>
+      <version>2.5.0</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>

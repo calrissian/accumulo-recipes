@@ -51,7 +51,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleCollection> 
         String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
         try {
           Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
-          String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? fieldValue.getValue().getVisibility().toString() : "";
+          String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
           entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
         } catch (TypeDecodingException e) {
           throw new RuntimeException(e);

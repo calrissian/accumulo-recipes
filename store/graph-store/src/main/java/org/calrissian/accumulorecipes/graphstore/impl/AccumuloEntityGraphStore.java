@@ -35,7 +35,7 @@ import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.*;
-import static org.calrissian.mango.criteria.utils.NodeUtils.criteriaFromNode;
+import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
 
 public class AccumuloEntityGraphStore extends AccumuloEntityStore implements GraphStore {
 
@@ -149,7 +149,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
           new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
             @Override
             public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-              return get(Iterables.transform(entries, new EdgeRowXform(edges)), null, auths);
+              CloseableIterable<Entity> entites = get(Iterables.transform(entries, new EdgeRowXform(edges)), null, auths);
+              return entites;
             }
           }
         )
@@ -253,5 +254,14 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     return entity.get(HEAD) != null &&
            entity.get(TAIL) != null &&
            entity.get(LABEL) != null;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName().toLowerCase() + "{" +
+            "table='" + table + '\'' +
+            ", bufferSize=" + bufferSize +
+            ", writer=" + writer +
+            '}';
   }
 }

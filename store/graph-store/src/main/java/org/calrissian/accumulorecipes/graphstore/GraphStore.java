@@ -1,6 +1,7 @@
 package org.calrissian.accumulorecipes.graphstore;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
@@ -13,7 +14,7 @@ import java.util.Set;
 /**
  * A graph store allows adjacent edges and vertices to be fetched given a query
  */
-public interface GraphStore {
+public interface GraphStore extends EntityStore {
 
   CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices, Node query, Direction direction,
                                           Set<String> labels, Auths auths);
