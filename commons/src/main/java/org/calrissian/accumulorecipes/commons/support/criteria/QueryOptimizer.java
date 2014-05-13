@@ -65,6 +65,10 @@ public class QueryOptimizer implements NodeVisitor {
     query.accept(new CollapseParentClauseVisitor());
     query.accept(new RangeSplitterVisitor());
 
+    ExtractRangesVisitor extractRangesVisitor = new ExtractRangesVisitor();
+    query.accept(extractRangesVisitor);
+    extractRangesVisitor.extract(); // perform actual extraction
+
     //visitors
     query.accept(new NoAndOrValidator());
     query.accept(new NoOrNotEqualsValidator());
