@@ -1,6 +1,5 @@
 package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
-import com.sun.tools.corba.se.idl.constExpr.GreaterThan;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.GreaterThanLeaf;

@@ -50,7 +50,6 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleCollecti
       for(Map.Entry<Key,Value> curEntry : keyValues.entrySet()) {
         if(entry == null)
           entry = buildEntryFromKey(curEntry.getKey());
-        System.out.println(curEntry);
         String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
         String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
         String visibility = curEntry.getKey().getColumnVisibility().toString();

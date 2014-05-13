@@ -82,14 +82,6 @@ public class EventFieldsFilteringIterator extends Filter {
     return true;
   }
 
-  /**
-   * A convenience method for setting the age off threshold.
-   *
-   * @param is
-   *          IteratorSetting object to configure.
-   * @param selectFields
-   *          fields to include
-   */
   public static void setSelectFields(IteratorSetting is, Set<String> selectFields) {
     is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, "\u0000"));
   }

@@ -296,12 +296,6 @@ public class AccumuloEventStore implements EventStore {
 
       scanner.addScanIterator(setting);
 
-      if (selectFields != null && selectFields.size() > 0) {
-        setting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-        EventFieldsFilteringIterator.setSelectFields(setting, union(selectFields, optimizer.getKeysInQuery()));
-        scanner.addScanIterator(setting);
-      }
-
       return transform(closeableIterable(scanner), new QueryXform(selectFields));
 
     } catch (TableNotFoundException e) {
