@@ -56,8 +56,8 @@ public class EntityVertexQuery implements VertexQuery{
   }
 
   @Override
-  public VertexQuery labels(String... strings) {
-    this.labels = strings;
+  public VertexQuery labels(String... labels) {
+    this.labels = labels;
     return this;
   }
 
@@ -75,43 +75,43 @@ public class EntityVertexQuery implements VertexQuery{
   }
 
   @Override
-  public VertexQuery has(String s) {
-    queryBuilder = queryBuilder.has(s);
+  public VertexQuery has(String key) {
+    queryBuilder = queryBuilder.has(key);
     return this;
   }
 
   @Override
-  public VertexQuery hasNot(String s) {
-    queryBuilder = queryBuilder.hasNot(s);
+  public VertexQuery hasNot(String key) {
+    queryBuilder = queryBuilder.hasNot(key);
     return this;
   }
 
   @Override
-  public VertexQuery has(String s, Object o) {
-    queryBuilder = queryBuilder.eq(s, o);
+  public VertexQuery has(String key, Object value) {
+    queryBuilder = queryBuilder.eq(key, value);
     return this;
   }
 
   @Override
-  public VertexQuery hasNot(String s, Object o) {
-    queryBuilder = queryBuilder.notEq(s, o);
+  public VertexQuery hasNot(String key, Object value) {
+    queryBuilder = queryBuilder.notEq(key, value);
     return this;
   }
 
   @Override
-  public VertexQuery has(String s, Predicate predicate, Object o) {
+  public VertexQuery has(String key, Predicate predicate, Object value) {
     if(predicate == EQUAL)
-      return has(s, o);
+      return has(key, value);
     else if(predicate == NOT_EQUAL)
-      return hasNot(s, o);
+      return hasNot(key, value);
     else if(predicate == GREATER_THAN)
-      queryBuilder = queryBuilder.greaterThan(s, o);
+      queryBuilder = queryBuilder.greaterThan(key, value);
     else if(predicate == LESS_THAN)
-      queryBuilder = queryBuilder.lessThan(s, o);
+      queryBuilder = queryBuilder.lessThan(key, value);
     else if(predicate == GREATER_THAN_EQUAL)
-      queryBuilder = queryBuilder.greaterThanEq(s, o);
+      queryBuilder = queryBuilder.greaterThanEq(key, value);
     else if(predicate == LESS_THAN_EQUAL)
-      queryBuilder = queryBuilder.lessThanEq(s, o);
+      queryBuilder = queryBuilder.lessThanEq(key, value);
     else
       throw new UnsupportedOperationException("Predicate with type " + predicate + " is not supported.");
 
@@ -119,19 +119,19 @@ public class EntityVertexQuery implements VertexQuery{
   }
 
   @Override
-  public <T extends Comparable<T>> VertexQuery has(String s, T t, Compare compare) {
-    return has(s, compare, t);
+  public <T extends Comparable<T>> VertexQuery has(String key, T value, Compare compare) {
+    return has(key, compare, value);
   }
 
   @Override
-  public <T extends Comparable<?>> VertexQuery interval(String s, T t, T t2) {
-    queryBuilder = queryBuilder.range(s, t, t2);
+  public <T extends Comparable<?>> VertexQuery interval(String key, T start, T stop) {
+    queryBuilder = queryBuilder.range(key, start, stop);
     return this;
   }
 
   @Override
-  public VertexQuery limit(int i) {
-    limit = i;
+  public VertexQuery limit(int limit) {
+    this.limit = limit;
     return this;
   }
 
