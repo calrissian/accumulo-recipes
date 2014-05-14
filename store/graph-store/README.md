@@ -54,10 +54,63 @@ Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, Transfo
 CloseableIterable<Entity> edges = graphStore.adjacentEdges(indexes, null, Direction.OUT, new Auths());
 ```
 
+##Tinkerpop
 
+Tinkerpop is a very well thought out framework for using graphs to solve problems. At the base of the framework is Tinkerpop Blueprints, a set of interfaces for modeling a graph. Tinkerpop Gremlin is a traversal language that's used to do discovery and solve graph-related problems. Things like eigenvectors and shortest path algorithms can be implemented fairly easily. You can read more on the Tinkerpop framework [here](https://github.com/tinkerpop/).
 
+The current Tinkerpop Blueprints graph is read-only. We are working to supply a mutable graph in the future but for now it's best and most performant to use the ```AccumuloEntityGraphStore``` to write entities.
 
+###Creating an EntityGraph
 
+Let's use the same model from above to traverse our graph. Since we are modelling our graph based on entity objects, we will need to know which entity types we plan to query. First,  we will create an ```EntityGraph``` instance:
 
+```java
+Instance instance = new MockInstance();
+Connector connector = instance.getConnector("root", "".getBytes());
+GraphStore graphStore = new AccumuloEntityGraphStore(connector);
+Graph g = new EntityGraph(graphStore, Sets.newHashSet("Person"), Sets.newHashSet("Relative"), new Auths());
+```
 
+That is, we only want to traverse over the vertices that include Person entities and we only want to traverse through edges that are Relative types. This typing makes it possible to traverse through the subgraphs we care about for a specific question.
 
+###Using Gremlin to traverse the graph
+
+Now, let's demonstrate using Tinkerpop's Gremlin to traverse the graph above. Gremlin is nice in that it can be written in both native Java and Groovy formats. Let's query for the vertex like we did in the ```AccumuloEntityGraphStore``` example above:
+```java
+Vertex v = g.getVertex(new EntityIndex("Person", "1"));
+```
+
+Now, let's set up a Gremlin query using Groovy to find the brothers of the vertex:
+
+```java
+List results = new ArrayList();
+Bindings bindings = engine.createBindings();
+bindings.put("g", graph);
+bindings.put("v", v); 
+bindings.put("results", results);
+
+engine.eval("v.out('brother').fill(results)", bindings);
+```
+
+Or, let's say we had a parent relationship as a relative: 
+
+``` java
+Entity vertex3 = new BaseEntity("Person", "3");
+vertex2.put(new Tuple("name", "James Smith Sr."));
+vertex2.put(new Tuple("age", 65));
+vertex2.put(new Tuple("location", "Maryland"));
+
+EdgeEntity edge2 = new EdgeEntity("Relative", "2:3", vertex2, "", vertex3, "", "child");
+edge2.put(new Tuple("biological", true));
+
+EdgeEntity edge3 = new EdgeEntity("Relative", "1:3", vertex1, "", vertex3, "", "child");
+edge3.put(new Tuple("biological", false));
+
+graphStore.save(Arrays.asList(new Entity[] { edge2, edge3 }));
+```
+
+Now, we can traverse the parents from either of the children and figure out which one is biological:
+
+```java
+v.in('child').has('biological', true).fill(results);
+```
