@@ -114,3 +114,10 @@ Now, we can traverse the parents from either of the children and figure out whic
 ```groovy
 v.in('child').has('biological', true).fill(results);
 ```
+
+We can also loop a traversal and define a termination point, like the part between the as('x') and the loop('x') in the example below. Let's find the great great grandparent of all people named John Smith:
+
+```groovy
+v = g.V('name', 'John Smith');
+v.as('x').in('child').loop('x'){it.loops < 3}.path
+```
