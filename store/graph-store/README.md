@@ -111,6 +111,6 @@ graphStore.save(Arrays.asList(new Entity[] { edge2, edge3 }));
 
 Now, we can traverse the parents from either of the children and figure out which one is biological:
 
-```java
+```groovy
 v.in('child').has('biological', true).fill(results);
 ```
