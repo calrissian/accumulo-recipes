@@ -106,7 +106,7 @@ edge2.put(new Tuple("biological", true));
 EdgeEntity edge3 = new EdgeEntity("Relative", "1:3", vertex1, "", vertex3, "", "child");
 edge3.put(new Tuple("biological", false));
 
-graphStore.save(Arrays.asList(new Entity[] { edge2, edge3 }));
+graphStore.save(Arrays.asList(new Entity[] { edge2, vertex3, edge3 }));
 ```
 
 Now, we can traverse the parents from either of the children and figure out which one is biological:
