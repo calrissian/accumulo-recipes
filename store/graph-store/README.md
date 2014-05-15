@@ -57,7 +57,7 @@ CloseableIterable<Entity> edges = graphStore.adjacentEdges(indexes, null, Direct
 Or we can propagate right to the set of vertices on the other side of the edges:
 ```java
 Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
-CloseableIterable<Entity> edges = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
+CloseableIterable<Entity> newVertices = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
 ```
 
 With this, it's possible to perform a breadth-first traversal through the graph. Let's calculate the 3-hop of a graph:
@@ -65,6 +65,7 @@ With this, it's possible to perform a breadth-first traversal through the graph.
 
 for(int i = 0; i < 3; i++) {
   Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
+  vertices.close()  // don't forget to close!
   vertices = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
 }
 ```
