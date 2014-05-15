@@ -54,6 +54,25 @@ Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, Transfo
 CloseableIterable<Entity> edges = graphStore.adjacentEdges(indexes, null, Direction.OUT, new Auths());
 ```
 
+Or we can propagate right to the set of vertices on the other side of the edges:
+```java
+Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
+CloseableIterable<Entity> edges = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
+```
+
+With this, it's possible to perform a breadth-first traversal through the graph. Let's calculate the 3-hop of a graph:
+```java
+
+for(int i = 0; i < 3; i++) {
+  Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
+  vertices = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
+}
+```
+
+Now, if you were to iterate through ```vertices```, you would find that it contains the vertices 3 hops away from the initial set of vertices. 
+
+It's important to note that the graph will return duplicate vertices and edges. For instance, if I were to have three edges that all linked ```vertex1``` to ```vertex3``` and I traversed through the ```adjacencies()``` from ```vertex1``` to ```vertex3``` without any further filtering of the edges upon which I traversed, I should expect to have ```vertex3``` show up three times in the resulting set of vertices. If the graph did not return these duplicates, then algorithms trying to quantify the number of times things were traversed would not be accurate.
+
 ##Tinkerpop
 
 Tinkerpop is a very well thought out framework for using graphs to solve problems. At the base of the framework is Tinkerpop Blueprints, a set of interfaces for modeling a graph. Tinkerpop Gremlin is a traversal language that's used to do discovery and solve graph-related problems. Things like eigenvectors and shortest path algorithms can be implemented fairly easily. You can read more on the Tinkerpop framework [here](https://github.com/tinkerpop/).
