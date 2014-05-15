@@ -6,6 +6,8 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
+import org.calrissian.accumulorecipes.graphstore.model.*;
+import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityElement;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
@@ -20,6 +22,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.HEAD;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.TAIL;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
@@ -86,7 +89,7 @@ public class EntityGraph implements Graph {
   public Vertex getVertex(Object o) {
     checkArgument(o instanceof EntityIndex);
     if (vertexTypes.contains(((EntityIndex) o).getType())) ;
-    CloseableIterable<Entity> entities = graphStore.get(singleton((EntityIndex) o), null, auths);
+    CloseableIterable<Entity> entities = graphStore.get(singletonList((EntityIndex) o), null, auths);
     Iterator<Entity> itr = entities.iterator();
     if (itr.hasNext()) {
       EntityVertex toReturn = new EntityVertex(itr.next(), graphStore, auths);
@@ -122,7 +125,7 @@ public class EntityGraph implements Graph {
   public Edge getEdge(Object o) {
     checkArgument(o instanceof EntityIndex);
     if (edgeTypes.contains(((EntityIndex) o).getType())) ;
-    CloseableIterable<Entity> entities = graphStore.get(singleton((EntityIndex) o), null, auths);
+    CloseableIterable<Entity> entities = graphStore.get(singletonList((EntityIndex) o), null, auths);
     Iterator<Entity> itr = entities.iterator();
     if (itr.hasNext()) {
       EntityEdge toReturn = new EntityEdge(itr.next(), graphStore, auths);
@@ -199,21 +202,25 @@ public class EntityGraph implements Graph {
     }
   }
 
-  public static class EdgeToVertexIndexXform implements Function<Edge, EntityIndex> {
+  public static class EdgeToVertexIndexXform implements Function<Entity, EntityIndex> {
 
-    private EntityVertex v;
+    private org.calrissian.accumulorecipes.graphstore.model.Direction direction;
 
-    public EdgeToVertexIndexXform(EntityVertex v) {
-      this.v = v;
+    public EdgeToVertexIndexXform(org.calrissian.accumulorecipes.graphstore.model.Direction direction) {
+      this.direction = direction;
     }
 
     @Override
-    public EntityIndex apply(Edge element) {
-      EntityRelationship tail = (((EntityEdge)element).getEntity().<EntityRelationship>get(TAIL)).getValue();
-      EntityRelationship head = (((EntityEdge)element).getEntity().<EntityRelationship>get(HEAD)).getValue();
-      EntityRelationship finalRelationship = (tail.getTargetType().equals(v.getEntity().getType()) &&
-              tail.getTargetId().equals(v.getEntity().getId())) ? head : tail;
-      return new EntityIndex(finalRelationship.getTargetType(), finalRelationship.getTargetId());
+    public EntityIndex apply(Entity element) {
+
+      String headOrTail;
+      if(direction == Direction.IN)
+        headOrTail = HEAD;
+      else
+        headOrTail = TAIL;
+
+      EntityRelationship rel = element.<EntityRelationship>get(headOrTail).getValue();
+      return new EntityIndex(rel.getTargetType(), rel.getTargetId());
     }
   }
 

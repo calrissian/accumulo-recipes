@@ -15,6 +15,7 @@ import org.calrissian.mango.domain.Entity;
 import java.util.Iterator;
 
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 public class EntityEdge extends EntityElement implements Edge{
 
@@ -36,7 +37,7 @@ public class EntityEdge extends EntityElement implements Edge{
 
 
     CloseableIterable<Entity> entities =
-            graphStore.get(singleton(new EntityIndex(rel.getTargetType(), rel.getTargetId())), null, auths);
+            graphStore.get(singletonList(new EntityIndex(rel.getTargetType(), rel.getTargetId())), null, auths);
 
     Iterator<Entity> entityItr = entities.iterator();
 

@@ -3,10 +3,11 @@ package org.calrissian.accumulorecipes.graphstore.tinkerpop.query;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Direction;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
-import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
+import org.calrissian.accumulorecipes.graphstore.model.*;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
@@ -15,6 +16,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.domain.Entity;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.List;
 import static com.google.common.collect.Sets.newHashSet;
 import static com.tinkerpop.blueprints.Query.Compare.*;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 
@@ -41,7 +44,6 @@ public class EntityVertexQuery implements VertexQuery{
   private int limit = -1;
 
   private QueryBuilder queryBuilder = new QueryBuilder().and();
-  private QueryBuilder filters = new QueryBuilder().and();
 
   public EntityVertexQuery(EntityVertex vertex, GraphStore graphStore, Auths auths) {
     this.vertex = vertex;
@@ -139,21 +141,32 @@ public class EntityVertexQuery implements VertexQuery{
   public CloseableIterable<Edge> edges() {
 
     Node query = queryBuilder.end().build();
-    Node filter = filters.end().build();
 
-    Collection<EntityIndex> vertexIndex = singleton(new EntityIndex(vertex.getEntity()));
+    List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
 
-    org.calrissian.accumulorecipes.graphstore.model.Direction dir =
-            org.calrissian.accumulorecipes.graphstore.model.Direction.valueOf(direction.toString());
+    List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
+            new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
 
-    CloseableIterable<EdgeEntity> entityEdgies = labels == null ?
-            graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, auths) :
-            graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, newHashSet(labels), auths);
+    if(direction == Direction.IN || direction == Direction.BOTH)
+      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.IN);
+    if(direction == Direction.OUT || direction == Direction.BOTH)
+      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.OUT);
 
-    CloseableIterable<Edge> finalEdges = transform(entityEdgies, new EdgeEntityXform(graphStore, auths));
+    CloseableIterable<? extends Entity> edges = null;
+    for(org.calrissian.accumulorecipes.graphstore.model.Direction dir : dirs) {
 
-    if(filter.children().size() > 0)
-      finalEdges = filter(finalEdges, new EntityFilterPredicate(NodeUtils.criteriaFromNode(filter)));
+      CloseableIterable<? extends Entity> entityEdges = labels == null ?
+              graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, auths) :
+              graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, newHashSet(labels), auths);
+
+      if(edges == null)
+        edges = entityEdges;
+      else
+        edges = chain(edges, entityEdges);
+
+    }
+
+    CloseableIterable<Edge> finalEdges = transform(edges, new EdgeEntityXform(graphStore, auths));
 
     if(limit > -1)
       return CloseableIterables.limit(finalEdges, limit);
@@ -162,21 +175,36 @@ public class EntityVertexQuery implements VertexQuery{
 
   @Override
   public CloseableIterable<Vertex> vertices() {
+    Node query = queryBuilder.end().build();
 
-    CloseableIterable<EntityIndex> indexes = CloseableIterables.transform(edges(), new EdgeToVertexIndexXform(vertex));
-    CloseableIterable<Vertex> vertices = concat(transform(partition(indexes, 50),
-      new Function<List<EntityIndex>, Iterable<Vertex>>() {
-        @Override
-        public Iterable<Vertex> apply(List<EntityIndex> entityIndexes) {
-          Collection<Entity> entityCollection = new LinkedList<Entity>();
-          CloseableIterable<Entity> entities = graphStore.get(entityIndexes, null, auths);
-          Iterables.addAll(entityCollection, entities);
-          entities.closeQuietly();
-          return Iterables.transform(entityCollection, new VertexEntityXform(graphStore, auths));
-        }
-      }
-    ));
+    List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
 
-    return vertices;
+    List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
+            new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
+
+    if(direction == Direction.IN || direction == Direction.BOTH)
+      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.IN);
+    if(direction == Direction.OUT || direction == Direction.BOTH)
+      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.OUT);
+
+    CloseableIterable<? extends Entity> vertices = null;
+    for(org.calrissian.accumulorecipes.graphstore.model.Direction dir : dirs) {
+
+      CloseableIterable<? extends Entity> entityvertices = labels == null ?
+              graphStore.adjacencies(vertexIndex, query.children().size() > 0 ? query : null, dir, auths) :
+              graphStore.adjacencies(vertexIndex, query.children().size() > 0 ? query : null, dir, newHashSet(labels), auths);
+
+      if(vertices == null)
+        vertices = entityvertices;
+      else
+        vertices = chain(vertices, entityvertices);
+
+    }
+
+    CloseableIterable<Vertex> finalVertices = transform(vertices, new VertexEntityXform(graphStore, auths));
+
+    if(limit > -1)
+      return CloseableIterables.limit(finalVertices, limit);
+    return finalVertices;
   }
 }

@@ -1,7 +1,6 @@
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import org.calrissian.mango.criteria.domain.*;
-import org.calrissian.mango.criteria.domain.criteria.HasNotCriteria;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;

@@ -51,11 +51,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     @Override
-    public void begin(ParentNode parentNode) {
-
-
-
-    }
+    public void begin(ParentNode parentNode) {}
 
     @Override
     public void end(ParentNode parentNode) {

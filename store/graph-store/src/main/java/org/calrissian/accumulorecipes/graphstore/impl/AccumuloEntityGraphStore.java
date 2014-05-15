@@ -17,16 +17,21 @@ import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
+import org.calrissian.accumulorecipes.graphstore.support.EdgeGroupingIterator;
 import org.calrissian.accumulorecipes.graphstore.support.TupleCollectionCriteriaPredicate;
+import org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
-import org.calrissian.mango.types.exception.TypeDecodingException;
+import org.calrissian.mango.domain.Tuple;
 
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.accumulo.core.data.Range.prefix;
 import static org.apache.commons.lang.StringUtils.defaultString;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder.ALIAS;
@@ -42,6 +47,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   public static final String DEFAULT_TABLE_NAME = "entityStore_graph";
 
   public static final int DEFAULT_BUFFER_SIZE = 50;
+
+  public static final String ONE_BYTE = "\u0001";
 
   protected String table;
   protected int bufferSize = DEFAULT_BUFFER_SIZE;
@@ -75,13 +82,13 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   }
 
   @Override
-  public CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices,
+  public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices,
                                                  Node query,
                                                  Direction direction,
                                                  Set<String> labels,
                                                  final Auths auths) {
     checkNotNull(labels);
-    final CloseableIterable<Entity> entities = adjacencies(fromVertices, query, direction, labels, auths, true);
+    final CloseableIterable<Entity> entities = findAdjacentEdges(fromVertices, query, direction, labels, auths);
     return transform(entities, new Function<Entity, EdgeEntity>() {
       @Override
       public EdgeEntity apply(Entity entity) {
@@ -91,8 +98,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   }
 
   @Override
-  public CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
-    final CloseableIterable<Entity> entities = adjacencies(fromVertices, query, direction, null, auths, true);
+  public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
+    final CloseableIterable<Entity> entities = findAdjacentEdges(fromVertices, query, direction, null, auths);
     return transform(entities, new Function<Entity, EdgeEntity>() {
       @Override
       public EdgeEntity apply(Entity entity) {
@@ -102,23 +109,35 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   }
 
   @Override
-  public CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices,
+  public CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices,
                                                Node query, Direction direction,
                                                Set<String> labels,
                                                final Auths auths) {
-    checkNotNull(labels);
-    return adjacencies(fromVertices, query, direction, labels, auths, false);
+    CloseableIterable<Entity> edges = findAdjacentEdges(fromVertices, query, direction, labels, auths);
+    CloseableIterable<EntityIndex> indexes = transform(edges, new EntityGraph.EdgeToVertexIndexXform(direction));
+    return concat(transform(partition(indexes, bufferSize),
+      new Function<List<EntityIndex>, Iterable<Entity>>() {
+        @Override
+        public Iterable<Entity> apply(List<EntityIndex> entityIndexes) {
+          List<Entity> entityCollection = new LinkedList<Entity>();
+          CloseableIterable<Entity> entities = get(entityIndexes, null, auths);
+          Iterables.addAll(entityCollection, entities);
+          entities.closeQuietly();
+          return entityCollection;
+        }
+      }
+    ));
   }
 
   @Override
-  public CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
-    return adjacencies(fromVertices, query, direction, null, auths, false);
+  public CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
+    return adjacencies(fromVertices, query, direction, null, auths);
   }
 
-  private CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices,
-                                                Node query, Direction direction,
-                                                Set<String> labels,
-                                                final Auths auths, final boolean edges) {
+  private CloseableIterable<Entity> findAdjacentEdges(List<EntityIndex> fromVertices,
+                                                      Node query, Direction direction,
+                                                      Set<String> labels,
+                                                      final Auths auths) {
     checkNotNull(fromVertices);
     checkNotNull(auths);
 
@@ -128,6 +147,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     // this one is fairly easy- return the adjacent edges that match the given query
     try {
       BatchScanner scanner = getConnector().createBatchScanner(table, auths.getAuths(), getConfig().getMaxQueryThreads());
+      IteratorSetting setting = new IteratorSetting(15, EdgeGroupingIterator.class);
+      scanner.addScanIterator(setting);
 
       Collection<Range> ranges = new ArrayList<Range>();
       for(EntityIndex entity : fromVertices) {
@@ -145,16 +166,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
        * This partitions the initial Accumulo rows in the scanner into buffers of <bufferSize> so that the full entities
        * can be grabbed from the server in batches instead of one at a time.
        */
-      CloseableIterable<Entity> entities = concat(transform(partition(closeableIterable(scanner), bufferSize),
-          new Function<List<Map.Entry<Key, Value>>, CloseableIterable<Entity>>() {
-            @Override
-            public CloseableIterable<Entity> apply(List<Map.Entry<Key, Value>> entries) {
-              CloseableIterable<Entity> entites = get(Iterables.transform(entries, new EdgeRowXform(edges)), null, auths);
-              return entites;
-            }
-          }
-        )
-      );
+      CloseableIterable<Entity> entities = transform(closeableIterable(scanner), edgeRowXform);
 
       if(filter != null)
         return filter(entities, filter);
@@ -167,34 +179,41 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
   }
 
   private void populateRange(Collection<Range> ranges, String row, Direction direction, String label) {
-    if(direction == Direction.IN || direction == Direction.BOTH)
-      ranges.add(Range.prefix(row, Direction.IN.toString() + DELIM + defaultString(label)));
-    if(direction == Direction.OUT || direction == Direction.BOTH) {
-      ranges.add(Range.prefix(row, Direction.OUT.toString() + DELIM + defaultString(label)));
-    }
+    ranges.add(prefix(row, direction.toString() + DELIM + defaultString(label)));
   }
 
   /**
    * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex
    */
-  private class EdgeRowXform implements Function<Map.Entry<Key, Value>, EntityIndex> {
-
-    private boolean edges;
-
-    private EdgeRowXform(boolean edges) {
-      this.edges = edges;
-    }
+  private Function<Map.Entry<Key,Value>, Entity> edgeRowXform = new Function<Map.Entry<Key, Value>, Entity>() {
 
     @Override
-    public EntityIndex apply(Map.Entry<Key, Value> keyValueEntry) {
+    public Entity apply(Map.Entry<Key, Value> keyValueEntry) {
+
       String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-      int startIdx = edges ? 0 : cq.indexOf(DELIM)+1;
-      int endIdx = edges ? cq.indexOf(DELIM) : cq.length();
-      String edge = cq.substring(startIdx, endIdx);
+
+      int idx = cq.indexOf(DELIM);
+      String edge = cq.substring(0, idx);
+
       try {
-        EntityRelationship rel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-        return new EntityIndex(rel.getTargetType(), rel.getTargetId());
-      } catch (TypeDecodingException e) {
+        EntityRelationship edgeRel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+        Entity entity = new BaseEntity(edgeRel.getTargetType(), edgeRel.getTargetId());
+        SortedMap<Key,Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+
+        for(Map.Entry<Key,Value> entry : entries.entrySet()) {
+          if(entry.getKey().getColumnQualifier().toString().indexOf(ONE_BYTE) == -1)
+            continue;
+
+          String[] qualParts = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), ONE_BYTE);
+          String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
+
+          entity.put(new Tuple(keyALiasValue[0], ENTITY_TYPES.decode(keyALiasValue[1], keyALiasValue[2]),
+                     entry.getKey().getColumnVisibility().toString()));
+
+        }
+
+        return entity;
+      } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
@@ -216,6 +235,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         String fromVertexVis = entity.get(HEAD).getVisibility();
 
         String label = entity.<String>get(LABEL).getValue();
+
         try {
           String fromEncoded = ENTITY_TYPES.encode(fromVertex);
           String toEncoded = ENTITY_TYPES.encode(toVertex);
@@ -225,8 +245,25 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
           forward.put(new Text(OUT.toString() + DELIM + label), new Text(edgeEncoded + DELIM + toEncoded),
                   new ColumnVisibility(toVertexVis), EMPTY_VALUE);
+
           reverse.put(new Text(IN.toString() + DELIM + label), new Text(edgeEncoded + DELIM + fromEncoded),
                   new ColumnVisibility(fromVertexVis), EMPTY_VALUE);
+
+          for(Tuple tuple : entity.getTuples()) {
+            String key = tuple.getKey();
+            String alias = ENTITY_TYPES.getAlias(tuple.getValue());
+            String value = ENTITY_TYPES.encode(tuple.getValue());
+
+            String keyAliasValue = key + DELIM + alias + DELIM + value;
+
+            forward.put(new Text(OUT.toString() + DELIM + label),
+                        new Text(edgeEncoded + DELIM + toEncoded + ONE_BYTE + keyAliasValue),
+                        new ColumnVisibility(tuple.getVisibility()), EMPTY_VALUE);
+
+            reverse.put(new Text(IN.toString() + DELIM + label),
+                        new Text(edgeEncoded + DELIM + fromEncoded + ONE_BYTE + keyAliasValue),
+                        new ColumnVisibility(tuple.getVisibility()), EMPTY_VALUE);
+          }
 
           writer.addMutation(forward);
           writer.addMutation(reverse);

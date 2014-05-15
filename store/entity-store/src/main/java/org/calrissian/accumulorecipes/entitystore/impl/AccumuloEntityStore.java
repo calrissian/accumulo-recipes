@@ -30,10 +30,7 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.union;
@@ -199,7 +196,7 @@ public class AccumuloEntityStore implements EntityStore {
   }
 
   @Override
-  public CloseableIterable<Entity> get(Iterable<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths) {
+  public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths) {
     checkNotNull(typesAndIds);
     checkNotNull(auths);
     try {
@@ -209,8 +206,7 @@ public class AccumuloEntityStore implements EntityStore {
       Collection<Range> ranges = new LinkedList<Range>();
       for (EntityIndex curIndex : typesAndIds) {
         String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
-        ranges.add(new Range(new Key(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()),
-                new Key(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId() + DELIM)));
+        ranges.add(prefix(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
       }
 
       scanner.setRanges(ranges);

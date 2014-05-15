@@ -9,6 +9,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Entity;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,13 +17,13 @@ import java.util.Set;
  */
 public interface GraphStore extends EntityStore {
 
-  CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices, Node query, Direction direction,
+  CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices, Node query, Direction direction,
                                           Set<String> labels, Auths auths);
 
-  CloseableIterable<EdgeEntity> adjacentEdges(Iterable<EntityIndex> fromVertices, Node query, Direction direction, Auths auths);
+  CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices, Node query, Direction direction, Auths auths);
 
-  CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices, Node query, Direction direction,
+  CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices, Node query, Direction direction,
                                         Set<String> labels, Auths auths);
 
-  CloseableIterable<Entity> adjacencies(Iterable<EntityIndex> fromVertices, Node query, Direction direction, Auths auths);
+  CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices, Node query, Direction direction, Auths auths);
 }
