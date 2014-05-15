@@ -240,7 +240,6 @@ public class AccumuloEventStore implements EventStore {
 
           multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
         }
-
       }
 
       for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
@@ -249,10 +248,9 @@ public class AccumuloEventStore implements EventStore {
         Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
         Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
 
-        keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
-                new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
-        valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), currentTimeMillis(),
-                new Value(Long.toString(indexCacheKey.getValue()).getBytes()));
+        Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
+        keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
+        valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
         multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
         multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
       }

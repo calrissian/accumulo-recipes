@@ -15,6 +15,7 @@ import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.*;
 
+import static java.lang.Long.parseLong;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -93,7 +94,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
                 Long cardinality = cardinalities.get(key);
                 if(cardinality == null)
                     cardinality = 0l;
-                cardinalities.put(key, ++cardinality);
+                cardinalities.put(key, cardinality + parseLong(new String(entry.getValue().get())));
                 shards.add(entry.getKey().getColumnQualifier().toString());
             }
 

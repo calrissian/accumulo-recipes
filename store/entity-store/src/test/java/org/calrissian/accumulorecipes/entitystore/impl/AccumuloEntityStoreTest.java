@@ -16,10 +16,7 @@
 package org.calrissian.accumulorecipes.entitystore.impl;
 
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -31,6 +28,7 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -239,6 +237,31 @@ public class AccumuloEntityStoreTest {
     else {
       assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
     }
+  }
+
+  @Test
+  public void testKeys() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
+
+    Entity entity = new BaseEntity("type", "id");
+    entity.put(new Tuple("hasIp", "true", ""));
+    entity.put(new Tuple("ip", "1.1.1.1", ""));
+
+    Entity entity2 = new BaseEntity("type", "id2");
+    entity2.put(new Tuple("hasIp", "true", ""));
+    entity2.put(new Tuple("ip", "2.2.2.2", ""));
+
+    Entity entity3 = new BaseEntity("type", "id3");
+    entity3.put(new Tuple("hasIp", "true", ""));
+    entity3.put(new Tuple("ip", "3.3.3.3", ""));
+
+    store.save(asList(entity, entity2, entity3));
+
+    CloseableIterable<Pair<String,String>> keys = store.keys("type", new Auths());
+
+    assertEquals(2, Iterables.size(keys));
+    assertEquals(new Pair<String,String>("hasIp", "string"), Iterables.get(keys, 0));
+    assertEquals(new Pair<String,String>("ip", "string"), Iterables.get(keys, 1));
   }
 
   @Test

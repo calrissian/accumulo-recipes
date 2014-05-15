@@ -1,10 +1,17 @@
 package org.calrissian.accumulorecipes.entitystore.impl;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.FirstEntryInRowIterator;
+import org.apache.accumulo.core.iterators.IteratorUtil;
+import org.apache.accumulo.core.iterators.LongCombiner;
+import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
@@ -21,11 +28,14 @@ import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWhol
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
+import org.calrissian.accumulorecipes.entitystore.support.EntityCardinalityKey;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -35,13 +45,17 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.union;
 import static java.util.Collections.singleton;
+import static java.util.EnumSet.allOf;
+import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
+import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloEntityStore implements EntityStore {
@@ -89,6 +103,13 @@ public class AccumuloEntityStore implements EntityStore {
     if (!connector.tableOperations().exists(this.indexTable))
       connector.tableOperations().create(this.indexTable);
 
+    if (connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
+      IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
+      SummingCombiner.setCombineAllColumns(setting, true);
+      SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
+      connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorUtil.IteratorScope.class));
+    }
+
     if (!connector.tableOperations().exists(this.shardTable))
       connector.tableOperations().create(this.shardTable);
 
@@ -128,7 +149,7 @@ public class AccumuloEntityStore implements EntityStore {
           String typeId = entity.getType() + INNER_DELIM + entity.getId();
 
           // key
-          Set<String> indexCache = new HashSet<String>();
+          Map<String, Long> indexCache = new HashMap<String, Long>();
 
           Mutation shardMutation = new Mutation(shardId);
 
@@ -150,34 +171,39 @@ public class AccumuloEntityStore implements EntityStore {
                     EMPTY_VALUE);  // forward mutation
 
             String[] strings = new String[]{
+                    entity.getType(),
                     shardId,
                     tuple.getKey(),
                     ENTITY_TYPES.getAlias(tuple.getValue()),
                     ENTITY_TYPES.encode(tuple.getValue()),
-                    tuple.getVisibility()
+                    tuple.getVisibility(),
+
             };
 
-            indexCache.add(join(strings, INNER_DELIM));
+            String cacheKey = join(strings, INNER_DELIM);
+            Long count = indexCache.get(cacheKey);
+            if (count == null)
+              count = 0l;
+            indexCache.put(cacheKey, ++count);
           }
 
-          String[] idIndex = new String[]{
-                  shardBuilder.buildShard(entity.getType(), entity.getId()),
-                  "@id",
-                  "string",
-                  entity.getId(),
-                  ""
-          };
+          for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
 
-          indexCache.add(join(idIndex, INNER_DELIM));
+            String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
 
-          for (String indexCacheKey : indexCache) {
+            String entityType = indexParts[0];
+            String shard = indexParts[1];
+            String key = indexParts[2];
+            String alias = indexParts[3];
+            String normalizedVal = indexParts[4];
+            String vis = indexParts[5];
 
-            String[] indexParts = splitPreserveAllTokens(indexCacheKey, INNER_DELIM);
-            Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
-            Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + INNER_DELIM + indexParts[3]);
+            Mutation keyMutation = new Mutation(entityType + "_" + INDEX_K + "_" + key);
+            Mutation valueMutation = new Mutation(entityType + "_" + INDEX_V + "_" + alias + "__" + normalizedVal);
 
-            keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), EMPTY_VALUE);
-            valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), EMPTY_VALUE);
+            Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
+            keyMutation.put(new Text(alias), new Text(shard), new ColumnVisibility(vis), value);
+            valueMutation.put(new Text(key), new Text(shard), new ColumnVisibility(normalizedVal), value);
             multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
             multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
           }
@@ -206,7 +232,7 @@ public class AccumuloEntityStore implements EntityStore {
       Collection<Range> ranges = new LinkedList<Range>();
       for (EntityIndex curIndex : typesAndIds) {
         String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
-        ranges.add(prefix(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
+        ranges.add(exact(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
       }
 
       scanner.setRanges(ranges);
@@ -287,6 +313,28 @@ public class AccumuloEntityStore implements EntityStore {
       scanner.addScanIterator(setting);
 
       return transform(closeableIterable(scanner), new QueryXform(selectFields));
+
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public CloseableIterable<Pair<String, String>> keys(String type, Auths auths) {
+    try {
+      Scanner scanner = connector.createScanner(indexTable, auths.getAuths());
+      IteratorSetting setting = new IteratorSetting(15, FirstEntryInRowIterator.class);
+      scanner.addScanIterator(setting);
+      scanner.setRange(Range.prefix(type + "_" + INDEX_K + "_"));
+
+      return transform(wrap(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
+
+        @Override
+        public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
+          EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());
+          return new Pair<String, String>(key.getKey(), key.getAlias());
+        }
+      });
 
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);

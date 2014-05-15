@@ -1,7 +1,100 @@
 package org.calrissian.accumulorecipes.entitystore.support;
 
-/**
- * Created by cjnolet on 5/14/14.
- */
-public class EntityGlobalIndexVisitor {
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
+import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
+import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.ParentNode;
+import org.calrissian.mango.types.TypeRegistry;
+import org.calrissian.mango.types.exception.TypeEncodingException;
+
+import java.util.*;
+
+import static java.lang.Long.parseLong;
+import static org.apache.accumulo.core.data.Range.exact;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+
+public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
+
+  private static TypeRegistry<String> registry = LEXI_TYPES;
+
+  private BatchScanner indexScanner;
+  private EntityShardBuilder shardBuilder;
+
+  private Set<String> shards = new HashSet<String>();
+  private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+
+  private Set<String> types;
+
+  private Set<Leaf> leaves = new HashSet<Leaf>();
+
+  public EntityGlobalIndexVisitor(BatchScanner indexScanner, EntityShardBuilder shardBuilder, Set<String> types) {
+    this.indexScanner = indexScanner;
+    this.shardBuilder = shardBuilder;
+    this.types = types;
+  }
+
+  @Override
+  public Map<CardinalityKey, Long> getCardinalities() {
+    return cardinalities;
+  }
+
+  @Override
+  public Set<String> getShards() {
+    return shards;
+  }
+
+  @Override
+  public void begin(ParentNode parentNode) {}
+
+  @Override
+  public void end(ParentNode parentNode) {
+
+    Collection<Range> ranges = new ArrayList<Range>();
+    for(Leaf leaf : leaves) {
+
+      AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf)leaf;
+
+      String alias = registry.getAlias(kvLeaf.getValue());
+
+      for(String type : types) {
+        if(isRangeLeaf(leaf)) {
+          ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
+        } else {
+          try {
+            String normVal = registry.encode(kvLeaf.getValue());
+            ranges.add(exact(type + "_" + INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey()));
+          } catch (TypeEncodingException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+
+      indexScanner.setRanges(ranges);
+
+      for(Map.Entry<Key,Value> entry : indexScanner) {
+
+        CardinalityKey key = new EntityCardinalityKey(entry.getKey());
+        Long cardinality = cardinalities.get(key);
+        if(cardinality == null)
+          cardinality = 0l;
+        cardinalities.put(key, cardinality + parseLong(new String(entry.getValue().get())));
+        shards.add(entry.getKey().getColumnQualifier().toString());
+      }
+
+      indexScanner.close();
+    }
+  }
+
+  @Override
+  public void visit(Leaf leaf) {
+    leaves.add(leaf);
+  }
 }
