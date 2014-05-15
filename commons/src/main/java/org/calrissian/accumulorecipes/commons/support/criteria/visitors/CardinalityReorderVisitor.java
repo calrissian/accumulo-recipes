@@ -7,9 +7,7 @@ import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Collections.sort;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -18,9 +16,18 @@ public class CardinalityReorderVisitor implements NodeVisitor{
 
     private static TypeRegistry<String> registry = LEXI_TYPES;
     private Map<CardinalityKey, Long> cardinalities;
+    private Map<String, Set<CardinalityKey>> keyToCarinalityKey = new HashMap<String, Set<CardinalityKey>>();
 
     public CardinalityReorderVisitor(Map<CardinalityKey, Long> cardinalities) {
         this.cardinalities = cardinalities;
+        for(CardinalityKey key : cardinalities.keySet()) {
+          Set<CardinalityKey> cardinalityKey = keyToCarinalityKey.get(key.getKey());
+          if(cardinalityKey == null) {
+            cardinalityKey = new HashSet<CardinalityKey>();
+            keyToCarinalityKey.put(key.getKey(), cardinalityKey);
+          }
+          cardinalityKey.add(key);
+        }
     }
 
     @Override
@@ -58,17 +65,30 @@ public class CardinalityReorderVisitor implements NodeVisitor{
     private long getCardinality(Leaf leaf) {
 
         AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf)leaf;
-        String alias = registry.getAlias(kvLeaf.getValue());
-        String normalizedVal = null;
-        try {
-            normalizedVal = registry.encode(kvLeaf.getValue());
-        } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-        }
 
-        CardinalityKey cardinalityKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
-        Long cardinality = cardinalities.get(cardinalityKey);
-        return cardinality == null ? 0 : cardinality;
+        // hasKey and hasNotKey need special treatment since we don't know the aliases
+        if(leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+          Set<CardinalityKey> cardinalityKeys = keyToCarinalityKey.get(kvLeaf.getKey());
+
+          Long cardinality = 0l;
+          for(CardinalityKey key : cardinalityKeys) {
+            cardinality += this.cardinalities.get(key);
+          }
+
+          return cardinality;
+        } else {
+          String alias = registry.getAlias(kvLeaf.getValue());
+          String normalizedVal = null;
+          try {
+            normalizedVal = registry.encode(kvLeaf.getValue());
+          } catch (TypeEncodingException e) {
+            throw new RuntimeException(e);
+          }
+
+          CardinalityKey cardinalityKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
+          Long cardinality = cardinalities.get(cardinalityKey);
+          return cardinality == null ? 0 : cardinality;
+        }
     }
 
     @Override

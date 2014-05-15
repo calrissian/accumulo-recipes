@@ -29,6 +29,7 @@ import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
 import org.calrissian.accumulorecipes.entitystore.support.EntityCardinalityKey;
+import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
@@ -203,7 +204,7 @@ public class AccumuloEntityStore implements EntityStore {
 
             Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
             keyMutation.put(new Text(alias), new Text(shard), new ColumnVisibility(vis), value);
-            valueMutation.put(new Text(key), new Text(shard), new ColumnVisibility(normalizedVal), value);
+            valueMutation.put(new Text(key), new Text(shard), new ColumnVisibility(vis), value);
             multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
             multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
           }
@@ -291,17 +292,18 @@ public class AccumuloEntityStore implements EntityStore {
   @Override
   public CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths) {
 
-    QueryOptimizer optimizer = new QueryOptimizer(query);
-
-    String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-    String originalJexl = nodeToJexl.transform(query);
-    Set<Text> shards = shardBuilder.buildShardsForTypes(types);
-
     try {
+      BatchScanner indexScanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+      QueryOptimizer optimizer = new QueryOptimizer(query, new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types));
+
+      String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+      String originalJexl = nodeToJexl.transform(query);
+      Set<String> shards = optimizer.getShards();
+
       BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
 
       Collection<Range> ranges = new HashSet<Range>();
-      for (Text shard : shards)
+      for (String shard : shards)
         ranges.add(new Range(shard));
 
       scanner.setRanges(ranges);

@@ -55,18 +55,18 @@ public class AccumuloEntityStoreTest {
     AccumuloEntityStore store = new AccumuloEntityStore(connector);
 
     Entity entity = new BaseEntity("type", "id");
-    entity.put(new Tuple("key1", "val1", ""));
-    entity.put(new Tuple("key2", "val2", ""));
+    entity.put(new Tuple("key1", "val1"));
+    entity.put(new Tuple("key2", "val2"));
 
     Entity entity2 = new BaseEntity("type", "id2");
-    entity2.put(new Tuple("key1", "val1", ""));
-    entity2.put(new Tuple("key2", "val2", ""));
+    entity2.put(new Tuple("key1", "val1"));
+    entity2.put(new Tuple("key2", "val2"));
 
     store.save(asList(entity, entity2));
 
-    Scanner scanner = connector.createScanner("entityStore_shard", new Authorizations());
+    Scanner scanner = connector.createScanner("entityStore_index", new Authorizations());
     for(Map.Entry<Key,Value> entry : scanner) {
-      System.out.println(entry);
+      System.out.println("ENTRY: " + entry);
     }
 
     CloseableIterable<Entity> actualEntity = store.get(singletonList(new EntityIndex("type", "id")), null, new Auths());

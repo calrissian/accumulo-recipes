@@ -6,9 +6,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
-import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
-import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.criteria.domain.ParentNode;
+import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
@@ -65,8 +63,11 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
       String alias = registry.getAlias(kvLeaf.getValue());
 
       for(String type : types) {
-        if(isRangeLeaf(leaf)) {
-          ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
+        if(isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+          if(alias != null)
+            ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
+          else
+            ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey()));
         } else {
           try {
             String normVal = registry.encode(kvLeaf.getValue());
