@@ -16,7 +16,7 @@ GraphStore graphStore = new AccumuloEntityGraphStore(connector);
 
 ###Modelling and saving vertices and edges
 
-As described above, modelling isn't too complicated at all. Any entity can be a vertex. Edges are just entities with 3 necessary properties describing the vertices they are connecting and the nature of the connection. I will elaborate on the model from the Calrissian entity store implementation and show how the same brother relationship would be modelled using the graph store.
+As described above, modelling isn't too complicated at all. Any entity can be a vertex. Edges are just a specialized entity with a few required properties describing the vertices they are connecting and the nature of the connection (these properties are HEAD, TAIL, and LABEL). I will elaborate on the example model from the Calrissian entity store documentation and show how the same brother relationship would be modelled using the graph store.
 
 ```java
 Entity vertex1 = new BaseEntity("Person", "1");
