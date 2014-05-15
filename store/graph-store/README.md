@@ -103,6 +103,7 @@ Vertex v = g.getVertex(new EntityIndex("Person", "1"));
 Now, let's set up a Gremlin query using Groovy to find the brothers of the vertex:
 
 ```java
+ScriptEngine engine = new GremlinGroovyScriptEngine();
 List results = new ArrayList();
 Bindings bindings = engine.createBindings();
 bindings.put("g", graph);
