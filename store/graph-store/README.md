@@ -51,7 +51,7 @@ CloseableIterable<Entity> vertices = graphStore.query(Collections.singleton("Per
 After we've found the vertices of interest, we can find the adjacent out edges connected to those vertices with the following:
 ```java
 Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
-CloseableIterable<Entity> edges = graphStore.adjacentEdges(indexes, null, Direction.OUT, new Auths());
+CloseableIterable<EdgeEntity> edges = graphStore.adjacentEdges(indexes, null, Direction.OUT, new Auths());
 ```
 
 Or we can propagate right to the set of vertices on the other side of the edges:
