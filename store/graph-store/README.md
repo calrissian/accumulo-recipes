@@ -142,3 +142,5 @@ We can also loop a traversal and define a termination point, like the part betwe
 v = g.V('name', 'John Smith');
 v.as('x').in('child').loop('x'){it.loops < 3}.path
 ```
+
+This is Tinkerpop's equivalent of the 3-hop we did using the ```AccumuloEntityGraphStore``` above.
