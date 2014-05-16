@@ -17,8 +17,8 @@ public class EventCardinalityKey extends BaseCardinalityKey {
     String row = key.getRow().toString();
     if(row.startsWith(INDEX_V)) {
 
-      this.alias = row.substring(row.indexOf("_"), row.indexOf("__"));
-      this.normalizedValue = row.substring(row.indexOf("__"), row.length());
+      this.alias = row.substring(row.indexOf("_")+1, row.indexOf("__"));
+      this.normalizedValue = row.substring(row.indexOf("__")+2, row.length());
       this.key = key.getColumnFamily().toString();
     } else if(row.startsWith(INDEX_K)) {
 

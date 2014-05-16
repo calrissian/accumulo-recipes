@@ -1,5 +1,6 @@
 package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
+import com.sun.org.apache.xpath.internal.operations.Neg;
 import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.mango.criteria.domain.*;
@@ -108,7 +109,15 @@ public class CardinalityReorderVisitor implements NodeVisitor {
 
       CardinalityKey cardinalityKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
       Long cardinality = cardinalities.get(cardinalityKey);
-      return cardinality == null ? 0 : cardinality;
+
+      if(cardinality == null) {
+        if(!(leaf instanceof NegationLeaf))
+          return 0;
+        else if(leaf instanceof NegationLeaf)
+          return 1; // need to fake the cardinality here in order for it to stay in the tree.
+      }
+
+      return cardinality != null ? cardinality : 0;
     }
   }
 

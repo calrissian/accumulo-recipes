@@ -43,7 +43,7 @@ public class QueryOptimizer implements NodeVisitor {
     this.node = query.clone(null);  // cloned so that original is not modified during optimization
     this.indexVisitor = indexVisitor;
 
-    init(query);
+    init(node);
   }
 
   public QueryOptimizer(Node query) {

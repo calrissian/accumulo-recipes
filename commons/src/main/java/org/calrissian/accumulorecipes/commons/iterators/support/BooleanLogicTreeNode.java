@@ -513,7 +513,7 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
 
     Text uuid = new Text(cq.length > 1 ? cq[1] : cq[0]);
     Text row = key.getRow();
-    log.info("Key-> r:" + row + "  fam:" + uuid);
+    log.debug("Key-> r:" + row + "  fam:" + uuid);
     // System.out.println("Key-> r:"+row+"  fam:"+uuid);
 
     Key k = new Key(row, uuid);

@@ -150,7 +150,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key,Value>, 
       // Step 3: create iterators where we need them.
       createIteratorTree(this.root);
       if (log.isDebugEnabled()) {
-        log.info("Query tree after iterator creation:\n\t" + this.root.getContents());
+        log.debug("Query tree after iterator creation:\n\t" + this.root.getContents());
       }
       // Step 4: split the positive and negative leaves
       splitLeaves(this.root);
@@ -1525,7 +1525,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key,Value>, 
       if (jumpKey != null && topKey != null) {
         // check that the uid's are not the same
         same = getIndexKeyUid(jumpKey).equals(getEventKeyUid(topKey));
-        log.info("jumpKeyUid: " + getIndexKeyUid(jumpKey) + "  topKeyUid: " + getEventKeyUid(topKey));
+        log.debug("jumpKeyUid: " + getIndexKeyUid(jumpKey) + "  topKeyUid: " + getEventKeyUid(topKey));
       }
 
       if (log.isDebugEnabled()) {

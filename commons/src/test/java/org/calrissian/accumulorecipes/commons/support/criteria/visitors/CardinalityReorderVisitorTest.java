@@ -1,6 +1,5 @@
 package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
-
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
@@ -39,7 +38,7 @@ public class CardinalityReorderVisitorTest {
   }
 
   @Test
-  public void test_pruneZeroCardinalities() {
+  public void test_pruneCardinalities_AndNode() {
 
     Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
     cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 500l);
@@ -58,4 +57,46 @@ public class CardinalityReorderVisitorTest {
     assertEquals(1, node.children().size());
     assertEquals("key3", ((AbstractKeyValueLeaf)node.children().get(0)).getKey());
   }
+
+  @Test
+  public void test_pruneCardinalities_OrNode() {
+
+    Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+    cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
+    cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
+    cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
+
+    Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+            .end().end().build();
+
+    node.accept(new CardinalityReorderVisitor(cardinalities));
+
+    System.out.println(new NodeToJexl().transform(node));
+
+    assertTrue(node instanceof OrNode);
+    assertTrue(node.children().get(0) instanceof EqualsLeaf);
+    assertEquals(1, node.children().size());
+    assertEquals("key3", ((AbstractKeyValueLeaf)node.children().get(0)).getKey());
+  }
+
+  @Test
+  public void test_pruneCardinalities_AllNodesZero() {
+
+    Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+    cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
+    cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
+    cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 0l);
+
+    Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+            .end().end().build();
+
+    node.accept(new CardinalityReorderVisitor(cardinalities));
+
+    System.out.println(new NodeToJexl().transform(node));
+
+    assertTrue(node instanceof OrNode);
+    assertEquals(0, node.children().size());
+  }
+
+
 }

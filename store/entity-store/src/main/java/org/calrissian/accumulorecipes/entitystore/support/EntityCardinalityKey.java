@@ -17,7 +17,7 @@ public class EntityCardinalityKey extends BaseCardinalityKey {
     String row = key.getRow().toString();
     if(row.indexOf("_" + INDEX_V + "_") != -1) {
       this.alias = row.substring(row.indexOf("_" + INDEX_V + "_")+3, row.indexOf("__"));
-      this.normalizedValue = row.substring(row.indexOf("__"), row.length());
+      this.normalizedValue = row.substring(row.indexOf("__")+2, row.length());
       this.key = key.getColumnFamily().toString();
     } else if(row.indexOf("_" + INDEX_K + "_") != -1) {
       this.key = row.substring(row.indexOf("_" + INDEX_K + "_")+3, row.length());
