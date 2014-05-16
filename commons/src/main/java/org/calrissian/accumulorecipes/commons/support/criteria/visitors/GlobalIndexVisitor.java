@@ -11,4 +11,6 @@ public interface GlobalIndexVisitor extends NodeVisitor {
   Map<CardinalityKey, Long> getCardinalities();
 
   Set<String> getShards();
+
+  void exec();
 }

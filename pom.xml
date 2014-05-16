@@ -26,6 +26,7 @@ limitations under the License.
     <module>commons</module>
     <module>examples</module>
     <module>store</module>
+    <module>test</module>
   </modules>
   <properties>
     <accumulo.version>1.4.4</accumulo.version>

@@ -5,4 +5,8 @@ public interface CardinalityKey {
 
   String getKey();
 
+  String getNormalizedValue();
+
+  String getAlias();
+
 }

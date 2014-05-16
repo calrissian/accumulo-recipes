@@ -27,6 +27,7 @@ import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
 
 /**
  * Visit criteria to validate and transform to perform the criteria against the swift event service.
@@ -52,34 +53,38 @@ public class QueryOptimizer implements NodeVisitor {
 
   protected void init(Node query) {
 
-    /**
-     * This performs a cardinality optimization
-     */
-    if (indexVisitor != null) {
-      query.accept(indexVisitor);
-      query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities()));
+    if(!isEmpty(query)) {
+      
+      /**
+       * This performs a cardinality optimization
+       */
+      if (indexVisitor != null) {
+        query.accept(indexVisitor);
+        indexVisitor.exec();
+        query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities()));
+      }
+
+      query.accept(new SingleClauseCollapseVisitor());
+      query.accept(new EmptyParentCollapseVisitor());
+      query.accept(new CollapseParentClauseVisitor());
+      query.accept(new RangeSplitterVisitor());
+
+      ExtractRangesVisitor extractRangesVisitor = new ExtractRangesVisitor();
+      query.accept(extractRangesVisitor);
+      extractRangesVisitor.extract(); // perform actual extraction
+
+      //visitors
+      query.accept(new NoAndOrValidator());
+      query.accept(new NoOrNotEqualsValidator());
+      query.accept(new MultipleEqualsValidator());    // this is questionable. Multivalued keys make this possible...
+
+      QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
+      query.accept(extractKeysVisitor);
+      keysInQuery = extractKeysVisitor.getKeysFound();
+
+      //develop criteria
+      query.accept(this);
     }
-
-    query.accept(new SingleClauseCollapseVisitor());
-    query.accept(new EmptyParentCollapseVisitor());
-    query.accept(new CollapseParentClauseVisitor());
-    query.accept(new RangeSplitterVisitor());
-
-    ExtractRangesVisitor extractRangesVisitor = new ExtractRangesVisitor();
-    query.accept(extractRangesVisitor);
-    extractRangesVisitor.extract(); // perform actual extraction
-
-    //visitors
-    query.accept(new NoAndOrValidator());
-    query.accept(new NoOrNotEqualsValidator());
-    query.accept(new MultipleEqualsValidator());    // this is questionable. Multivalued keys make this possible...
-
-    QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
-    query.accept(extractKeysVisitor);
-    keysInQuery = extractKeysVisitor.getKeysFound();
-
-    //develop criteria
-    query.accept(this);
   }
 
   public Node getOptimizedQuery() {

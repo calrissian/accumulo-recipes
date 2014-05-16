@@ -51,55 +51,60 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
         return shards;
     }
 
-    @Override
+  @Override
+  public void exec() {
+
+    Collection<Range> ranges = new ArrayList<Range>();
+    for(Leaf leaf : leaves) {
+
+      AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf)leaf;
+
+      String alias = registry.getAlias(kvLeaf.getValue());
+      String startShard = shardBuilder.buildShard(start.getTime(), 0);
+      String stopShard = shardBuilder.buildShard(end.getTime(), DEFAULT_PARTITION_SIZE-1) + "\uffff";
+
+      if(isRangeLeaf(leaf)) {
+        ranges.add(
+                new Range(
+                        new Key(INDEX_K + "_" + kvLeaf.getKey(), alias, startShard),
+                        new Key(INDEX_K + "_" + kvLeaf.getKey(), alias, stopShard)
+                ));
+      } else {
+
+        try {
+          String normVal = registry.encode(kvLeaf.getValue());
+          ranges.add(
+                  new Range(
+                          new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), startShard),
+                          new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), stopShard)
+                  ));
+        } catch (TypeEncodingException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    indexScanner.setRanges(ranges);
+
+    for(Map.Entry<Key,Value> entry : indexScanner) {
+
+      CardinalityKey key = new EventCardinalityKey(entry.getKey());
+      Long cardinality = cardinalities.get(key);
+      if(cardinality == null)
+        cardinality = 0l;
+      cardinalities.put(key, cardinality + parseLong(new String(entry.getValue().get())));
+      shards.add(entry.getKey().getColumnQualifier().toString());
+    }
+
+    indexScanner.close();
+  }
+
+  @Override
     public void begin(ParentNode parentNode) {}
 
     @Override
     public void end(ParentNode parentNode) {
 
-        Collection<Range> ranges = new ArrayList<Range>();
-        for(Leaf leaf : leaves) {
-
-            AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf)leaf;
-
-            String alias = registry.getAlias(kvLeaf.getValue());
-            String startShard = shardBuilder.buildShard(start.getTime(), 0);
-            String stopShard = shardBuilder.buildShard(end.getTime(), DEFAULT_PARTITION_SIZE-1) + "\uffff";
-
-            if(isRangeLeaf(leaf)) {
-                ranges.add(
-                        new Range(
-                                new Key(INDEX_K + "_" + kvLeaf.getKey(), alias, startShard),
-                                new Key(INDEX_K + "_" + kvLeaf.getKey(), alias, stopShard)
-                        ));
-            } else {
-
-                try {
-                    String normVal = registry.encode(kvLeaf.getValue());
-                    ranges.add(
-                            new Range(
-                                    new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), startShard),
-                                    new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), stopShard)
-                            ));
-                } catch (TypeEncodingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            indexScanner.setRanges(ranges);
-
-            for(Map.Entry<Key,Value> entry : indexScanner) {
-
-                CardinalityKey key = new EventCardinalityKey(entry.getKey());
-                Long cardinality = cardinalities.get(key);
-                if(cardinality == null)
-                    cardinality = 0l;
-                cardinalities.put(key, cardinality + parseLong(new String(entry.getValue().get())));
-                shards.add(entry.getKey().getColumnQualifier().toString());
-            }
-
-            indexScanner.close();
-        }
     }
 
     @Override

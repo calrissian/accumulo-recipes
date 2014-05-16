@@ -2,6 +2,8 @@ package org.calrissian.accumulorecipes.entitystore.model;
 
 import org.calrissian.mango.domain.Entity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Models a relationship to an entity.
  */
@@ -11,6 +13,8 @@ public class EntityRelationship {
   private String targetId;
 
   public EntityRelationship(String targetType, String targetId) {
+    checkNotNull(targetType);
+    checkNotNull(targetId);
     this.targetType = targetType;
     this.targetId = targetId;
   }

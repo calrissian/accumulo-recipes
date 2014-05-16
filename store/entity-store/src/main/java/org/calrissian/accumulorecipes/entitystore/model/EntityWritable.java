@@ -1,5 +1,6 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.io.WritableComparable;
 import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
@@ -12,6 +13,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 
@@ -24,6 +26,7 @@ public class EntityWritable implements WritableComparable {
 
     Entity entity;
     public EntityWritable(Entity entity) {
+        checkNotNull(entity);
         this.entity = entity;
     }
 

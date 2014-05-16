@@ -53,18 +53,19 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
   public void begin(ParentNode parentNode) {}
 
   @Override
-  public void end(ParentNode parentNode) {
+  public void end(ParentNode parentNode) {  }
 
+  public void exec() {
     Collection<Range> ranges = new ArrayList<Range>();
     for(Leaf leaf : leaves) {
 
-      AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf)leaf;
+      AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
 
       String alias = registry.getAlias(kvLeaf.getValue());
 
-      for(String type : types) {
-        if(isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
-          if(alias != null)
+      for (String type : types) {
+        if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+          if (alias != null)
             ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
           else
             ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey()));
@@ -77,21 +78,22 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
           }
         }
       }
-
-      indexScanner.setRanges(ranges);
-
-      for(Map.Entry<Key,Value> entry : indexScanner) {
-
-        CardinalityKey key = new EntityCardinalityKey(entry.getKey());
-        Long cardinality = cardinalities.get(key);
-        if(cardinality == null)
-          cardinality = 0l;
-        cardinalities.put(key, cardinality + parseLong(new String(entry.getValue().get())));
-        shards.add(entry.getKey().getColumnQualifier().toString());
-      }
-
-      indexScanner.close();
     }
+
+    indexScanner.setRanges(ranges);
+
+    for(Map.Entry<Key,Value> entry : indexScanner) {
+
+      CardinalityKey key = new EntityCardinalityKey(entry.getKey());
+      Long cardinality = cardinalities.get(key);
+      if(cardinality == null)
+        cardinality = 0l;
+      long newCardinality = parseLong(new String(entry.getValue().get()));
+      cardinalities.put(key, cardinality + newCardinality);
+      shards.add(entry.getKey().getColumnQualifier().toString());
+    }
+
+    indexScanner.close();
   }
 
   @Override

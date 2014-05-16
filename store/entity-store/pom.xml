@@ -85,6 +85,12 @@ limitations under the License.
       <version>1.4.4</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

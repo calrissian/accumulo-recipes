@@ -18,13 +18,13 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.calrissian.accumulorecipes</groupId>
-    <artifactId>store</artifactId>
+    <artifactId>accumulorecipes-parent</artifactId>
     <version>0.2.0-SNAPSHOT</version>
   </parent>
-  <artifactId>event-store</artifactId>
+  <artifactId>test</artifactId>
   <packaging>jar</packaging>
-  <name>Calrissian Accumulo Recipes Event Store</name>
-  <description>The event store is a document store for time-based events.</description>
+  <name>Calrissian Accumulo Test</name>
+  <description>Tools for testing</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>
@@ -32,16 +32,7 @@ limitations under the License.
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- Mango -->
-    <dependency>
-      <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-accumulo</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-json</artifactId>
-    </dependency>
-    <!-- Hadoop / CB -->
+    <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
@@ -60,25 +51,6 @@ limitations under the License.
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-
-    <!-- Joda-Time -->
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-      <version>2.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.accumulo</groupId>
-      <artifactId>accumulo-minicluster</artifactId>
-      <version>1.4.4</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.calrissian.accumulorecipes</groupId>
-      <artifactId>test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
