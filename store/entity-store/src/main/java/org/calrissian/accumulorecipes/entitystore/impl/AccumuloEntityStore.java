@@ -2,6 +2,7 @@ package org.calrissian.accumulorecipes.entitystore.impl;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
@@ -44,6 +45,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.union;
 import static java.util.Collections.EMPTY_LIST;
@@ -135,6 +137,7 @@ public class AccumuloEntityStore implements EntityStore {
 
 
   public void setShardBuilder(EntityShardBuilder shardBuilder) {
+    checkNotNull(shardBuilder);
     this.shardBuilder = shardBuilder;
   }
 
@@ -294,6 +297,12 @@ public class AccumuloEntityStore implements EntityStore {
   @Override
   public CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths) {
 
+    checkNotNull(types);
+    checkNotNull(query);
+    checkNotNull(auths);
+
+    checkArgument(types.size() > 0);
+
     try {
       BatchScanner indexScanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
       QueryOptimizer optimizer = new QueryOptimizer(query, new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types));
@@ -329,6 +338,10 @@ public class AccumuloEntityStore implements EntityStore {
 
   @Override
   public CloseableIterable<Pair<String, String>> keys(String type, Auths auths) {
+
+    checkNotNull(type);
+    checkNotNull(auths);
+
     try {
       Scanner scanner = connector.createScanner(indexTable, auths.getAuths());
       IteratorSetting setting = new IteratorSetting(15, FirstEntryInRowIterator.class);

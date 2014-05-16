@@ -8,10 +8,6 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 
 public class EventCardinalityKey extends BaseCardinalityKey {
 
-  public EventCardinalityKey(String key, String value, String alias) {
-    super(key, value, alias);
-  }
-
   public EventCardinalityKey(Key key) {
 
     String row = key.getRow().toString();
