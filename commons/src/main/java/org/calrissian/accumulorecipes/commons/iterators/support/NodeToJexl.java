@@ -109,9 +109,9 @@ public class NodeToJexl {
       return builder.append(leaf.getKey()).append(" >= '\u0000')")
               .toString();
     } else if (node instanceof HasNotLeaf) {
-      builder.append("(");
+      builder.append("!(");
       HasNotLeaf leaf = (HasNotLeaf) node;
-      return builder.append(leaf.getKey()).append(" < '\u0000')")
+      return builder.append(leaf.getKey()).append(" >= '\u0000')")
               .toString();
     } else {
       throw new RuntimeException("An unsupported leaf type was encountered: " + node.getClass().getName());

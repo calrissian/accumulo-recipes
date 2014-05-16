@@ -54,7 +54,7 @@ public class QueryOptimizer implements NodeVisitor {
   protected void init(Node query) {
 
     if(!isEmpty(query)) {
-      
+
       /**
        * This performs a cardinality optimization
        */

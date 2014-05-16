@@ -22,6 +22,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
@@ -30,6 +31,7 @@ import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -46,15 +48,21 @@ import static org.junit.Assert.*;
 public class AccumuloEntityStoreTest {
 
 
-  public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
+  private Connector getConnector() throws AccumuloSecurityException, AccumuloException {
     return new MockInstance().getConnector("root", "".getBytes());
+  }
+
+  private EntityStore store;
+  private Connector connector;
+
+  @Before
+  public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    connector = getConnector();
+    store = new AccumuloEntityStore(connector);
   }
 
   @Test
   public void testGet() throws Exception {
-
-    Connector connector = getConnector();
-    AccumuloEntityStore store = new AccumuloEntityStore(connector);
 
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1"));
@@ -83,9 +91,6 @@ public class AccumuloEntityStoreTest {
   @Test
   public void testGet_withSelection() throws Exception {
 
-    Connector connector = getConnector();
-    AccumuloEntityStore store = new AccumuloEntityStore(connector);
-
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
@@ -107,8 +112,6 @@ public class AccumuloEntityStoreTest {
 
   @Test
   public void testQuery_withSelection() throws Exception {
-    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
-
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
@@ -134,8 +137,6 @@ public class AccumuloEntityStoreTest {
 
   @Test
   public void testQuery_AndQuery() throws Exception {
-    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
-
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
@@ -171,8 +172,6 @@ public class AccumuloEntityStoreTest {
 
   @Test
   public void testQuery_OrQuery() throws Exception {
-    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
-
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
@@ -206,8 +205,6 @@ public class AccumuloEntityStoreTest {
 
   @Test
   public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
-    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
-
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("key1", "val1", ""));
     entity.put(new Tuple("key2", "val2", ""));
@@ -242,9 +239,37 @@ public class AccumuloEntityStoreTest {
   }
 
   @Test
-  public void testKeys() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
+  public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
+    Entity entity = new BaseEntity("type", "id");
+    entity.put(new Tuple("key1", "val1", ""));
+
+    store.save(asList(entity));
+
+    Node node = new QueryBuilder().has("key1").build();
+
+    Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+    assertEquals(1, Iterables.size(itr));
+    assertEquals(entity, Iterables.get(itr, 0));
+  }
+
+  @Test
+  public void testQuery_hasNot() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+    Entity entity = new BaseEntity("type", "id");
+    entity.put(new Tuple("key1", "val1", ""));
+
+    store.save(asList(entity));
+
+    Node node = new QueryBuilder().has("key2").build();
+
+    Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+    assertEquals(0, Iterables.size(itr));
+  }
+
+
+  @Test
+  public void testKeys() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("hasIp", "true", ""));
     entity.put(new Tuple("ip", "1.1.1.1", ""));
@@ -268,8 +293,6 @@ public class AccumuloEntityStoreTest {
 
   @Test
   public void testQuery_MultipleNotInQuery() throws Exception {
-    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
-
     Entity entity = new BaseEntity("type", "id");
     entity.put(new Tuple("hasIp", "true", ""));
     entity.put(new Tuple("ip", "1.1.1.1", ""));
@@ -308,8 +331,6 @@ public class AccumuloEntityStoreTest {
 
   @Test
   public void testQuery_emptyNodeReturnsNoResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
-
     Node query = new QueryBuilder().and().end().build();
 
     CloseableIterable<Entity> itr = store.query(Collections.singleton("type"), query, null, new Auths());
