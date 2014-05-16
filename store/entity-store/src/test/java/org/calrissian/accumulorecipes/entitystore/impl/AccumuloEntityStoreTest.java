@@ -32,10 +32,12 @@ import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -301,6 +303,18 @@ public class AccumuloEntityStoreTest {
 
     }
     assertEquals(1, x);
+  }
+
+
+  @Test
+  public void testQuery_emptyNodeReturnsNoResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    AccumuloEntityStore store = new AccumuloEntityStore(getConnector());
+
+    Node query = new QueryBuilder().and().end().build();
+
+    CloseableIterable<Entity> itr = store.query(Collections.singleton("type"), query, null, new Auths());
+
+    assertEquals(0, size(itr));
   }
 
 }

@@ -34,6 +34,7 @@ import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Pair;
@@ -45,6 +46,7 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.union;
+import static java.util.Collections.EMPTY_LIST;
 import static java.util.Collections.singleton;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.data.Range.exact;
@@ -295,6 +297,10 @@ public class AccumuloEntityStore implements EntityStore {
     try {
       BatchScanner indexScanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
       QueryOptimizer optimizer = new QueryOptimizer(query, new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types));
+      indexScanner.close();
+
+      if(NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
+        return CloseableIterables.wrap(EMPTY_LIST);
 
       String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
       String originalJexl = nodeToJexl.transform(query);
@@ -330,7 +336,6 @@ public class AccumuloEntityStore implements EntityStore {
       scanner.setRange(Range.prefix(type + "_" + INDEX_K + "_"));
 
       return transform(wrap(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
-
         @Override
         public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
           EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());

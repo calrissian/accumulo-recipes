@@ -16,9 +16,7 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
@@ -35,6 +33,7 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static com.google.common.collect.Iterables.size;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -72,7 +71,7 @@ public class AccumuloEventStoreTest {
 
         CloseableIterable<StoreEntry> actualEvent = store.get(singletonList(new EventIndex(event.getId())), null, new Auths());
 
-        assertEquals(1, Iterables.size(actualEvent));
+        assertEquals(1, size(actualEvent));
         StoreEntry actual = actualEvent.iterator().next();
         assertEquals(new HashSet(actual.getTuples()), new HashSet(event.getTuples()));
         assertEquals(actual.getId(), event.getId());
@@ -98,7 +97,7 @@ public class AccumuloEventStoreTest {
       CloseableIterable<StoreEntry> actualEvent = store.get(singletonList(new EventIndex(event.getId())),
               Collections.singleton("key1"), new Auths());
 
-      assertEquals(1, Iterables.size(actualEvent));
+      assertEquals(1, size(actualEvent));
       assertNull(actualEvent.iterator().next().get("key2"));
       assertNotNull(actualEvent.iterator().next().get("key1"));
     }
@@ -246,8 +245,20 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
+    public void testQuery_emptyNodeReturnsNoResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+      AccumuloEventStore store = new AccumuloEventStore(getConnector());
+
+      Node query = new QueryBuilder().and().end().build();
+
+      CloseableIterable<StoreEntry> itr = store.query(new Date(currentTimeMillis() - 5000),
+              new Date(), query, null, new Auths());
+
+      assertEquals(0, size(itr));
+    }
+
+    @Test
     public void testQuery_MultipleNotInQuery() throws Exception {
-        AccumuloEventStore store = new AccumuloEventStore(getConnector());
+      AccumuloEventStore store = new AccumuloEventStore(getConnector());
 
         StoreEntry event = new StoreEntry(UUID.randomUUID().toString(),
                 currentTimeMillis());
