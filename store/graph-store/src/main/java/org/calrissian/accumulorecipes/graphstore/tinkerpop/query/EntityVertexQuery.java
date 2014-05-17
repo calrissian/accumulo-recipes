@@ -1,32 +1,41 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.graphstore.tinkerpop.query;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.*;
-import com.tinkerpop.blueprints.Direction;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
-import org.calrissian.accumulorecipes.graphstore.model.*;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.domain.Entity;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static com.tinkerpop.blueprints.Query.Compare.*;
-import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
-import static org.calrissian.mango.collect.CloseableIterables.*;
+import static org.calrissian.mango.collect.CloseableIterables.chain;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
  * This builder class allows a set of vertices and/or edges to be queried matching the given criteria. This class
