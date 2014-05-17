@@ -16,7 +16,6 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -44,7 +43,6 @@ import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.domain.Tuple;
@@ -54,8 +52,6 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Sets.union;
-import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
@@ -63,7 +59,7 @@ import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc
 import static org.apache.commons.lang.StringUtils.*;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
-import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;

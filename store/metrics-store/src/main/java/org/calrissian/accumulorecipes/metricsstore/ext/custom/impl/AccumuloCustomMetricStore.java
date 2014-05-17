@@ -39,7 +39,7 @@ import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
