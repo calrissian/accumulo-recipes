@@ -11,8 +11,10 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
+import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
+import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
@@ -32,6 +34,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
@@ -46,27 +49,27 @@ public class AccumuloEntityStore implements EntityStore {
 
   public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
+  public static final int DEFAULT_PARTITION_SIZE = 5;
+
   public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(5);
 
   public static final TypeRegistry<String> ENTITY_TYPES =
           new TypeRegistry<String>(LEXI_TYPES, new RelationshipTypeEncoder());
 
-  private EntityShardBuilder shardBuilder;
+  private EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
 
   private final EntityQfdHelper helper;
 
   public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
+    this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, DEFAULT_SHARD_BUILDER);
   }
 
-  public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, StoreConfig config)
+  public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, StoreConfig config, ShardBuilder<Entity> entityShardBuilder)
           throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
     checkNotNull(connector);
     checkNotNull(indexTable);
     checkNotNull(shardTable);
     checkNotNull(config);
-
-    this.shardBuilder = DEFAULT_SHARD_BUILDER;
 
     KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, ENTITY_TYPES);
 
