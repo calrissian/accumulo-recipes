@@ -226,6 +226,7 @@ public class EntityGraph implements Graph {
 
   public static class EntityFilterPredicate<T extends Element> implements com.google.common.base.Predicate<T> {
 
+
     Criteria criteria;
 
     public EntityFilterPredicate(Criteria criteria) {

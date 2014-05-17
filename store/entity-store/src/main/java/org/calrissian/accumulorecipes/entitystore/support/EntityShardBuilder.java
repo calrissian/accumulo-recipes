@@ -1,6 +1,8 @@
 package org.calrissian.accumulorecipes.entitystore.support;
 
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
+import org.calrissian.mango.domain.Entity;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,7 +10,7 @@ import java.util.Set;
 
 import static java.lang.String.format;
 
-public class EntityShardBuilder {
+public class EntityShardBuilder implements ShardBuilder<Entity> {
 
   private int partitionSize;
 
@@ -32,5 +34,10 @@ public class EntityShardBuilder {
         ret.add(new Text(buildShard(type, i)));
     }
     return ret;
+  }
+
+  @Override
+  public String buildShard(Entity item) {
+    return buildShard(item.getType(), item.getId());
   }
 }

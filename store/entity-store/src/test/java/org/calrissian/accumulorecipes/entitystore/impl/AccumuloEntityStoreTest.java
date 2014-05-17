@@ -24,6 +24,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -152,22 +153,16 @@ public class AccumuloEntityStoreTest {
     Iterator<Entity> itr = store.query(singleton("type"), query, null, new Auths()).iterator();
 
     Entity actualEvent = itr.next();
-    if(actualEvent.getId().equals(entity.getId())) {
+    if(actualEvent.getId().equals(entity.getId()))
       assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity.getTuples()));
-    }
-
-    else {
+    else
       assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity2.getTuples()));
-    }
 
     actualEvent = itr.next();
-    if(actualEvent.getId().equals(entity.getId())) {
+    if(actualEvent.getId().equals(entity.getId()))
       assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity.getTuples()));
-    }
-
-    else {
+    else
       assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity2.getTuples()));
-    }
   }
 
   @Test
@@ -187,20 +182,16 @@ public class AccumuloEntityStoreTest {
     Iterator<Entity> itr = store.query(singleton("type"), query, null, new Auths()).iterator();
 
     Entity actualEvent = itr.next();
-    if(actualEvent.getId().equals(entity.getId())) {
+    if(actualEvent.getId().equals(entity.getId()))
       assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
-    else {
+    else
       assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
 
     actualEvent = itr.next();
-    if(actualEvent.getId().equals(entity.getId())) {
+    if(actualEvent.getId().equals(entity.getId()))
       assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
-    else {
+    else
       assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
   }
 
   @Test
@@ -220,22 +211,17 @@ public class AccumuloEntityStoreTest {
     Iterator<Entity> itr = store.query(singleton("type"), query, null, new Auths()).iterator();
 
     Entity actualEvent = itr.next();
-    if(actualEvent.getId().equals(entity.getId())) {
+    if(actualEvent.getId().equals(entity.getId()))
       assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
 
-    else {
+    else
       assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
 
     actualEvent = itr.next();
-    if(actualEvent.getId().equals(entity.getId())) {
+    if(actualEvent.getId().equals(entity.getId()))
       assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
-
-    else {
+    else
       assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
-    }
   }
 
   @Test

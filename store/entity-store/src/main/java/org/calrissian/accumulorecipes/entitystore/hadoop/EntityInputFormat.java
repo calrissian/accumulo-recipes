@@ -67,24 +67,25 @@ public class EntityInputFormat extends InputFormatBase<Key, EntityWritable> {
   @Override
   public RecordReader<Key, EntityWritable> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
 
-    final EntityWritable sharedWritable = new EntityWritable();
-    final String[] selectFields = context.getConfiguration().getStrings("selectFields");
-    final QueryXform xform = new QueryXform(selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
+//    final EntityWritable sharedWritable = new EntityWritable();
+//    final String[] selectFields = context.getConfiguration().getStrings("selectFields");
+//    final QueryXform xform = new QueryXform(selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
 
     return new RecordReaderBase<Key, EntityWritable>() {
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (scannerIterator.hasNext()) {
-          ++numKeysRead;
-          Map.Entry<Key,Value> entry = scannerIterator.next();
-          currentK = currentKey = entry.getKey();
-          sharedWritable.set(xform.apply(entry));
-          currentV =  sharedWritable;
-
-          if (log.isTraceEnabled())
-            log.trace("Processing key/value pair: " + formatEntry(entry, true));
-          return true;
-        }
+//        if (scannerIterator.hasNext()) {
+//          ++numKeysRead;
+//          Map.Entry<Key,Value> entry = scannerIterator.next();
+//          currentK = currentKey = entry.getKey();
+//          sharedWritable.set(xform.apply(entry));
+//          currentV =  sharedWritable;
+//
+//          if (log.isTraceEnabled())
+//            log.trace("Processing key/value pair: " + formatEntry(entry, true));
+//          return true;
+//        }
+//        return false;
         return false;
       }
     };

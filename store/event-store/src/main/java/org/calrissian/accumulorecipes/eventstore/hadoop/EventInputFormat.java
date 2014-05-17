@@ -8,7 +8,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.util.format.DefaultFormatter;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -19,8 +18,10 @@ import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
-import org.calrissian.accumulorecipes.eventstore.support.shard.ShardBuilder;
+import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
+import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
     setQueryInfo(config, start, end, query, selectFields, DEFAULT_SHARD_BUILDER);
   }
 
-  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, ShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, EventShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
     try {
       validateOptions(config);
@@ -75,12 +76,24 @@ public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
     }
   }
 
+  private Connector getConnector(Configuration configuration) throws AccumuloSecurityException, AccumuloException {
+    Instance instance = getInstance(configuration);
+    return instance.getConnector(getUsername(configuration), getPassword(configuration));
+  }
+
   @Override
   public RecordReader<Key, StoreEntryWritable> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
 
-    final StoreEntryWritable sharedWritable = new StoreEntryWritable();
-    final String[] selectFields = context.getConfiguration().getStrings("selectFields");
-    final QueryXform xform = new QueryXform(selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
+//    try {
+//      Connector conn = getConnector(context.getConfiguration());
+//      EventQfdHelper helper = new EventQfdHelper()
+//
+//    } catch (Exception e) {
+//      throw new RuntimeException(e);
+//    }
+//    final StoreEntryWritable sharedWritable = new StoreEntryWritable();
+//    final String[] selectFields = context.getConfiguration().getStrings("selectFields");
+//    final EventQfdHelper.QueryXform xform = new EventQfdHelper.QueryXform(selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
 
     return new RecordReaderBase<Key, StoreEntryWritable>() {
       @Override
@@ -89,8 +102,8 @@ public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
           ++numKeysRead;
           Map.Entry<Key,Value> entry = scannerIterator.next();
           currentK = currentKey = entry.getKey();
-          sharedWritable.set(xform.apply(entry));
-          currentV =  sharedWritable;
+//          sharedWritable.set(xform.apply(entry));
+//          currentV =  sharedWritable;
 
           if (log.isTraceEnabled())
             log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));

@@ -1,44 +1,26 @@
 package org.calrissian.accumulorecipes.entitystore.impl;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.FirstEntryInRowIterator;
-import org.apache.accumulo.core.iterators.IteratorUtil;
-import org.apache.accumulo.core.iterators.LongCombiner;
-import org.apache.accumulo.core.iterators.user.SummingCombiner;
-import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
-import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
-import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
-import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
-import org.calrissian.accumulorecipes.entitystore.support.EntityCardinalityKey;
-import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
-import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
+import org.calrissian.accumulorecipes.entitystore.support.*;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.support.NodeUtils;
-import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -46,16 +28,12 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.EMPTY_LIST;
 import static java.util.Collections.singleton;
-import static java.util.EnumSet.allOf;
+import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
-import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
-import static org.apache.commons.lang.StringUtils.join;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
-import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -74,15 +52,8 @@ public class AccumuloEntityStore implements EntityStore {
           new TypeRegistry<String>(LEXI_TYPES, new RelationshipTypeEncoder());
 
   private EntityShardBuilder shardBuilder;
-  private final Connector connector;
-  private final String indexTable;
-  private final String shardTable;
-  private final StoreConfig config;
-  private final MultiTableBatchWriter multiTableWriter;
 
-  private static final Kryo kryo = new Kryo();
-
-  private final NodeToJexl nodeToJexl;
+  private final EntityQfdHelper helper;
 
   public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
     this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
@@ -95,134 +66,21 @@ public class AccumuloEntityStore implements EntityStore {
     checkNotNull(shardTable);
     checkNotNull(config);
 
-    this.connector = connector;
-    this.indexTable = indexTable;
-    this.shardTable = shardTable;
-    this.config = config;
     this.shardBuilder = DEFAULT_SHARD_BUILDER;
 
-    this.nodeToJexl = new NodeToJexl();
+    KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, ENTITY_TYPES);
 
-    if (!connector.tableOperations().exists(this.indexTable))
-      connector.tableOperations().create(this.indexTable);
-
-    if (connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
-      IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
-      SummingCombiner.setCombineAllColumns(setting, true);
-      SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
-      connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorUtil.IteratorScope.class));
-    }
-
-    if (!connector.tableOperations().exists(this.shardTable))
-      connector.tableOperations().create(this.shardTable);
-
-    initializeKryo(kryo);
-    this.multiTableWriter = connector.createMultiTableBatchWriter(config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
-  }
-
-  protected StoreConfig getConfig() {
-    return config;
-  }
-
-  protected Connector getConnector() {
-    return connector;
+    helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, ENTITY_TYPES, keyValueIndex);
   }
 
   @Override
   public void shutdown() throws MutationsRejectedException {
-    multiTableWriter.close();
-  }
-
-
-  public void setShardBuilder(EntityShardBuilder shardBuilder) {
-    checkNotNull(shardBuilder);
-    this.shardBuilder = shardBuilder;
+    helper.shutdown();
   }
 
   @Override
   public void save(Iterable<Entity> entities) {
-
-    checkNotNull(entities);
-    try {
-      for (Entity entity : entities) {
-
-        //If there are no getTuples then don't write anything to the data store.
-        if (entity.getTuples() != null) {
-
-          String shardId = shardBuilder.buildShard(entity.getType(), entity.getId());
-          String typeId = entity.getType() + INNER_DELIM + entity.getId();
-
-          // key
-          Map<String, Long> indexCache = new HashMap<String, Long>();
-
-          Mutation shardMutation = new Mutation(shardId);
-
-          for (Tuple tuple : entity.getTuples()) {
-
-            String aliasValue = ENTITY_TYPES.getAlias(tuple.getValue()) + INNER_DELIM +
-                    ENTITY_TYPES.encode(tuple.getValue());
-
-            // forward mutation
-            shardMutation.put(new Text(typeId),
-                    new Text(tuple.getKey() + DELIM + aliasValue),
-                    new ColumnVisibility(tuple.getVisibility()),
-                    EMPTY_VALUE);
-
-            // reverse mutation
-            shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
-                    new Text(aliasValue + DELIM + typeId),
-                    new ColumnVisibility(tuple.getVisibility()),
-                    EMPTY_VALUE);  // forward mutation
-
-            String[] strings = new String[]{
-                    entity.getType(),
-                    shardId,
-                    tuple.getKey(),
-                    ENTITY_TYPES.getAlias(tuple.getValue()),
-                    ENTITY_TYPES.encode(tuple.getValue()),
-                    tuple.getVisibility(),
-
-            };
-
-            String cacheKey = join(strings, INNER_DELIM);
-            Long count = indexCache.get(cacheKey);
-            if (count == null)
-              count = 0l;
-            indexCache.put(cacheKey, ++count);
-          }
-
-          for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
-
-            String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
-
-            String entityType = indexParts[0];
-            String shard = indexParts[1];
-            String key = indexParts[2];
-            String alias = indexParts[3];
-            String normalizedVal = indexParts[4];
-            String vis = indexParts[5];
-
-            Mutation keyMutation = new Mutation(entityType + "_" + INDEX_K + "_" + key);
-            Mutation valueMutation = new Mutation(entityType + "_" + INDEX_V + "_" + alias + "__" + normalizedVal);
-
-            Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
-            keyMutation.put(new Text(alias), new Text(shard), new ColumnVisibility(vis), value);
-            valueMutation.put(new Text(key), new Text(shard), new ColumnVisibility(vis), value);
-            multiTableWriter.getBatchWriter(indexTable).addMutation(keyMutation);
-            multiTableWriter.getBatchWriter(indexTable).addMutation(valueMutation);
-          }
-
-          multiTableWriter.getBatchWriter(shardTable).addMutation(shardMutation);
-        }
-      }
-
-      multiTableWriter.flush();
-    } catch (RuntimeException re) {
-      throw re;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
+    helper.save(entities);
   }
 
   @Override
@@ -231,7 +89,7 @@ public class AccumuloEntityStore implements EntityStore {
     checkNotNull(auths);
     try {
 
-      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
+      BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
       Collection<Range> ranges = new LinkedList<Range>();
       for (EntityIndex curIndex : typesAndIds) {
@@ -250,7 +108,7 @@ public class AccumuloEntityStore implements EntityStore {
         scanner.addScanIterator(iteratorSetting);
       }
 
-      return transform(closeableIterable(scanner), new WholeColFXform(selectFields));
+      return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
     } catch (RuntimeException re) {
       throw re;
     } catch (Exception e) {
@@ -264,7 +122,7 @@ public class AccumuloEntityStore implements EntityStore {
     checkNotNull(auths);
     try {
 
-      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), DEFAULT_STORE_CONFIG.getMaxQueryThreads());
+      BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
       Collection<Range> ranges = new LinkedList<Range>();
       for (String type : types) {
@@ -284,7 +142,7 @@ public class AccumuloEntityStore implements EntityStore {
         scanner.addScanIterator(iteratorSetting);
       }
 
-      return transform(closeableIterable(scanner), new WholeColFXform(selectFields));
+      return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
     } catch (RuntimeException re) {
       throw re;
     } catch (Exception e) {
@@ -301,37 +159,13 @@ public class AccumuloEntityStore implements EntityStore {
 
     checkArgument(types.size() > 0);
 
-    try {
-      BatchScanner indexScanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
-      QueryOptimizer optimizer = new QueryOptimizer(query, new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types));
-      indexScanner.close();
+    BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
+    GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types);
 
-      if(NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
-        return CloseableIterables.wrap(EMPTY_LIST);
+    CloseableIterable<Entity> entities = helper.query(globalIndexVisitor, query, helper.buildQueryXform(selectFields), auths);
+    indexScanner.close();
 
-      String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-      String originalJexl = nodeToJexl.transform(query);
-      Set<String> shards = optimizer.getShards();
-
-      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
-
-      Collection<Range> ranges = new HashSet<Range>();
-      for (String shard : shards)
-        ranges.add(new Range(shard));
-
-      scanner.setRanges(ranges);
-
-      IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-      setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
-      setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
-
-      scanner.addScanIterator(setting);
-
-      return transform(closeableIterable(scanner), new QueryXform(selectFields));
-
-    } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    return entities;
   }
 
   @Override
@@ -340,54 +174,22 @@ public class AccumuloEntityStore implements EntityStore {
     checkNotNull(type);
     checkNotNull(auths);
 
-    try {
-      Scanner scanner = connector.createScanner(indexTable, auths.getAuths());
-      IteratorSetting setting = new IteratorSetting(15, FirstEntryInRowIterator.class);
-      scanner.addScanIterator(setting);
-      scanner.setRange(Range.prefix(type + "_" + INDEX_K + "_"));
+    BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
+    IteratorSetting setting = new IteratorSetting(15, FirstEntryInRowIterator.class);
+    scanner.addScanIterator(setting);
+    scanner.setRanges(singletonList(Range.prefix(type + "_" + INDEX_K + "_")));
 
-      return transform(wrap(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
-        @Override
-        public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
-          EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());
-          return new Pair<String, String>(key.getKey(), key.getAlias());
-        }
-      });
-
-    } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    return transform(wrap(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
+      @Override
+      public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
+        EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());
+        return new Pair<String, String>(key.getKey(), key.getAlias());
+      }
+    });
   }
 
   @Override
   public void delete(Iterable<EntityIndex> typesAndIds, Auths auths) {
     throw new NotImplementedException();
   }
-
-  public static class QueryXform extends KeyToTupleCollectionQueryXform<Entity> {
-
-    public QueryXform(Set<String> selectFields) {
-      super(kryo, ENTITY_TYPES, selectFields);
-    }
-
-    @Override
-    protected Entity buildTupleCollectionFromKey(Key k) {
-      String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
-      return new BaseEntity(typeId[0], typeId[1]);
-    }
-  }
-
-  public static class WholeColFXform extends KeyToTupleCollectionWholeColFXform<Entity> {
-    public WholeColFXform(Set<String> selectFields) {
-      super(kryo, ENTITY_TYPES, selectFields);
-    }
-
-    @Override
-    protected Entity buildEntryFromKey(Key k) {
-      String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
-      return new BaseEntity(typeId[0], typeId[1]);
-    }
-
-  }
-
 }

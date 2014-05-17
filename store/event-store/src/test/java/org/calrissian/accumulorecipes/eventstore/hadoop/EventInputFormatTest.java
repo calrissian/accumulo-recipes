@@ -13,6 +13,8 @@ import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -27,7 +29,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class EventInputFormatTest {
 
-  public static StoreEntry event;
+  public static Event event;
 
   @Test
   public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
@@ -35,7 +37,7 @@ public class EventInputFormatTest {
     Instance instance = new MockInstance("instName");
     Connector connector = instance.getConnector("root", "".getBytes());
     AccumuloEventStore store = new AccumuloEventStore(connector);
-    event = new StoreEntry(UUID.randomUUID().toString());
+    event = new BaseEvent(UUID.randomUUID().toString());
     event.put(new Tuple("key1", "val1", ""));
     event.put(new Tuple("key2", false, ""));
     store.save(singleton(event));
