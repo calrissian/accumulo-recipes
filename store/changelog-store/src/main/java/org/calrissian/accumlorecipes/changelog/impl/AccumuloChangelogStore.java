@@ -29,9 +29,9 @@ import org.calrissian.accumlorecipes.changelog.iterator.BucketHashIterator;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
+import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.calrissian.mango.json.tuple.TupleModule;
 
@@ -68,11 +68,11 @@ public class AccumuloChangelogStore implements ChangelogStore {
   private final BucketSize bucketSize;
   private final BatchWriter writer;
 
-  private final Function<Entry<Key, Value>, StoreEntry> entityTransform = new Function<Entry<Key, Value>, StoreEntry>() {
+  private final Function<Entry<Key, Value>, Event> entityTransform = new Function<Entry<Key, Value>, Event>() {
     @Override
-    public StoreEntry apply(Entry<Key, Value> entry) {
+    public Event apply(Entry<Key, Value> entry) {
       try {
-        return asWritable(entry.getValue().get(), StoreEntryWritable.class).get();
+        return asWritable(entry.getValue().get(), EventWritable.class).get();
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -129,12 +129,12 @@ public class AccumuloChangelogStore implements ChangelogStore {
    * @param changes
    */
   @Override
-  public void put(Iterable<StoreEntry> changes) {
+  public void put(Iterable<Event> changes) {
 
-    StoreEntryWritable shared = new StoreEntryWritable();
+    EventWritable shared = new EventWritable();
     checkNotNull(changes);
     try {
-      for (StoreEntry change : changes) {
+      for (Event change : changes) {
 
         shared.set(change);
         Mutation m = new Mutation(Long.toString(truncatedReverseTimestamp(change.getTimestamp(), bucketSize)));
@@ -235,7 +235,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
    * @return
    */
   @Override
-  public CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Auths auths) {
+  public CloseableIterable<Event> getChanges(Iterable<Date> buckets, Auths auths) {
     checkNotNull(buckets);
     checkNotNull(auths);
     try {

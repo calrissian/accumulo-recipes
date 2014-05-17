@@ -25,8 +25,8 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
+import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
@@ -111,7 +111,7 @@ public class BucketHashIterator extends WrappingIterator {
 
                 super.next();
 
-                StoreEntry entry = asWritable(value.get(), StoreEntryWritable.class).get();
+                Event entry = asWritable(value.get(), EventWritable.class).get();
                 hashes.add(new String(hashEntry(entry, typeRegistry)));
             }
 

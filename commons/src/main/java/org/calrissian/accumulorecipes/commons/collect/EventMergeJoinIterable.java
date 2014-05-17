@@ -1,7 +1,7 @@
 package org.calrissian.accumulorecipes.commons.collect;
 
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.PeekingCloseableIterator;
+import org.calrissian.mango.domain.Event;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -10,27 +10,27 @@ import java.util.List;
 import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
 import static org.calrissian.mango.collect.CloseableIterators.wrap;
 
-public class StoreEntryMergeJoinIterable implements Iterable<StoreEntry> {
+public class EventMergeJoinIterable implements Iterable<Event> {
 
-    private Iterable<Iterable<StoreEntry>> cursors;
+    private Iterable<Iterable<Event>> cursors;
 
-    public StoreEntryMergeJoinIterable(Iterable<Iterable<StoreEntry>> cursors) {
+    public EventMergeJoinIterable(Iterable<Iterable<Event>> cursors) {
         this.cursors = cursors;
     }
 
     @Override
-    public Iterator iterator() {
+    public Iterator<Event> iterator() {
 
-        final List<PeekingCloseableIterator<StoreEntry>> iterators =
-                new LinkedList<PeekingCloseableIterator<StoreEntry>>();
-        for(Iterable<StoreEntry> entries : cursors)
+        final List<PeekingCloseableIterator<Event>> iterators =
+                new LinkedList<PeekingCloseableIterator<Event>>();
+        for(Iterable<Event> entries : cursors)
             iterators.add(peekingIterator(wrap(entries.iterator())));
 
-        return new Iterator<StoreEntry>() {
+        return new Iterator<Event>() {
             @Override
             public boolean hasNext() {
 
-                for(Iterator<StoreEntry> entry : iterators) {
+                for(Iterator<Event> entry : iterators) {
                     if(entry.hasNext())
                         return true;
                 }
@@ -38,10 +38,10 @@ public class StoreEntryMergeJoinIterable implements Iterable<StoreEntry> {
             }
 
             @Override
-            public StoreEntry next() {
+            public Event next() {
 
-                PeekingCloseableIterator<StoreEntry> curEntry = null;
-                for (PeekingCloseableIterator<StoreEntry> itr : iterators) {
+                PeekingCloseableIterator<Event> curEntry = null;
+                for (PeekingCloseableIterator<Event> itr : iterators) {
                     if (itr.hasNext() && (curEntry == null ||
                             (itr.peek()).getTimestamp() > curEntry.peek().getTimestamp()))
                         curEntry = itr;
@@ -52,7 +52,7 @@ public class StoreEntryMergeJoinIterable implements Iterable<StoreEntry> {
 
             @Override
             public void remove() {
-                for(Iterator<StoreEntry> itr : iterators)
+                for(Iterator<Event> itr : iterators)
                     itr.remove();
             }
         };

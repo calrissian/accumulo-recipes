@@ -1,7 +1,7 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.io.WritableComparable;
+import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 
-public class EntityWritable implements WritableComparable {
+public class EntityWritable implements WritableComparable, Settable<Entity> {
 
     private static TypeRegistry<String> typeRegistry = LEXI_TYPES;
 

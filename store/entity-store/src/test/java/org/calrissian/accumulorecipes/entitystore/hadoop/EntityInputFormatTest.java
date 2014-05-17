@@ -26,7 +26,6 @@ import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-@Ignore
 public class EntityInputFormatTest {
 
   public static Entity entity;
@@ -49,10 +48,10 @@ public class EntityInputFormatTest {
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(Text.class);
     job.setInputFormatClass(EntityInputFormat.class);
+    EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
     EntityInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
     EntityInputFormat.setQueryInfo(job.getConfiguration(), Collections.singleton("type"),
             new QueryBuilder().eq("key1", "val1").build(), null);
-    EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
     job.setOutputFormatClass(NullOutputFormat.class);
 
     job.submit();

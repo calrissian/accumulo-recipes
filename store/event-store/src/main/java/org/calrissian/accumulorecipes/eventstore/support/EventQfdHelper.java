@@ -57,7 +57,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
   @Override
   protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {}
 
-  public class QueryXform extends KeyToTupleCollectionQueryXform<Event> {
+  public static class QueryXform extends KeyToTupleCollectionQueryXform<Event> {
 
     public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
       super(kryo, typeRegistry, selectFields);
@@ -69,7 +69,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
   }
 
-  public class WholeColFXForm extends KeyToTupleCollectionWholeColFXform<Event> {
+  public static class WholeColFXForm extends KeyToTupleCollectionWholeColFXform<Event> {
     public WholeColFXForm(Kryo kryo, TypeRegistry<String> typeRegistry) {
       super(kryo, typeRegistry, null);
     }

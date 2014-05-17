@@ -1,5 +1,7 @@
 package org.calrissian.accumulorecipes.eventstore.hadoop;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
 import org.apache.accumulo.core.data.Key;
@@ -11,27 +13,28 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
+import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
+import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
-import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
-import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
-import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Event;
 
 import java.io.IOException;
 import java.util.*;
 
-import static com.google.common.collect.Sets.union;
 import static java.util.Arrays.asList;
+import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.*;
+import static org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper.QueryXform;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
-public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
+public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
   public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
     setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
@@ -68,49 +71,21 @@ public class EventInputFormat extends InputFormatBase<Key, StoreEntryWritable> {
     setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
     addIterator(config, setting);
-
-    if(selectFields != null && selectFields.size() > 0) {
-      setting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-      EventFieldsFilteringIterator.setSelectFields(setting, union(selectFields, optimizer.getKeysInQuery()));
-      addIterator(config, setting);
-    }
   }
 
-  private Connector getConnector(Configuration configuration) throws AccumuloSecurityException, AccumuloException {
-    Instance instance = getInstance(configuration);
-    return instance.getConnector(getUsername(configuration), getPassword(configuration));
+
+  @Override
+  protected Function<Map.Entry<Key, Value>, Event> getTransform(Configuration configuration) {
+    final String[] selectFields = configuration.getStrings("selectFields");
+
+    final Kryo kryo = new Kryo();
+    initializeKryo(kryo);
+
+    return new QueryXform(kryo, LEXI_TYPES, selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
   }
 
   @Override
-  public RecordReader<Key, StoreEntryWritable> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
-
-//    try {
-//      Connector conn = getConnector(context.getConfiguration());
-//      EventQfdHelper helper = new EventQfdHelper()
-//
-//    } catch (Exception e) {
-//      throw new RuntimeException(e);
-//    }
-//    final StoreEntryWritable sharedWritable = new StoreEntryWritable();
-//    final String[] selectFields = context.getConfiguration().getStrings("selectFields");
-//    final EventQfdHelper.QueryXform xform = new EventQfdHelper.QueryXform(selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
-
-    return new RecordReaderBase<Key, StoreEntryWritable>() {
-      @Override
-      public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (scannerIterator.hasNext()) {
-          ++numKeysRead;
-          Map.Entry<Key,Value> entry = scannerIterator.next();
-          currentK = currentKey = entry.getKey();
-//          sharedWritable.set(xform.apply(entry));
-//          currentV =  sharedWritable;
-
-          if (log.isTraceEnabled())
-            log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));
-          return true;
-        }
-        return false;
-      }
-    };
+  protected EventWritable getWritable() {
+    return new EventWritable();
   }
 }

@@ -9,8 +9,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
+import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.BaseEvent;
@@ -28,7 +27,6 @@ import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-@Ignore
 public class EventInputFormatTest {
 
   public static Event event;
@@ -67,16 +65,16 @@ public class EventInputFormatTest {
 
   }
 
-  public static class TestMapper extends Mapper<Key, StoreEntryWritable, Text, Text> {
+  public static class TestMapper extends Mapper<Key, EventWritable, Text, Text> {
 
-    public static StoreEntry entry;
+    public static Event entry;
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
       super.setup(context);
     }
 
     @Override
-    protected void map(Key key, StoreEntryWritable value, Context context) throws IOException, InterruptedException {
+    protected void map(Key key, EventWritable value, Context context) throws IOException, InterruptedException {
       entry = value.get();
     }
   }

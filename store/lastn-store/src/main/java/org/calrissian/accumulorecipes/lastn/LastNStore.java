@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.lastn;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.domain.Event;
 
 /**
  * The LastN store is a version-based eviction mechanism- meaning that it will only keep around the last N versions of
@@ -31,7 +31,7 @@ public interface LastNStore {
      * @param group
      * @param entry
      */
-    void put(String group, StoreEntry entry);
+    void put(String group, Event entry);
 
     /**
      * Returns the last N store entries under the specified group- starting with the most recent.
@@ -39,6 +39,6 @@ public interface LastNStore {
      * @param auths
      * @return
      */
-    Iterable<StoreEntry> get(String group, Auths auths);
+    Iterable<Event> get(String group, Auths auths);
 
 }

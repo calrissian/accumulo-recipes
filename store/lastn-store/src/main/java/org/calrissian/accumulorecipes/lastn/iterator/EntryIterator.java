@@ -15,7 +15,6 @@
  */
 package org.calrissian.accumulorecipes.lastn.iterator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -24,11 +23,10 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
-import org.calrissian.accumulorecipes.commons.support.WritableUtils2;
+import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
@@ -49,7 +47,7 @@ public class EntryIterator extends WrappingIterator {
 
     private TypeRegistry<String> typeRegistry;
     private SortedKeyValueIterator<Key,Value> sourceItr;
-    private StoreEntryWritable writable;
+    private EventWritable writable;
 
     public void init(SortedKeyValueIterator<Key,Value> source, java.util.Map<String,String> options,
                      IteratorEnvironment env) throws IOException {
@@ -57,7 +55,7 @@ public class EntryIterator extends WrappingIterator {
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
         this.typeRegistry = LEXI_TYPES; //TODO make types configurable.
-        this.writable = new StoreEntryWritable();
+        this.writable = new EventWritable();
     }
 
     /**
@@ -109,7 +107,7 @@ public class EntryIterator extends WrappingIterator {
                     }
                 }
 
-                StoreEntry entry = new StoreEntry(entryId, timestamp);
+                Event entry = new BaseEvent(entryId, timestamp);
                 writable.set(entry);
 
                 if(tuples.size() > 0)

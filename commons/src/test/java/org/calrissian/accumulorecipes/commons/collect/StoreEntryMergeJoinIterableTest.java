@@ -1,8 +1,8 @@
 package org.calrissian.accumulorecipes.commons.collect;
 
 import com.google.common.collect.Iterables;
-import org.calrissian.accumulorecipes.commons.collect.StoreEntryMergeJoinIterable;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -15,24 +15,24 @@ import static org.junit.Assert.assertEquals;
 
 public class StoreEntryMergeJoinIterableTest {
 
-    @Test
-    public void test() {
+  @Test
+  public void test() {
 
-        StoreEntry entry1 = new StoreEntry(randomUUID().toString(), currentTimeMillis() - 5000);
-        StoreEntry entry2 = new StoreEntry(randomUUID().toString(), currentTimeMillis());
-        StoreEntry entry3 = new StoreEntry(randomUUID().toString(), currentTimeMillis() - 30);
+    Event entry1 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
+    Event entry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis());
+    Event entry3 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 30);
 
-        List<Iterable<StoreEntry>> entryIter = new LinkedList<Iterable<StoreEntry>>();
-        entryIter.add(Arrays.asList(new StoreEntry[] { entry1 }));
-        entryIter.add(Arrays.asList(new StoreEntry[] { entry2 }));
-        entryIter.add(Arrays.asList(new StoreEntry[] { entry3 }));
+    List<Iterable<Event>> entryIter = new LinkedList<Iterable<Event>>();
+    entryIter.add(Arrays.asList(new Event[]{entry1}));
+    entryIter.add(Arrays.asList(new Event[]{entry2}));
+    entryIter.add(Arrays.asList(new Event[]{entry3}));
 
-        StoreEntryMergeJoinIterable iterable = new StoreEntryMergeJoinIterable(entryIter);
+    EventMergeJoinIterable iterable = new EventMergeJoinIterable(entryIter);
 
-        assertEquals(3, Iterables.size(iterable));
-        assertEquals(entry2, Iterables.get(iterable, 0));
-        assertEquals(entry3, Iterables.get(iterable, 1));
-        assertEquals(entry1, Iterables.get(iterable, 2));
+    assertEquals(3, Iterables.size(iterable));
+    assertEquals(entry2, Iterables.get(iterable, 0));
+    assertEquals(entry3, Iterables.get(iterable, 1));
+    assertEquals(entry1, Iterables.get(iterable, 2));
 
-    }
+  }
 }
