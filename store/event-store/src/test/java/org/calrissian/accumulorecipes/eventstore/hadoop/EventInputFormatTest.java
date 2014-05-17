@@ -16,6 +16,7 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.BaseEvent;
 import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@Ignore
 public class EventInputFormatTest {
 
   public static Event event;

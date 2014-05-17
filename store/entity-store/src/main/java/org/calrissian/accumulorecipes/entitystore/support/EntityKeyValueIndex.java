@@ -44,7 +44,7 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
 
     for(Entity entity : items) {
       String shardId = shardBuilder.buildShard(entity);
-      for(Tuple tuple : entity.getTuples()) {
+      for (Tuple tuple : entity.getTuples()) {
         try {
           String[] strings = new String[]{
                   entity.getType(),
@@ -65,30 +65,30 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
           throw new RuntimeException(e);
         }
       }
+    }
 
-      for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
+    for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
 
-        String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
+      String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
 
-        String entityType = indexParts[0];
-        String shard = indexParts[1];
-        String key = indexParts[2];
-        String alias = indexParts[3];
-        String normalizedVal = indexParts[4];
-        String vis = indexParts[5];
+      String entityType = indexParts[0];
+      String shard = indexParts[1];
+      String key = indexParts[2];
+      String alias = indexParts[3];
+      String normalizedVal = indexParts[4];
+      String vis = indexParts[5];
 
-        Mutation keyMutation = new Mutation(entityType + "_" + INDEX_K + "_" + key);
-        Mutation valueMutation = new Mutation(entityType + "_" + INDEX_V + "_" + alias + "__" + normalizedVal);
+      Mutation keyMutation = new Mutation(entityType + "_" + INDEX_K + "_" + key);
+      Mutation valueMutation = new Mutation(entityType + "_" + INDEX_V + "_" + alias + "__" + normalizedVal);
 
-        Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
-        keyMutation.put(new Text(alias), new Text(shard), new ColumnVisibility(vis), value);
-        valueMutation.put(new Text(key), new Text(shard), new ColumnVisibility(vis), value);
-        try {
-          writer.addMutation(keyMutation);
-          writer.addMutation(valueMutation);
-        } catch (MutationsRejectedException e) {
-          throw new RuntimeException(e);
-        }
+      Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
+      keyMutation.put(new Text(alias), new Text(shard), new ColumnVisibility(vis), value);
+      valueMutation.put(new Text(key), new Text(shard), new ColumnVisibility(vis), value);
+      try {
+        writer.addMutation(keyMutation);
+        writer.addMutation(valueMutation);
+      } catch (MutationsRejectedException e) {
+        throw new RuntimeException(e);
       }
     }
   }

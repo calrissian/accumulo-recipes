@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.commons.support.qfd;
+package org.calrissian.accumulorecipes.eventstore.support;
 
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.Connector;
@@ -9,6 +9,8 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
+import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
@@ -73,23 +75,23 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
 
       indexCache.put(join(idIndex, INNER_DELIM), 1l);
 
-      for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
+    }
 
-        String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
-        Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
-        Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
+    for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
 
-        Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
-        keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
-        valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
-        try {
-          writer.addMutation(keyMutation);
-          writer.addMutation(valueMutation);
-        } catch (MutationsRejectedException e) {
-          throw new RuntimeException(e);
-        }
+      String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
+      Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
+      Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
+
+      Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
+      keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
+      valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
+      try {
+        writer.addMutation(keyMutation);
+        writer.addMutation(valueMutation);
+      } catch (MutationsRejectedException e) {
+        throw new RuntimeException(e);
       }
-
     }
   }
 

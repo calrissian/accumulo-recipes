@@ -3,7 +3,6 @@ package org.calrissian.accumulorecipes.entitystore.support;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
@@ -20,6 +19,7 @@ import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_PARTITION_SIZE;
 import static org.calrissian.accumulorecipes.test.AccumuloTestUtils.dumpTable;
 import static org.junit.Assert.assertEquals;
 
@@ -49,7 +49,7 @@ public class EntityGlobalIndexVisitorTest {
 
     BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, new Authorizations(), 2);
     GlobalIndexVisitor visitor = new EntityGlobalIndexVisitor(scanner,
-            new EntityShardBuilder(Constants.DEFAULT_PARTITION_SIZE),
+            new EntityShardBuilder(DEFAULT_PARTITION_SIZE),
             Collections.singleton("type"));
 
     node.accept(visitor);

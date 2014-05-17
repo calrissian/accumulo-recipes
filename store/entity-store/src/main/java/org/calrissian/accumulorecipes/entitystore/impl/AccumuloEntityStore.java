@@ -61,10 +61,10 @@ public class AccumuloEntityStore implements EntityStore {
   private final EntityQfdHelper helper;
 
   public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, DEFAULT_SHARD_BUILDER);
+    this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
   }
 
-  public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, StoreConfig config, ShardBuilder<Entity> entityShardBuilder)
+  public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, StoreConfig config)
           throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
     checkNotNull(connector);
     checkNotNull(indexTable);
@@ -194,5 +194,9 @@ public class AccumuloEntityStore implements EntityStore {
   @Override
   public void delete(Iterable<EntityIndex> typesAndIds, Auths auths) {
     throw new NotImplementedException();
+  }
+
+  protected EntityQfdHelper getHelper() {
+    return helper;
   }
 }
