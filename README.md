@@ -20,3 +20,7 @@ Be sure to check the README files at the root of each store's folder to get deta
 - Metrics Store: Useful for aggregating counts and other statistical algorithms that can be applied associatively over units of time (minutes, hours, days, months, etc...).
 - Range Store: Allows intervals (start and stop ranges) to be indexed so that overlapping intervals can be queried back easily.
 - Temporal Last N Store: Similar to the last-n store, this does't evict based on count, but rather allows a customizable window into a custom grouping for datasets for some point in time.
+
+#Want to get involved?
+
+These projects are all licensed under Apache 2.0. If you'd like to help out, you can start by looking at the github tickets. Pull requests are welcome as well. Check out the google group if you have any questions or want to start a discussion.
