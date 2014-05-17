@@ -2,7 +2,6 @@ package org.calrissian.accumulorecipes.entitystore.impl;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
@@ -47,7 +46,6 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Sets.union;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.Collections.singleton;
 import static java.util.EnumSet.allOf;
@@ -58,7 +56,7 @@ import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
-import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;

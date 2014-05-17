@@ -38,7 +38,7 @@ import static org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeE
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
-import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
 

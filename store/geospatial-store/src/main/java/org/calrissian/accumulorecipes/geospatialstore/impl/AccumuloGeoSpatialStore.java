@@ -29,7 +29,7 @@ import java.util.Map;
 
 import static java.lang.Math.abs;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 

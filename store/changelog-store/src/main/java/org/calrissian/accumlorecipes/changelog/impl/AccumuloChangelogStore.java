@@ -47,7 +47,7 @@ import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MI
 import static org.calrissian.accumlorecipes.changelog.support.Utils.*;
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
-import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
