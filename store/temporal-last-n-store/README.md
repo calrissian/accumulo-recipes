@@ -16,18 +16,18 @@ Now let's say we have a system where we are monitoring possible malicious activi
 First we'll construct a few StoreEntry objects that we can place in the store.
 
 ```java
-StoreEntry blogUpdate = new StoreEntry(UUID.randomUUID().toString());
+Event blogUpdate = new BaseEvent(UUID.randomUUID().toString());
 blogUpdate.put(new Tuple("link", "http://blogs-r-cool.com/", ""));
 blogUpdate.put(new Tuple("owner", "John Doe", ""));
 blogUpdate.put(new Tuple("updateType", "New Content Added", ""));
 blogUpdate.put(new Tuple("contentName", "The people we know", ""));
 
-StoreEntry worldNews = new StoreEntry(UUID.randomUUID().toStirng());
+Event worldNews = new BaseEvent(UUID.randomUUID().toStirng());
 worldNews.add(new Tuple("provider", "CNN", ""));
 worldNews.add(new Tuple("headline", "Burglary in the grocery store", ""));
 worldNews.add(new Tuple("reporter", "Jane Doe", ""));
 
-StoreEntry emailUpdate = new StoreEntry(UUID.randomUUID().toString());
+Event emailUpdate = new BaseEvent(UUID.randomUUID().toString());
 emailUpdate.add(new Tuple("from", "thisguy@gmail.com", ""));
 emailUpdate.add(new Tuple("subject", "Things you should see before age 50", ""));
 emailUpdate.add(new Tuple("to", "yournamehere@gmail.com", ""));
@@ -57,7 +57,7 @@ String[] groups = new new String[] { "userName|blogUpdates", "userName|worldNews
 // set our time range to the last hour
 Date start = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
 Date stop = new Date();
-Iterable<StoreEntry> lastNEntries = store.get(start, stop, Arrays.asList(groups), 100, new Auths());
+Iterable<Event> lastNEntries = store.get(start, stop, Arrays.asList(groups), 100, new Auths());
 ```
 
 In the example above, we are querying the last 100 events across the groups 'userName|blogUpdates', 'userName|worldNews', and 'userName|emailUpdates'. This will merge the last n feeds together and provide a holistic view.

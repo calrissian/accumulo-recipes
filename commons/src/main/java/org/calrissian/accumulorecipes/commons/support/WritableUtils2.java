@@ -20,9 +20,6 @@ import org.apache.hadoop.io.Writable;
 
 import java.io.*;
 
-/**
- * Created by cjnolet on 5/10/14.
- */
 public class WritableUtils2 {
 
   public static byte[] serialize(Writable writable) throws IOException {

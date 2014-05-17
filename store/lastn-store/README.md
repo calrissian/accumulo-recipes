@@ -26,11 +26,11 @@ Connector connector = instance.getConnector("root", "secret".getBytes());
 // The only time the last n value is set is the first time the store is configured in Accumulo
 AccumuloLastNStore lastNStore = new AccumuloLastNStore(connector, 100);
 
-StoreEntry entry1 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
+Event entry1 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
 entry1.put(new Tuple("key1", "val1", ""));
 entry1.put(new Tuple("key3", "val3", ""));
 
-StoreEntry entry2 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
+Event entry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
 entry2.put(new Tuple("key1", "val1", ""));
 entry2.put(new Tuple("key3", "val3", ""));
 
@@ -41,7 +41,7 @@ lastNStore.put("index1", entry2);
 ###Retrieve the last n objects from the store
 
 ```java
-Iterable<StoreEntry> lastN = lastNStore.get("index1", new Auths());
+Iterable<Event> lastN = lastNStore.get("index1", new Auths());
 ```
 
 There you have it. Seem simple?
