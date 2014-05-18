@@ -16,8 +16,8 @@
 package org.calrissian.accumlorecipes.changelog;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.hash.tree.MerkleTree;
 
 import java.util.Date;
@@ -33,7 +33,7 @@ public interface ChangelogStore {
      * Put a changeset into the changeset store.
      * @param changes
      */
-    void put(Iterable<StoreEntry> changes);
+    void put(Iterable<Event> changes);
 
     /**
      * Get a Merkle tree containing hashes of each of the buckets
@@ -58,5 +58,5 @@ public interface ChangelogStore {
      * @param buckets dates representing time increments (i.e. 15 minutes)
      * @return
      */
-    CloseableIterable<StoreEntry> getChanges(Iterable<Date> buckets, Auths auths);
+    CloseableIterable<Event> getChanges(Iterable<Date> buckets, Auths auths);
 }

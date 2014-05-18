@@ -1,6 +1,23 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.entitystore.hadoop;
 
-import org.apache.accumulo.core.client.IteratorSetting;
+import com.esotericsoftware.kryo.Kryo;
+import com.google.common.base.Function;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -11,14 +28,22 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
+import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
+import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.types.LexiTypeEncoders;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,67 +51,45 @@ import java.util.*;
 import static com.google.common.collect.Sets.union;
 import static java.util.Arrays.asList;
 import static org.apache.accumulo.core.util.format.DefaultFormatter.formatEntry;
+import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.*;
 
-public class EntityInputFormat extends InputFormatBase<Key, EntityWritable> {
+public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable> {
 
   public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
     setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
   }
 
-  public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields) {
+  public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
     setQueryInfo(config, entityTypes, query, selectFields, DEFAULT_SHARD_BUILDER);
   }
 
-  public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields, EntityShardBuilder shardBuilder) {
+  public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields, EntityShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
-    Collection<Text> shards = shardBuilder.buildShardsForTypes(entityTypes);
-    Collection<Range> ranges = new LinkedList<Range>();
-    for(Text shard : shards)
-      ranges.add(new Range(shard));
+    validateOptions(config);
 
-    QueryOptimizer optimizer = new QueryOptimizer(query);
-    NodeToJexl nodeToJexl = new NodeToJexl();
-    String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+    Instance instance = getInstance(config);
+    Connector connector = instance.getConnector(getUsername(config), getPassword(config));
+    BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
+    GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(scanner, shardBuilder, entityTypes);
 
-    setRanges(config, ranges);
-
-    IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-    setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
-    setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
-
-    addIterator(config, setting);
-
-    if(selectFields != null && selectFields.size() > 0) {
-      setting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-      EventFieldsFilteringIterator.setSelectFields(setting, union(selectFields, optimizer.getKeysInQuery()));
-      addIterator(config, setting);
-    }
+    configureScanner(config, query, globalIndexVisitor);
   }
 
   @Override
-  public RecordReader<Key, EntityWritable> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
+  protected Function<Map.Entry<Key, Value>, Entity> getTransform(Configuration configuration) {
+    final String[] selectFields = configuration.getStrings("selectFields");
 
-    final EntityWritable sharedWritable = new EntityWritable();
-    final String[] selectFields = context.getConfiguration().getStrings("selectFields");
-    final QueryXform xform = new QueryXform(selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
+    Kryo kryo = new Kryo();
+    initializeKryo(kryo);
 
-    return new RecordReaderBase<Key, EntityWritable>() {
-      @Override
-      public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (scannerIterator.hasNext()) {
-          ++numKeysRead;
-          Map.Entry<Key,Value> entry = scannerIterator.next();
-          currentK = currentKey = entry.getKey();
-          sharedWritable.set(xform.apply(entry));
-          currentV =  sharedWritable;
+    return new EntityQfdHelper.QueryXform(kryo, ENTITY_TYPES, selectFields != null ?
+            new HashSet<String>(asList(selectFields)) : null);
 
-          if (log.isTraceEnabled())
-            log.trace("Processing key/value pair: " + formatEntry(entry, true));
-          return true;
-        }
-        return false;
-      }
-    };
+  }
+
+  @Override
+  protected EntityWritable getWritable() {
+    return new EntityWritable();
   }
 }

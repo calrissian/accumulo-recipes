@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumlorecipes.changelog.support;
 
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
@@ -41,7 +41,7 @@ public class Utils {
      * @param entry
      * @return
      */
-    public static byte[] hashEntry(StoreEntry entry, TypeRegistry<String> typeRegistry) {
+    public static byte[] hashEntry(Event entry, TypeRegistry<String> typeRegistry) {
 
         List<Tuple> tuples = new ArrayList(entry.getTuples());
 

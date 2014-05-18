@@ -1,4 +1,18 @@
-package org.calrissian.accumulorecipes.eventstore.hadoop;
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */package org.calrissian.accumulorecipes.eventstore.hadoop;
 
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
@@ -9,10 +23,11 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
+import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -27,7 +42,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class EventInputFormatTest {
 
-  public static StoreEntry event;
+  public static Event event;
 
   @Test
   public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
@@ -35,7 +50,7 @@ public class EventInputFormatTest {
     Instance instance = new MockInstance("instName");
     Connector connector = instance.getConnector("root", "".getBytes());
     AccumuloEventStore store = new AccumuloEventStore(connector);
-    event = new StoreEntry(UUID.randomUUID().toString());
+    event = new BaseEvent(UUID.randomUUID().toString());
     event.put(new Tuple("key1", "val1", ""));
     event.put(new Tuple("key2", false, ""));
     store.save(singleton(event));
@@ -63,16 +78,16 @@ public class EventInputFormatTest {
 
   }
 
-  public static class TestMapper extends Mapper<Key, StoreEntryWritable, Text, Text> {
+  public static class TestMapper extends Mapper<Key, EventWritable, Text, Text> {
 
-    public static StoreEntry entry;
+    public static Event entry;
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
       super.setup(context);
     }
 
     @Override
-    protected void map(Key key, StoreEntryWritable value, Context context) throws IOException, InterruptedException {
+    protected void map(Key key, EventWritable value, Context context) throws IOException, InterruptedException {
       entry = value.get();
     }
   }

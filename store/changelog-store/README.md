@@ -17,7 +17,7 @@ The Changelog effectively allows state to be summarized quickly so that the stat
 Take for a moment, an update that occurs on a system. Let's say a person's location was updated. We won't get into the specifics about how a person is modeled because that's outside of the scope of this recipe. Instead, let's dive into how I may model a person's location being changed:
 
 ```java
-StoreEntry changeEvent = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
+Event changeEvent = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
 changeEvent.put(new Tuple("id", "person#1"));
 changeEvent.put(new Tuple("location", "Virginia"));
 ```
@@ -72,7 +72,7 @@ To get the changes, we just need to request them from the store with the dates o
 for(BucketHashLeaf leaf : diffLeaves)
  dates.add(new Date(leaf.getTimestamp()));
 
-Iterable<StoreEntry> entries = store.getChanges(dates, new Auths());
+Iterable<Event> entries = store.getChanges(dates, new Auths());
 ```
 
 There you have it, in most scenarios, this should severely have limited the amount of data that would have been sent across the systems had they needed to share everything in order to determine what differed.

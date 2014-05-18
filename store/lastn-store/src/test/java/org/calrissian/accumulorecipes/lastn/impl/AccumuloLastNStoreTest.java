@@ -22,7 +22,8 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -33,39 +34,39 @@ import static org.junit.Assert.assertEquals;
 
 public class AccumuloLastNStoreTest {
 
-    public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance().getConnector("root", "".getBytes());
-    }
+  public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
+    return new MockInstance().getConnector("root", "".getBytes());
+  }
 
-    @Test
-    public void test() throws Exception {
-        AccumuloLastNStore lastNStore = new AccumuloLastNStore(getConnector(), 3);
+  @Test
+  public void test() throws Exception {
+    AccumuloLastNStore lastNStore = new AccumuloLastNStore(getConnector(), 3);
 
-        StoreEntry entry1 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
-        entry1.put(new Tuple("key1", "val1", ""));
-        entry1.put(new Tuple("key3", "val3", ""));
+    Event entry1 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
+    entry1.put(new Tuple("key1", "val1", ""));
+    entry1.put(new Tuple("key3", "val3", ""));
 
-        StoreEntry entry2 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
-        entry2.put(new Tuple("key1", "val1", ""));
-        entry2.put(new Tuple("key3", "val3", ""));
+    Event entry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
+    entry2.put(new Tuple("key1", "val1", ""));
+    entry2.put(new Tuple("key3", "val3", ""));
 
-        StoreEntry entry3 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
-        entry3.put(new Tuple("key1", "val1", ""));
-        entry3.put(new Tuple("key3", "val3", ""));
+    Event entry3 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
+    entry3.put(new Tuple("key1", "val1", ""));
+    entry3.put(new Tuple("key3", "val3", ""));
 
-        StoreEntry entry4 = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
-        entry4.put(new Tuple("key1", "val1", ""));
-        entry4.put(new Tuple("key3", "val3", ""));
+    Event entry4 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
+    entry4.put(new Tuple("key1", "val1", ""));
+    entry4.put(new Tuple("key3", "val3", ""));
 
-        lastNStore.put("index1", entry1);
-        lastNStore.put("index1", entry2);
-        lastNStore.put("index1", entry3);
-        lastNStore.put("index1", entry4);
+    lastNStore.put("index1", entry1);
+    lastNStore.put("index1", entry2);
+    lastNStore.put("index1", entry3);
+    lastNStore.put("index1", entry4);
 
-        List<StoreEntry> results = Lists.newArrayList(lastNStore.get("index1", new Auths()));
-        assertEquals(3, results.size());
-        assertEquals(entry4, results.get(0));
-        assertEquals(entry3, results.get(1));
-        assertEquals(entry2, results.get(2));
-    }
+    List<Event> results = Lists.newArrayList(lastNStore.get("index1", new Auths()));
+    assertEquals(3, results.size());
+    assertEquals(entry4, results.get(0));
+    assertEquals(entry3, results.get(1));
+    assertEquals(entry2, results.get(2));
+  }
 }

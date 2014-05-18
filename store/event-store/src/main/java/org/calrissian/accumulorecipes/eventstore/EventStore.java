@@ -16,10 +16,10 @@
 package org.calrissian.accumulorecipes.eventstore;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Event;
 
 import java.util.Collection;
 import java.util.Date;
@@ -35,7 +35,7 @@ public interface EventStore {
      * @param events
      * @throws Exception
      */
-    void save(Iterable<StoreEntry> events);
+    void save(Iterable<Event> events);
 
     /**
      * Query the store using criteria specified
@@ -45,7 +45,7 @@ public interface EventStore {
      * @param auths
      * @return
      */
-    CloseableIterable<StoreEntry> query(Date start, Date end, Node node, Set<String> selectFields, Auths auths);
+    CloseableIterable<Event> query(Date start, Date end, Node node, Set<String> selectFields, Auths auths);
 
     /**
      * If an event is already being indexed in another store, it's often useful to query a bunch
@@ -55,5 +55,5 @@ public interface EventStore {
      * @param auths
      * @return
      */
-    CloseableIterable<StoreEntry> get(Collection<EventIndex> indexes, Set<String> selectFields, Auths auths);
+    CloseableIterable<Event> get(Collection<EventIndex> indexes, Set<String> selectFields, Auths auths);
 }

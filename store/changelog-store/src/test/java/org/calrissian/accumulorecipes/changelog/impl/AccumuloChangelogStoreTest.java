@@ -22,7 +22,8 @@ import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.junit.Before;
@@ -65,7 +66,7 @@ public class AccumuloChangelogStoreTest {
         /**
          * Put some data into the store to represent changes in the underlying data
          */
-        StoreEntry entry = createStoreEntry("1", currentTime);
+        Event entry = createStoreEntry("1", currentTime);
 
         store.put(asList(entry));
 
@@ -96,11 +97,11 @@ public class AccumuloChangelogStoreTest {
 
         MerkleTree sourceTree = buildTree();
 
-        StoreEntry entry = createStoreEntry("1", currentTime);
-        StoreEntry entry2 = createStoreEntry("2", currentTime - 900000);
-        StoreEntry entry3 = createStoreEntry("3", currentTime - 50000000);
-        StoreEntry entry4 = createStoreEntry("4", currentTime);
-        StoreEntry entry5 = createStoreEntry("5", currentTime + 5000000);
+        Event entry = createStoreEntry("1", currentTime);
+        Event entry2 = createStoreEntry("2", currentTime - 900000);
+        Event entry3 = createStoreEntry("3", currentTime - 50000000);
+        Event entry4 = createStoreEntry("4", currentTime);
+        Event entry5 = createStoreEntry("5", currentTime + 5000000);
 
         store.put(asList(entry, entry2, entry3, entry4, entry5));
 
@@ -133,7 +134,7 @@ public class AccumuloChangelogStoreTest {
 
         long currentTime = currentTimeMillis();
 
-        StoreEntry entry = createStoreEntry("1", currentTime);
+        Event entry = createStoreEntry("1", currentTime);
         store.put(asList(entry));
 
         MerkleTree targetTree = buildTree();
@@ -146,7 +147,7 @@ public class AccumuloChangelogStoreTest {
         for(BucketHashLeaf leaf : diffLeaves)
             dates.add(new Date(leaf.getTimestamp()));
 
-        Iterable<StoreEntry> entries = store.getChanges(dates, new Auths());
+        Iterable<Event> entries = store.getChanges(dates, new Auths());
         assertEquals(entry, Iterables.get(entries, 0));
     }
 
@@ -158,14 +159,14 @@ public class AccumuloChangelogStoreTest {
 
         long currentTime = currentTimeMillis();
 
-        StoreEntry entry = createStoreEntry("1", currentTime);
-        StoreEntry entry2 = createStoreEntry("2", currentTime - 900000);
-        StoreEntry entry3 = createStoreEntry("3", currentTime - 50000000);
-        StoreEntry entry4 = createStoreEntry("4", currentTime);
-        StoreEntry entry5 = createStoreEntry("5", currentTime + 5000000);
+          Event entry = createStoreEntry("1", currentTime);
+        Event entry2 = createStoreEntry("2", currentTime - 900000);
+        Event entry3 = createStoreEntry("3", currentTime - 50000000);
+        Event entry4 = createStoreEntry("4", currentTime);
+        Event entry5 = createStoreEntry("5", currentTime + 5000000);
 
 
-        List<StoreEntry> entryList = asList(entry, entry2, entry3, entry4, entry5);
+        List<Event> entryList = asList(entry, entry2, entry3, entry4, entry5);
         store.put(entryList);
 
         MerkleTree targetTree = buildTree();
@@ -180,10 +181,10 @@ public class AccumuloChangelogStoreTest {
 
         System.out.println(dates);
 
-        Iterable<StoreEntry> entries = store.getChanges(dates, new Auths());
+        Iterable<Event> entries = store.getChanges(dates, new Auths());
         assertEquals(5, Iterables.size(entries));
 
-        for(StoreEntry actualEntry : entries) {
+        for(Event actualEntry : entries) {
             assertTrue(entryList.contains(actualEntry));
         }
     }
@@ -195,8 +196,8 @@ public class AccumuloChangelogStoreTest {
                 new Date(currentTimeMillis() + 50000000), new Auths());
     }
 
-    private StoreEntry createStoreEntry(String uuid , long timestamp) {
-        StoreEntry entry = new StoreEntry(uuid, timestamp);
+    private Event createStoreEntry(String uuid , long timestamp) {
+        Event entry = new BaseEvent(uuid, timestamp);
         entry.put(new Tuple("key2", "val2", ""));
         entry.put(new Tuple("key3", "val3", ""));
 

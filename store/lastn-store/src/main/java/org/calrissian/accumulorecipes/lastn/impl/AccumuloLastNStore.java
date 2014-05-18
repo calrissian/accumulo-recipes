@@ -15,7 +15,6 @@
  */
 package org.calrissian.accumulorecipes.lastn.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
@@ -26,14 +25,12 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
-import org.calrissian.accumulorecipes.commons.hadoop.StoreEntryWritable;
-import org.calrissian.accumulorecipes.commons.support.WritableUtils2;
+import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.json.tuple.TupleModule;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
@@ -66,11 +63,11 @@ public class AccumuloLastNStore implements LastNStore {
     private final BatchWriter writer;
     private final TypeRegistry<String> typeRegistry;
 
-    private Function<Entry<Key, Value>, StoreEntry> storeTransform = new Function<Entry<Key, Value>, StoreEntry>() {
+    private Function<Entry<Key, Value>, Event> storeTransform = new Function<Entry<Key, Value>, Event>() {
         @Override
-        public StoreEntry apply(Entry<Key, Value> entry) {
+        public Event apply(Entry<Key, Value> entry) {
             try {
-                return asWritable(entry.getValue().get(), StoreEntryWritable.class).get();
+                return asWritable(entry.getValue().get(), EventWritable.class).get();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -144,7 +141,7 @@ public class AccumuloLastNStore implements LastNStore {
      * @param entry
      */
     @Override
-    public void put(String group, StoreEntry entry) {
+    public void put(String group, Event entry) {
         checkNotNull(group);
         checkNotNull(entry);
 
@@ -180,7 +177,7 @@ public class AccumuloLastNStore implements LastNStore {
      * @return
      */
     @Override
-    public Iterable<StoreEntry> get(String index, Auths auths) {
+    public Iterable<Event> get(String index, Auths auths) {
         checkNotNull(index);
         checkNotNull(auths);
 

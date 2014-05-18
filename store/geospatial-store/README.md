@@ -9,7 +9,7 @@ The purpose of the store is to find all of the possible events that are associat
 You can specify mutliple entires to be added at a single location. That location is a 2-dimensional geo-coordinate represented with an x and a y value (longitude and latitude respectively). Let's make an example store entry and add it.
 
 ```java
-StoreEntry entry = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
+Event entry = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
 entry.put(new Tuple("name", "John Doe", ""));
 entry.put(new Tuple("age", 35, ""));
 entry.put(new Tuple("affiliation", "republican", ""));
@@ -25,6 +25,6 @@ store.put(Collections.singleton(entry), new Point2D.Double(76.7000, 39.0000));
 So now that we've indexed our entry, let's fetch it back out
 
 ```java
-CloseableIterable<StoreEntry> entries = store.get(new Rectangle2D.Double(74.0, 37, 5, 9), new Auths());
+CloseableIterable<Event> entries = store.get(new Rectangle2D.Double(74.0, 37, 5, 9), new Auths());
 ```
 

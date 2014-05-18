@@ -17,14 +17,16 @@ package org.calrissian.accumulorecipes.eventstore.support.shard;
 
 
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.cli.ShardSplitter;
+import org.calrissian.mango.domain.Event;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class HourlyShardBuilder implements ShardBuilder {
+public class HourlyShardBuilder implements ShardBuilder<Event>, EventShardBuilder {
 
     protected final Integer numPartitions;
 
@@ -36,8 +38,8 @@ public class HourlyShardBuilder implements ShardBuilder {
         this.numPartitions = numPartitions;
     }
 
-    public String buildShard(long timestamp, String uuid) {
-        return buildShard(timestamp, (Math.abs(uuid.hashCode()) % numPartitions));
+    public String buildShard(Event event) {
+        return buildShard(event.getTimestamp(), (Math.abs(event.getId().hashCode()) % numPartitions));
     }
 
     public String buildShard(long timestamp, int partition) {

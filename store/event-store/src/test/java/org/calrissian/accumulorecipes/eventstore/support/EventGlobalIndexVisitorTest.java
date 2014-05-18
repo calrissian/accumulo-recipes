@@ -1,9 +1,23 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.eventstore.support;
 
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
@@ -12,6 +26,8 @@ import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
@@ -32,16 +48,16 @@ public class EventGlobalIndexVisitorTest {
     Connector connector = instance.getConnector("root", "".getBytes());
     EventStore eventStore = new AccumuloEventStore(connector);
 
-    StoreEntry event = new StoreEntry("id");
+    Event event = new BaseEvent("id");
     event.put(new Tuple("key1", "val1"));
     event.put(new Tuple("key2", "val2"));
 
-    StoreEntry event2 = new StoreEntry("id2");
+    Event event2 = new BaseEvent("id2");
     event2.put(new Tuple("key1", "val1"));
     event2.put(new Tuple("key2", "val2"));
     event2.put(new Tuple("key3", true));
 
-    eventStore.save(asList(new StoreEntry[]{event, event2}));
+    eventStore.save(asList(new Event[]{event, event2}));
 
     dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 

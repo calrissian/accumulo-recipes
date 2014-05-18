@@ -1,7 +1,24 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.commons.hadoop;
 
 import org.apache.hadoop.io.Writable;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
+import org.calrissian.accumulorecipes.commons.domain.Settable;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;
@@ -14,16 +31,16 @@ import java.io.IOException;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 
-public class StoreEntryWritable implements Writable {
+public class EventWritable implements Writable, Settable<Event> {
 
   private static TypeRegistry<String> typeRegistry = LEXI_TYPES;
 
-  public StoreEntryWritable() {
+  public EventWritable() {
   }
 
-  StoreEntry entry;
+  Event entry;
 
-  public StoreEntryWritable(StoreEntry entry) {
+  public EventWritable(Event entry) {
     this.entry = entry;
   }
 
@@ -49,7 +66,7 @@ public class StoreEntryWritable implements Writable {
   public void readFields(DataInput dataInput) throws IOException {
     String uuid = dataInput.readUTF();
     long timestamp = dataInput.readLong();
-    entry = new StoreEntry(uuid, timestamp);
+    entry = new BaseEvent(uuid, timestamp);
 
     int count = dataInput.readInt();
     for (int i = 0; i < count; i++) {
@@ -65,11 +82,11 @@ public class StoreEntryWritable implements Writable {
     }
   }
 
-  public void set(StoreEntry entry) {
+  public void set(Event entry) {
     this.entry = entry;
   }
 
-  public StoreEntry get() {
+  public Event get() {
     return entry;
   }
 }

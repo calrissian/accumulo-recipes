@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2013 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.geospatialstore.impl;
 
 import com.google.common.base.Function;
@@ -10,13 +25,14 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.domain.StoreEntry;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.geospatialstore.GeoSpatialStore;
 import org.calrissian.accumulorecipes.geospatialstore.support.BoundingBoxFilter;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeHelper;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeScanRange;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.domain.BaseEvent;
+import org.calrissian.mango.domain.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
@@ -106,8 +122,8 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
     }
 
     @Override
-    public void put(Iterable<StoreEntry> entries, Point2D.Double location) {
-        for(StoreEntry entry : entries) {
+    public void put(Iterable<Event> entries, Point2D.Double location) {
+        for(Event entry : entries) {
 
             int partition = abs(entry.getId().hashCode() % numPartitions);
 
@@ -140,12 +156,12 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
         }
     }
 
-    public static Function<Map.Entry<Key,Value>, StoreEntry> xform = new Function<Map.Entry<Key, Value>, StoreEntry>() {
+    public static Function<Map.Entry<Key,Value>, Event> xform = new Function<Map.Entry<Key, Value>, Event>() {
         @Override
-        public StoreEntry apply(Map.Entry<Key, Value> keyValueEntry) {
+        public Event apply(Map.Entry<Key, Value> keyValueEntry) {
 
             String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), DELIM);
-            StoreEntry entry = new StoreEntry(cfParts[0], Long.parseLong(cfParts[1]));
+            Event entry = new BaseEvent(cfParts[0], Long.parseLong(cfParts[1]));
             try {
                 Map<Key,Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
                 for(Map.Entry<Key,Value> curEntry : map.entrySet()) {
@@ -160,7 +176,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
     };
 
     @Override
-    public CloseableIterable<StoreEntry> get(Rectangle2D.Double location, Auths auths) {
+    public CloseableIterable<Event> get(Rectangle2D.Double location, Auths auths) {
         Collection<QuadTreeScanRange> ranges =
                 helper.buildQueryRangesForBoundingBox(location, maxPrecision);
 

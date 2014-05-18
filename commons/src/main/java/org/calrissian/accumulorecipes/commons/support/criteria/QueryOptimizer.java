@@ -74,9 +74,7 @@ public class QueryOptimizer implements NodeVisitor {
       extractRangesVisitor.extract(); // perform actual extraction
 
       //visitors
-      query.accept(new NoAndOrValidator());
       query.accept(new NoOrNotEqualsValidator());
-      query.accept(new MultipleEqualsValidator());    // this is questionable. Multivalued keys make this possible...
 
       QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
       query.accept(extractKeysVisitor);
