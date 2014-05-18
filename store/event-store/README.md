@@ -8,7 +8,7 @@ Many of the stores in the Calrissian stack deal with objects modeled like events
 
 ```java
 // create our event to contain the keys/values we plan to add to give it state
-StoreEntry event = new StoreEntry(UUID.randomUUID().toString(), System.currentTimeMillis());
+Event event = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
 
 // add the state to the event
 event.put(new Tuple("systemName", "system1", "USER|ADMIN"));
@@ -57,7 +57,7 @@ Let's say we want to query back the event we constructure earlier. Let's first q
 Node query = new QueryBuilder().eq("location", "Maryland").build();
 Date startTime = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
 Date endTime = new Date(System.currentTimeMillis() + (60 * 60 * 1000));
-CloseableIterable<StoreEntry> events = store.query(startTime, endTime, query, new Auths("ADMIN"));
+CloseableIterable<Event> events = store.query(startTime, endTime, query, new Auths("ADMIN"));
 ```
 
 This query will return all events that have a "location" field equal to "Maryland" for the given time range where any tuples visiblity to the "ADMIN" label will be returned.
@@ -65,7 +65,7 @@ This query will return all events that have a "location" field equal to "Marylan
 Notice the returned object is a CloseableIterable. Accumulo opens up socket connections to the tablet servers in a threadpool to queue up the items that should be returned when iterating the result set. It's important that you close the results when the iteration is done.
 
 ```java
-for(StoreEntry entry : events)
+for(Event entry : events)
   System.out.println("Entry Returned: " + entry);
 events.close();
 ```
