@@ -18,10 +18,10 @@ package org.calrissian.accumulorecipes.commons.support.criteria;
 public interface CardinalityKey {
 
 
-  String getKey();
+    String getKey();
 
-  String getNormalizedValue();
+    String getNormalizedValue();
 
-  String getAlias();
+    String getAlias();
 
 }

@@ -17,8 +17,8 @@ package org.calrissian.accumulorecipes.metricsstore;
 
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
@@ -27,12 +27,14 @@ public interface MetricStore {
 
     /**
      * Save a set of metrics to the store
+     *
      * @param metricData
      */
     void save(Iterable<Metric> metricData);
 
     /**
      * Query metrics back from the store.
+     *
      * @param start
      * @param end
      * @param group

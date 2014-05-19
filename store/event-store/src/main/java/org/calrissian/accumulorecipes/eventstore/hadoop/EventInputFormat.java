@@ -46,56 +46,56 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
-  public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
-    setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
-  }
-
-  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    setQueryInfo(config, start, end, query, selectFields, DEFAULT_SHARD_BUILDER);
-  }
-
-  public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, EventShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-
-    try {
-      validateOptions(config);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
+        setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
     }
 
-    Instance instance = getInstance(config);
-    Connector connector = instance.getConnector(getUsername(config), getPassword(config));
-    BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
-    GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
-    QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
-    NodeToJexl nodeToJexl = new NodeToJexl();
-    String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+    public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        setQueryInfo(config, start, end, query, selectFields, DEFAULT_SHARD_BUILDER);
+    }
 
-    Collection<Range> ranges = new ArrayList<Range>();
-    for(String shard : optimizer.getShards())
-      ranges.add(new Range(shard));
+    public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, EventShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-    setRanges(config, ranges);
+        try {
+            validateOptions(config);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-    IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-    setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
-    setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+        Instance instance = getInstance(config);
+        Connector connector = instance.getConnector(getUsername(config), getPassword(config));
+        BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
+        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
+        NodeToJexl nodeToJexl = new NodeToJexl();
+        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
 
-    addIterator(config, setting);
-  }
+        Collection<Range> ranges = new ArrayList<Range>();
+        for (String shard : optimizer.getShards())
+            ranges.add(new Range(shard));
+
+        setRanges(config, ranges);
+
+        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+        setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
+        setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+
+        addIterator(config, setting);
+    }
 
 
-  @Override
-  protected Function<Map.Entry<Key, Value>, Event> getTransform(Configuration configuration) {
-    final String[] selectFields = configuration.getStrings("selectFields");
+    @Override
+    protected Function<Map.Entry<Key, Value>, Event> getTransform(Configuration configuration) {
+        final String[] selectFields = configuration.getStrings("selectFields");
 
-    final Kryo kryo = new Kryo();
-    initializeKryo(kryo);
+        final Kryo kryo = new Kryo();
+        initializeKryo(kryo);
 
-    return new QueryXform(kryo, LEXI_TYPES, selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
-  }
+        return new QueryXform(kryo, LEXI_TYPES, selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
+    }
 
-  @Override
-  protected EventWritable getWritable() {
-    return new EventWritable();
-  }
+    @Override
+    protected EventWritable getWritable() {
+        return new EventWritable();
+    }
 }

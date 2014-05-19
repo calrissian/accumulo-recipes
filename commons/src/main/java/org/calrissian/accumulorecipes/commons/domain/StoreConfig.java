@@ -42,8 +42,8 @@ public class StoreConfig {
     /**
      * Write only constructor that will default all batch scans to a single thread.
      *
-     * @param maxMemory size in bytes of the maximum memory to batch before writing
-     * @param maxLatency time in milliseconds; set to 0 or Long.MAX_VALUE to allow the maximum time to hold a batch before writing
+     * @param maxMemory       size in bytes of the maximum memory to batch before writing
+     * @param maxLatency      time in milliseconds; set to 0 or Long.MAX_VALUE to allow the maximum time to hold a batch before writing
      * @param maxWriteThreads the maximum number of threads to use for writing data to the tablet servers
      */
     public StoreConfig(long maxMemory, long maxLatency, int maxWriteThreads) {
@@ -54,8 +54,8 @@ public class StoreConfig {
      * Allows the user to set the criteria and write options for the store.
      *
      * @param maxQueryThreads
-     * @param maxMemory size in bytes of the maximum memory to batch before writing
-     * @param maxLatency time in milliseconds; set to 0 or Long.MAX_VALUE to allow the maximum time to hold a batch before writing
+     * @param maxMemory       size in bytes of the maximum memory to batch before writing
+     * @param maxLatency      time in milliseconds; set to 0 or Long.MAX_VALUE to allow the maximum time to hold a batch before writing
      * @param maxWriteThreads the maximum number of threads to use for writing data to the tablet servers
      */
     public StoreConfig(int maxQueryThreads, long maxMemory, long maxLatency, int maxWriteThreads) {
@@ -88,6 +88,7 @@ public class StoreConfig {
 
     /**
      * The maximum number of threads to use for writing data to the tablet servers
+     *
      * @return
      */
     public int getMaxWriteThreads() {

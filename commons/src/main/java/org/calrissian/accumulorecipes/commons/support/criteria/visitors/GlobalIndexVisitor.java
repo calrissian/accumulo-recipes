@@ -23,9 +23,9 @@ import java.util.Set;
 
 public interface GlobalIndexVisitor extends NodeVisitor {
 
-  Map<CardinalityKey, Long> getCardinalities();
+    Map<CardinalityKey, Long> getCardinalities();
 
-  Set<String> getShards();
+    Set<String> getShards();
 
-  void exec();
+    void exec();
 }

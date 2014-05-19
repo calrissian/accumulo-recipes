@@ -50,7 +50,7 @@ public class AndSingleDepthOnlyValidator implements NodeVisitor {
             }
         });
 
-        if(notEqNodes != null && notEqNodes.size() == size)
+        if (notEqNodes != null && notEqNodes.size() == size)
             throw new IllegalArgumentException("Not every leaf can be a not equals");
 
     }

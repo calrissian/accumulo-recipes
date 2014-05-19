@@ -21,12 +21,13 @@ import org.calrissian.mango.domain.Entity;
 
 public class TransformUtils {
 
-  private TransformUtils() {}
+    public static Function<Entity, EntityIndex> entityToEntityIndex = new Function<Entity, EntityIndex>() {
+        @Override
+        public EntityIndex apply(Entity entity) {
+            return new EntityIndex(entity);
+        }
+    };
 
-  public static Function<Entity, EntityIndex> entityToEntityIndex = new Function<Entity, EntityIndex>() {
-    @Override
-    public EntityIndex apply(Entity entity) {
-      return new EntityIndex(entity);
+    private TransformUtils() {
     }
-  };
 }

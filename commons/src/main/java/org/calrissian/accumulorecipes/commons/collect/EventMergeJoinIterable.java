@@ -38,15 +38,15 @@ public class EventMergeJoinIterable implements Iterable<Event> {
 
         final List<PeekingCloseableIterator<Event>> iterators =
                 new LinkedList<PeekingCloseableIterator<Event>>();
-        for(Iterable<Event> entries : cursors)
+        for (Iterable<Event> entries : cursors)
             iterators.add(peekingIterator(wrap(entries.iterator())));
 
         return new Iterator<Event>() {
             @Override
             public boolean hasNext() {
 
-                for(Iterator<Event> entry : iterators) {
-                    if(entry.hasNext())
+                for (Iterator<Event> entry : iterators) {
+                    if (entry.hasNext())
                         return true;
                 }
                 return false;
@@ -67,7 +67,7 @@ public class EventMergeJoinIterable implements Iterable<Event> {
 
             @Override
             public void remove() {
-                for(Iterator<Event> itr : iterators)
+                for (Iterator<Event> itr : iterators)
                     itr.remove();
             }
         };

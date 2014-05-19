@@ -33,7 +33,7 @@ public class FileStreamExample {
 
     public static void main(String args[]) throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException, IOException {
 
-        if(args.length != 1) {
+        if (args.length != 1) {
             System.out.println("Usage: " + FileStreamExample.class.getName() + " <outputDirectory>");
             System.exit(1);
         }

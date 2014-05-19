@@ -18,6 +18,7 @@ package org.calrissian.accumulorecipes.metricsstore.ext.custom.function;
 
 /**
  * Custom function for defining the aggregation behavior of metrics for a criteria.
+ *
  * @param <T>
  */
 public interface MetricFunction<T> {
@@ -26,13 +27,14 @@ public interface MetricFunction<T> {
 
     /**
      * Updates the original metric with the given value.
+     *
      * @param value
      */
     void update(long value);
 
     /**
      * Merges the two metrics together.
-     *
+     * <p/>
      * TODO With no iterator settings specified during compactions, this should never happen and we can use
      * more complex iterable math functions.
      *
@@ -42,12 +44,14 @@ public interface MetricFunction<T> {
 
     /**
      * Serialize the given metric
+     *
      * @return
      */
     byte[] serialize();
 
     /**
      * Deserialize the given metric.
+     *
      * @param data
      * @return
      */

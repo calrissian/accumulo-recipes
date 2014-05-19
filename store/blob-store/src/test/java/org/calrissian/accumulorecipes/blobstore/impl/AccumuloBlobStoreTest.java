@@ -43,7 +43,8 @@ public class AccumuloBlobStoreTest {
 
     private static final int CHUNK_SIZE = 16; //small chunk size for testing
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final TypeReference<Collection<String>> strColRef = new TypeReference<Collection<String>>() {};
+    private static final TypeReference<Collection<String>> strColRef = new TypeReference<Collection<String>>() {
+    };
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
         return new MockInstance().getConnector("root", "".getBytes());
@@ -110,8 +111,8 @@ public class AccumuloBlobStoreTest {
 
         byte[] testBlob = new byte[size];
 
-        for(int i = 0; i < size; i++) {
-            testBlob[i] = (byte)Math.abs(i);
+        for (int i = 0; i < size; i++) {
+            testBlob[i] = (byte) Math.abs(i);
         }
 
         return testBlob;

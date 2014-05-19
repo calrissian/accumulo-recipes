@@ -28,17 +28,17 @@ import java.util.Set;
 
 public interface EntityStore {
 
-  void save(Iterable<Entity> entities);
+    void save(Iterable<Entity> entities);
 
-  CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths);
+    CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths);
 
-  CloseableIterable<Entity> getAllByType(Set<String> types, Set<String> selectFields, Auths auths);
+    CloseableIterable<Entity> getAllByType(Set<String> types, Set<String> selectFields, Auths auths);
 
-  CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths);
+    CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths);
 
-  CloseableIterable<Pair<String,String>> keys(String type, Auths auths);
+    CloseableIterable<Pair<String, String>> keys(String type, Auths auths);
 
-  void delete(Iterable<EntityIndex> typesAndIds, Auths auths);
+    void delete(Iterable<EntityIndex> typesAndIds, Auths auths);
 
-  void shutdown() throws Exception;
+    void shutdown() throws Exception;
 }

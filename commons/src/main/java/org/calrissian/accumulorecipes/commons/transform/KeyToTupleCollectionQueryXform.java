@@ -34,47 +34,47 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DEL
 
 public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
 
-  private Set<String> selectFields;
-  private Kryo kryo;
-  private TypeRegistry<String> typeRegistry;
+    private Set<String> selectFields;
+    private Kryo kryo;
+    private TypeRegistry<String> typeRegistry;
 
-  public KeyToTupleCollectionQueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
-    this.selectFields = selectFields;
-    this.kryo = kryo;
-    this.typeRegistry = typeRegistry;
-  }
-
-  protected Set<String> getSelectFields() {
-    return selectFields;
-  }
-
-  protected Kryo getKryo() {
-    return kryo;
-  }
-
-  protected TypeRegistry<String> getTypeRegistry() {
-    return typeRegistry;
-  }
-
-  @Override
-  public V apply(Map.Entry<Key, Value> keyValueEntry) {
-    EventFields eventFields = new EventFields();
-    eventFields.readObjectData(kryo, wrap(keyValueEntry.getValue().get()));
-    V entry = buildTupleCollectionFromKey(keyValueEntry.getKey());
-    for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
-      if(selectFields == null || selectFields.contains(fieldValue.getKey())) {
-        String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
-        try {
-          Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
-          String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-          entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
-        } catch (TypeDecodingException e) {
-          throw new RuntimeException(e);
-        }
-      }
+    public KeyToTupleCollectionQueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
+        this.selectFields = selectFields;
+        this.kryo = kryo;
+        this.typeRegistry = typeRegistry;
     }
-    return entry;
-  }
 
-  protected abstract V buildTupleCollectionFromKey(Key k);
+    protected Set<String> getSelectFields() {
+        return selectFields;
+    }
+
+    protected Kryo getKryo() {
+        return kryo;
+    }
+
+    protected TypeRegistry<String> getTypeRegistry() {
+        return typeRegistry;
+    }
+
+    @Override
+    public V apply(Map.Entry<Key, Value> keyValueEntry) {
+        EventFields eventFields = new EventFields();
+        eventFields.readObjectData(kryo, wrap(keyValueEntry.getValue().get()));
+        V entry = buildTupleCollectionFromKey(keyValueEntry.getKey());
+        for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
+            if (selectFields == null || selectFields.contains(fieldValue.getKey())) {
+                String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
+                try {
+                    Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
+                    String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
+                    entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
+                } catch (TypeDecodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return entry;
+    }
+
+    protected abstract V buildTupleCollectionFromKey(Key k);
 }

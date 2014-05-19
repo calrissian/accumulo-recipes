@@ -114,16 +114,16 @@ public class AccumuloChangelogStoreTest {
         assertEquals(4, diffLeaves.size());
 
         long expectedTime1 = (currentTime + 5000000) - ((currentTime + 5000000) % BucketSize.FIVE_MINS.getMs());
-        assertEquals(expectedTime1 , diffLeaves.get(0).getTimestamp());
+        assertEquals(expectedTime1, diffLeaves.get(0).getTimestamp());
 
         long expectedTime2 = (currentTime) - ((currentTime) % BucketSize.FIVE_MINS.getMs());
-        assertEquals(expectedTime2 , diffLeaves.get(1).getTimestamp());
+        assertEquals(expectedTime2, diffLeaves.get(1).getTimestamp());
 
         long expectedTime3 = (currentTime - 900000) - ((currentTime - 900000) % BucketSize.FIVE_MINS.getMs());
-        assertEquals(expectedTime3 , diffLeaves.get(2).getTimestamp());
+        assertEquals(expectedTime3, diffLeaves.get(2).getTimestamp());
 
         long expectedTime4 = (currentTime - 50000000) - ((currentTime - 50000000) % BucketSize.FIVE_MINS.getMs());
-        assertEquals(expectedTime4 , diffLeaves.get(3).getTimestamp());
+        assertEquals(expectedTime4, diffLeaves.get(3).getTimestamp());
     }
 
 
@@ -144,7 +144,7 @@ public class AccumuloChangelogStoreTest {
 
         List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);
         Collection<Date> dates = new ArrayList<Date>();
-        for(BucketHashLeaf leaf : diffLeaves)
+        for (BucketHashLeaf leaf : diffLeaves)
             dates.add(new Date(leaf.getTimestamp()));
 
         Iterable<Event> entries = store.getChanges(dates, new Auths());
@@ -159,7 +159,7 @@ public class AccumuloChangelogStoreTest {
 
         long currentTime = currentTimeMillis();
 
-          Event entry = createStoreEntry("1", currentTime);
+        Event entry = createStoreEntry("1", currentTime);
         Event entry2 = createStoreEntry("2", currentTime - 900000);
         Event entry3 = createStoreEntry("3", currentTime - 50000000);
         Event entry4 = createStoreEntry("4", currentTime);
@@ -176,7 +176,7 @@ public class AccumuloChangelogStoreTest {
 
         List<BucketHashLeaf> diffLeaves = targetTree.diff(sourceTree);
         Collection<Date> dates = new ArrayList<Date>();
-        for(BucketHashLeaf leaf : diffLeaves)
+        for (BucketHashLeaf leaf : diffLeaves)
             dates.add(new Date(leaf.getTimestamp()));
 
         System.out.println(dates);
@@ -184,7 +184,7 @@ public class AccumuloChangelogStoreTest {
         Iterable<Event> entries = store.getChanges(dates, new Auths());
         assertEquals(5, Iterables.size(entries));
 
-        for(Event actualEntry : entries) {
+        for (Event actualEntry : entries) {
             assertTrue(entryList.contains(actualEntry));
         }
     }
@@ -196,7 +196,7 @@ public class AccumuloChangelogStoreTest {
                 new Date(currentTimeMillis() + 50000000), new Auths());
     }
 
-    private Event createStoreEntry(String uuid , long timestamp) {
+    private Event createStoreEntry(String uuid, long timestamp) {
         Event entry = new BaseEvent(uuid, timestamp);
         entry.put(new Tuple("key2", "val2", ""));
         entry.put(new Tuple("key3", "val3", ""));

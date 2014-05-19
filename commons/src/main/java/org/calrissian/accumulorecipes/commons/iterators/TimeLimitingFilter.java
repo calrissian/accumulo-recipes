@@ -28,9 +28,9 @@ import java.util.Map;
 /**
  * A small modification of the age off filter that ships with Accumulo which ages off key/value pairs based on the
  * Key's timestamp. It removes an entry if its timestamp is less than currentTime - threshold.
- *
+ * <p/>
  * The modification will now allow rows with timestamp > currentTime to pass through.
- *
+ * <p/>
  * This filter requires a "ttl" option, in milliseconds, to determine the age off threshold.
  */
 public class TimeLimitingFilter extends Filter {
@@ -46,6 +46,26 @@ public class TimeLimitingFilter extends Filter {
     protected long currentTime;
 
     /**
+     * A convenience method for setting the age off threshold.
+     *
+     * @param is  IteratorSetting object to configure.
+     * @param ttl age off threshold in milliseconds.
+     */
+    public static void setTTL(IteratorSetting is, Long ttl) {
+        is.addOption(TTL, Long.toString(ttl));
+    }
+
+    /**
+     * A convenience method for setting the current time (from which to measure the age off threshold).
+     *
+     * @param is          IteratorSetting object to configure.
+     * @param currentTime time in milliseconds.
+     */
+    public static void setCurrentTime(IteratorSetting is, Long currentTime) {
+        is.addOption(CURRENT_TIME, Long.toString(currentTime));
+    }
+
+    /**
      * Accepts entries whose timestamps are less than currentTime - threshold.
      *
      * @see org.apache.accumulo.core.iterators.Filter#accept(org.apache.accumulo.core.data.Key, org.apache.accumulo.core.data.Value)
@@ -58,7 +78,7 @@ public class TimeLimitingFilter extends Filter {
     }
 
     @Override
-    public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
+    public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         super.init(source, options, env);
         threshold = -1;
         if (options == null)
@@ -80,7 +100,7 @@ public class TimeLimitingFilter extends Filter {
     }
 
     @Override
-    public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
+    public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         TimeLimitingFilter copy = (TimeLimitingFilter) super.deepCopy(env);
         copy.currentTime = currentTime;
         copy.threshold = threshold;
@@ -98,7 +118,7 @@ public class TimeLimitingFilter extends Filter {
     }
 
     @Override
-    public boolean validateOptions(Map<String,String> options) {
+    public boolean validateOptions(Map<String, String> options) {
         super.validateOptions(options);
         try {
             Long.parseLong(options.get(TTL));
@@ -106,29 +126,5 @@ public class TimeLimitingFilter extends Filter {
             return false;
         }
         return true;
-    }
-
-    /**
-     * A convenience method for setting the age off threshold.
-     *
-     * @param is
-     *          IteratorSetting object to configure.
-     * @param ttl
-     *          age off threshold in milliseconds.
-     */
-    public static void setTTL(IteratorSetting is, Long ttl) {
-        is.addOption(TTL, Long.toString(ttl));
-    }
-
-    /**
-     * A convenience method for setting the current time (from which to measure the age off threshold).
-     *
-     * @param is
-     *          IteratorSetting object to configure.
-     * @param currentTime
-     *          time in milliseconds.
-     */
-    public static void setCurrentTime(IteratorSetting is, Long currentTime) {
-        is.addOption(CURRENT_TIME, Long.toString(currentTime));
     }
 }

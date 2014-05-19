@@ -23,14 +23,14 @@ import org.junit.Test;
 
 public class QueryOptimizerTest {
 
-  @Test
-  public void test() {
+    @Test
+    public void test() {
 
-    Node query = new QueryBuilder().and().and().or().end().end().end().build();
+        Node query = new QueryBuilder().and().and().or().end().end().end().build();
 
-    QueryOptimizer optimizer = new QueryOptimizer(query);
+        QueryOptimizer optimizer = new QueryOptimizer(query);
 
-    System.out.println(new NodeToJexl().transform(optimizer.getOptimizedQuery()));
+        System.out.println(new NodeToJexl().transform(optimizer.getOptimizedQuery()));
 
-  }
+    }
 }

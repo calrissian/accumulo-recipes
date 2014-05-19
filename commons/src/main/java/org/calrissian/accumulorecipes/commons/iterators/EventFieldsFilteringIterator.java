@@ -33,57 +33,57 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 
 public class EventFieldsFilteringIterator extends Filter {
 
-  protected static final String SELECT_FIELDS = "selectFields";
-  private Set<String> selectFields;
+    protected static final String SELECT_FIELDS = "selectFields";
+    private Set<String> selectFields;
 
-  @Override
-  public boolean accept(Key k, Value v) {
-    if(!k.getColumnFamily().toString().startsWith("fi")) {
-      int ifx = k.getColumnQualifier().toString().indexOf("\u0000");
-      String key = k.getColumnQualifier().toString().substring(0, ifx);
-      return selectFields.contains(key);
+    public static void setSelectFields(IteratorSetting is, Set<String> selectFields) {
+        is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, "\u0000"));
     }
-    return true;
-  }
 
-  @Override
-  public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
-    super.init(source, options, env);
-    if (options == null)
-      throw new IllegalArgumentException(SELECT_FIELDS + " must be set for " + EventFieldsFilteringIterator.class.getName());
+    @Override
+    public boolean accept(Key k, Value v) {
+        if (!k.getColumnFamily().toString().startsWith("fi")) {
+            int ifx = k.getColumnQualifier().toString().indexOf("\u0000");
+            String key = k.getColumnQualifier().toString().substring(0, ifx);
+            return selectFields.contains(key);
+        }
+        return true;
+    }
 
-    String eventFieldsOpt = options.get(SELECT_FIELDS);
-    if (eventFieldsOpt == null)
-      throw new IllegalArgumentException(SELECT_FIELDS + " must be set for " + EventFieldsFilteringIterator.class.getName());
+    @Override
+    public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
+        super.init(source, options, env);
+        if (options == null)
+            throw new IllegalArgumentException(SELECT_FIELDS + " must be set for " + EventFieldsFilteringIterator.class.getName());
 
-    selectFields = new HashSet<String>(asList(splitPreserveAllTokens(eventFieldsOpt, "\u0000")));
-  }
+        String eventFieldsOpt = options.get(SELECT_FIELDS);
+        if (eventFieldsOpt == null)
+            throw new IllegalArgumentException(SELECT_FIELDS + " must be set for " + EventFieldsFilteringIterator.class.getName());
 
-  @Override
-  public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
-    EventFieldsFilteringIterator copy = (EventFieldsFilteringIterator) super.deepCopy(env);
-    copy.selectFields = selectFields;
-    return copy;
-  }
+        selectFields = new HashSet<String>(asList(splitPreserveAllTokens(eventFieldsOpt, "\u0000")));
+    }
 
-  @Override
-  public IteratorOptions describeOptions() {
-    IteratorOptions io = super.describeOptions();
-    io.addNamedOption(SELECT_FIELDS, "fields to allow through (delimited by \u0000)");
-    io.setDescription("EventFieldsFIlteringIterator only allows fields through that have a key existing in a given selection set");
-    return io;
-  }
+    @Override
+    public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
+        EventFieldsFilteringIterator copy = (EventFieldsFilteringIterator) super.deepCopy(env);
+        copy.selectFields = selectFields;
+        return copy;
+    }
 
-  @Override
-  public boolean validateOptions(Map<String,String> options) {
-    super.validateOptions(options);
-    if(!options.containsKey(SELECT_FIELDS))
-      return false;
-    return true;
-  }
+    @Override
+    public IteratorOptions describeOptions() {
+        IteratorOptions io = super.describeOptions();
+        io.addNamedOption(SELECT_FIELDS, "fields to allow through (delimited by \u0000)");
+        io.setDescription("EventFieldsFIlteringIterator only allows fields through that have a key existing in a given selection set");
+        return io;
+    }
 
-  public static void setSelectFields(IteratorSetting is, Set<String> selectFields) {
-    is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, "\u0000"));
-  }
+    @Override
+    public boolean validateOptions(Map<String, String> options) {
+        super.validateOptions(options);
+        if (!options.containsKey(SELECT_FIELDS))
+            return false;
+        return true;
+    }
 
 }

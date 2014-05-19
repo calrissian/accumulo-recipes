@@ -19,5 +19,5 @@ import org.calrissian.mango.domain.TupleStore;
 
 public interface ShardBuilder<T extends TupleStore> {
 
-  String buildShard(T item);
+    String buildShard(T item);
 }

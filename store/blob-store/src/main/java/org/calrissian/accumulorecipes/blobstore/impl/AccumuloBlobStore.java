@@ -44,14 +44,13 @@ import static org.calrissian.mango.types.LexiTypeEncoders.integerEncoder;
  * An accumulo representation of the blob store. For purposes of simplicity, current implementation only stores data
  * that can be loaded into a byte array in memory- the interface uses standard Streams to allow future
  * implementations to partition large blobs over several different rows that can be streamed from Accumulo.
- *
+ * <p/>
  * Row format is as follows:
- *
+ * <p/>
  * RowId:               key\u0000type
  * Column Family:       DATA
  * Column Qualifier:    sequence#
  * Value:               byte[]
- *
  */
 public class AccumuloBlobStore implements BlobStore {
 
@@ -89,14 +88,26 @@ public class AccumuloBlobStore implements BlobStore {
         this.config = config;
         this.bufferSize = bufferSize;
 
-        if(!connector.tableOperations().exists(tableName)) {
+        if (!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);
             configureTable(connector, tableName);
         }
     }
 
     /**
+     * Helper method to generate the rowID for the data mutations.
+     *
+     * @param key
+     * @param type
+     * @return
+     */
+    protected static String generateRowId(String key, String type) {
+        return defaultString(key) + "\u0000" + defaultString(type);
+    }
+
+    /**
      * Utility method to update the correct iterators to the table.
+     *
      * @param connector
      * @throws AccumuloSecurityException
      * @throws AccumuloException
@@ -108,6 +119,7 @@ public class AccumuloBlobStore implements BlobStore {
 
     /**
      * Returns a new batch writer for the table.
+     *
      * @return
      * @throws TableNotFoundException
      */
@@ -116,17 +128,8 @@ public class AccumuloBlobStore implements BlobStore {
     }
 
     /**
-     * Helper method to generate the rowID for the data mutations.
-     * @param key
-     * @param type
-     * @return
-     */
-    protected static String generateRowId(String key, String type) {
-        return defaultString(key) + "\u0000" + defaultString(type);
-    }
-
-    /**
      * Helper method to generate a mutation for each chunk of data that is being stored.
+     *
      * @param key
      * @param type
      * @param data
@@ -146,6 +149,7 @@ public class AccumuloBlobStore implements BlobStore {
 
     /**
      * Helper method to generate an {@link OutputStream} for storing data into Accumulo.
+     *
      * @param writer
      * @param key
      * @param type
@@ -159,6 +163,7 @@ public class AccumuloBlobStore implements BlobStore {
 
         return new AbstractBufferedOutputStream(bufferSize) {
             int sequenceNum = 0;
+
             @Override
             protected void writeBuffer(byte[] buf) throws IOException {
                 if (buf.length == 0)
@@ -223,7 +228,7 @@ public class AccumuloBlobStore implements BlobStore {
             scanner.setRange(Range.exact(rowId, DATA_CF));
             scanner.fetchColumnFamily(new Text(DATA_CF));
 
-            final Iterator<Map.Entry<Key,Value>> iterator = scanner.iterator();
+            final Iterator<Map.Entry<Key, Value>> iterator = scanner.iterator();
 
             //Create an input stream that will read the values from the iterator.
             return new AbstractBufferedInputStream() {

@@ -22,8 +22,8 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.junit.Test;
 
@@ -43,12 +43,16 @@ public class AccumuloMetricStoreTest {
         return new MockInstance().getConnector("root", "".getBytes());
     }
 
-    public static long getTimeOffset(MetricTimeUnit timeUnit){
+    public static long getTimeOffset(MetricTimeUnit timeUnit) {
         switch (timeUnit) {
-            case MINUTES: return TimeUnit.MINUTES.toMillis(1);
-            case HOURS: return TimeUnit.HOURS.toMillis(1);
-            case DAYS: return TimeUnit.DAYS.toMillis(1);
-            case MONTHS: return TimeUnit.DAYS.toMillis(31);
+            case MINUTES:
+                return TimeUnit.MINUTES.toMillis(1);
+            case HOURS:
+                return TimeUnit.HOURS.toMillis(1);
+            case DAYS:
+                return TimeUnit.DAYS.toMillis(1);
+            case MONTHS:
+                return TimeUnit.DAYS.toMillis(31);
         }
         return TimeUnit.MINUTES.toMillis(1);
     }
@@ -72,7 +76,8 @@ public class AccumuloMetricStoreTest {
                         };
                     }
                 },
-                limit);
+                limit
+        );
     }
 
     public static void checkMetrics(CloseableIterable<Metric> actual, int expectedNum, int expectedVal) {

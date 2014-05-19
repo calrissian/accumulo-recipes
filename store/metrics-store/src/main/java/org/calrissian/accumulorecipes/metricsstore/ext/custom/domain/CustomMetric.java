@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Data object to hold the value of custom metric functions.
+ *
  * @param <T>
  */
 public class CustomMetric<T> {

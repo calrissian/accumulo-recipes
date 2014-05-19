@@ -38,7 +38,7 @@ public class GroupedKey implements WritableComparable<GroupedKey> {
     @Override
     public int compareTo(GroupedKey groupedKey) {
         int result = getGroup().compareTo(groupedKey.getGroup());
-        if(result == 0)
+        if (result == 0)
             result = getKey().compareTo(groupedKey.getKey());
         return result;
     }

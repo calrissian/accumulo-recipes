@@ -32,6 +32,7 @@ public interface EventStore {
 
     /**
      * Persists a set of StoreEntry objects into the event store
+     *
      * @param events
      * @throws Exception
      */
@@ -39,6 +40,7 @@ public interface EventStore {
 
     /**
      * Query the store using criteria specified
+     *
      * @param start
      * @param end
      * @param node

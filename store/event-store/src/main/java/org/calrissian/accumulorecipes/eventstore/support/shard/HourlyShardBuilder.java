@@ -18,7 +18,6 @@ package org.calrissian.accumulorecipes.eventstore.support.shard;
 
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.accumulorecipes.eventstore.cli.ShardSplitter;
 import org.calrissian.mango.domain.Event;
 
 import java.text.SimpleDateFormat;
@@ -56,8 +55,8 @@ public class HourlyShardBuilder implements ShardBuilder<Event>, EventShardBuilde
         int hours = (int) ((stop.getTime() - start.getTime()) / (60 * 60 * 1000));
         hours = hours > 0 ? hours : 1;
 
-        for(int i = 0; i < hours; i++) {
-            for(int j = 0; j < numPartitions; j++)
+        for (int i = 0; i < hours; i++) {
+            for (int j = 0; j < numPartitions; j++)
                 shards.add(new Text(buildShard(start.getTime(), j)));
             start.setTime(start.getTime() + (60 * 60 * 1000));
         }

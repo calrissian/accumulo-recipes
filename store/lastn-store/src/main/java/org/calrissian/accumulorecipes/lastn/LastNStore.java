@@ -28,6 +28,7 @@ public interface LastNStore {
     /**
      * Puts a StoreEntry into the Last N store under the specified grouping. The Last N items returned are all grouped
      * by the group value.
+     *
      * @param group
      * @param entry
      */
@@ -35,6 +36,7 @@ public interface LastNStore {
 
     /**
      * Returns the last N store entries under the specified group- starting with the most recent.
+     *
      * @param group
      * @param auths
      * @return

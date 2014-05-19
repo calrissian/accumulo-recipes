@@ -40,47 +40,47 @@ import static org.junit.Assert.assertEquals;
 
 public class EntityGlobalIndexVisitorTest {
 
-  @Test
-  public void test() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    @Test
+    public void test() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-    Instance instance = new MockInstance();
-    Connector connector = instance.getConnector("root", "".getBytes());
-    EntityStore entityStore = new AccumuloEntityStore(connector);
+        Instance instance = new MockInstance();
+        Connector connector = instance.getConnector("root", "".getBytes());
+        EntityStore entityStore = new AccumuloEntityStore(connector);
 
-    Entity entity = new BaseEntity("type", "id");
-    entity.put(new Tuple("key1", "val1"));
-    entity.put(new Tuple("key2", "val2"));
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1"));
+        entity.put(new Tuple("key2", "val2"));
 
-    Entity entity2 = new BaseEntity("type", "id2");
-    entity2.put(new Tuple("key1", "val1"));
-    entity2.put(new Tuple("key2", "val2"));
-    entity2.put(new Tuple("key3", true));
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", "val1"));
+        entity2.put(new Tuple("key2", "val2"));
+        entity2.put(new Tuple("key3", true));
 
-    entityStore.save(asList(new Entity[]{entity, entity2}));
+        entityStore.save(asList(new Entity[]{entity, entity2}));
 
-    dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
+        dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
-    Node node = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").eq("key3", true).end().build();
+        Node node = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").eq("key3", true).end().build();
 
-    BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, new Authorizations(), 2);
-    GlobalIndexVisitor visitor = new EntityGlobalIndexVisitor(scanner,
-            new EntityShardBuilder(DEFAULT_PARTITION_SIZE),
-            Collections.singleton("type"));
+        BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, new Authorizations(), 2);
+        GlobalIndexVisitor visitor = new EntityGlobalIndexVisitor(scanner,
+                new EntityShardBuilder(DEFAULT_PARTITION_SIZE),
+                Collections.singleton("type"));
 
-    node.accept(visitor);
-    visitor.exec();
+        node.accept(visitor);
+        visitor.exec();
 
 
-    assertEquals(3, visitor.getCardinalities().size());
-    for(Map.Entry<CardinalityKey, Long> entry : visitor.getCardinalities().entrySet()) {
-      if(entry.getKey().getKey().equals("key1"))
-        assertEquals(2l, (long)entry.getValue());
-      else if(entry.getKey().getKey().equals("key2"))
-        assertEquals(2l, (long)entry.getValue());
-      else if(entry.getKey().getKey().equals("key3"))
-        assertEquals(1l, (long)entry.getValue());
-      else
-        throw new RuntimeException("Unexpected key in cardinalities");
+        assertEquals(3, visitor.getCardinalities().size());
+        for (Map.Entry<CardinalityKey, Long> entry : visitor.getCardinalities().entrySet()) {
+            if (entry.getKey().getKey().equals("key1"))
+                assertEquals(2l, (long) entry.getValue());
+            else if (entry.getKey().getKey().equals("key2"))
+                assertEquals(2l, (long) entry.getValue());
+            else if (entry.getKey().getKey().equals("key3"))
+                assertEquals(1l, (long) entry.getValue());
+            else
+                throw new RuntimeException("Unexpected key in cardinalities");
+        }
     }
-  }
 }

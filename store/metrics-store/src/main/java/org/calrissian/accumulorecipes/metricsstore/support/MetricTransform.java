@@ -22,11 +22,12 @@ import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 
 import static java.util.Map.Entry;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.revertTimestamp;
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
 
 /**
  * Simple utility class to extract the metadata from a Key/Value to allow specific Metric types to be returned.
+ *
  * @param <T>
  */
 public abstract class MetricTransform<T> implements Function<Entry<Key, Value>, T> {

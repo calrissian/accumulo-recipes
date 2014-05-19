@@ -35,11 +35,11 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 public class EntityWritable implements WritableComparable, Settable<Entity> {
 
     private static TypeRegistry<String> typeRegistry = LEXI_TYPES;
+    Entity entity;
 
     public EntityWritable() {
     }
 
-    Entity entity;
     public EntityWritable(Entity entity) {
         checkNotNull(entity);
         this.entity = entity;
@@ -50,7 +50,7 @@ public class EntityWritable implements WritableComparable, Settable<Entity> {
         dataOutput.writeUTF(entity.getType());
         dataOutput.writeUTF(entity.getId());
         dataOutput.writeInt(entity.getTuples() != null ? entity.getTuples().size() : 0);
-        for(Tuple tuple : entity.getTuples()) {
+        for (Tuple tuple : entity.getTuples()) {
             dataOutput.writeUTF(tuple.getKey());
             dataOutput.writeUTF(typeRegistry.getAlias(tuple.getValue()));
             try {
@@ -68,7 +68,7 @@ public class EntityWritable implements WritableComparable, Settable<Entity> {
         String id = dataInput.readUTF();
 
         entity = new BaseEntity(entityType, id);
-        for(int i = 0; i < dataInput.readInt(); i++) {
+        for (int i = 0; i < dataInput.readInt(); i++) {
             String key = dataInput.readUTF();
             String type = dataInput.readUTF();
             String val = dataInput.readUTF();
@@ -91,7 +91,7 @@ public class EntityWritable implements WritableComparable, Settable<Entity> {
 
     @Override
     public int compareTo(Object o) {
-        Entity entity2 = (Entity)o;
+        Entity entity2 = (Entity) o;
 
         int res = entity.getType().compareTo(entity2.getType());
         if (res == 0)

@@ -25,7 +25,8 @@ public class BucketHashLeaf extends HashLeaf {
 
     protected long timestamp;
 
-    public BucketHashLeaf() {}
+    public BucketHashLeaf() {
+    }
 
     public BucketHashLeaf(String hash, long timestamp) {
         super(hash);

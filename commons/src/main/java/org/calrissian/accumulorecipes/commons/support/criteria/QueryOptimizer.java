@@ -34,82 +34,82 @@ import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
  */
 public class QueryOptimizer implements NodeVisitor {
 
-  protected Node node;
-  protected Set<String> keysInQuery;
-  protected GlobalIndexVisitor indexVisitor;
+    protected Node node;
+    protected Set<String> keysInQuery;
+    protected GlobalIndexVisitor indexVisitor;
 
-  public QueryOptimizer(Node query, GlobalIndexVisitor indexVisitor) {
-    checkNotNull(query);
+    public QueryOptimizer(Node query, GlobalIndexVisitor indexVisitor) {
+        checkNotNull(query);
 
-    this.node = query.clone(null);  // cloned so that original is not modified during optimization
-    this.indexVisitor = indexVisitor;
+        this.node = query.clone(null);  // cloned so that original is not modified during optimization
+        this.indexVisitor = indexVisitor;
 
-    init(node);
-  }
-
-  public QueryOptimizer(Node query) {
-    this(query, null);
-  }
-
-  protected void init(Node query) {
-
-    if(!isEmpty(query)) {
-
-      /**
-       * This performs a cardinality optimization
-       */
-      if (indexVisitor != null) {
-        query.accept(indexVisitor);
-        indexVisitor.exec();
-        query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities()));
-      }
-
-      query.accept(new SingleClauseCollapseVisitor());
-      query.accept(new EmptyParentCollapseVisitor());
-      query.accept(new CollapseParentClauseVisitor());
-      query.accept(new RangeSplitterVisitor());
-
-      ExtractRangesVisitor extractRangesVisitor = new ExtractRangesVisitor();
-      query.accept(extractRangesVisitor);
-      extractRangesVisitor.extract(); // perform actual extraction
-
-      //visitors
-      query.accept(new NoOrNotEqualsValidator());
-
-      QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
-      query.accept(extractKeysVisitor);
-      keysInQuery = extractKeysVisitor.getKeysFound();
-
-      //develop criteria
-      query.accept(this);
+        init(node);
     }
-  }
 
-  public Node getOptimizedQuery() {
-    return this.node;
-  }
+    public QueryOptimizer(Node query) {
+        this(query, null);
+    }
 
-  public Set<String> getKeysInQuery() {
-    return keysInQuery;
-  }
+    protected void init(Node query) {
 
-  @Override
-  public void begin(ParentNode node) {
-  }
+        if (!isEmpty(query)) {
 
-  @Override
-  public void end(ParentNode parentNode) {
+            /**
+             * This performs a cardinality optimization
+             */
+            if (indexVisitor != null) {
+                query.accept(indexVisitor);
+                indexVisitor.exec();
+                query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities()));
+            }
 
-  }
+            query.accept(new SingleClauseCollapseVisitor());
+            query.accept(new EmptyParentCollapseVisitor());
+            query.accept(new CollapseParentClauseVisitor());
+            query.accept(new RangeSplitterVisitor());
 
-  @Override
-  public void visit(Leaf node) {
-  }
+            ExtractRangesVisitor extractRangesVisitor = new ExtractRangesVisitor();
+            query.accept(extractRangesVisitor);
+            extractRangesVisitor.extract(); // perform actual extraction
 
-  public Set<String> getShards() {
-    if (indexVisitor != null)
-      return indexVisitor.getShards();
-    else
-      throw new RuntimeException("A global index visitor was not configured on this optimizer.");
-  }
+            //visitors
+            query.accept(new NoOrNotEqualsValidator());
+
+            QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
+            query.accept(extractKeysVisitor);
+            keysInQuery = extractKeysVisitor.getKeysFound();
+
+            //develop criteria
+            query.accept(this);
+        }
+    }
+
+    public Node getOptimizedQuery() {
+        return this.node;
+    }
+
+    public Set<String> getKeysInQuery() {
+        return keysInQuery;
+    }
+
+    @Override
+    public void begin(ParentNode node) {
+    }
+
+    @Override
+    public void end(ParentNode parentNode) {
+
+    }
+
+    @Override
+    public void visit(Leaf node) {
+    }
+
+    public Set<String> getShards() {
+        if (indexVisitor != null)
+            return indexVisitor.getShards();
+        else
+            throw new RuntimeException("A global index visitor was not configured on this optimizer.");
+    }
 }

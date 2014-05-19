@@ -16,30 +16,20 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
-import org.apache.accumulo.core.data.ByteSequence;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.PartialKey;
-import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.data.*;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key,Value> {
+
+import java.io.*;
+import java.util.*;
+
+public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key, Value> {
 
 
-    private SortedKeyValueIterator<Key,Value> sourceIter;
+    List<Key> keys = new ArrayList<Key>();
+    List<Value> values = new ArrayList<Value>();
+    private SortedKeyValueIterator<Key, Value> sourceIter;
     private Key topKey = null;
     private Value topValue = null;
 
@@ -47,13 +37,13 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key,Val
 
     }
 
-    WholeColumnFamilyIterator(SortedKeyValueIterator<Key,Value> source) {
+    WholeColumnFamilyIterator(SortedKeyValueIterator<Key, Value> source) {
         this.sourceIter = source;
     }
 
     // decode a bunch of key value pairs that have been encoded into a single value
-    public static final SortedMap<Key,Value> decodeRow(Key rowKey, Value rowValue) throws IOException {
-        SortedMap<Key,Value> map = new TreeMap<Key,Value>();
+    public static final SortedMap<Key, Value> decodeRow(Key rowKey, Value rowValue) throws IOException {
+        SortedMap<Key, Value> map = new TreeMap<Key, Value>();
         ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
         DataInputStream din = new DataInputStream(in);
         int numKeys = din.readInt();
@@ -131,9 +121,6 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key,Val
         return new Value(out.toByteArray());
     }
 
-    List<Key> keys = new ArrayList<Key>();
-    List<Value> values = new ArrayList<Value>();
-
     private void prepKeys() throws IOException {
         if (topKey != null)
             return;
@@ -160,13 +147,9 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key,Val
     }
 
     /**
-     *
-     * @param currentRow
-     *          All keys have this in their row portion (do not modify!).
-     * @param keys
-     *          One key for each key in the row, ordered as they are given by the source iterator (do not modify!).
-     * @param values
-     *          One value for each key in keys, ordered to correspond to the ordering in keys (do not modify!).
+     * @param currentRow All keys have this in their row portion (do not modify!).
+     * @param keys       One key for each key in the row, ordered as they are given by the source iterator (do not modify!).
+     * @param values     One value for each key in keys, ordered to correspond to the ordering in keys (do not modify!).
      * @return true if we want to keep the row, false if we want to skip it
      */
     protected boolean filter(Text currentRow, List<Key> keys, List<Value> values) {
@@ -174,7 +157,7 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key,Val
     }
 
     @Override
-    public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
+    public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         if (sourceIter != null)
             return new WholeColumnFamilyIterator(sourceIter.deepCopy(env));
         return new WholeColumnFamilyIterator();
@@ -196,7 +179,7 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key,Val
     }
 
     @Override
-    public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
+    public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         sourceIter = source;
     }
 

@@ -17,12 +17,9 @@ package org.calrissian.accumulorecipes.geospatialstore.support;
 
 import org.calrissian.accumulorecipes.geospatialstore.model.BoundingBox;
 
-import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
-import java.util.List;
-import java.util.Queue;
 
 public class QuadTreeHelper {
 

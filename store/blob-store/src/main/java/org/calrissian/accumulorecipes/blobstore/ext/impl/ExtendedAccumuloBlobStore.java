@@ -50,29 +50,29 @@ import static org.apache.commons.lang.Validate.notNull;
 /**
  * This implementation is an extension of the {@link AccumuloBlobStore} which stores additional data
  * including the storage size (in bytes) and the properties for the data.
- *
+ * <p/>
  * Data Row format is as follows:
- *
+ * <p/>
  * RowId:               key\u0000type
  * Column Family:       DATA
  * Column Qualifier:    sequence#
  * Value:               byte[]
- *
+ * <p/>
  * Row format is as follows:
- *
+ * <p/>
  * RowId:               key\u0000type
  * Column Family:       SIZE
  * Column Qualifier:
  * Value:               chunksize
- *
+ * <p/>
  * Property format is as follows:
- *
+ * <p/>
  * RowId:               key\u0000type
  * Column Family:       PROP
  * Column Qualifier:    \u0000propKey\u0000propValue
  * Value:
  */
-public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements ExtendedBlobStore{
+public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements ExtendedBlobStore {
 
     private static final String PROP_CF = "PROP";
     private static final String SIZE_CF = "SIZE";
@@ -133,7 +133,7 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
             scanner.fetchColumnFamily(new Text(SIZE_CF));
             scanner.setBatchSize(1);
 
-            Iterator<Entry<Key,Value>> iterator = scanner.iterator();
+            Iterator<Entry<Key, Value>> iterator = scanner.iterator();
             if (iterator.hasNext())
                 return parseInt(iterator.next().getValue().toString());
 
@@ -159,7 +159,7 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
             scanner.setRange(Range.exact(generateRowId(key, type), PROP_CF));
             scanner.fetchColumnFamily(new Text(PROP_CF));
 
-            Iterator<Entry<Key,Value>> iterator = scanner.iterator();
+            Iterator<Entry<Key, Value>> iterator = scanner.iterator();
             if (!iterator.hasNext())
                 return emptyMap();
 
@@ -167,7 +167,7 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
             while (iterator.hasNext()) {
                 String[] keyVal = splitPreserveAllTokens(iterator.next().getKey().getColumnQualifier().toString().replaceFirst("\u0000", ""), "\u0000", 2);
 
-                if(keyVal.length == 2)
+                if (keyVal.length == 2)
                     properties.put(keyVal[0], keyVal[1]);
             }
 

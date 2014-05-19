@@ -25,18 +25,21 @@ public interface RangeStore<T extends Comparable<T>> {
 
     /**
      * Inserts ranges into the store.
+     *
      * @param ranges
      */
     void save(Iterable<ValueRange<T>> ranges);
 
     /**
      * Deletes ranges from the store.
+     *
      * @param ranges
      */
     void delete(Iterable<ValueRange<T>> ranges);
 
     /**
      * Queries for any ranges that intersect, overlap, or are contained by the given range.
+     *
      * @param range
      * @param auths
      * @return

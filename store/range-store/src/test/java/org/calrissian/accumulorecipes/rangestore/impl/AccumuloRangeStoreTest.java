@@ -23,7 +23,6 @@ import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.rangestore.helper.LongRangeHelper;
 import org.calrissian.mango.domain.ValueRange;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -305,7 +304,7 @@ public class AccumuloRangeStoreTest {
      */
 
     @Test
-    public void testStumbleForwardIterator() throws Exception{
+    public void testStumbleForwardIterator() throws Exception {
         AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
 
         rangeStore.save(singleton(new ValueRange<Long>(80L, 90L)));
@@ -321,7 +320,7 @@ public class AccumuloRangeStoreTest {
     }
 
     @Test
-    public void testGoofyMonsterRange() throws Exception{
+    public void testGoofyMonsterRange() throws Exception {
         AccumuloRangeStore<Long> rangeStore = new AccumuloRangeStore<Long>(getConnector(), new LongRangeHelper());
 
         rangeStore.save(singleton(new ValueRange<Long>(5L, 10L)));

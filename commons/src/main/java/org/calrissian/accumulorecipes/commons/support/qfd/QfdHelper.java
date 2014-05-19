@@ -60,234 +60,229 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public abstract class QfdHelper<T extends TupleStore> {
 
-  private ShardBuilder<T> shardBuilder;
-  private final Connector connector;
-  private final String indexTable;
-  private final String shardTable;
-  private final StoreConfig config;
-  private final BatchWriter shardWriter;
+    private static final Kryo kryo = new Kryo();
+    private final Connector connector;
+    private final String indexTable;
+    private final String shardTable;
+    private final StoreConfig config;
+    private final BatchWriter shardWriter;
+    private final NodeToJexl nodeToJexl = new NodeToJexl();
+    private ShardBuilder<T> shardBuilder;
+    private TypeRegistry<String> typeRegistry;
 
-  private static final Kryo kryo = new Kryo();
+    private KeyValueIndex<T> keyValueIndex;
 
-  private final NodeToJexl nodeToJexl = new NodeToJexl();
+    public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
+                     ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
+            throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-  private TypeRegistry<String> typeRegistry;
+        checkNotNull(connector);
+        checkNotNull(indexTable);
+        checkNotNull(shardTable);
+        checkNotNull(config);
+        checkNotNull(shardBuilder);
+        checkNotNull(typeRegistry);
+        checkNotNull(keyValueIndex);
 
-  private KeyValueIndex<T> keyValueIndex;
-
-  public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-                   ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
-          throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-
-    checkNotNull(connector);
-    checkNotNull(indexTable);
-    checkNotNull(shardTable);
-    checkNotNull(config);
-    checkNotNull(shardBuilder);
-    checkNotNull(typeRegistry);
-    checkNotNull(keyValueIndex);
-
-    this.connector = connector;
-    this.indexTable = indexTable;
-    this.shardTable = shardTable;
-    this.typeRegistry = LEXI_TYPES;
-    this.config = config;
-    this.shardBuilder = shardBuilder;
-    this.typeRegistry =typeRegistry;
-    this.keyValueIndex = keyValueIndex;
+        this.connector = connector;
+        this.indexTable = indexTable;
+        this.shardTable = shardTable;
+        this.typeRegistry = LEXI_TYPES;
+        this.config = config;
+        this.shardBuilder = shardBuilder;
+        this.typeRegistry = typeRegistry;
+        this.keyValueIndex = keyValueIndex;
 
 
-    if (!connector.tableOperations().exists(this.indexTable)) {
-      connector.tableOperations().create(this.indexTable);
-      configureIndexTable(connector, this.indexTable);
-    }
-
-    if (connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
-      IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
-      SummingCombiner.setCombineAllColumns(setting, true);
-      SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
-      connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorUtil.IteratorScope.class));
-    }
-
-    if (!connector.tableOperations().exists(this.shardTable)) {
-      connector.tableOperations().create(this.shardTable);
-      configureShardTable(connector, this.shardTable);
-    }
-
-    initializeKryo(kryo);
-    this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
-  }
-
-  /**
-   * Items get saved into a sharded table to parallelize queries & ingest.
-   */
-  public void save(Iterable<T> items) {
-    checkNotNull(items);
-    try {
-
-      for (T item : items) {
-
-        //If there are no getTuples then don't write anything to the data store.
-        if (item.getTuples() != null && !item.getTuples().isEmpty()) {
-
-          String shardId = shardBuilder.buildShard(item);
-
-          Mutation shardMutation = new Mutation(shardId);
-
-          for (Tuple tuple : item.getTuples()) {
-
-            String aliasValue = typeRegistry.getAlias(tuple.getValue()) + INNER_DELIM +
-                    typeRegistry.encode(tuple.getValue());
-
-            // forward mutation
-            shardMutation.put(new Text(buildId(item)),
-                    new Text(tuple.getKey() + DELIM + aliasValue),
-                    new ColumnVisibility(tuple.getVisibility()),
-                    buildTimestamp(item),
-                    EMPTY_VALUE);
-
-            // reverse mutation
-            shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
-                    new Text(aliasValue + DELIM + buildId(item)),
-                    new ColumnVisibility(tuple.getVisibility()),
-                    buildTimestamp(item),
-                    EMPTY_VALUE);  // forward mutation
-          }
-
-          shardWriter.addMutation(shardMutation);
+        if (!connector.tableOperations().exists(this.indexTable)) {
+            connector.tableOperations().create(this.indexTable);
+            configureIndexTable(connector, this.indexTable);
         }
-      }
 
-      shardWriter.flush();
+        if (connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
+            IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
+            SummingCombiner.setCombineAllColumns(setting, true);
+            SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
+            connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorUtil.IteratorScope.class));
+        }
 
-      keyValueIndex.indexKeyValues(items);
-      keyValueIndex.commit();
+        if (!connector.tableOperations().exists(this.shardTable)) {
+            connector.tableOperations().create(this.shardTable);
+            configureShardTable(connector, this.shardTable);
+        }
 
-    } catch (RuntimeException re) {
-      throw re;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public CloseableIterable<T> query(GlobalIndexVisitor globalIndexVisitor, Node query,
-                                             Function<Map.Entry<Key,Value>, T> transform, Auths auths) {
-    checkNotNull(query);
-    checkNotNull(auths);
-
-    try {
-      QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
-
-      if(NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
-        return wrap(EMPTY_LIST);
-
-      String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-      String originalJexl = nodeToJexl.transform(query);
-      Set<String> shards = optimizer.getShards();
-
-      BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
-
-      Collection<Range> ranges = new HashSet<Range>();
-      for (String shard : shards)
-        ranges.add(new Range(shard));
-
-      scanner.setRanges(ranges);
-
-      IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-      setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
-      setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
-
-      scanner.addScanIterator(setting);
-
-      return transform(closeableIterable(scanner),transform);
-
-    } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void shutdown() {
-    try {
-      getWriter().close();
-    } catch (MutationsRejectedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-
-  /**
-   * Utility method to update the correct iterators to the index table.
-   *
-   * @param connector
-   * @throws AccumuloSecurityException
-   * @throws AccumuloException
-   * @throws TableNotFoundException
-   */
-  protected abstract void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
-
-  /**
-   * Utility method to update the correct iterators to the shardBuilder table.
-   *
-   * @param connector
-   * @throws AccumuloSecurityException
-   * @throws AccumuloException
-   * @throws TableNotFoundException
-   */
-  protected abstract void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
-
-
-  protected abstract String buildId(T item);
-
-  protected abstract Value buildValue(T item);
-
-  protected abstract long buildTimestamp(T item);
-
-  public BatchScanner buildIndexScanner(Authorizations auths) {
-    return buildScanner(indexTable, auths);
-  }
-
-  public BatchScanner buildShardScanner(Authorizations auths) {
-    return buildScanner(shardTable, auths);
-  }
-
-  private BatchScanner buildScanner(String table, Authorizations authorizations) {
-    try {
-      return connector.createBatchScanner(table, authorizations, config.getMaxQueryThreads());
-    } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
+        initializeKryo(kryo);
+        this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
-  }
+    public static Kryo getKryo() {
+        return kryo;
+    }
 
-  public ShardBuilder getShardBuilder() {
-    return shardBuilder;
-  }
+    /**
+     * Items get saved into a sharded table to parallelize queries & ingest.
+     */
+    public void save(Iterable<T> items) {
+        checkNotNull(items);
+        try {
 
-  public Connector getConnector() {
-    return connector;
-  }
+            for (T item : items) {
 
-  public String getIndexTable() {
-    return indexTable;
-  }
+                //If there are no getTuples then don't write anything to the data store.
+                if (item.getTuples() != null && !item.getTuples().isEmpty()) {
 
-  public String getShardTable() {
-    return shardTable;
-  }
+                    String shardId = shardBuilder.buildShard(item);
 
-  public StoreConfig getConfig() {
-    return config;
-  }
+                    Mutation shardMutation = new Mutation(shardId);
 
-  public BatchWriter getWriter() {
-    return shardWriter;
-  }
+                    for (Tuple tuple : item.getTuples()) {
 
-  public static Kryo getKryo() {
-    return kryo;
-  }
+                        String aliasValue = typeRegistry.getAlias(tuple.getValue()) + INNER_DELIM +
+                                typeRegistry.encode(tuple.getValue());
 
-  public TypeRegistry<String> getTypeRegistry() {
-    return typeRegistry;
-  }
+                        // forward mutation
+                        shardMutation.put(new Text(buildId(item)),
+                                new Text(tuple.getKey() + DELIM + aliasValue),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                buildTimestamp(item),
+                                EMPTY_VALUE);
+
+                        // reverse mutation
+                        shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
+                                new Text(aliasValue + DELIM + buildId(item)),
+                                new ColumnVisibility(tuple.getVisibility()),
+                                buildTimestamp(item),
+                                EMPTY_VALUE);  // forward mutation
+                    }
+
+                    shardWriter.addMutation(shardMutation);
+                }
+            }
+
+            shardWriter.flush();
+
+            keyValueIndex.indexKeyValues(items);
+            keyValueIndex.commit();
+
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public CloseableIterable<T> query(GlobalIndexVisitor globalIndexVisitor, Node query,
+                                      Function<Map.Entry<Key, Value>, T> transform, Auths auths) {
+        checkNotNull(query);
+        checkNotNull(auths);
+
+        try {
+            QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
+
+            if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
+                return wrap(EMPTY_LIST);
+
+            String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+            String originalJexl = nodeToJexl.transform(query);
+            Set<String> shards = optimizer.getShards();
+
+            BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
+
+            Collection<Range> ranges = new HashSet<Range>();
+            for (String shard : shards)
+                ranges.add(new Range(shard));
+
+            scanner.setRanges(ranges);
+
+            IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+            setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
+            setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+
+            scanner.addScanIterator(setting);
+
+            return transform(closeableIterable(scanner), transform);
+
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void shutdown() {
+        try {
+            getWriter().close();
+        } catch (MutationsRejectedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Utility method to update the correct iterators to the index table.
+     *
+     * @param connector
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
+    protected abstract void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
+
+    /**
+     * Utility method to update the correct iterators to the shardBuilder table.
+     *
+     * @param connector
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
+    protected abstract void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
+
+    protected abstract String buildId(T item);
+
+    protected abstract Value buildValue(T item);
+
+    protected abstract long buildTimestamp(T item);
+
+    public BatchScanner buildIndexScanner(Authorizations auths) {
+        return buildScanner(indexTable, auths);
+    }
+
+    public BatchScanner buildShardScanner(Authorizations auths) {
+        return buildScanner(shardTable, auths);
+    }
+
+    private BatchScanner buildScanner(String table, Authorizations authorizations) {
+        try {
+            return connector.createBatchScanner(table, authorizations, config.getMaxQueryThreads());
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public ShardBuilder getShardBuilder() {
+        return shardBuilder;
+    }
+
+    public Connector getConnector() {
+        return connector;
+    }
+
+    public String getIndexTable() {
+        return indexTable;
+    }
+
+    public String getShardTable() {
+        return shardTable;
+    }
+
+    public StoreConfig getConfig() {
+        return config;
+    }
+
+    public BatchWriter getWriter() {
+        return shardWriter;
+    }
+
+    public TypeRegistry<String> getTypeRegistry() {
+        return typeRegistry;
+    }
 }

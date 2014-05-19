@@ -14,8 +14,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 
 import java.io.IOException;
@@ -23,10 +23,10 @@ import java.util.Date;
 import java.util.Map;
 
 import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore.DEFAULT_TABLE_NAME;
 import static org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore.combine;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 
 public class MetricsInputFormat extends InputFormatBase<Key, MetricWritable> {
 
@@ -39,17 +39,17 @@ public class MetricsInputFormat extends InputFormatBase<Key, MetricWritable> {
         config.set("timeUnit", timeUnit.toString());
 
         setRanges(config,
-            singleton(new Range(
-                    combine(group, generateTimestamp(end.getTime(), timeUnit)),
-                    combine(group, generateTimestamp(start.getTime(), timeUnit))
-            ))
+                singleton(new Range(
+                        combine(group, generateTimestamp(end.getTime(), timeUnit)),
+                        combine(group, generateTimestamp(start.getTime(), timeUnit))
+                ))
         );
 
         if (name != null) {
-            Pair<Text,Text> column = new Pair<Text, Text>(new Text(timeUnit.toString()), new Text(combine(type, name)));
+            Pair<Text, Text> column = new Pair<Text, Text>(new Text(timeUnit.toString()), new Text(combine(type, name)));
             fetchColumns(config, singleton(column));
         } else {
-            Pair<Text,Text> column = new Pair<Text, Text>(new Text(timeUnit.toString()), null);
+            Pair<Text, Text> column = new Pair<Text, Text>(new Text(timeUnit.toString()), null);
             fetchColumns(config, singleton(column));
 
             String cqRegex = null;
@@ -77,10 +77,10 @@ public class MetricsInputFormat extends InputFormatBase<Key, MetricWritable> {
             public boolean nextKeyValue() throws IOException, InterruptedException {
                 if (scannerIterator.hasNext()) {
                     ++numKeysRead;
-                    Map.Entry<Key,Value> entry = scannerIterator.next();
+                    Map.Entry<Key, Value> entry = scannerIterator.next();
                     currentK = currentKey = entry.getKey();
                     sharedWritable.set(xform.apply(entry));
-                    currentV =  sharedWritable;
+                    currentV = sharedWritable;
 
                     if (log.isTraceEnabled())
                         log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));

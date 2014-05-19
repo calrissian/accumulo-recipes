@@ -30,7 +30,6 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.BaseEntity;
 import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -43,53 +42,54 @@ import static org.junit.Assert.assertNotNull;
 
 public class EntityInputFormatTest {
 
-  public static Entity entity;
-
-  @Test
-  public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-
-    Instance instance = new MockInstance("instName");
-    Connector connector = instance.getConnector("root", "".getBytes());
-    AccumuloEntityStore store = new AccumuloEntityStore(connector);
-    entity = new BaseEntity("type", "id");
-    entity.put(new Tuple("key1", "val1", ""));
-    entity.put(new Tuple("key2", false, ""));
-    store.save(singleton(entity));
-
-    Job job = new Job(new Configuration());
-    job.setJarByClass(getClass());
-    job.setMapperClass(TestMapper.class);
-    job.setNumReduceTasks(0);
-    job.setMapOutputKeyClass(Text.class);
-    job.setMapOutputValueClass(Text.class);
-    job.setInputFormatClass(EntityInputFormat.class);
-    EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
-    EntityInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
-    EntityInputFormat.setQueryInfo(job.getConfiguration(), Collections.singleton("type"),
-            new QueryBuilder().eq("key1", "val1").build(), null);
-    job.setOutputFormatClass(NullOutputFormat.class);
-
-    job.submit();
-    job.waitForCompletion(true);
-
-    assertNotNull(TestMapper.entity);
-    assertEquals(TestMapper.entity.getId(), entity.getId());
-    assertEquals(TestMapper.entity.getType(), entity.getType());
-    assertEquals(new HashSet<Tuple>(TestMapper.entity.getTuples()), new HashSet<Tuple>(entity.getTuples()));
-
-  }
-
-  public static class TestMapper extends Mapper<Key, EntityWritable, Text, Text> {
-
     public static Entity entity;
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-      super.setup(context);
+
+    @Test
+    public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Instance instance = new MockInstance("instName");
+        Connector connector = instance.getConnector("root", "".getBytes());
+        AccumuloEntityStore store = new AccumuloEntityStore(connector);
+        entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1", ""));
+        entity.put(new Tuple("key2", false, ""));
+        store.save(singleton(entity));
+
+        Job job = new Job(new Configuration());
+        job.setJarByClass(getClass());
+        job.setMapperClass(TestMapper.class);
+        job.setNumReduceTasks(0);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(Text.class);
+        job.setInputFormatClass(EntityInputFormat.class);
+        EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
+        EntityInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
+        EntityInputFormat.setQueryInfo(job.getConfiguration(), Collections.singleton("type"),
+                new QueryBuilder().eq("key1", "val1").build(), null);
+        job.setOutputFormatClass(NullOutputFormat.class);
+
+        job.submit();
+        job.waitForCompletion(true);
+
+        assertNotNull(TestMapper.entity);
+        assertEquals(TestMapper.entity.getId(), entity.getId());
+        assertEquals(TestMapper.entity.getType(), entity.getType());
+        assertEquals(new HashSet<Tuple>(TestMapper.entity.getTuples()), new HashSet<Tuple>(entity.getTuples()));
+
     }
 
-    @Override
-    protected void map(Key key, EntityWritable value, Context context) throws IOException, InterruptedException {
-      entity = value.get();
+    public static class TestMapper extends Mapper<Key, EntityWritable, Text, Text> {
+
+        public static Entity entity;
+
+        @Override
+        protected void setup(Context context) throws IOException, InterruptedException {
+            super.setup(context);
+        }
+
+        @Override
+        protected void map(Key key, EntityWritable value, Context context) throws IOException, InterruptedException {
+            entity = value.get();
+        }
     }
-  }
 }

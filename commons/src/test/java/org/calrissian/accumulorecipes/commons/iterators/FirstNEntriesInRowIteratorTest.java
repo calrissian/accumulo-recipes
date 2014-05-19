@@ -25,7 +25,6 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,8 +53,8 @@ public class FirstNEntriesInRowIteratorTest {
         Scanner scanner = buildScanner(10);
 
         assertEquals(1, Iterables.size(scanner));
-        for(Map.Entry<Key,Value> entry : scanner) {
-            Iterable<Map.Entry<Key,Value>> items = decodeRow(entry.getKey(), entry.getValue());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            Iterable<Map.Entry<Key, Value>> items = decodeRow(entry.getKey(), entry.getValue());
             assertEquals(10, Iterables.size(items));
         }
     }
@@ -67,8 +66,8 @@ public class FirstNEntriesInRowIteratorTest {
 
         Scanner scanner = buildScanner(10);
         assertEquals(50, Iterables.size(scanner));
-        for(Map.Entry<Key,Value> entry : scanner) {
-            Iterable<Map.Entry<Key,Value>> items = decodeRow(entry.getKey(), entry.getValue());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            Iterable<Map.Entry<Key, Value>> items = decodeRow(entry.getKey(), entry.getValue());
             assertEquals(10, Iterables.size(items));
         }
     }
@@ -82,8 +81,8 @@ public class FirstNEntriesInRowIteratorTest {
         Scanner scanner = buildScanner(10);
         scanner.setRange(new Range("1"));
         assertEquals(1, Iterables.size(scanner));
-        for(Map.Entry<Key,Value> entry : scanner) {
-            Iterable<Map.Entry<Key,Value>> items = decodeRow(entry.getKey(), entry.getValue());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            Iterable<Map.Entry<Key, Value>> items = decodeRow(entry.getKey(), entry.getValue());
             assertEquals(10, Iterables.size(items));
         }
     }
@@ -101,8 +100,8 @@ public class FirstNEntriesInRowIteratorTest {
         assertEquals(1, Iterables.size(scanner));
 
 
-        for(Map.Entry<Key,Value> entry : scanner) {
-            Iterable<Map.Entry<Key,Value>> items = decodeRow(entry.getKey(), entry.getValue());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            Iterable<Map.Entry<Key, Value>> items = decodeRow(entry.getKey(), entry.getValue());
             assertEquals(1, Iterables.size(items));
         }
     }
@@ -117,8 +116,8 @@ public class FirstNEntriesInRowIteratorTest {
         scanner.fetchColumnFamily(new Text("1"));
 
         assertEquals(50, Iterables.size(scanner));
-        for(Map.Entry<Key,Value> entry : scanner) {
-            Iterable<Map.Entry<Key,Value>> items = decodeRow(entry.getKey(), entry.getValue());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            Iterable<Map.Entry<Key, Value>> items = decodeRow(entry.getKey(), entry.getValue());
             assertEquals(1, Iterables.size(items));
         }
     }
@@ -128,9 +127,9 @@ public class FirstNEntriesInRowIteratorTest {
 
         BatchWriter writer = connector.createBatchWriter("test", 1000, 1000, 1);
 
-        for(int j = 0; j < numRows; j++) {
+        for (int j = 0; j < numRows; j++) {
             Mutation m = new Mutation(Integer.toString(j));
-            for(int i = 0; i < entriesPerRow; i++)
+            for (int i = 0; i < entriesPerRow; i++)
                 m.put(new Text(Integer.toString(i)), new Text(""), new Value("".getBytes()));
 
             writer.addMutation(m);
@@ -147,9 +146,6 @@ public class FirstNEntriesInRowIteratorTest {
 
         return scanner;
     }
-
-
-
 
 
 }

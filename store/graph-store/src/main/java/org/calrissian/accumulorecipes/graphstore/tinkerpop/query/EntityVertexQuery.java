@@ -42,178 +42,178 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
  * will try to perform the most optimal query given the input but complex predicates like custom comparables will
  * require filtering.
  */
-public class EntityVertexQuery implements VertexQuery{
+public class EntityVertexQuery implements VertexQuery {
 
-  private GraphStore graphStore;
-  private EntityVertex vertex;
-  private Auths auths;
+    private GraphStore graphStore;
+    private EntityVertex vertex;
+    private Auths auths;
 
-  private Direction direction = Direction.BOTH;
-  private String[] labels = null;
-  private int limit = -1;
+    private Direction direction = Direction.BOTH;
+    private String[] labels = null;
+    private int limit = -1;
 
-  private QueryBuilder queryBuilder = new QueryBuilder().and();
+    private QueryBuilder queryBuilder = new QueryBuilder().and();
 
-  public EntityVertexQuery(EntityVertex vertex, GraphStore graphStore, Auths auths) {
-    this.vertex = vertex;
-    this.graphStore = graphStore;
-    this.auths = auths;
-  }
-
-  @Override
-  public VertexQuery direction(Direction direction) {
-    this.direction = direction;
-    return this;
-  }
-
-  @Override
-  public VertexQuery labels(String... labels) {
-    this.labels = labels;
-    return this;
-  }
-
-  @Override
-  public long count() {
-    CloseableIterable<Edge> edges = edges();
-    long count = Iterables.size(edges);
-    edges.closeQuietly();
-    return count;
-  }
-
-  @Override
-  public CloseableIterable<EntityIndex> vertexIds() {
-    return transform(vertices(), new EntityIndexXform());
-  }
-
-  @Override
-  public VertexQuery has(String key) {
-    queryBuilder = queryBuilder.has(key);
-    return this;
-  }
-
-  @Override
-  public VertexQuery hasNot(String key) {
-    queryBuilder = queryBuilder.hasNot(key);
-    return this;
-  }
-
-  @Override
-  public VertexQuery has(String key, Object value) {
-    queryBuilder = queryBuilder.eq(key, value);
-    return this;
-  }
-
-  @Override
-  public VertexQuery hasNot(String key, Object value) {
-    queryBuilder = queryBuilder.notEq(key, value);
-    return this;
-  }
-
-  @Override
-  public VertexQuery has(String key, Predicate predicate, Object value) {
-    if(predicate == EQUAL)
-      return has(key, value);
-    else if(predicate == NOT_EQUAL)
-      return hasNot(key, value);
-    else if(predicate == GREATER_THAN)
-      queryBuilder = queryBuilder.greaterThan(key, value);
-    else if(predicate == LESS_THAN)
-      queryBuilder = queryBuilder.lessThan(key, value);
-    else if(predicate == GREATER_THAN_EQUAL)
-      queryBuilder = queryBuilder.greaterThanEq(key, value);
-    else if(predicate == LESS_THAN_EQUAL)
-      queryBuilder = queryBuilder.lessThanEq(key, value);
-    else
-      throw new UnsupportedOperationException("Predicate with type " + predicate + " is not supported.");
-
-    return this;
-  }
-
-  @Override
-  public <T extends Comparable<T>> VertexQuery has(String key, T value, Compare compare) {
-    return has(key, compare, value);
-  }
-
-  @Override
-  public <T extends Comparable<?>> VertexQuery interval(String key, T start, T stop) {
-    queryBuilder = queryBuilder.range(key, start, stop);
-    return this;
-  }
-
-  @Override
-  public VertexQuery limit(int limit) {
-    this.limit = limit;
-    return this;
-  }
-
-  @Override
-  public CloseableIterable<Edge> edges() {
-
-    Node query = queryBuilder.end().build();
-
-    List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
-
-    List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
-            new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
-
-    if(direction == Direction.IN || direction == Direction.BOTH)
-      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.IN);
-    if(direction == Direction.OUT || direction == Direction.BOTH)
-      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.OUT);
-
-    CloseableIterable<? extends Entity> edges = null;
-    for(org.calrissian.accumulorecipes.graphstore.model.Direction dir : dirs) {
-
-      CloseableIterable<? extends Entity> entityEdges = labels == null ?
-              graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, auths) :
-              graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, newHashSet(labels), auths);
-
-      if(edges == null)
-        edges = entityEdges;
-      else
-        edges = chain(edges, entityEdges);
-
+    public EntityVertexQuery(EntityVertex vertex, GraphStore graphStore, Auths auths) {
+        this.vertex = vertex;
+        this.graphStore = graphStore;
+        this.auths = auths;
     }
 
-    CloseableIterable<Edge> finalEdges = transform(edges, new EdgeEntityXform(graphStore, auths));
-
-    if(limit > -1)
-      return CloseableIterables.limit(finalEdges, limit);
-    return finalEdges;
-  }
-
-  @Override
-  public CloseableIterable<Vertex> vertices() {
-    Node query = queryBuilder.end().build();
-
-    List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
-
-    List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
-            new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
-
-    if(direction == Direction.IN || direction == Direction.BOTH)
-      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.IN);
-    if(direction == Direction.OUT || direction == Direction.BOTH)
-      dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.OUT);
-
-    CloseableIterable<? extends Entity> vertices = null;
-    for(org.calrissian.accumulorecipes.graphstore.model.Direction dir : dirs) {
-
-      CloseableIterable<? extends Entity> entityvertices = labels == null ?
-              graphStore.adjacencies(vertexIndex, query.children().size() > 0 ? query : null, dir, auths) :
-              graphStore.adjacencies(vertexIndex, query.children().size() > 0 ? query : null, dir, newHashSet(labels), auths);
-
-      if(vertices == null)
-        vertices = entityvertices;
-      else
-        vertices = chain(vertices, entityvertices);
-
+    @Override
+    public VertexQuery direction(Direction direction) {
+        this.direction = direction;
+        return this;
     }
 
-    CloseableIterable<Vertex> finalVertices = transform(vertices, new VertexEntityXform(graphStore, auths));
+    @Override
+    public VertexQuery labels(String... labels) {
+        this.labels = labels;
+        return this;
+    }
 
-    if(limit > -1)
-      return CloseableIterables.limit(finalVertices, limit);
-    return finalVertices;
-  }
+    @Override
+    public long count() {
+        CloseableIterable<Edge> edges = edges();
+        long count = Iterables.size(edges);
+        edges.closeQuietly();
+        return count;
+    }
+
+    @Override
+    public CloseableIterable<EntityIndex> vertexIds() {
+        return transform(vertices(), new EntityIndexXform());
+    }
+
+    @Override
+    public VertexQuery has(String key) {
+        queryBuilder = queryBuilder.has(key);
+        return this;
+    }
+
+    @Override
+    public VertexQuery hasNot(String key) {
+        queryBuilder = queryBuilder.hasNot(key);
+        return this;
+    }
+
+    @Override
+    public VertexQuery has(String key, Object value) {
+        queryBuilder = queryBuilder.eq(key, value);
+        return this;
+    }
+
+    @Override
+    public VertexQuery hasNot(String key, Object value) {
+        queryBuilder = queryBuilder.notEq(key, value);
+        return this;
+    }
+
+    @Override
+    public VertexQuery has(String key, Predicate predicate, Object value) {
+        if (predicate == EQUAL)
+            return has(key, value);
+        else if (predicate == NOT_EQUAL)
+            return hasNot(key, value);
+        else if (predicate == GREATER_THAN)
+            queryBuilder = queryBuilder.greaterThan(key, value);
+        else if (predicate == LESS_THAN)
+            queryBuilder = queryBuilder.lessThan(key, value);
+        else if (predicate == GREATER_THAN_EQUAL)
+            queryBuilder = queryBuilder.greaterThanEq(key, value);
+        else if (predicate == LESS_THAN_EQUAL)
+            queryBuilder = queryBuilder.lessThanEq(key, value);
+        else
+            throw new UnsupportedOperationException("Predicate with type " + predicate + " is not supported.");
+
+        return this;
+    }
+
+    @Override
+    public <T extends Comparable<T>> VertexQuery has(String key, T value, Compare compare) {
+        return has(key, compare, value);
+    }
+
+    @Override
+    public <T extends Comparable<?>> VertexQuery interval(String key, T start, T stop) {
+        queryBuilder = queryBuilder.range(key, start, stop);
+        return this;
+    }
+
+    @Override
+    public VertexQuery limit(int limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    @Override
+    public CloseableIterable<Edge> edges() {
+
+        Node query = queryBuilder.end().build();
+
+        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
+
+        List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
+                new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
+
+        if (direction == Direction.IN || direction == Direction.BOTH)
+            dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.IN);
+        if (direction == Direction.OUT || direction == Direction.BOTH)
+            dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.OUT);
+
+        CloseableIterable<? extends Entity> edges = null;
+        for (org.calrissian.accumulorecipes.graphstore.model.Direction dir : dirs) {
+
+            CloseableIterable<? extends Entity> entityEdges = labels == null ?
+                    graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, auths) :
+                    graphStore.adjacentEdges(vertexIndex, query.children().size() > 0 ? query : null, dir, newHashSet(labels), auths);
+
+            if (edges == null)
+                edges = entityEdges;
+            else
+                edges = chain(edges, entityEdges);
+
+        }
+
+        CloseableIterable<Edge> finalEdges = transform(edges, new EdgeEntityXform(graphStore, auths));
+
+        if (limit > -1)
+            return CloseableIterables.limit(finalEdges, limit);
+        return finalEdges;
+    }
+
+    @Override
+    public CloseableIterable<Vertex> vertices() {
+        Node query = queryBuilder.end().build();
+
+        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
+
+        List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
+                new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
+
+        if (direction == Direction.IN || direction == Direction.BOTH)
+            dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.IN);
+        if (direction == Direction.OUT || direction == Direction.BOTH)
+            dirs.add(org.calrissian.accumulorecipes.graphstore.model.Direction.OUT);
+
+        CloseableIterable<? extends Entity> vertices = null;
+        for (org.calrissian.accumulorecipes.graphstore.model.Direction dir : dirs) {
+
+            CloseableIterable<? extends Entity> entityvertices = labels == null ?
+                    graphStore.adjacencies(vertexIndex, query.children().size() > 0 ? query : null, dir, auths) :
+                    graphStore.adjacencies(vertexIndex, query.children().size() > 0 ? query : null, dir, newHashSet(labels), auths);
+
+            if (vertices == null)
+                vertices = entityvertices;
+            else
+                vertices = chain(vertices, entityvertices);
+
+        }
+
+        CloseableIterable<Vertex> finalVertices = transform(vertices, new VertexEntityXform(graphStore, auths));
+
+        if (limit > -1)
+            return CloseableIterables.limit(finalVertices, limit);
+        return finalVertices;
+    }
 }

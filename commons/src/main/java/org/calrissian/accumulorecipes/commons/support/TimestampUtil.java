@@ -25,25 +25,27 @@ import static java.lang.Long.parseLong;
  */
 public class TimestampUtil {
 
-    private TimestampUtil() {}
-
     private final static DateTimeFormatter MINUTES_FORMAT = DateTimeFormat.forPattern("yyyyMMddHHmm");
     private final static DateTimeFormatter HOURS_FORMAT = DateTimeFormat.forPattern("yyyyMMddHH");
     private final static DateTimeFormatter DAYS_FORMAT = DateTimeFormat.forPattern("yyyyMMdd");
     private final static DateTimeFormatter MONTHS_FORMAT = DateTimeFormat.forPattern("yyyyMM");
+    private TimestampUtil() {
+    }
 
     /**
      * Poor mans reverse function.
      * Simply allows the latest timestamps to appear first in lexigraphical ordering.
+     *
      * @param timestamp
      * @return
      */
-    private static String reverse(String timestamp){
+    private static String reverse(String timestamp) {
         return Long.toString(Long.MAX_VALUE - parseLong(timestamp));
     }
 
     /**
      * Will generate a reverse timestamp with the precision of the provided timeunit.
+     *
      * @param timestamp
      * @param timeUnit
      * @return
@@ -66,6 +68,7 @@ public class TimestampUtil {
 
     /**
      * Reverts the string timestamp into an epoch timestamp with the precision of the provided timeunit.
+     *
      * @param timestamp
      * @param timeUnit
      * @return

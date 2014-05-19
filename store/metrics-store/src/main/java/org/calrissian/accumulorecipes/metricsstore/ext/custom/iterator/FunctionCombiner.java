@@ -37,11 +37,13 @@ import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELI
  * Accumulo Combiner class that handles the generic logic for enabling custom function aggregation.
  */
 public class FunctionCombiner extends Combiner {
-    private static final String PREFIX = DELIM;
-
     public static final String FUNCTION_CLASS = "functionClass";
-
+    private static final String PREFIX = DELIM;
     private MetricFunction function;
+
+    public static <T> void setFunctionClass(IteratorSetting is, Class<? extends MetricFunction<T>> functionClazz) {
+        is.addOption(FUNCTION_CLASS, functionClazz.getName());
+    }
 
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
@@ -56,10 +58,6 @@ public class FunctionCombiner extends Combiner {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static <T> void setFunctionClass(IteratorSetting is, Class<? extends MetricFunction<T>> functionClazz) {
-        is.addOption(FUNCTION_CLASS, functionClazz.getName());
     }
 
     @Override
@@ -83,7 +81,7 @@ public class FunctionCombiner extends Combiner {
         byte[] data = function.serialize();
         byte[] prefixed = new byte[data.length + 1];
         prefixed[0] = 0;
-        for (int i = 0;i< data.length; i++)
+        for (int i = 0; i < data.length; i++)
             prefixed[i + 1] = data[i];
 
         return new Value(prefixed);

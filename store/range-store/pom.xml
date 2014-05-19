@@ -24,7 +24,8 @@ limitations under the License.
   <artifactId>range-store</artifactId>
   <packaging>jar</packaging>
   <name>Calrissian Accumulo Recipes Range Store</name>
-  <description>The range store provides overlapping queries of intervals that overlap (or are contained inside of) other intervals.</description>
+  <description>The range store provides overlapping queries of intervals that overlap (or are contained inside of)
+        other intervals.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>

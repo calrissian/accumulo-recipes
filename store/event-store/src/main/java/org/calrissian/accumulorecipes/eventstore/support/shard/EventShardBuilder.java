@@ -20,5 +20,5 @@ import org.calrissian.mango.domain.Event;
 
 public interface EventShardBuilder extends ShardBuilder<Event> {
 
-  String buildShard(long timestamp, int partition);
+    String buildShard(long timestamp, int partition);
 }

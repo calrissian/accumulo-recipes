@@ -70,7 +70,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         this.tableName = tableName;
         this.helper = helper;
 
-        if(!connector.tableOperations().exists(this.tableName)) {
+        if (!connector.tableOperations().exists(this.tableName)) {
             connector.tableOperations().create(this.tableName);
             configureTable(connector, this.tableName);
         }
@@ -80,6 +80,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
     /**
      * Utility method to update the correct iterators to the table.
+     *
      * @param connector
      * @throws AccumuloSecurityException
      * @throws AccumuloException
@@ -88,8 +89,10 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
     protected void configureTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
         //Nothing special to do for default implementation
     }
+
     /**
      * Will close all underlying resources
+     *
      * @throws MutationsRejectedException
      */
     public void shutdown() throws MutationsRejectedException {
@@ -183,7 +186,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
             return null;
 
         //Only need the top one, as it should be sorted by size.
-        Entry<Key,Value> entry = iterator.next();
+        Entry<Key, Value> entry = iterator.next();
         return helper.decodeComplement(entry.getKey().getRow().toString().split(DELIM)[1]);
     }
 
@@ -198,7 +201,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
         ));
 
-        return transform(scanner,new RangeTransform<T>(helper, true));
+        return transform(scanner, new RangeTransform<T>(helper, true));
     }
 
     /**
@@ -219,16 +222,16 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         ReverseScanFilter.setQueryLowBound(setting, helper.encode(queryRange.getStart()));
         scanner.addScanIterator(setting);
 
-        return transform(scanner,new RangeTransform<T>(helper, false));
+        return transform(scanner, new RangeTransform<T>(helper, false));
     }
 
     /**
      * This iterator is looking through all the ranges surrounding the criteria range to see if it is inside.
      * It uses the knowledge of the max range to limit the criteria to the ranges closest to the range using the following
      * logic to generate an efficient scan
-     *
+     * <p/>
      * [(high - maxdistance) -> low]
-     *
+     * <p/>
      * It will then ignore all ranges that don't overlap the criteria range, via the use of a filter.
      */
     private Iterable<ValueRange<T>> overlappingScan(final ValueRange<T> queryRange, Authorizations auths) throws TableNotFoundException {
@@ -253,7 +256,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         OverlappingScanFilter.setQueryUpperBound(setting, helper.encode(queryRange.getStop()));
         scanner.addScanIterator(setting);
 
-        return transform(scanner,new RangeTransform<T>(helper, true));
+        return transform(scanner, new RangeTransform<T>(helper, true));
     }
 
     /**

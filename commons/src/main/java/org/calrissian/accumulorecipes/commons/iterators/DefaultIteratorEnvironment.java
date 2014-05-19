@@ -16,8 +16,6 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import java.io.IOException;
-
 import org.apache.accumulo.core.conf.AccumuloConfiguration;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -30,29 +28,31 @@ import org.apache.accumulo.core.util.CachedConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 
+import java.io.IOException;
+
 @SuppressWarnings("deprecation")
 public class DefaultIteratorEnvironment implements IteratorEnvironment {
 
-  public Reader reserveMapFileReader(String mapFileName) throws IOException {
-    Configuration conf = CachedConfiguration.getInstance();
-    FileSystem fs = FileSystem.get(conf);
-    return new MyMapFile.Reader(fs, mapFileName, conf);
-  }
+    public Reader reserveMapFileReader(String mapFileName) throws IOException {
+        Configuration conf = CachedConfiguration.getInstance();
+        FileSystem fs = FileSystem.get(conf);
+        return new MyMapFile.Reader(fs, mapFileName, conf);
+    }
 
-  public AccumuloConfiguration getConfig() {
-    return AccumuloConfiguration.getDefaultConfiguration();
-  }
+    public AccumuloConfiguration getConfig() {
+        return AccumuloConfiguration.getDefaultConfiguration();
+    }
 
-  public IteratorScope getIteratorScope() {
-    throw new UnsupportedOperationException();
-  }
+    public IteratorScope getIteratorScope() {
+        throw new UnsupportedOperationException();
+    }
 
-  public boolean isFullMajorCompaction() {
-    throw new UnsupportedOperationException();
-  }
+    public boolean isFullMajorCompaction() {
+        throw new UnsupportedOperationException();
+    }
 
-  public void registerSideChannel(SortedKeyValueIterator<Key,Value> iter) {
-    throw new UnsupportedOperationException();
-  }
+    public void registerSideChannel(SortedKeyValueIterator<Key, Value> iter) {
+        throw new UnsupportedOperationException();
+    }
 
 }

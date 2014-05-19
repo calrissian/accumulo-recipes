@@ -76,6 +76,7 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Uses the default tableName, store config, and maxVersions
+     *
      * @param connector
      */
     public AccumuloLastNStore(Connector connector) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
@@ -84,6 +85,7 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Uses the default tableName and store config
+     *
      * @param connector
      */
     public AccumuloLastNStore(Connector connector, int maxVersions) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
@@ -92,6 +94,7 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Uses the specified tableName, store config, and maxVersions
+     *
      * @param connector
      */
     public AccumuloLastNStore(Connector connector, String tableName, StoreConfig config, int maxVersions) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
@@ -103,7 +106,7 @@ public class AccumuloLastNStore implements LastNStore {
         this.tableName = tableName;
         this.typeRegistry = LEXI_TYPES; //TODO allow caller to pass in types.
 
-        if(!connector.tableOperations().exists(this.tableName)) {
+        if (!connector.tableOperations().exists(this.tableName)) {
             connector.tableOperations().create(this.tableName, true);
             configureTable(connector, this.tableName, maxVersions);
         }
@@ -113,6 +116,7 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Utility method to update the correct iterators to the table.
+     *
      * @param connector
      * @throws AccumuloSecurityException
      * @throws AccumuloException
@@ -129,6 +133,7 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Free up threads from the batch writer.
+     *
      * @throws Exception
      */
     public void shutdown() throws MutationsRejectedException {
@@ -137,6 +142,7 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Add the index which will be managed by the versioning iterator and the data rows to scan from the index
+     *
      * @param group
      * @param entry
      */
@@ -172,6 +178,7 @@ public class AccumuloLastNStore implements LastNStore {
 
     /**
      * Pull back the last N entries. EntryIterator will group entry getTuples into a single object on the server side.
+     *
      * @param index
      * @param auths
      * @return

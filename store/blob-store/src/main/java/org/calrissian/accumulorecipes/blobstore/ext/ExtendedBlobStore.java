@@ -29,6 +29,7 @@ public interface ExtendedBlobStore extends BlobStore {
 
     /**
      * Returns the size of the data stored with the given key and type.
+     *
      * @param key
      * @param type
      * @param auths
@@ -38,6 +39,7 @@ public interface ExtendedBlobStore extends BlobStore {
 
     /**
      * Returns the properties stored with the data for the given key and type.
+     *
      * @param key
      * @param type
      * @param auths
@@ -47,6 +49,7 @@ public interface ExtendedBlobStore extends BlobStore {
 
     /**
      * Provides an {@link java.io.OutputStream} to allow storage of the data into the store along with some properties.
+     *
      * @param key
      * @param type
      * @param visibility

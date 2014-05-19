@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * <pre>
  * <h2>Overview</h2>
- * Query implementation that works with the JEXL grammar. This 
+ * Query implementation that works with the JEXL grammar. This
  * uses the metadata, global index, and partitioned table to return
  * results based on the criteria. Example queries:
  *
@@ -38,7 +38,7 @@ import java.util.*;
  *          down the optimized criteria path which uses the intersecting iterators on the partitioned
  *          table.
  *
- *  <b>Boolean expression</b>        
+ *  <b>Boolean expression</b>
  *  field == 'foo' - For fielded queries, those that contain a field, an operator, and a literal (string or number),
  *                   the criteria is parsed and the set of eventFields in the criteria that are indexed is determined by
  *                   querying the metadata table. Depending on the conjunctions in the criteria (or, and, not) and the
@@ -65,114 +65,43 @@ import java.util.*;
  *  3. An unsupported operator exists in the criteria
  *
  * </pre>
- *
  */
 public abstract class AbstractQueryLogic {
 
-  protected static Logger log = Logger.getLogger(AbstractQueryLogic.class);
-
-  /**
-   * Set of datatypes to limit the criteria to.
-   */
-  public static final String DATATYPE_FILTER_SET = "datatype.filter.set";
-
-  private static class DoNotPerformOptimizedQueryException extends Exception {
-    private static final long serialVersionUID = 1L;
-  }
-
-  /**
-   * Object that is used to hold ranges found in the index. Subclasses may compute the final range set in various ways.
-   */
-  public static abstract class IndexRanges {
-
-    private Map<String,String> indexValuesToOriginalValues = null;
-    private Multimap<String,String> fieldNamesAndValues = HashMultimap.create();
-    private Map<String,Long> termCardinality = new HashMap<String,Long>();
-    protected Map<String,TreeSet<Range>> ranges = new HashMap<String,TreeSet<Range>>();
-
-    public Multimap<String,String> getFieldNamesAndValues() {
-      return fieldNamesAndValues;
+    /**
+     * Set of datatypes to limit the criteria to.
+     */
+    public static final String DATATYPE_FILTER_SET = "datatype.filter.set";
+    //  private Map<Class<? extends Normalizer>,Normalizer> normalizerCacheMap = new HashMap<Class<? extends Normalizer>,Normalizer>();
+    private static final String NULL_BYTE = "\u0000";
+    protected static Logger log = Logger.getLogger(AbstractQueryLogic.class);
+    private String metadataTableName;
+    private String indexTableName;
+    private String reverseIndexTableName;
+    private String tableName;
+    private int queryThreads = 8;
+    private String readAheadQueueSize;
+    private String readAheadTimeOut;
+    private boolean useReadAheadIterator;
+    private Kryo kryo = new Kryo();
+    private EventFields eventFields = new EventFields();
+    private List<String> unevaluatedFields = null;
+    public AbstractQueryLogic() {
+        super();
+        EventFields.initializeKryo(kryo);
     }
 
-    public void setFieldNamesAndValues(Multimap<String,String> fieldNamesAndValues) {
-      this.fieldNamesAndValues = fieldNamesAndValues;
+    public String getMetadataTableName() {
+        return metadataTableName;
     }
 
-    public final Map<String,Long> getTermCardinality() {
-      return termCardinality;
+    public void setMetadataTableName(String metadataTableName) {
+        this.metadataTableName = metadataTableName;
     }
 
-    public Map<String,String> getIndexValuesToOriginalValues() {
-      return indexValuesToOriginalValues;
+    public String getIndexTableName() {
+        return indexTableName;
     }
-
-    public void setIndexValuesToOriginalValues(Map<String,String> indexValuesToOriginalValues) {
-      this.indexValuesToOriginalValues = indexValuesToOriginalValues;
-    }
-
-    public abstract void add(String term, Range r);
-
-    public abstract Set<Range> getRanges();
-  }
-
-  /**
-   * Object that computes the ranges by unioning all of the ranges for all of the terms together. In the case where ranges overlap, the largest range is used.
-   */
-  public static class UnionIndexRanges extends IndexRanges {
-
-    public static String DEFAULT_KEY = "default";
-
-    public UnionIndexRanges() {
-      this.ranges.put(DEFAULT_KEY, new TreeSet<Range>());
-    }
-
-    public Set<Range> getRanges() {
-      // So the set of ranges is ordered. It *should* be the case that
-      // ranges with partition ids will sort before ranges that point to
-      // a specific event. Populate a new set of ranges but don't add a
-      // range for an event where that range is contained in a range already
-      // added.
-      Set<Text> shardsAdded = new HashSet<Text>();
-      Set<Range> returnSet = new HashSet<Range>();
-      for (Range r : ranges.get(DEFAULT_KEY)) {
-        if (!shardsAdded.contains(r.getStartKey().getRow())) {
-          // Only add ranges with a start key for the entire partition.
-          if (r.getStartKey().getColumnFamily() == null) {
-            shardsAdded.add(r.getStartKey().getRow());
-          }
-          returnSet.add(r);
-        } else {
-          // if (log.isTraceEnabled())
-          log.info("Skipping event specific range: " + r.toString() + " because range has already been added: "
-                  + shardsAdded.contains(r.getStartKey().getRow()));
-        }
-      }
-      return returnSet;
-    }
-
-    public void add(String term, Range r) {
-      ranges.get(DEFAULT_KEY).add(r);
-    }
-  }
-
-  private String metadataTableName;
-  private String indexTableName;
-  private String reverseIndexTableName;
-  private String tableName;
-  private int queryThreads = 8;
-  private String readAheadQueueSize;
-  private String readAheadTimeOut;
-  private boolean useReadAheadIterator;
-  private Kryo kryo = new Kryo();
-  private EventFields eventFields = new EventFields();
-  private List<String> unevaluatedFields = null;
-//  private Map<Class<? extends Normalizer>,Normalizer> normalizerCacheMap = new HashMap<Class<? extends Normalizer>,Normalizer>();
-  private static final String NULL_BYTE = "\u0000";
-
-  public AbstractQueryLogic() {
-    super();
-    EventFields.initializeKryo(kryo);
-  }
 
 //  /**
 //   * Queries metadata table to determine which terms are indexed.
@@ -275,83 +204,150 @@ public abstract class AbstractQueryLogic {
 //
 //  protected abstract Collection<Range> getFullScanRange(Date begin, Date end, Multimap<String,QueryTerm> terms);
 
-  public String getMetadataTableName() {
-    return metadataTableName;
-  }
+    public void setIndexTableName(String indexTableName) {
+        this.indexTableName = indexTableName;
+    }
 
-  public String getIndexTableName() {
-    return indexTableName;
-  }
+    public String getTableName() {
+        return tableName;
+    }
 
-  public String getTableName() {
-    return tableName;
-  }
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
 
-  public void setMetadataTableName(String metadataTableName) {
-    this.metadataTableName = metadataTableName;
-  }
+    public int getQueryThreads() {
+        return queryThreads;
+    }
 
-  public void setIndexTableName(String indexTableName) {
-    this.indexTableName = indexTableName;
-  }
+    public void setQueryThreads(int queryThreads) {
+        this.queryThreads = queryThreads;
+    }
 
-  public void setTableName(String tableName) {
-    this.tableName = tableName;
-  }
+    public String getReadAheadQueueSize() {
+        return readAheadQueueSize;
+    }
 
-  public int getQueryThreads() {
-    return queryThreads;
-  }
+    public void setReadAheadQueueSize(String readAheadQueueSize) {
+        this.readAheadQueueSize = readAheadQueueSize;
+    }
 
-  public void setQueryThreads(int queryThreads) {
-    this.queryThreads = queryThreads;
-  }
+    public String getReadAheadTimeOut() {
+        return readAheadTimeOut;
+    }
 
-  public String getReadAheadQueueSize() {
-    return readAheadQueueSize;
-  }
+    public void setReadAheadTimeOut(String readAheadTimeOut) {
+        this.readAheadTimeOut = readAheadTimeOut;
+    }
 
-  public String getReadAheadTimeOut() {
-    return readAheadTimeOut;
-  }
+    public boolean isUseReadAheadIterator() {
+        return useReadAheadIterator;
+    }
 
-  public boolean isUseReadAheadIterator() {
-    return useReadAheadIterator;
-  }
+    public void setUseReadAheadIterator(boolean useReadAheadIterator) {
+        this.useReadAheadIterator = useReadAheadIterator;
+    }
 
-  public void setReadAheadQueueSize(String readAheadQueueSize) {
-    this.readAheadQueueSize = readAheadQueueSize;
-  }
+    public String getReverseIndexTableName() {
+        return reverseIndexTableName;
+    }
 
-  public void setReadAheadTimeOut(String readAheadTimeOut) {
-    this.readAheadTimeOut = readAheadTimeOut;
-  }
+    public void setReverseIndexTableName(String reverseIndexTableName) {
+        this.reverseIndexTableName = reverseIndexTableName;
+    }
 
-  public void setUseReadAheadIterator(boolean useReadAheadIterator) {
-    this.useReadAheadIterator = useReadAheadIterator;
-  }
+    public List<String> getUnevaluatedFields() {
+        return unevaluatedFields;
+    }
 
-  public String getReverseIndexTableName() {
-    return reverseIndexTableName;
-  }
+    public void setUnevaluatedFields(String unevaluatedFieldList) {
+        this.unevaluatedFields = new ArrayList<String>();
+        for (String field : unevaluatedFieldList.split(","))
+            this.unevaluatedFields.add(field);
+    }
 
-  public void setReverseIndexTableName(String reverseIndexTableName) {
-    this.reverseIndexTableName = reverseIndexTableName;
-  }
+    public void setUnevaluatedFields(List<String> unevaluatedFields) {
+        this.unevaluatedFields = unevaluatedFields;
+    }
 
-  public List<String> getUnevaluatedFields() {
-    return unevaluatedFields;
-  }
+    private static class DoNotPerformOptimizedQueryException extends Exception {
+        private static final long serialVersionUID = 1L;
+    }
 
-  public void setUnevaluatedFields(List<String> unevaluatedFields) {
-    this.unevaluatedFields = unevaluatedFields;
-  }
+    /**
+     * Object that is used to hold ranges found in the index. Subclasses may compute the final range set in various ways.
+     */
+    public static abstract class IndexRanges {
 
-  public void setUnevaluatedFields(String unevaluatedFieldList) {
-    this.unevaluatedFields = new ArrayList<String>();
-    for (String field : unevaluatedFieldList.split(","))
-      this.unevaluatedFields.add(field);
-  }
+        protected Map<String, TreeSet<Range>> ranges = new HashMap<String, TreeSet<Range>>();
+        private Map<String, String> indexValuesToOriginalValues = null;
+        private Multimap<String, String> fieldNamesAndValues = HashMultimap.create();
+        private Map<String, Long> termCardinality = new HashMap<String, Long>();
+
+        public Multimap<String, String> getFieldNamesAndValues() {
+            return fieldNamesAndValues;
+        }
+
+        public void setFieldNamesAndValues(Multimap<String, String> fieldNamesAndValues) {
+            this.fieldNamesAndValues = fieldNamesAndValues;
+        }
+
+        public final Map<String, Long> getTermCardinality() {
+            return termCardinality;
+        }
+
+        public Map<String, String> getIndexValuesToOriginalValues() {
+            return indexValuesToOriginalValues;
+        }
+
+        public void setIndexValuesToOriginalValues(Map<String, String> indexValuesToOriginalValues) {
+            this.indexValuesToOriginalValues = indexValuesToOriginalValues;
+        }
+
+        public abstract void add(String term, Range r);
+
+        public abstract Set<Range> getRanges();
+    }
+
+    /**
+     * Object that computes the ranges by unioning all of the ranges for all of the terms together. In the case where ranges overlap, the largest range is used.
+     */
+    public static class UnionIndexRanges extends IndexRanges {
+
+        public static String DEFAULT_KEY = "default";
+
+        public UnionIndexRanges() {
+            this.ranges.put(DEFAULT_KEY, new TreeSet<Range>());
+        }
+
+        public Set<Range> getRanges() {
+            // So the set of ranges is ordered. It *should* be the case that
+            // ranges with partition ids will sort before ranges that point to
+            // a specific event. Populate a new set of ranges but don't add a
+            // range for an event where that range is contained in a range already
+            // added.
+            Set<Text> shardsAdded = new HashSet<Text>();
+            Set<Range> returnSet = new HashSet<Range>();
+            for (Range r : ranges.get(DEFAULT_KEY)) {
+                if (!shardsAdded.contains(r.getStartKey().getRow())) {
+                    // Only add ranges with a start key for the entire partition.
+                    if (r.getStartKey().getColumnFamily() == null) {
+                        shardsAdded.add(r.getStartKey().getRow());
+                    }
+                    returnSet.add(r);
+                } else {
+                    // if (log.isTraceEnabled())
+                    log.info("Skipping event specific range: " + r.toString() + " because range has already been added: "
+                            + shardsAdded.contains(r.getStartKey().getRow()));
+                }
+            }
+            return returnSet;
+        }
+
+        public void add(String term, Range r) {
+            ranges.get(DEFAULT_KEY).add(r);
+        }
+    }
 
 //  public Document createDocument(Key key, Value value) {
 //    Document doc = new Document();
