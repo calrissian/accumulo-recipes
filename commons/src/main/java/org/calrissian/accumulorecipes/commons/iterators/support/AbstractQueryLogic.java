@@ -86,6 +86,7 @@ public abstract class AbstractQueryLogic {
     private Kryo kryo = new Kryo();
     private EventFields eventFields = new EventFields();
     private List<String> unevaluatedFields = null;
+
     public AbstractQueryLogic() {
         super();
         EventFields.initializeKryo(kryo);
@@ -260,14 +261,14 @@ public abstract class AbstractQueryLogic {
         return unevaluatedFields;
     }
 
+    public void setUnevaluatedFields(List<String> unevaluatedFields) {
+        this.unevaluatedFields = unevaluatedFields;
+    }
+
     public void setUnevaluatedFields(String unevaluatedFieldList) {
         this.unevaluatedFields = new ArrayList<String>();
         for (String field : unevaluatedFieldList.split(","))
             this.unevaluatedFields.add(field);
-    }
-
-    public void setUnevaluatedFields(List<String> unevaluatedFields) {
-        this.unevaluatedFields = unevaluatedFields;
     }
 
     private static class DoNotPerformOptimizedQueryException extends Exception {

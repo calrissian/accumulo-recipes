@@ -67,12 +67,45 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     public static final String DEFAULT_TABLE_NAME = "entityStore_graph";
 
     public static final int DEFAULT_BUFFER_SIZE = 50;
-
-    public static final String ONE_BYTE = "\u0001";
-
-    protected String table;
     protected int bufferSize = DEFAULT_BUFFER_SIZE;
+    public static final String ONE_BYTE = "\u0001";
+    /**
+     * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex
+     */
+    private Function<Map.Entry<Key, Value>, Entity> edgeRowXform = new Function<Map.Entry<Key, Value>, Entity>() {
 
+        @Override
+        public Entity apply(Map.Entry<Key, Value> keyValueEntry) {
+
+            String cq = keyValueEntry.getKey().getColumnQualifier().toString();
+
+            int idx = cq.indexOf(DELIM);
+            String edge = cq.substring(0, idx);
+
+            try {
+                EntityRelationship edgeRel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+                Entity entity = new BaseEntity(edgeRel.getTargetType(), edgeRel.getTargetId());
+                SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+
+                for (Map.Entry<Key, Value> entry : entries.entrySet()) {
+                    if (entry.getKey().getColumnQualifier().toString().indexOf(ONE_BYTE) == -1)
+                        continue;
+
+                    String[] qualParts = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), ONE_BYTE);
+                    String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
+
+                    entity.put(new Tuple(keyALiasValue[0], ENTITY_TYPES.decode(keyALiasValue[1], keyALiasValue[2]),
+                            entry.getKey().getColumnVisibility().toString()));
+
+                }
+
+                return entity;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
+    protected String table;
     protected BatchWriter writer;
 
     public AccumuloEntityGraphStore(Connector connector)
@@ -201,43 +234,6 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     private void populateRange(Collection<Range> ranges, String row, Direction direction, String label) {
         ranges.add(prefix(row, direction.toString() + DELIM + defaultString(label)));
     }
-
-    /**
-     * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex
-     */
-    private Function<Map.Entry<Key, Value>, Entity> edgeRowXform = new Function<Map.Entry<Key, Value>, Entity>() {
-
-        @Override
-        public Entity apply(Map.Entry<Key, Value> keyValueEntry) {
-
-            String cq = keyValueEntry.getKey().getColumnQualifier().toString();
-
-            int idx = cq.indexOf(DELIM);
-            String edge = cq.substring(0, idx);
-
-            try {
-                EntityRelationship edgeRel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-                Entity entity = new BaseEntity(edgeRel.getTargetType(), edgeRel.getTargetId());
-                SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
-
-                for (Map.Entry<Key, Value> entry : entries.entrySet()) {
-                    if (entry.getKey().getColumnQualifier().toString().indexOf(ONE_BYTE) == -1)
-                        continue;
-
-                    String[] qualParts = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), ONE_BYTE);
-                    String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
-
-                    entity.put(new Tuple(keyALiasValue[0], ENTITY_TYPES.decode(keyALiasValue[1], keyALiasValue[2]),
-                            entry.getKey().getColumnVisibility().toString()));
-
-                }
-
-                return entity;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    };
 
     @Override
     public void save(Iterable<Entity> entities) {

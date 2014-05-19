@@ -32,6 +32,7 @@ public class TreeBuilder implements ParserVisitor {
     private TreeNode rootNode = null;
     private TreeNode currentNode = null;
     private boolean currentlyInCheckChildren = false;
+
     public TreeBuilder(String query) throws ParseException {
         Parser p = new Parser(new StringReader(";"));
         ASTJexlScript script = p.parse(new StringReader(query), null);
