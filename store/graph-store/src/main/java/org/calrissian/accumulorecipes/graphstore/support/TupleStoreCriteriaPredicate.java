@@ -17,18 +17,18 @@ package org.calrissian.accumulorecipes.graphstore.support;
 
 import com.google.common.base.Predicate;
 import org.calrissian.mango.criteria.domain.criteria.Criteria;
-import org.calrissian.mango.domain.TupleCollection;
+import org.calrissian.mango.domain.TupleStore;
 
-public class TupleCollectionCriteriaPredicate implements Predicate<TupleCollection> {
+public class TupleStoreCriteriaPredicate implements Predicate<TupleStore> {
 
   private Criteria criteria;
 
-  public TupleCollectionCriteriaPredicate(Criteria criteria) {
+  public TupleStoreCriteriaPredicate(Criteria criteria) {
     this.criteria = criteria;
   }
 
   @Override
-  public boolean apply(TupleCollection storeEntry) {
+  public boolean apply(TupleStore storeEntry) {
     return criteria.apply(storeEntry);
   }
 }

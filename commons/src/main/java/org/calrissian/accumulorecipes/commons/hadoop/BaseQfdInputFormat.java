@@ -36,7 +36,7 @@ import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.TupleCollection;
+import org.calrissian.mango.domain.TupleStore;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ import java.util.Map;
 import static org.apache.accumulo.core.util.format.DefaultFormatter.formatEntry;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 
-public abstract class BaseQfdInputFormat<T extends TupleCollection, W extends Settable> extends InputFormatBase<Key, W> {
+public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settable> extends InputFormatBase<Key, W> {
 
   protected static void configureScanner(Configuration config, Node query, GlobalIndexVisitor globalInexVisitor) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
