@@ -63,9 +63,11 @@ public class ReadAheadIterator implements SortedKeyValueIterator<Key, Value>, Op
     private QueueElement currentElement = new QueueElement();
     private ProducerThread thread = null;
     private Thread t = null;
+
     protected ReadAheadIterator(ReadAheadIterator other, IteratorEnvironment env) {
         source = other.source.deepCopy(env);
     }
+
     public ReadAheadIterator() {
     }
 
@@ -214,11 +216,10 @@ public class ReadAheadIterator implements SortedKeyValueIterator<Key, Value>, Op
         private static final long serialVersionUID = 1L;
 
         private Exception e = null;
-        private SortedKeyValueIterator<Key, Value> sourceIter = null;        private int waitTime = timeout;
-
+        private SortedKeyValueIterator<Key, Value> sourceIter = null;
         public ProducerThread(SortedKeyValueIterator<Key, Value> source) {
             this.sourceIter = source;
-        }
+        }        private int waitTime = timeout;
 
         public void run() {
             boolean hasMoreData = true;
@@ -279,6 +280,8 @@ public class ReadAheadIterator implements SortedKeyValueIterator<Key, Value>, Op
         public Exception getError() {
             return this.e;
         }
+
+
 
 
     }

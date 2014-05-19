@@ -20,7 +20,7 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.TupleCollection;
+import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 
@@ -33,7 +33,7 @@ import static org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamily
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 
-public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleCollection> implements Function<Map.Entry<Key, Value>, V> {
+public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
 
 
     private Set<String> selectFields;

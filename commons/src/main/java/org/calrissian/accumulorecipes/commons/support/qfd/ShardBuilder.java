@@ -15,9 +15,9 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
-import org.calrissian.mango.domain.TupleCollection;
+import org.calrissian.mango.domain.TupleStore;
 
-public interface ShardBuilder<T extends TupleCollection> {
+public interface ShardBuilder<T extends TupleStore> {
 
     String buildShard(T item);
 }

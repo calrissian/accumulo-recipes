@@ -15,9 +15,9 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
-import org.calrissian.mango.domain.TupleCollection;
+import org.calrissian.mango.domain.TupleStore;
 
-public interface KeyValueIndex<T extends TupleCollection> {
+public interface KeyValueIndex<T extends TupleStore> {
 
     void indexKeyValues(Iterable<T> items);
 

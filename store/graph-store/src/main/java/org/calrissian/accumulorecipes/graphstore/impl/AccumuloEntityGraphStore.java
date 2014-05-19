@@ -33,7 +33,7 @@ import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.support.EdgeGroupingIterator;
-import org.calrissian.accumulorecipes.graphstore.support.TupleCollectionCriteriaPredicate;
+import org.calrissian.accumulorecipes.graphstore.support.TupleStoreCriteriaPredicate;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
@@ -194,8 +194,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         checkNotNull(fromVertices);
         checkNotNull(auths);
 
-        TupleCollectionCriteriaPredicate filter =
-                query != null ? new TupleCollectionCriteriaPredicate(criteriaFromNode(query)) : null;
+        TupleStoreCriteriaPredicate filter =
+                query != null ? new TupleStoreCriteriaPredicate(criteriaFromNode(query)) : null;
 
         // this one is fairly easy- return the adjacent edges that match the given query
         try {

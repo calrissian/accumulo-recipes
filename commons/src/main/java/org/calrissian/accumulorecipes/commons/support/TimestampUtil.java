@@ -29,6 +29,7 @@ public class TimestampUtil {
     private final static DateTimeFormatter HOURS_FORMAT = DateTimeFormat.forPattern("yyyyMMddHH");
     private final static DateTimeFormatter DAYS_FORMAT = DateTimeFormat.forPattern("yyyyMMdd");
     private final static DateTimeFormatter MONTHS_FORMAT = DateTimeFormat.forPattern("yyyyMM");
+
     private TimestampUtil() {
     }
 

@@ -39,7 +39,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.TupleCollection;
+import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.Collection;
@@ -58,7 +58,7 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
-public abstract class QfdHelper<T extends TupleCollection> {
+public abstract class QfdHelper<T extends TupleStore> {
 
     private static final Kryo kryo = new Kryo();
     private final Connector connector;

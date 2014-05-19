@@ -21,7 +21,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.TupleCollection;
+import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 
@@ -32,7 +32,7 @@ import static java.nio.ByteBuffer.wrap;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 
-public abstract class KeyToTupleCollectionQueryXform<V extends TupleCollection> implements Function<Map.Entry<Key, Value>, V> {
+public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
 
     private Set<String> selectFields;
     private Kryo kryo;
