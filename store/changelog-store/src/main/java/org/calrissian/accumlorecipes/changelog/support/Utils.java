@@ -38,6 +38,7 @@ public class Utils {
 
     /**
      * Tuples are hashed by sorting them by their keys, normalized values, and visibilities.
+     *
      * @param entry
      * @return
      */
@@ -48,7 +49,7 @@ public class Utils {
         sort(tuples, new TupleComparator(typeRegistry));
 
         String tupleString = entry.getId();
-        for(Tuple tuple : tuples)
+        for (Tuple tuple : tuples)
             tupleString += tupleToString(tuple, typeRegistry) + ",";
 
         try {
@@ -61,6 +62,7 @@ public class Utils {
 
     /**
      * Defaults to 15 mins.
+     *
      * @param timestamp
      * @return
      */

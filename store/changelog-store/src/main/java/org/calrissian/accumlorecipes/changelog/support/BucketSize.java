@@ -25,6 +25,7 @@ public enum BucketSize {
     DAY(60 * 1000 * 60 * 24);
 
     private long ms;
+
     private BucketSize(long ms) {
         this.ms = ms;
     }

@@ -19,7 +19,7 @@ import org.calrissian.mango.domain.TupleCollection;
 
 public interface KeyValueIndex<T extends TupleCollection> {
 
-  void indexKeyValues(Iterable<T> items);
+    void indexKeyValues(Iterable<T> items);
 
-  void commit() throws Exception;
+    void commit() throws Exception;
 }

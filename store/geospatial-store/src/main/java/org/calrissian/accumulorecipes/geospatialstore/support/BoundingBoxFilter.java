@@ -40,11 +40,20 @@ public class BoundingBoxFilter extends Filter {
 
     private Rectangle2D.Double box;
 
+    public static void setBoundingBox(IteratorSetting config, Rectangle2D.Double box) {
+        Map<String, String> props = new HashMap<String, String>();
+        props.put("x", Double.toString(box.getX()));
+        props.put("y", Double.toString(box.getY()));
+        props.put("width", Double.toString(box.getWidth()));
+        props.put("height", Double.toString(box.getHeight()));
+        config.addOptions(props);
+    }
+
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         super.init(source, options, env);
 
-        if(options.containsKey("x") && options.containsKey("y") && options.containsKey("width") && options.containsKey("height")) {
+        if (options.containsKey("x") && options.containsKey("y") && options.containsKey("width") && options.containsKey("height")) {
 
             Double x = Double.parseDouble(options.get("x"));
             Double y = Double.parseDouble(options.get("y"));
@@ -61,24 +70,15 @@ public class BoundingBoxFilter extends Filter {
         try {
             String colF = key.getColumnFamily().toString();
             int lastIdx = colF.lastIndexOf(DELIM);
-            String geoCoords = colF.substring(lastIdx, colF.length()-1);
+            String geoCoords = colF.substring(lastIdx, colF.length() - 1);
 
             lastIdx = geoCoords.lastIndexOf(DELIM_ONE);
             Double x = Double.parseDouble(geoCoords.substring(0, lastIdx));
-            Double y = Double.parseDouble(geoCoords.substring(lastIdx, geoCoords.length()-1));
+            Double y = Double.parseDouble(geoCoords.substring(lastIdx, geoCoords.length() - 1));
 
             return box.contains(x, y);
-        } catch(Exception e) {
+        } catch (Exception e) {
             return true;
         }
-    }
-
-    public static void setBoundingBox(IteratorSetting config, Rectangle2D.Double box) {
-        Map<String,String> props = new HashMap<String, String>();
-        props.put("x", Double.toString(box.getX()));
-        props.put("y", Double.toString(box.getY()));
-        props.put("width", Double.toString(box.getWidth()));
-        props.put("height", Double.toString(box.getHeight()));
-        config.addOptions(props);
     }
 }

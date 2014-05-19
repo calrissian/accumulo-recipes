@@ -80,7 +80,7 @@ public class SummaryStatsFunction implements MetricFunction<SummaryStatistics> {
 
             ByteArrayInputStream byteArrStream = new ByteArrayInputStream(data);
             ObjectInputStream istream = new ObjectInputStream(byteArrStream);
-            SummaryStatistics retVal = (SummaryStatistics)istream.readObject();
+            SummaryStatistics retVal = (SummaryStatistics) istream.readObject();
             istream.close();
             byteArrStream.close();
             return retVal;

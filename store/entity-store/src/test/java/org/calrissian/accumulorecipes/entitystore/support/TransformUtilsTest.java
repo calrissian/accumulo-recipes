@@ -24,13 +24,13 @@ import static org.junit.Assert.assertEquals;
 
 public class TransformUtilsTest {
 
-  @Test
-  public void test() {
+    @Test
+    public void test() {
 
-    Entity entity = new BaseEntity("type", "id");
+        Entity entity = new BaseEntity("type", "id");
 
-    EntityIndex index = TransformUtils.entityToEntityIndex.apply(entity);
-    assertEquals(entity.getType(), index.getType());
-    assertEquals(entity.getId(), index.getId());
-  }
+        EntityIndex index = TransformUtils.entityToEntityIndex.apply(entity);
+        assertEquals(entity.getType(), index.getType());
+        assertEquals(entity.getId(), index.getId());
+    }
 }

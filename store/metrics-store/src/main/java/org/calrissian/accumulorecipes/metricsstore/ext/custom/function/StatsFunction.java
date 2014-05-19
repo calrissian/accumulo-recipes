@@ -86,7 +86,7 @@ public class StatsFunction implements MetricFunction<long[]> {
             throw new IllegalStateException("Invalid number of elements in combiner function");
 
         long[] retVal = new long[5];
-        for (int i = 0;i < retVal.length;i++)
+        for (int i = 0; i < retVal.length; i++)
             retVal[i] = parseLong(individual[i]);
         return retVal;
     }

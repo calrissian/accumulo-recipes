@@ -30,88 +30,88 @@ import static org.junit.Assert.assertTrue;
 
 public class CardinalityReorderVisitorTest {
 
-  @Test
-  public void test_basicReorder() {
+    @Test
+    public void test_basicReorder() {
 
-    Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
-    cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 500l);
-    cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 50l);
-    cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
+        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 500l);
+        cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 50l);
+        cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
 
-    Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
-            .end().end().build();
+        Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
+                .end().end().build();
 
-    node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities));
 
-    System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl().transform(node));
 
-    assertTrue(node instanceof OrNode);
-    assertTrue(node.children().get(0) instanceof AndNode);
-    assertEquals("key2", ((AbstractKeyValueLeaf)node.children().get(0).children().get(0)).getKey());
-    assertEquals("key1", ((AbstractKeyValueLeaf)node.children().get(0).children().get(1)).getKey());
-    assertEquals("key3", ((AbstractKeyValueLeaf)node.children().get(1)).getKey());
-  }
+        assertTrue(node instanceof OrNode);
+        assertTrue(node.children().get(0) instanceof AndNode);
+        assertEquals("key2", ((AbstractKeyValueLeaf) node.children().get(0).children().get(0)).getKey());
+        assertEquals("key1", ((AbstractKeyValueLeaf) node.children().get(0).children().get(1)).getKey());
+        assertEquals("key3", ((AbstractKeyValueLeaf) node.children().get(1)).getKey());
+    }
 
-  @Test
-  public void test_pruneCardinalities_AndNode() {
+    @Test
+    public void test_pruneCardinalities_AndNode() {
 
-    Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
-    cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 500l);
-    cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
-    cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
+        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 500l);
+        cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
+        cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
 
-    Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
-            .end().end().build();
+        Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
+                .end().end().build();
 
-    node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities));
 
-    System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl().transform(node));
 
-    assertTrue(node instanceof OrNode);
-    assertTrue(node.children().get(0) instanceof EqualsLeaf);
-    assertEquals(1, node.children().size());
-    assertEquals("key3", ((AbstractKeyValueLeaf)node.children().get(0)).getKey());
-  }
+        assertTrue(node instanceof OrNode);
+        assertTrue(node.children().get(0) instanceof EqualsLeaf);
+        assertEquals(1, node.children().size());
+        assertEquals("key3", ((AbstractKeyValueLeaf) node.children().get(0)).getKey());
+    }
 
-  @Test
-  public void test_pruneCardinalities_OrNode() {
+    @Test
+    public void test_pruneCardinalities_OrNode() {
 
-    Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
-    cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
-    cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
-    cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
+        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
+        cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
+        cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
 
-    Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
-            .end().end().build();
+        Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+                .end().end().build();
 
-    node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities));
 
-    System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl().transform(node));
 
-    assertTrue(node instanceof OrNode);
-    assertTrue(node.children().get(0) instanceof EqualsLeaf);
-    assertEquals(1, node.children().size());
-    assertEquals("key3", ((AbstractKeyValueLeaf)node.children().get(0)).getKey());
-  }
+        assertTrue(node instanceof OrNode);
+        assertTrue(node.children().get(0) instanceof EqualsLeaf);
+        assertEquals(1, node.children().size());
+        assertEquals("key3", ((AbstractKeyValueLeaf) node.children().get(0)).getKey());
+    }
 
-  @Test
-  public void test_pruneCardinalities_AllNodesZero() {
+    @Test
+    public void test_pruneCardinalities_AllNodesZero() {
 
-    Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
-    cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
-    cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
-    cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 0l);
+        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
+        cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
+        cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 0l);
 
-    Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
-            .end().end().build();
+        Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+                .end().end().build();
 
-    node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities));
 
-    System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl().transform(node));
 
-    assertTrue(node instanceof OrNode);
-    assertEquals(0, node.children().size());
-  }
+        assertTrue(node instanceof OrNode);
+        assertEquals(0, node.children().size());
+    }
 
 
 }

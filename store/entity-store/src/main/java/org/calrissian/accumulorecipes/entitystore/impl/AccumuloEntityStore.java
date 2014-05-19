@@ -26,10 +26,8 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
-import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
@@ -49,7 +47,6 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
@@ -59,159 +56,155 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloEntityStore implements EntityStore {
 
-  public static final String DEFAULT_IDX_TABLE_NAME = "entityStore_index";
-  public static final String DEFAULT_SHARD_TABLE_NAME = "entityStore_shard";
+    public static final String DEFAULT_IDX_TABLE_NAME = "entityStore_index";
+    public static final String DEFAULT_SHARD_TABLE_NAME = "entityStore_shard";
 
-  public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+    public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
-  public static final int DEFAULT_PARTITION_SIZE = 5;
+    public static final int DEFAULT_PARTITION_SIZE = 5;
+    private EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
+    public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(5);
+    public static final TypeRegistry<String> ENTITY_TYPES =
+            new TypeRegistry<String>(LEXI_TYPES, new RelationshipTypeEncoder());
+    private final EntityQfdHelper helper;
 
-  public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(5);
-
-  public static final TypeRegistry<String> ENTITY_TYPES =
-          new TypeRegistry<String>(LEXI_TYPES, new RelationshipTypeEncoder());
-
-  private EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
-
-  private final EntityQfdHelper helper;
-
-  public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
-  }
-
-  public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, StoreConfig config)
-          throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    checkNotNull(connector);
-    checkNotNull(indexTable);
-    checkNotNull(shardTable);
-    checkNotNull(config);
-
-    KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, ENTITY_TYPES);
-
-    helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, ENTITY_TYPES, keyValueIndex);
-  }
-
-  @Override
-  public void shutdown() throws MutationsRejectedException {
-    helper.shutdown();
-  }
-
-  @Override
-  public void save(Iterable<Entity> entities) {
-    helper.save(entities);
-  }
-
-  @Override
-  public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths) {
-    checkNotNull(typesAndIds);
-    checkNotNull(auths);
-    try {
-
-      BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
-
-      Collection<Range> ranges = new LinkedList<Range>();
-      for (EntityIndex curIndex : typesAndIds) {
-        String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
-        ranges.add(exact(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
-      }
-
-      scanner.setRanges(ranges);
-
-      IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-      scanner.addScanIterator(iteratorSetting);
-
-      if (selectFields != null && selectFields.size() > 0) {
-        iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-        EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
-        scanner.addScanIterator(iteratorSetting);
-      }
-
-      return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
-    } catch (RuntimeException re) {
-      throw re;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
     }
-  }
 
-  @Override
-  public CloseableIterable<Entity> getAllByType(Set<String> types, Set<String> selectFields, Auths auths) {
-    checkNotNull(types);
-    checkNotNull(auths);
-    try {
+    public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, StoreConfig config)
+            throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        checkNotNull(connector);
+        checkNotNull(indexTable);
+        checkNotNull(shardTable);
+        checkNotNull(config);
 
-      BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
+        KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, ENTITY_TYPES);
 
-      Collection<Range> ranges = new LinkedList<Range>();
-      for (String type : types) {
-        Set<Text> shards = shardBuilder.buildShardsForTypes(singleton(type));
-        for (Text shard : shards)
-          ranges.add(prefix(shard.toString(), type));
-      }
-
-      scanner.setRanges(ranges);
-
-      IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-      scanner.addScanIterator(iteratorSetting);
-
-      if (selectFields != null && selectFields.size() > 0) {
-        iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-        EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
-        scanner.addScanIterator(iteratorSetting);
-      }
-
-      return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
-    } catch (RuntimeException re) {
-      throw re;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+        helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, ENTITY_TYPES, keyValueIndex);
     }
-  }
 
-  @Override
-  public CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths) {
+    @Override
+    public void shutdown() throws MutationsRejectedException {
+        helper.shutdown();
+    }
 
-    checkNotNull(types);
-    checkNotNull(query);
-    checkNotNull(auths);
+    @Override
+    public void save(Iterable<Entity> entities) {
+        helper.save(entities);
+    }
 
-    checkArgument(types.size() > 0);
+    @Override
+    public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths) {
+        checkNotNull(typesAndIds);
+        checkNotNull(auths);
+        try {
 
-    BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
-    GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types);
+            BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
-    CloseableIterable<Entity> entities = helper.query(globalIndexVisitor, query, helper.buildQueryXform(selectFields), auths);
-    indexScanner.close();
+            Collection<Range> ranges = new LinkedList<Range>();
+            for (EntityIndex curIndex : typesAndIds) {
+                String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
+                ranges.add(exact(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
+            }
 
-    return entities;
-  }
+            scanner.setRanges(ranges);
 
-  @Override
-  public CloseableIterable<Pair<String, String>> keys(String type, Auths auths) {
+            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+            scanner.addScanIterator(iteratorSetting);
 
-    checkNotNull(type);
-    checkNotNull(auths);
+            if (selectFields != null && selectFields.size() > 0) {
+                iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+                EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+                scanner.addScanIterator(iteratorSetting);
+            }
 
-    BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
-    IteratorSetting setting = new IteratorSetting(15, FirstEntryInRowIterator.class);
-    scanner.addScanIterator(setting);
-    scanner.setRanges(singletonList(Range.prefix(type + "_" + INDEX_K + "_")));
+            return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    return transform(wrap(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
-      @Override
-      public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
-        EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());
-        return new Pair<String, String>(key.getKey(), key.getAlias());
-      }
-    });
-  }
+    @Override
+    public CloseableIterable<Entity> getAllByType(Set<String> types, Set<String> selectFields, Auths auths) {
+        checkNotNull(types);
+        checkNotNull(auths);
+        try {
 
-  @Override
-  public void delete(Iterable<EntityIndex> typesAndIds, Auths auths) {
-    throw new NotImplementedException();
-  }
+            BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
-  protected EntityQfdHelper getHelper() {
-    return helper;
-  }
+            Collection<Range> ranges = new LinkedList<Range>();
+            for (String type : types) {
+                Set<Text> shards = shardBuilder.buildShardsForTypes(singleton(type));
+                for (Text shard : shards)
+                    ranges.add(prefix(shard.toString(), type));
+            }
+
+            scanner.setRanges(ranges);
+
+            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+            scanner.addScanIterator(iteratorSetting);
+
+            if (selectFields != null && selectFields.size() > 0) {
+                iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+                EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+                scanner.addScanIterator(iteratorSetting);
+            }
+
+            return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths) {
+
+        checkNotNull(types);
+        checkNotNull(query);
+        checkNotNull(auths);
+
+        checkArgument(types.size() > 0);
+
+        BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
+        GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types);
+
+        CloseableIterable<Entity> entities = helper.query(globalIndexVisitor, query, helper.buildQueryXform(selectFields), auths);
+        indexScanner.close();
+
+        return entities;
+    }
+
+    @Override
+    public CloseableIterable<Pair<String, String>> keys(String type, Auths auths) {
+
+        checkNotNull(type);
+        checkNotNull(auths);
+
+        BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
+        IteratorSetting setting = new IteratorSetting(15, FirstEntryInRowIterator.class);
+        scanner.addScanIterator(setting);
+        scanner.setRanges(singletonList(Range.prefix(type + "_" + INDEX_K + "_")));
+
+        return transform(wrap(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
+            @Override
+            public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
+                EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());
+                return new Pair<String, String>(key.getKey(), key.getAlias());
+            }
+        });
+    }
+
+    @Override
+    public void delete(Iterable<EntityIndex> typesAndIds, Auths auths) {
+        throw new NotImplementedException();
+    }
+
+    protected EntityQfdHelper getHelper() {
+        return helper;
+    }
 }

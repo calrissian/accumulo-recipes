@@ -21,14 +21,14 @@ import org.calrissian.mango.domain.TupleCollection;
 
 public class TupleCollectionCriteriaPredicate implements Predicate<TupleCollection> {
 
-  private Criteria criteria;
+    private Criteria criteria;
 
-  public TupleCollectionCriteriaPredicate(Criteria criteria) {
-    this.criteria = criteria;
-  }
+    public TupleCollectionCriteriaPredicate(Criteria criteria) {
+        this.criteria = criteria;
+    }
 
-  @Override
-  public boolean apply(TupleCollection storeEntry) {
-    return criteria.apply(storeEntry);
-  }
+    @Override
+    public boolean apply(TupleCollection storeEntry) {
+        return criteria.apply(storeEntry);
+    }
 }

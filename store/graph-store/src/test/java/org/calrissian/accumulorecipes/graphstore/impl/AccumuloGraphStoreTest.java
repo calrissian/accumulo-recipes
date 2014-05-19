@@ -32,7 +32,6 @@ import org.calrissian.mango.domain.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,209 +44,209 @@ import static org.junit.Assert.assertEquals;
 
 public class AccumuloGraphStoreTest {
 
-  Entity vertex1 = new BaseEntity("vertex", "id1");
-  Entity vertex2 = new BaseEntity("vertex", "id2");
-  Entity edge = new EdgeEntity("edge", "edgeId", vertex1, "", vertex2, "", "label1");
+    Entity vertex1 = new BaseEntity("vertex", "id1");
+    Entity vertex2 = new BaseEntity("vertex", "id2");
+    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, "", vertex2, "", "label1");
 
-  private AccumuloEntityGraphStore graphStore;
-  private Connector connector;
+    private AccumuloEntityGraphStore graphStore;
+    private Connector connector;
 
-  @Before
-  public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    @Before
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-    vertex1.put(new Tuple("key1", "val1", "U"));
-    vertex1.put(new Tuple("key2", "val2", "U"));
-    vertex2.put(new Tuple("key3", "val3", "U"));
-    vertex2.put(new Tuple("key4", "val4", "U"));
+        vertex1.put(new Tuple("key1", "val1", "U"));
+        vertex1.put(new Tuple("key2", "val2", "U"));
+        vertex2.put(new Tuple("key3", "val3", "U"));
+        vertex2.put(new Tuple("key4", "val4", "U"));
 
-    edge.put(new Tuple("edgeProp1", "edgeVal1", "ADMIN"));
+        edge.put(new Tuple("edgeProp1", "edgeVal1", "ADMIN"));
 
-    Instance instance = new MockInstance();
-    connector = instance.getConnector("root", "".getBytes());
-    graphStore = new AccumuloEntityGraphStore(connector);
+        Instance instance = new MockInstance();
+        connector = instance.getConnector("root", "".getBytes());
+        graphStore = new AccumuloEntityGraphStore(connector);
 
-    graphStore.save(asList(new Entity[]{vertex1, edge, vertex2}));
-  }
-
-  @Test
-  public void testSave() throws TableNotFoundException {
-
-    Scanner scanner = connector.createScanner("entityStore_graph", new Authorizations("ADMIN,U".getBytes()));
-    for (Map.Entry<Key, Value> entry : scanner) {
-      System.out.println(entry);
-    }
-  }
-
-  @Test
-  public void testAdjacentEdges_withLabels_outDirection() throws TableNotFoundException {
-
-    Scanner scanner = connector.createScanner("entityStore_graph", new Authorizations("ADMIN,U".getBytes()));
-    for (Map.Entry<Key, Value> entry : scanner) {
-      System.out.println(entry);
+        graphStore.save(asList(new Entity[]{vertex1, edge, vertex2}));
     }
 
-    CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-            asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.OUT,
-            singleton("label1"),
-            new Auths("ADMIN,U")
-    );
+    @Test
+    public void testSave() throws TableNotFoundException {
 
-    assertEquals(1, size(results));
+        Scanner scanner = connector.createScanner("entityStore_graph", new Authorizations("ADMIN,U".getBytes()));
+        for (Map.Entry<Key, Value> entry : scanner) {
+            System.out.println(entry);
+        }
+    }
 
-    Entity actualEdge = get(results, 0);
-    assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
-    assertEquals(edge.getType(), actualEdge.getType());
-    assertEquals(edge.getId(), actualEdge.getId());
+    @Test
+    public void testAdjacentEdges_withLabels_outDirection() throws TableNotFoundException {
 
-    results.closeQuietly();
-  }
+        Scanner scanner = connector.createScanner("entityStore_graph", new Authorizations("ADMIN,U".getBytes()));
+        for (Map.Entry<Key, Value> entry : scanner) {
+            System.out.println(entry);
+        }
 
+        CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
+                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.OUT,
+                singleton("label1"),
+                new Auths("ADMIN,U")
+        );
 
-  @Test
-  public void testAdjacentEdges_withLabels_inDirection() throws TableNotFoundException {
+        assertEquals(1, size(results));
 
-    CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-            asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.IN,
-            singleton("label1"),
-            new Auths("U,ADMIN")
-    );
+        Entity actualEdge = get(results, 0);
+        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(edge.getType(), actualEdge.getType());
+        assertEquals(edge.getId(), actualEdge.getId());
 
-    assertEquals(1, size(results));
-
-    Entity actualEdge = get(results, 0);
-    assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
-    assertEquals(edge.getType(), actualEdge.getType());
-    assertEquals(edge.getId(), actualEdge.getId());
-
-    results.closeQuietly();
-  }
+        results.closeQuietly();
+    }
 
 
-  @Test
-  public void testAdjacentEdges_noLabels_outDirection() throws TableNotFoundException {
+    @Test
+    public void testAdjacentEdges_withLabels_inDirection() throws TableNotFoundException {
 
-    CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-            asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.OUT,
-            new Auths("U,ADMIN")
-    );
+        CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
+                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.IN,
+                singleton("label1"),
+                new Auths("U,ADMIN")
+        );
 
-    assertEquals(1, size(results));
+        assertEquals(1, size(results));
 
-    Entity actualEdge = get(results, 0);
-    assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
-    assertEquals(edge.getType(), actualEdge.getType());
-    assertEquals(edge.getId(), actualEdge.getId());
+        Entity actualEdge = get(results, 0);
+        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(edge.getType(), actualEdge.getType());
+        assertEquals(edge.getId(), actualEdge.getId());
 
-    results.closeQuietly();
-  }
-
-
-  @Test
-  public void testAdjacentEdges_noLabels_inDirection() throws TableNotFoundException {
-
-    CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-            asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.IN,
-            new Auths("U,ADMIN")
-    );
-
-    assertEquals(1, size(results));
-
-    Entity actualEdge = get(results, 0);
-    assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
-    assertEquals(edge.getType(), actualEdge.getType());
-    assertEquals(edge.getId(), actualEdge.getId());
-
-    results.closeQuietly();
-  }
-
-  @Test
-  public void testAdjacencies_withLabels_outDirection() throws TableNotFoundException {
-
-    CloseableIterable<Entity> results = graphStore.adjacencies(
-            asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.OUT,
-            Collections.singleton("label1"),
-            new Auths("U,ADMIN")
-    );
-
-    assertEquals(1, size(results));
-
-    Entity actualVertex2 = get(results, 0);
-    assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
-    assertEquals(vertex2.getType(), actualVertex2.getType());
-    assertEquals(vertex2.getId(), actualVertex2.getId());
-
-    results.closeQuietly();
-  }
-
-  @Test
-  public void testAdjacencies_withLabels_inDirection() throws TableNotFoundException {
-
-    CloseableIterable<Entity> results = graphStore.adjacencies(
-            asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.IN,
-            Collections.singleton("label1"),
-            new Auths("U,ADMIN")
-    );
-
-    assertEquals(1, size(results));
-
-    Entity actualVertex1 = get(results, 0);
-    assertEquals(new HashSet(vertex1.getTuples()), new HashSet(actualVertex1.getTuples()));
-    assertEquals(vertex1.getType(), actualVertex1.getType());
-    assertEquals(vertex1.getId(), actualVertex1.getId());
-
-    results.closeQuietly();
-  }
+        results.closeQuietly();
+    }
 
 
-  @Test
-  public void testAdjacencies_noLabels_outDirection() throws TableNotFoundException {
+    @Test
+    public void testAdjacentEdges_noLabels_outDirection() throws TableNotFoundException {
 
-    CloseableIterable<Entity> results = graphStore.adjacencies(
-            asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.OUT,
-            new Auths("U,ADMIN")
-    );
+        CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
+                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.OUT,
+                new Auths("U,ADMIN")
+        );
 
-    assertEquals(1, size(results));
+        assertEquals(1, size(results));
 
-    Entity actualVertex2 = get(results, 0);
-    assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
-    assertEquals(vertex2.getType(), actualVertex2.getType());
-    assertEquals(vertex2.getId(), actualVertex2.getId());
+        Entity actualEdge = get(results, 0);
+        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(edge.getType(), actualEdge.getType());
+        assertEquals(edge.getId(), actualEdge.getId());
 
-    results.closeQuietly();
-  }
+        results.closeQuietly();
+    }
 
-  @Test
-  public void testAdjacencies_noLabels_inDirection() throws TableNotFoundException {
 
-    CloseableIterable<Entity> results = graphStore.adjacencies(
-            asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
-            new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
-            Direction.IN,
-            new Auths("U,ADMIN")
-    );
+    @Test
+    public void testAdjacentEdges_noLabels_inDirection() throws TableNotFoundException {
 
-    assertEquals(1, size(results));
+        CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
+                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.IN,
+                new Auths("U,ADMIN")
+        );
 
-    Entity actualVertex1 = get(results, 0);
-    assertEquals(new HashSet(vertex1.getTuples()), new HashSet(actualVertex1.getTuples()));
-    assertEquals(vertex1.getType(), actualVertex1.getType());
-    assertEquals(vertex1.getId(), actualVertex1.getId());
+        assertEquals(1, size(results));
 
-    results.closeQuietly();
-  }
+        Entity actualEdge = get(results, 0);
+        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(edge.getType(), actualEdge.getType());
+        assertEquals(edge.getId(), actualEdge.getId());
+
+        results.closeQuietly();
+    }
+
+    @Test
+    public void testAdjacencies_withLabels_outDirection() throws TableNotFoundException {
+
+        CloseableIterable<Entity> results = graphStore.adjacencies(
+                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.OUT,
+                Collections.singleton("label1"),
+                new Auths("U,ADMIN")
+        );
+
+        assertEquals(1, size(results));
+
+        Entity actualVertex2 = get(results, 0);
+        assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
+        assertEquals(vertex2.getType(), actualVertex2.getType());
+        assertEquals(vertex2.getId(), actualVertex2.getId());
+
+        results.closeQuietly();
+    }
+
+    @Test
+    public void testAdjacencies_withLabels_inDirection() throws TableNotFoundException {
+
+        CloseableIterable<Entity> results = graphStore.adjacencies(
+                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.IN,
+                Collections.singleton("label1"),
+                new Auths("U,ADMIN")
+        );
+
+        assertEquals(1, size(results));
+
+        Entity actualVertex1 = get(results, 0);
+        assertEquals(new HashSet(vertex1.getTuples()), new HashSet(actualVertex1.getTuples()));
+        assertEquals(vertex1.getType(), actualVertex1.getType());
+        assertEquals(vertex1.getId(), actualVertex1.getId());
+
+        results.closeQuietly();
+    }
+
+
+    @Test
+    public void testAdjacencies_noLabels_outDirection() throws TableNotFoundException {
+
+        CloseableIterable<Entity> results = graphStore.adjacencies(
+                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.OUT,
+                new Auths("U,ADMIN")
+        );
+
+        assertEquals(1, size(results));
+
+        Entity actualVertex2 = get(results, 0);
+        assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
+        assertEquals(vertex2.getType(), actualVertex2.getType());
+        assertEquals(vertex2.getId(), actualVertex2.getId());
+
+        results.closeQuietly();
+    }
+
+    @Test
+    public void testAdjacencies_noLabels_inDirection() throws TableNotFoundException {
+
+        CloseableIterable<Entity> results = graphStore.adjacencies(
+                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                Direction.IN,
+                new Auths("U,ADMIN")
+        );
+
+        assertEquals(1, size(results));
+
+        Entity actualVertex1 = get(results, 0);
+        assertEquals(new HashSet(vertex1.getTuples()), new HashSet(actualVertex1.getTuples()));
+        assertEquals(vertex1.getType(), actualVertex1.getType());
+        assertEquals(vertex1.getId(), actualVertex1.getId());
+
+        results.closeQuietly();
+    }
 }

@@ -46,10 +46,10 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 public class EntryIterator extends WrappingIterator {
 
     private TypeRegistry<String> typeRegistry;
-    private SortedKeyValueIterator<Key,Value> sourceItr;
+    private SortedKeyValueIterator<Key, Value> sourceItr;
     private EventWritable writable;
 
-    public void init(SortedKeyValueIterator<Key,Value> source, java.util.Map<String,String> options,
+    public void init(SortedKeyValueIterator<Key, Value> source, java.util.Map<String, String> options,
                      IteratorEnvironment env) throws IOException {
 
         super.init(source, options, env);
@@ -61,12 +61,13 @@ public class EntryIterator extends WrappingIterator {
     /**
      * For each index row in the lastN store, grab the associated getTuples (further down in the tablet) and construct
      * the entry to be returned.
+     *
      * @return
      */
     @Override
     public Value getTopValue() {
 
-        if(hasTop()) {
+        if (hasTop()) {
 
             Key topKey = getTopKey();
             Value topVal = super.getTopValue();
@@ -83,18 +84,18 @@ public class EntryIterator extends WrappingIterator {
                 sourceItr.seek(range, Collections.<ByteSequence>emptyList(), false);
 
                 Collection<Tuple> tuples = new ArrayList<Tuple>();
-                while(sourceItr.hasTop()) {
+                while (sourceItr.hasTop()) {
 
                     Key nextKey = sourceItr.getTopKey();
                     sourceItr.next();
 
-                    if(!nextKey.getColumnFamily().toString().endsWith(entryId)) {
+                    if (!nextKey.getColumnFamily().toString().endsWith(entryId)) {
                         break;
                     }
 
                     String[] keyValueDatatype = nextKey.getColumnQualifier().toString().split(DELIM);
 
-                    if(keyValueDatatype.length == 3) {
+                    if (keyValueDatatype.length == 3) {
 
 
                         Tuple tuple = new Tuple(
@@ -110,7 +111,7 @@ public class EntryIterator extends WrappingIterator {
                 Event entry = new BaseEvent(entryId, timestamp);
                 writable.set(entry);
 
-                if(tuples.size() > 0)
+                if (tuples.size() > 0)
                     entry.putAll(tuples);
 
                 return new Value(serialize(writable));

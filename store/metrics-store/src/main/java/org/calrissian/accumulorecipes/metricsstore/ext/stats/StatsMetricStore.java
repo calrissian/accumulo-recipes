@@ -16,8 +16,8 @@
 package org.calrissian.accumulorecipes.metricsstore.ext.stats;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
 import org.calrissian.mango.collect.CloseableIterable;
 
@@ -26,10 +26,11 @@ import java.util.Date;
 /**
  * An extended metric services which provides additional statistics on data in the store such as min, max, sum, and count.
  */
-public interface StatsMetricStore extends MetricStore{
+public interface StatsMetricStore extends MetricStore {
 
     /**
      * Query metrics back from the store.
+     *
      * @param start
      * @param end
      * @param group
@@ -40,6 +41,6 @@ public interface StatsMetricStore extends MetricStore{
      * @return
      */
     CloseableIterable<Stats> queryStats(Date start, Date end, String group, String type, String name,
-                               MetricTimeUnit timeUnit, Auths auths);
+                                        MetricTimeUnit timeUnit, Auths auths);
 
 }

@@ -36,83 +36,85 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
 
-  private static TypeRegistry<String> registry = LEXI_TYPES;
+    private static TypeRegistry<String> registry = LEXI_TYPES;
 
-  private BatchScanner indexScanner;
-  private EntityShardBuilder shardBuilder;
+    private BatchScanner indexScanner;
+    private EntityShardBuilder shardBuilder;
 
-  private Set<String> shards = new HashSet<String>();
-  private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+    private Set<String> shards = new HashSet<String>();
+    private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
 
-  private Set<String> types;
+    private Set<String> types;
 
-  private Set<Leaf> leaves = new HashSet<Leaf>();
+    private Set<Leaf> leaves = new HashSet<Leaf>();
 
-  public EntityGlobalIndexVisitor(BatchScanner indexScanner, EntityShardBuilder shardBuilder, Set<String> types) {
-    this.indexScanner = indexScanner;
-    this.shardBuilder = shardBuilder;
-    this.types = types;
-  }
+    public EntityGlobalIndexVisitor(BatchScanner indexScanner, EntityShardBuilder shardBuilder, Set<String> types) {
+        this.indexScanner = indexScanner;
+        this.shardBuilder = shardBuilder;
+        this.types = types;
+    }
 
-  @Override
-  public Map<CardinalityKey, Long> getCardinalities() {
-    return cardinalities;
-  }
+    @Override
+    public Map<CardinalityKey, Long> getCardinalities() {
+        return cardinalities;
+    }
 
-  @Override
-  public Set<String> getShards() {
-    return shards;
-  }
+    @Override
+    public Set<String> getShards() {
+        return shards;
+    }
 
-  @Override
-  public void begin(ParentNode parentNode) {}
+    @Override
+    public void begin(ParentNode parentNode) {
+    }
 
-  @Override
-  public void end(ParentNode parentNode) {  }
+    @Override
+    public void end(ParentNode parentNode) {
+    }
 
-  public void exec() {
-    Collection<Range> ranges = new ArrayList<Range>();
-    for(Leaf leaf : leaves) {
+    public void exec() {
+        Collection<Range> ranges = new ArrayList<Range>();
+        for (Leaf leaf : leaves) {
 
-      AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
+            AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
 
-      String alias = registry.getAlias(kvLeaf.getValue());
+            String alias = registry.getAlias(kvLeaf.getValue());
 
-      for (String type : types) {
-        if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
-          if (alias != null)
-            ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
-          else
-            ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey()));
-        } else {
-          try {
-            String normVal = registry.encode(kvLeaf.getValue());
-            ranges.add(exact(type + "_" + INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey()));
-          } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-          }
+            for (String type : types) {
+                if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+                    if (alias != null)
+                        ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
+                    else
+                        ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey()));
+                } else {
+                    try {
+                        String normVal = registry.encode(kvLeaf.getValue());
+                        ranges.add(exact(type + "_" + INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey()));
+                    } catch (TypeEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         }
-      }
+
+        indexScanner.setRanges(ranges);
+
+        for (Map.Entry<Key, Value> entry : indexScanner) {
+
+            CardinalityKey key = new EntityCardinalityKey(entry.getKey());
+            Long cardinality = cardinalities.get(key);
+            if (cardinality == null)
+                cardinality = 0l;
+            long newCardinality = parseLong(new String(entry.getValue().get()));
+            cardinalities.put(key, cardinality + newCardinality);
+            shards.add(entry.getKey().getColumnQualifier().toString());
+        }
+
+        indexScanner.close();
     }
 
-    indexScanner.setRanges(ranges);
-
-    for(Map.Entry<Key,Value> entry : indexScanner) {
-
-      CardinalityKey key = new EntityCardinalityKey(entry.getKey());
-      Long cardinality = cardinalities.get(key);
-      if(cardinality == null)
-        cardinality = 0l;
-      long newCardinality = parseLong(new String(entry.getValue().get()));
-      cardinalities.put(key, cardinality + newCardinality);
-      shards.add(entry.getKey().getColumnQualifier().toString());
+    @Override
+    public void visit(Leaf leaf) {
+        leaves.add(leaf);
     }
-
-    indexScanner.close();
-  }
-
-  @Override
-  public void visit(Leaf leaf) {
-    leaves.add(leaf);
-  }
 }

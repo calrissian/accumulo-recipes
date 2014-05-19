@@ -18,11 +18,10 @@ package org.calrissian.accumulorecipes.metricsstore.ext.stats.impl;
 import com.google.common.base.Function;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.junit.Test;
 
 import java.util.Date;
@@ -96,22 +95,22 @@ public class AccumuloStatsMetricStoreTest {
     }
 
     @Test
-    public void testStatisticAccuracy() throws Exception{
+    public void testStatisticAccuracy() throws Exception {
         AccumuloStatsMetricStore metricStore = new AccumuloStatsMetricStore(getConnector());
 
         Random random = new Random();
 
         List<Long> sampleData = asList(
-                (long)random.nextInt(10000),
-                (long)random.nextInt(10000),
-                (long)random.nextInt(10000),
-                (long)random.nextInt(10000),
-                (long)random.nextInt(10000)
+                (long) random.nextInt(10000),
+                (long) random.nextInt(10000),
+                (long) random.nextInt(10000),
+                (long) random.nextInt(10000),
+                (long) random.nextInt(10000)
         );
 
         //use commons math as a
         SummaryStatistics sumStats = new SummaryStatistics();
-        for (long num :sampleData)
+        for (long num : sampleData)
             sumStats.addValue(num);
 
         final long timestamp = System.currentTimeMillis();

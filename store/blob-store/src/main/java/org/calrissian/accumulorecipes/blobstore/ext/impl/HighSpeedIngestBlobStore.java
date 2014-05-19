@@ -25,7 +25,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
  * is the possibility that data from several storage streams could be intermingled during a write.  This
  * means data flushed from one stream will actually flush data for all streams that are currently opened.
  * In most instances this should not be a problem as the data will be written anyway.
- *
  */
 public class HighSpeedIngestBlobStore extends ExtendedAccumuloBlobStore {
 
@@ -49,23 +48,6 @@ public class HighSpeedIngestBlobStore extends ExtendedAccumuloBlobStore {
     public HighSpeedIngestBlobStore(Connector connector, String tableName, StoreConfig config, int bufferSize) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, tableName, config, bufferSize);
         mainWriter = super.getWriter();
-    }
-
-    /**
-     * Will close all underlying resources
-     * @throws MutationsRejectedException
-     */
-    public void shutdown() throws MutationsRejectedException {
-        mainWriter.close();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected BatchWriter getWriter() throws TableNotFoundException {
-        //Return a batch writer that ignores close calls.
-        return ignoreClose(mainWriter);
     }
 
     /**
@@ -94,5 +76,23 @@ public class HighSpeedIngestBlobStore extends ExtendedAccumuloBlobStore {
                 //ignore close calls;
             }
         };
+    }
+
+    /**
+     * Will close all underlying resources
+     *
+     * @throws MutationsRejectedException
+     */
+    public void shutdown() throws MutationsRejectedException {
+        mainWriter.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected BatchWriter getWriter() throws TableNotFoundException {
+        //Return a batch writer that ignores close calls.
+        return ignoreClose(mainWriter);
     }
 }

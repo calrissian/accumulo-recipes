@@ -48,56 +48,56 @@ import static org.calrissian.accumulorecipes.commons.iterators.support.EventFiel
 
 public abstract class BaseQfdInputFormat<T extends TupleCollection, W extends Settable> extends InputFormatBase<Key, W> {
 
-  protected static void configureScanner(Configuration config, Node query, GlobalIndexVisitor globalInexVisitor) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    protected static void configureScanner(Configuration config, Node query, GlobalIndexVisitor globalInexVisitor) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-    QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor);
-    NodeToJexl nodeToJexl = new NodeToJexl();
-    String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor);
+        NodeToJexl nodeToJexl = new NodeToJexl();
+        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
 
-    Collection<Range> ranges = new ArrayList<Range>();
-    for(String shard : optimizer.getShards())
-      ranges.add(new Range(shard));
+        Collection<Range> ranges = new ArrayList<Range>();
+        for (String shard : optimizer.getShards())
+            ranges.add(new Range(shard));
 
-    setRanges(config, ranges);
+        setRanges(config, ranges);
 
-    IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-    setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
-    setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+        setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
+        setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
-    addIterator(config, setting);
-  }
+        addIterator(config, setting);
+    }
 
-  protected abstract Function<Map.Entry<Key,Value>, T> getTransform(Configuration configuration);
+    protected abstract Function<Map.Entry<Key, Value>, T> getTransform(Configuration configuration);
 
-  protected abstract W getWritable();
+    protected abstract W getWritable();
 
-  @Override
-  public RecordReader<Key, W> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
+    @Override
+    public RecordReader<Key, W> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
 
-    final W sharedWritable = getWritable();
-    final String[] selectFields = context.getConfiguration().getStrings("selectFields");
+        final W sharedWritable = getWritable();
+        final String[] selectFields = context.getConfiguration().getStrings("selectFields");
 
-    Kryo kryo = new Kryo();
-    initializeKryo(kryo);
+        Kryo kryo = new Kryo();
+        initializeKryo(kryo);
 
-    final Function<Map.Entry<Key,Value>, T> xform = getTransform(context.getConfiguration());
+        final Function<Map.Entry<Key, Value>, T> xform = getTransform(context.getConfiguration());
 
-    return new RecordReaderBase<Key, W>() {
-      @Override
-      public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (scannerIterator.hasNext()) {
-          ++numKeysRead;
-          Map.Entry<Key,Value> entry = scannerIterator.next();
-          currentK = currentKey = entry.getKey();
-          sharedWritable.set(xform.apply(entry));
-          currentV =  sharedWritable;
+        return new RecordReaderBase<Key, W>() {
+            @Override
+            public boolean nextKeyValue() throws IOException, InterruptedException {
+                if (scannerIterator.hasNext()) {
+                    ++numKeysRead;
+                    Map.Entry<Key, Value> entry = scannerIterator.next();
+                    currentK = currentKey = entry.getKey();
+                    sharedWritable.set(xform.apply(entry));
+                    currentV = sharedWritable;
 
-          if (log.isTraceEnabled())
-            log.trace("Processing key/value pair: " + formatEntry(entry, true));
-          return true;
-        }
-        return false;
-      }
-    };
-  }
+                    if (log.isTraceEnabled())
+                        log.trace("Processing key/value pair: " + formatEntry(entry, true));
+                    return true;
+                }
+                return false;
+            }
+        };
+    }
 }

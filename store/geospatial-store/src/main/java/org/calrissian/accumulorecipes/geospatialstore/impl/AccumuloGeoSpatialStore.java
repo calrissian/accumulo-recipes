@@ -49,23 +49,35 @@ import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableI
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
-public class AccumuloGeoSpatialStore implements GeoSpatialStore{
+public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
     public static final String DEFAULT_TABLE_NAME = "geoStore";
     public static final String DELIM = "\0";
+    public static Function<Map.Entry<Key, Value>, Event> xform = new Function<Map.Entry<Key, Value>, Event>() {
+        @Override
+        public Event apply(Map.Entry<Key, Value> keyValueEntry) {
+
+            String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), DELIM);
+            Event entry = new BaseEvent(cfParts[0], Long.parseLong(cfParts[1]));
+            try {
+                Map<Key, Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+                for (Map.Entry<Key, Value> curEntry : map.entrySet()) {
+                    String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
+                    entry.put(new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), curEntry.getKey().getColumnVisibility().toString()));
+                }
+                return entry;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
     public static final String DELIM_ONE = "\1";
     public static final String PARTITION_DELIM = "_";
-
-    private int numPartitions = 50;
-
-    private final QuadTreeHelper helper = new QuadTreeHelper();
-
-    private double maxPrecision = .002;
-
     private static final TypeRegistry registry = LEXI_TYPES;
-
+    private final QuadTreeHelper helper = new QuadTreeHelper();
     private final BatchWriter writer;
-
+    private int numPartitions = 50;
+    private double maxPrecision = .002;
     private Connector connector;
     private StoreConfig config;
     private String tableName;
@@ -82,7 +94,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
         this.tableName = tableName;
 
 
-        if(!connector.tableOperations().exists(tableName))
+        if (!connector.tableOperations().exists(tableName))
             connector.tableOperations().create(tableName);
 
         writer = connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
@@ -123,13 +135,13 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
     @Override
     public void put(Iterable<Event> entries, Point2D.Double location) {
-        for(Event entry : entries) {
+        for (Event entry : entries) {
 
             int partition = abs(entry.getId().hashCode() % numPartitions);
 
             Mutation m = new Mutation(buildRow(partition, location));
 
-            for(Tuple tuple : entry.getTuples()) {
+            for (Tuple tuple : entry.getTuples()) {
                 try {
                     // put in the forward mutation
                     m.put(new Text(buildId(entry.getId(), entry.getTimestamp(), location)),
@@ -144,7 +156,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
 
             try {
 
-                if(m.size() > 0) {
+                if (m.size() > 0) {
                     writer.addMutation(m);
                     writer.flush();
                 }
@@ -156,25 +168,6 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
         }
     }
 
-    public static Function<Map.Entry<Key,Value>, Event> xform = new Function<Map.Entry<Key, Value>, Event>() {
-        @Override
-        public Event apply(Map.Entry<Key, Value> keyValueEntry) {
-
-            String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), DELIM);
-            Event entry = new BaseEvent(cfParts[0], Long.parseLong(cfParts[1]));
-            try {
-                Map<Key,Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
-                for(Map.Entry<Key,Value> curEntry : map.entrySet()) {
-                    String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
-                    entry.put(new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), curEntry.getKey().getColumnVisibility().toString()));
-                }
-                return entry;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    };
-
     @Override
     public CloseableIterable<Event> get(Rectangle2D.Double location, Auths auths) {
         Collection<QuadTreeScanRange> ranges =
@@ -184,8 +177,8 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore{
             BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), config.getMaxQueryThreads());
 
             Collection<Range> theRanges = new ArrayList<Range>();
-            for(QuadTreeScanRange range : ranges) {
-                for(int i = 0; i < numPartitions; i++)
+            for (QuadTreeScanRange range : ranges) {
+                for (int i = 0; i < numPartitions; i++)
                     theRanges.add(new Range(buildRow(i, range.getMinimum()), buildRow(i, range.getMaximum())));
             }
 

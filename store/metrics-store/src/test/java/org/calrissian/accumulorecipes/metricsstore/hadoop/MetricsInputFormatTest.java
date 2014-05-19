@@ -9,8 +9,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.impl.AccumuloMetricStore;
 import org.junit.Test;
 
@@ -58,6 +58,7 @@ public class MetricsInputFormatTest {
     public static class TestMapper extends Mapper<Key, MetricWritable, Text, Text> {
 
         public static Metric metric;
+
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
             super.setup(context);

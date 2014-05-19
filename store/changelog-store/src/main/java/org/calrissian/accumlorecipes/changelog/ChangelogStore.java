@@ -31,12 +31,14 @@ public interface ChangelogStore {
 
     /**
      * Put a changeset into the changeset store.
+     *
      * @param changes
      */
     void put(Iterable<Event> changes);
 
     /**
      * Get a Merkle tree containing hashes of each of the buckets
+     *
      * @param start
      * @param stop
      * @return
@@ -45,6 +47,7 @@ public interface ChangelogStore {
 
     /**
      * Get a Merkle tree containing hashes of each of the buckets with the given dimensions
+     *
      * @param start
      * @param stop
      * @return
@@ -53,7 +56,6 @@ public interface ChangelogStore {
 
     /**
      * Get changesets living inside of the given buckets
-     *
      *
      * @param buckets dates representing time increments (i.e. 15 minutes)
      * @return

@@ -21,6 +21,7 @@ public interface RangeHelper<T extends Comparable<T>> {
 
     /**
      * Simply verifies that the range is valid.
+     *
      * @param range
      * @return
      */
@@ -28,9 +29,10 @@ public interface RangeHelper<T extends Comparable<T>> {
 
     /**
      * Returns the distance between the start and end elements.
-     *
+     * <p/>
      * TODO.  The return value of this function is sort of a hack. This value needs
      * to be able to be compared and complemented, which this class allows.
+     *
      * @param range
      * @return
      */
@@ -38,6 +40,7 @@ public interface RangeHelper<T extends Comparable<T>> {
 
     /**
      * Encodes a value into a string that can be lexigraphically sorted.
+     *
      * @param value
      * @return
      */
@@ -45,6 +48,7 @@ public interface RangeHelper<T extends Comparable<T>> {
 
     /**
      * Encodes the values in a string that can be lexigraphically sorted in reverse order.
+     *
      * @param value
      * @return
      */
@@ -52,6 +56,7 @@ public interface RangeHelper<T extends Comparable<T>> {
 
     /**
      * Decodes the lexigraphical representation of the value.
+     *
      * @param value
      * @return
      */
@@ -59,6 +64,7 @@ public interface RangeHelper<T extends Comparable<T>> {
 
     /**
      * Decodes the complements lexigraphical representation of the value.
+     *
      * @param value
      * @return
      */

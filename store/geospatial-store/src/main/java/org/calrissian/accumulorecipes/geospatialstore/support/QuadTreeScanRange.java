@@ -23,13 +23,13 @@ public class QuadTreeScanRange {
     private String minimum;
     private String maximum;
 
-    private static String getNextId(BoundingBox quad) {
-        return quad.getId().substring(0, quad.getId().length() - 1) + (char) (quad.getId().charAt(quad.getId().length() - 1) + 1);
-    }
-
     public QuadTreeScanRange(BoundingBox quad) {
         this.minimum = quad.getId();
         this.maximum = getNextId(quad);
+    }
+
+    private static String getNextId(BoundingBox quad) {
+        return quad.getId().substring(0, quad.getId().length() - 1) + (char) (quad.getId().charAt(quad.getId().length() - 1) + 1);
     }
 
     public boolean contains(BoundingBox quad) {

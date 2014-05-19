@@ -39,6 +39,16 @@ public class OverlappingScanFilter extends Filter {
 
     private String queryUpperBound = "";
 
+    /**
+     * A convenience method for setting the filter condition for the iterator.
+     *
+     * @param iterConfig    Iterator settings to configure
+     * @param queryLowBound The normalized representation of the criteria low bound for a range.
+     */
+    public static void setQueryUpperBound(IteratorSetting iterConfig, String queryLowBound) {
+        iterConfig.addOption(UPPER_BOUND_OPTION, queryLowBound);
+    }
+
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         super.init(source, options, env);
@@ -52,17 +62,5 @@ public class OverlappingScanFilter extends Filter {
     public boolean accept(Key key, Value value) {
         String vals[] = splitPreserveAllTokens(key.getRow().toString(), DELIM);
         return vals.length == 3 && vals[2].compareTo(queryUpperBound) > 0;
-    }
-
-    /**
-     * A convenience method for setting the filter condition for the iterator.
-     *
-     * @param iterConfig
-     *          Iterator settings to configure
-     * @param queryLowBound
-     *          The normalized representation of the criteria low bound for a range.
-     */
-    public static void setQueryUpperBound(IteratorSetting iterConfig, String queryLowBound) {
-        iterConfig.addOption(UPPER_BOUND_OPTION, queryLowBound);
     }
 }

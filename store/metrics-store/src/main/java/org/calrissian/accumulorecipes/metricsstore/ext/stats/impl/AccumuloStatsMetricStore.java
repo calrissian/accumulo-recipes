@@ -21,8 +21,8 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.StatsMetricStore;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.domain.Stats;
 import org.calrissian.accumulorecipes.metricsstore.ext.stats.iterator.StatsCombiner;
@@ -39,21 +39,21 @@ import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
  * but are available immediately to criteria.
- *
+ * <p/>
  * Format of the table:
  * Rowid                CF                  CQ                  Value
  * group\u0000revTS     'MINUTES'           type\u0000name      value
  * group\u0000revTS     'HOURS'             type\u0000name      value
  * group\u0000revTS     'DAYS'              type\u0000name      value
  * group\u0000revTS     'MONTHS'            type\u0000name      value
- *
+ * <p/>
  * The table is configured to use a StatsCombiner against each of the columns specified.
  */
 public class AccumuloStatsMetricStore extends AccumuloMetricStore implements StatsMetricStore {
@@ -78,7 +78,7 @@ public class AccumuloStatsMetricStore extends AccumuloMetricStore implements Sta
         for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
             columns.add(new Column(timeUnit.toString()));
 
-        IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", StatsCombiner.class);
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", StatsCombiner.class);
         StatsCombiner.setColumns(setting, columns);
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
     }

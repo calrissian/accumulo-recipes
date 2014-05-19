@@ -29,9 +29,11 @@ import java.util.Map;
 import static com.google.common.collect.Maps.immutableEntry;
 
 
-public class EventGroupingIterator implements SortedKeyValueIterator<Key,Value> {
+public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value> {
 
-    private SortedKeyValueIterator<Key,Value> sourceIter;
+    List<Key> keys = new ArrayList<Key>();
+    List<Value> values = new ArrayList<Value>();
+    private SortedKeyValueIterator<Key, Value> sourceIter;
     private Key topKey = null;
     private Value topValue = null;
 
@@ -44,8 +46,8 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key,Value> 
     }
 
     // decode a bunch of key value pairs that have been encoded into a single value
-    public static final List<Map.Entry<Key,Value>> decodeRow(Key rowKey, Value rowValue) throws IOException {
-        List<Map.Entry<Key,Value>> map = new ArrayList<Map.Entry<Key, Value>>();
+    public static final List<Map.Entry<Key, Value>> decodeRow(Key rowKey, Value rowValue) throws IOException {
+        List<Map.Entry<Key, Value>> map = new ArrayList<Map.Entry<Key, Value>>();
         ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
         DataInputStream din = new DataInputStream(in);
         int numKeys = din.readInt();
@@ -123,9 +125,6 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key,Value> 
         return new Value(out.toByteArray());
     }
 
-    List<Key> keys = new ArrayList<Key>();
-    List<Value> values = new ArrayList<Value>();
-
     private void prepKeys() throws IOException {
         if (topKey != null)
             return;
@@ -153,7 +152,7 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key,Value> 
     }
 
     @Override
-    public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
+    public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         if (sourceIter != null)
             return new EventGroupingIterator(sourceIter.deepCopy(env));
         return new EventGroupingIterator();
@@ -175,7 +174,7 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key,Value> 
     }
 
     @Override
-    public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
+    public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         sourceIter = source;
     }
 

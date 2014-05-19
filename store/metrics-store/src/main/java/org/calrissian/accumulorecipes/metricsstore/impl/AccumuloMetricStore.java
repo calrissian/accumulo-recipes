@@ -27,9 +27,9 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.MetricStore;
 import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.metricsstore.support.MetricTransform;
 import org.calrissian.mango.collect.CloseableIterable;
 
@@ -45,23 +45,23 @@ import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
  * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
  * but are available immediately to criteria.
- *
+ * <p/>
  * Format of the table:
  * Rowid                CF                  CQ                  Value
  * group\u0000revTS     'MINUTES'           type\u0000name      value
  * group\u0000revTS     'HOURS'             type\u0000name      value
  * group\u0000revTS     'DAYS'              type\u0000name      value
  * group\u0000revTS     'MONTHS'            type\u0000name      value
- *
+ * <p/>
  * The table is configured to use a SummingCombiner against each of the columns specified.
  */
 public class AccumuloMetricStore implements MetricStore {
@@ -96,22 +96,23 @@ public class AccumuloMetricStore implements MetricStore {
         this.typeWriter = this.connector.createBatchWriter(tableName + REVERSE_SUFFIX, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
-    private void createTable(String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        if(!connector.tableOperations().exists(tableName)) {
-            //Create table without versioning iterator.
-            connector.tableOperations().create(tableName, false);
-            configureTable(connector, tableName);
-        }
-    }
-
     public static String combine(String... items) {
         if (items == null)
             return null;
         return join(items, DELIM);
     }
 
+    private void createTable(String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        if (!connector.tableOperations().exists(tableName)) {
+            //Create table without versioning iterator.
+            connector.tableOperations().create(tableName, false);
+            configureTable(connector, tableName);
+        }
+    }
+
     /**
      * Utility method to update the correct iterators to the table.
+     *
      * @param connector
      * @throws AccumuloSecurityException
      * @throws AccumuloException
@@ -123,7 +124,7 @@ public class AccumuloMetricStore implements MetricStore {
         for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
             columns.add(new Column(timeUnit.toString()));
 
-        IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
         SummingCombiner.setColumns(setting, columns);
         SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
         connector.tableOperations().attachIterator(tableName, setting, allOf(IteratorScope.class));
@@ -145,8 +146,8 @@ public class AccumuloMetricStore implements MetricStore {
             //timestamp.  Which is used to provide the latest results first.
             BatchScanner scanner = connector.createBatchScanner(tableName + REVERSE_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
             scanner.setRanges(singleton(new Range(
-                combine(type, generateTimestamp(end.getTime(), timeUnit)),
-                combine(type, generateTimestamp(start.getTime(), timeUnit))
+                    combine(type, generateTimestamp(end.getTime(), timeUnit)),
+                    combine(type, generateTimestamp(start.getTime(), timeUnit))
             )));
 
             //If both type and name are here then simply fetch the column
@@ -173,6 +174,7 @@ public class AccumuloMetricStore implements MetricStore {
 
     /**
      * Will close all underlying resources
+     *
      * @throws MutationsRejectedException
      */
     public void shutdown() throws MutationsRejectedException {
@@ -209,7 +211,6 @@ public class AccumuloMetricStore implements MetricStore {
                     Mutation type_mutation = new Mutation(
                             combine(type, timestamp)
                     );
-
 
 
                     //CF: Timeunit

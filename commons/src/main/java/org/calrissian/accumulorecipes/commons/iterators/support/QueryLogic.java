@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
  *          down the optimized criteria path which uses the intersecting iterators on the shard
  *          table.
  *
- *  <b>Boolean expression</b>        
+ *  <b>Boolean expression</b>
  *  field == 'foo' - For fielded queries, those that contain a field, an operator, and a literal (string or number),
  *                   the criteria is parsed and the set of eventFields in the criteria that are indexed is determined by
  *                   querying the metadata table. Depending on the conjunctions in the criteria (or, and, not) and the
@@ -60,15 +60,14 @@ import org.apache.log4j.Logger;
  *  3. An unsupported operator exists in the criteria
  *
  * </pre>
- *
  */
 public class QueryLogic extends AbstractQueryLogic {
 
-  protected static Logger log = Logger.getLogger(QueryLogic.class);
+    protected static Logger log = Logger.getLogger(QueryLogic.class);
 
-  public QueryLogic() {
-    super();
-  }
+    public QueryLogic() {
+        super();
+    }
 
 //  @Override
 //  protected RangeCalculator getTermIndexInformation(Connector c, Authorizations auths, Multimap<String,Normalizer> indexedTerms,

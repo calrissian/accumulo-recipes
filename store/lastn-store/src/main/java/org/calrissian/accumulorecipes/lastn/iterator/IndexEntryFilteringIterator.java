@@ -44,7 +44,7 @@ public class IndexEntryFilteringIterator extends Filter {
     }
 
     @Override
-    public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
+    public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         IndexEntryFilteringIterator copy = (IndexEntryFilteringIterator) super.deepCopy(env);
         copy.currentIndex = currentIndex;
         copy.previousEvent = previousEvent;
@@ -57,6 +57,7 @@ public class IndexEntryFilteringIterator extends Filter {
     /**
      * Makes sure only those rows with an index row are kept around. The versioning iterator should have run already
      * and evicted older index rows.
+     *
      * @param key
      * @param value
      * @return
@@ -66,9 +67,9 @@ public class IndexEntryFilteringIterator extends Filter {
 
         try {
             // first find out if we are inside of an index row
-            if(key.getColumnFamily().toString().equals(DELIM + "INDEX")) {
+            if (key.getColumnFamily().toString().equals(DELIM + "INDEX")) {
 
-                if(!key.getRow().toString().equals(currentIndex)) {
+                if (!key.getRow().toString().equals(currentIndex)) {
                     currentIndex = key.getRow().toString();
                     uuidSet = new HashSet<String>();
                 }
@@ -84,7 +85,7 @@ public class IndexEntryFilteringIterator extends Filter {
                 String uuid = key.getColumnFamily().toString().replace(DELIM_END, "");
                 String hash = new String(value.get());
 
-                if(!uuidSet.contains(uuid + DELIM + hash)) {
+                if (!uuidSet.contains(uuid + DELIM + hash)) {
                     return false;
                 }
 
@@ -93,7 +94,7 @@ public class IndexEntryFilteringIterator extends Filter {
                 // here we want to make sure that any duplicate events added are filtered out (this is possible simply
                 // because the maxVersions > 1)
 
-                if(previousEvent != null && previousEvent.equals(key.getRow() + DELIM + uuid + DELIM + hash
+                if (previousEvent != null && previousEvent.equals(key.getRow() + DELIM + uuid + DELIM + hash
                         + DELIM + keyValue[0] + DELIM + keyValue[1])) {
                     return false;
                 }
@@ -102,7 +103,7 @@ public class IndexEntryFilteringIterator extends Filter {
                         + keyValue[0] + DELIM + keyValue[1];
 
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
 
             return true;
         }

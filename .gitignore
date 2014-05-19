@@ -1,4 +1,36 @@
-target/
+*.class
+
+# Package Files #
 *.jar
+*.war
+*.ear
+
+# IntelliJ
 *.iml
 .idea/
+*.iws
+*.ipr
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Maven
+target/
+**/pom.xml.bak
+
+# Mac
+.DS_Store
+
+# Extra
+bin/
+bin-groovy/
+build/
+out/
+.svn/
+*/.svn
+.gradle
+MANIFEST.MF
+.clover
+

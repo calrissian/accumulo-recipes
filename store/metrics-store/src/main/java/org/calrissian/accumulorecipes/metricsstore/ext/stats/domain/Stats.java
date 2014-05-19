@@ -130,7 +130,7 @@ public class Stats {
         if (count < 1)
             return 0;
 
-        return ((double)sum) / count;
+        return ((double) sum) / count;
     }
 
     /**
@@ -151,7 +151,7 @@ public class Stats {
             if (count < 2)
                 return 0;
 
-            return (double) sumSquare / (count - 1) - getMean() * (((double)sum) / (count - 1));
+            return (double) sumSquare / (count - 1) - getMean() * (((double) sum) / (count - 1));
         } else {
             if (count < 1)
                 return 0;

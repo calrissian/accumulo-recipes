@@ -28,7 +28,7 @@ public class ShardSplitter {
 
     public static void main(String args[]) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-        if(args.length != 7) {
+        if (args.length != 7) {
             System.out.println("Usage: " + ShardSplitter.class.getName() + "<zookeepers> <instance> <username> <password> <tableName> <start day: yyyy-mm-dd> <stop day: yyyy-mm-dd>");
             System.exit(1);
         }

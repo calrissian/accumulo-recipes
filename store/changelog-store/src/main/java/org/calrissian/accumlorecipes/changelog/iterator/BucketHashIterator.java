@@ -43,13 +43,15 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class BucketHashIterator extends WrappingIterator {
 
-    private TypeRegistry<String> typeRegistry;
-
-    protected  String currentBucket;
+    protected String currentBucket;
     protected List<String> hashes;
-
     protected Key retKey;
     protected Value val;
+    private TypeRegistry<String> typeRegistry;
+
+    public static void setBucketSize(IteratorSetting is, BucketSize bucketSize) {
+        is.addOption("bucketSize", bucketSize.name());
+    }
 
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env)
@@ -64,7 +66,6 @@ public class BucketHashIterator extends WrappingIterator {
     public boolean hasTop() {
         return val != null || super.hasTop();
     }
-
 
     @Override
     public void next() throws IOException {
@@ -95,16 +96,16 @@ public class BucketHashIterator extends WrappingIterator {
         String nowBucket = currentBucket;
         try {
 
-            while(super.hasTop()) {
+            while (super.hasTop()) {
 
                 Key topKey = super.getTopKey();
                 Value value = super.getTopValue();
 
-                if(currentBucket == null) {
+                if (currentBucket == null) {
                     currentBucket = topKey.getRow().toString();
                     nowBucket = currentBucket;
                 }
-                if(!topKey.getRow().toString().equals(currentBucket)) {
+                if (!topKey.getRow().toString().equals(currentBucket)) {
                     currentBucket = topKey.getRow().toString();
                     break;
                 }
@@ -115,7 +116,7 @@ public class BucketHashIterator extends WrappingIterator {
                 hashes.add(new String(hashEntry(entry, typeRegistry)));
             }
 
-            if(hashes.size() > 0) {
+            if (hashes.size() > 0) {
                 val = new Value(md5Hex(join(hashes, ",")).getBytes());
                 retKey = new Key(new Text(nowBucket));
             }
@@ -123,10 +124,5 @@ public class BucketHashIterator extends WrappingIterator {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-    public static void setBucketSize(IteratorSetting is, BucketSize bucketSize) {
-        is.addOption("bucketSize", bucketSize.name());
     }
 }

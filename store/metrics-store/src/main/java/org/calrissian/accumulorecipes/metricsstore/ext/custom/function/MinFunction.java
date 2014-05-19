@@ -39,7 +39,7 @@ public class MinFunction implements MetricFunction<Long> {
      */
     @Override
     public void update(long value) {
-        min =  min(min, value);
+        min = min(min, value);
     }
 
     /**

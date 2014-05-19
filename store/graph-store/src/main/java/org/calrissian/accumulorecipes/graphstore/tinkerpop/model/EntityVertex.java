@@ -27,27 +27,27 @@ import org.calrissian.mango.domain.Entity;
 
 public class EntityVertex extends EntityElement implements Vertex {
 
-  public EntityVertex(Entity entity, GraphStore graphStore, Auths auths) {
-    super(entity, graphStore, auths);
-  }
+    public EntityVertex(Entity entity, GraphStore graphStore, Auths auths) {
+        super(entity, graphStore, auths);
+    }
 
-  @Override
-  public Iterable<Edge> getEdges(Direction direction, String... strings) {
-    return new EntityVertexQuery(this, graphStore, auths).direction(direction).labels(strings).edges();
-  }
+    @Override
+    public Iterable<Edge> getEdges(Direction direction, String... strings) {
+        return new EntityVertexQuery(this, graphStore, auths).direction(direction).labels(strings).edges();
+    }
 
-  @Override
-  public Iterable<Vertex> getVertices(Direction direction, String... strings) {
-    return new EntityVertexQuery(this, graphStore, auths).direction(direction).labels(strings).vertices();
-  }
+    @Override
+    public Iterable<Vertex> getVertices(Direction direction, String... strings) {
+        return new EntityVertexQuery(this, graphStore, auths).direction(direction).labels(strings).vertices();
+    }
 
-  @Override
-  public VertexQuery query() {
-    return new EntityVertexQuery(this, graphStore, auths);
-  }
+    @Override
+    public VertexQuery query() {
+        return new EntityVertexQuery(this, graphStore, auths);
+    }
 
-  @Override
-  public Edge addEdge(String s, Vertex vertex) {
-    throw new UnsupportedOperationException("The calrissian entity graph is immutable. Use the EntityGraphStore to modify the graph");
-  }
+    @Override
+    public Edge addEdge(String s, Vertex vertex) {
+        throw new UnsupportedOperationException("The calrissian entity graph is immutable. Use the EntityGraphStore to modify the graph");
+    }
 }

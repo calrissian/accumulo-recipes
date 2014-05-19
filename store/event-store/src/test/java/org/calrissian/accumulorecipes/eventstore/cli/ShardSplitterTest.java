@@ -43,19 +43,19 @@ public class ShardSplitterTest {
         Connector connector = instance.getConnector("root", "secret".getBytes());
         connector.tableOperations().create("event_shard");
 
-        ShardSplitter.main(new String[] {
-            mac.getZooKeepers(),
-            mac.getInstanceName(),
-            "root",
-            "secret",
-            "event_shard",
-            "1969-01-01",
-            "1969-01-01"
+        ShardSplitter.main(new String[]{
+                mac.getZooKeepers(),
+                mac.getInstanceName(),
+                "root",
+                "secret",
+                "event_shard",
+                "1969-01-01",
+                "1969-01-01"
         });
 
         assertEquals(DEFAULT_PARTITION_SIZE, connector.tableOperations().getSplits("event_shard").size());
 
-        ShardSplitter.main(new String[] {
+        ShardSplitter.main(new String[]{
                 mac.getZooKeepers(),
                 mac.getInstanceName(),
                 "root",
@@ -68,7 +68,6 @@ public class ShardSplitterTest {
         System.out.println(connector.tableOperations().getSplits("event_shard"));
 
         assertEquals(24 * DEFAULT_PARTITION_SIZE, connector.tableOperations().getSplits("event_shard").size());
-
 
 
         mac.stop();

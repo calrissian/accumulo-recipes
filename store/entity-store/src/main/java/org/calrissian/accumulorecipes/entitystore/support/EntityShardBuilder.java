@@ -27,32 +27,32 @@ import static java.lang.String.format;
 
 public class EntityShardBuilder implements ShardBuilder<Entity> {
 
-  private int partitionSize;
+    private int partitionSize;
 
-  public EntityShardBuilder(int partitionSize) {
-    this.partitionSize = partitionSize;
-  }
-
-  public String buildShard(String entityType, String entityId) {
-    int partition = Math.abs(entityId.hashCode() % partitionSize);
-    return buildShard(entityType, partition);
-  }
-
-  public String buildShard(String entityType, int partition) {
-    return format("%s_%" + Integer.toString(partitionSize).length() + "d", entityType, partition);
-  }
-
-  public Set<Text> buildShardsForTypes(Collection<String> types) {
-    Set<Text> ret = new HashSet<Text>();
-    for(int i = 0; i < partitionSize; i++) {
-      for(String type : types)
-        ret.add(new Text(buildShard(type, i)));
+    public EntityShardBuilder(int partitionSize) {
+        this.partitionSize = partitionSize;
     }
-    return ret;
-  }
 
-  @Override
-  public String buildShard(Entity item) {
-    return buildShard(item.getType(), item.getId());
-  }
+    public String buildShard(String entityType, String entityId) {
+        int partition = Math.abs(entityId.hashCode() % partitionSize);
+        return buildShard(entityType, partition);
+    }
+
+    public String buildShard(String entityType, int partition) {
+        return format("%s_%" + Integer.toString(partitionSize).length() + "d", entityType, partition);
+    }
+
+    public Set<Text> buildShardsForTypes(Collection<String> types) {
+        Set<Text> ret = new HashSet<Text>();
+        for (int i = 0; i < partitionSize; i++) {
+            for (String type : types)
+                ret.add(new Text(buildShard(type, i)));
+        }
+        return ret;
+    }
+
+    @Override
+    public String buildShard(Entity item) {
+        return buildShard(item.getType(), item.getId());
+    }
 }

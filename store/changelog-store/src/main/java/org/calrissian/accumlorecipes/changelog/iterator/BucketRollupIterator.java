@@ -37,11 +37,16 @@ public class BucketRollupIterator extends WrappingIterator {
 
     protected BucketSize bucketSize = BucketSize.FIVE_MINS;
 
+    public static void setBucketSize(IteratorSetting is, BucketSize bucketSize) {
+
+        is.addOption("bucketSize", bucketSize.name());
+    }
+
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         super.init(source, options, env);
 
-        if(options.containsKey("bucketSize")) {
+        if (options.containsKey("bucketSize")) {
             bucketSize = BucketSize.valueOf(options.get("bucketSize"));
         }
     }
@@ -67,7 +72,7 @@ public class BucketRollupIterator extends WrappingIterator {
 
         long timestamp = reverseTimestampToNormalTime(Long.parseLong(topKey.getRow().toString()));
 
-        Key retKey =  new Key(new Text(truncatedReverseTimestamp(timestamp, bucketSize).toString()),
+        Key retKey = new Key(new Text(truncatedReverseTimestamp(timestamp, bucketSize).toString()),
                 topKey.getColumnFamily(), topKey.getColumnQualifier(),
                 new Text(topKey.getColumnVisibility().toString()), topKey.getTimestamp());
 
@@ -77,10 +82,5 @@ public class BucketRollupIterator extends WrappingIterator {
     @Override
     public Value getTopValue() {
         return super.getTopValue();
-    }
-
-    public static void setBucketSize(IteratorSetting is, BucketSize bucketSize) {
-
-        is.addOption("bucketSize", bucketSize.name());
     }
 }

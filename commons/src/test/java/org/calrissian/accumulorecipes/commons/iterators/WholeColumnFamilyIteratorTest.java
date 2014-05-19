@@ -21,11 +21,9 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,8 +51,8 @@ public class WholeColumnFamilyIteratorTest {
         Scanner scanner = buildScanner(10);
 
         assertEquals(1, Iterables.size(scanner));
-        for(Map.Entry<Key,Value> entry : scanner) {
-            Map<Key,Value> items = WholeColumnFamilyIterator.decodeRow(entry.getKey(), entry.getValue());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            Map<Key, Value> items = WholeColumnFamilyIterator.decodeRow(entry.getKey(), entry.getValue());
             assertEquals(500, Iterables.size(items.entrySet()));
         }
     }
@@ -67,8 +65,8 @@ public class WholeColumnFamilyIteratorTest {
         Scanner scanner = buildScanner(10);
 
         assertEquals(50, Iterables.size(scanner));
-        for(Map.Entry<Key,Value> entry : scanner) {
-            Map<Key,Value> items = WholeColumnFamilyIterator.decodeRow(entry.getKey(), entry.getValue());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            Map<Key, Value> items = WholeColumnFamilyIterator.decodeRow(entry.getKey(), entry.getValue());
             assertEquals(500, Iterables.size(items.entrySet()));
         }
     }
@@ -78,9 +76,9 @@ public class WholeColumnFamilyIteratorTest {
 
         BatchWriter writer = connector.createBatchWriter("test", 1000, 1000, 1);
 
-        for(int j = 0; j < numRows; j++) {
+        for (int j = 0; j < numRows; j++) {
             Mutation m = new Mutation(Integer.toString(j));
-            for(int i = 0; i < entriesPerRow; i++)
+            for (int i = 0; i < entriesPerRow; i++)
                 m.put(new Text(Integer.toString(j)), new Text(String.valueOf(i)), new Value("".getBytes()));
 
             writer.addMutation(m);
@@ -96,9 +94,6 @@ public class WholeColumnFamilyIteratorTest {
 
         return scanner;
     }
-
-
-
 
 
 }

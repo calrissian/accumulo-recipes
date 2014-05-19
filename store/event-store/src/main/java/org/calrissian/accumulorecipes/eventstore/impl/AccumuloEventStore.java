@@ -55,136 +55,134 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
  */
 public class AccumuloEventStore implements EventStore {
 
-  public static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
-  public static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
+    public static final String DEFAULT_IDX_TABLE_NAME = "eventStore_index";
+    public static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
 
-  public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
-  public static final EventShardBuilder DEFAULT_SHARD_BUILDER = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
+    public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+    public static final EventShardBuilder DEFAULT_SHARD_BUILDER = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
+    private final EventShardBuilder shardBuilder = DEFAULT_SHARD_BUILDER;
+    private final TypeRegistry<String> typeRegistry = LEXI_TYPES;
+    private final EventQfdHelper helper;
 
-  private final TypeRegistry<String> typeRegistry = LEXI_TYPES;
-  private final EventQfdHelper helper;
-
-  private final EventShardBuilder shardBuilder = DEFAULT_SHARD_BUILDER;
-
-  public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
-  }
-
-  public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    checkNotNull(connector);
-    checkNotNull(indexTable);
-    checkNotNull(shardTable);
-    checkNotNull(config);
-
-    KeyValueIndex<Event> keyValueIndex = new EventKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
-
-    helper = new EventQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
-  }
-
-
-  /**
-   * Free up any resources used by the store.
-   *
-   * @throws MutationsRejectedException
-   */
-  public void shutdown() throws MutationsRejectedException {
-    helper.shutdown();
-  }
-
-  /**
-   * Events get save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
-   * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
-   *
-   * @param events
-   * @throws Exception
-   */
-  @Override
-  public void save(Iterable<Event> events) {
-    helper.save(events);
-  }
-
-  /**
-   * Shard ids for which to scan are generated from the given start and end time. The given query specifies
-   * which events to return. It is propagated all the way down to the iterators so that the query is run in parallel
-   * on each tablet that needs to be scanned.
-   */
-  @Override
-  public CloseableIterable<Event> query(Date start, Date end, Node query, final Set<String> selectFields, Auths auths) {
-    checkNotNull(start);
-    checkNotNull(end);
-    checkNotNull(query);
-    checkNotNull(auths);
-
-    BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
-    GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
-
-    CloseableIterable<Event> events = helper.query(globalIndexVisitor, query, helper.buildQueryXform(selectFields), auths);
-    indexScanner.close();
-
-    return events;
-  }
-
-  /**
-   * This method will batch get a bunch of events by uuid (and optionally timestamp). If another store is used to
-   * index into events in this store in a specially designed way (i.e. getting the last-n events, etc...) then
-   * the most optimal way to store the index would be the UUID and the timestamp. However, if all that is known
-   * about an event is the uuid, this method will do the extra fetch of the timestamp from the index table.
-   */
-  @Override
-  public CloseableIterable<Event> get(Collection<EventIndex> uuids, Set<String> selectFields, Auths auths) {
-    checkNotNull(uuids);
-    checkNotNull(auths);
-    try {
-
-      BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
-
-      Collection<Range> ranges = new LinkedList<Range>();
-      for (EventIndex uuid : uuids) {
-        if (uuid.getTimestamp() == null)
-          ranges.add(new Range(INDEX_V + "_string__" + uuid.getUuid()));
-      }
-
-      scanner.setRanges(ranges);
-      scanner.fetchColumnFamily(new Text("@id"));
-
-      Iterator<Map.Entry<Key, Value>> itr = scanner.iterator();
-
-      /**
-       * Should just be one index for the shard containing the uuid
-       */
-      BatchScanner eventScanner = helper.buildShardScanner(auths.getAuths());
-      Collection<Range> eventRanges = new LinkedList<Range>();
-      while (itr.hasNext()) {
-        Map.Entry<Key, Value> entry = itr.next();
-        String shardId = entry.getKey().getColumnQualifier().toString();
-        String[] rowParts = splitByWholeSeparatorPreserveAllTokens(entry.getKey().getRow().toString(), "__");
-        eventRanges.add(Range.prefix(shardId, rowParts[1]));
-      }
-
-      scanner.close();
-      for (EventIndex curIndex : uuids) {
-        if (curIndex.getTimestamp() != null) {
-          String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getUuid(), curIndex.getTimestamp()));
-          ranges.add(Range.prefix(shardId, curIndex.getUuid()));
-        }
-      }
-
-      eventScanner.setRanges(eventRanges);
-
-      IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-      eventScanner.addScanIterator(iteratorSetting);
-
-      if (selectFields != null && selectFields.size() > 0) {
-        iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-        EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
-        eventScanner.addScanIterator(iteratorSetting);
-      }
-
-      return transform(closeableIterable(eventScanner), helper.buildWholeColFXform());
-    } catch (RuntimeException re) {
-      throw re;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
     }
-  }
+
+    public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        checkNotNull(connector);
+        checkNotNull(indexTable);
+        checkNotNull(shardTable);
+        checkNotNull(config);
+
+        KeyValueIndex<Event> keyValueIndex = new EventKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
+
+        helper = new EventQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
+    }
+
+
+    /**
+     * Free up any resources used by the store.
+     *
+     * @throws MutationsRejectedException
+     */
+    public void shutdown() throws MutationsRejectedException {
+        helper.shutdown();
+    }
+
+    /**
+     * Events get save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
+     * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
+     *
+     * @param events
+     * @throws Exception
+     */
+    @Override
+    public void save(Iterable<Event> events) {
+        helper.save(events);
+    }
+
+    /**
+     * Shard ids for which to scan are generated from the given start and end time. The given query specifies
+     * which events to return. It is propagated all the way down to the iterators so that the query is run in parallel
+     * on each tablet that needs to be scanned.
+     */
+    @Override
+    public CloseableIterable<Event> query(Date start, Date end, Node query, final Set<String> selectFields, Auths auths) {
+        checkNotNull(start);
+        checkNotNull(end);
+        checkNotNull(query);
+        checkNotNull(auths);
+
+        BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
+        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
+
+        CloseableIterable<Event> events = helper.query(globalIndexVisitor, query, helper.buildQueryXform(selectFields), auths);
+        indexScanner.close();
+
+        return events;
+    }
+
+    /**
+     * This method will batch get a bunch of events by uuid (and optionally timestamp). If another store is used to
+     * index into events in this store in a specially designed way (i.e. getting the last-n events, etc...) then
+     * the most optimal way to store the index would be the UUID and the timestamp. However, if all that is known
+     * about an event is the uuid, this method will do the extra fetch of the timestamp from the index table.
+     */
+    @Override
+    public CloseableIterable<Event> get(Collection<EventIndex> uuids, Set<String> selectFields, Auths auths) {
+        checkNotNull(uuids);
+        checkNotNull(auths);
+        try {
+
+            BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
+
+            Collection<Range> ranges = new LinkedList<Range>();
+            for (EventIndex uuid : uuids) {
+                if (uuid.getTimestamp() == null)
+                    ranges.add(new Range(INDEX_V + "_string__" + uuid.getUuid()));
+            }
+
+            scanner.setRanges(ranges);
+            scanner.fetchColumnFamily(new Text("@id"));
+
+            Iterator<Map.Entry<Key, Value>> itr = scanner.iterator();
+
+            /**
+             * Should just be one index for the shard containing the uuid
+             */
+            BatchScanner eventScanner = helper.buildShardScanner(auths.getAuths());
+            Collection<Range> eventRanges = new LinkedList<Range>();
+            while (itr.hasNext()) {
+                Map.Entry<Key, Value> entry = itr.next();
+                String shardId = entry.getKey().getColumnQualifier().toString();
+                String[] rowParts = splitByWholeSeparatorPreserveAllTokens(entry.getKey().getRow().toString(), "__");
+                eventRanges.add(Range.prefix(shardId, rowParts[1]));
+            }
+
+            scanner.close();
+            for (EventIndex curIndex : uuids) {
+                if (curIndex.getTimestamp() != null) {
+                    String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getUuid(), curIndex.getTimestamp()));
+                    ranges.add(Range.prefix(shardId, curIndex.getUuid()));
+                }
+            }
+
+            eventScanner.setRanges(eventRanges);
+
+            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+            eventScanner.addScanIterator(iteratorSetting);
+
+            if (selectFields != null && selectFields.size() > 0) {
+                iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
+                EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+                eventScanner.addScanIterator(iteratorSetting);
+            }
+
+            return transform(closeableIterable(eventScanner), helper.buildWholeColFXform());
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

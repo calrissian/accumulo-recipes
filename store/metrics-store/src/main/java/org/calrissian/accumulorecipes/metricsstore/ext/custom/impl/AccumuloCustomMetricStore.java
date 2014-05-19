@@ -21,8 +21,8 @@ import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.CustomMetricStore;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.MetricFunction;
@@ -38,8 +38,8 @@ import static java.lang.Long.parseLong;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
 import static org.apache.accumulo.core.client.IteratorSetting.Column;
-import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.metricsstore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
@@ -47,8 +47,8 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
  * table configured iterators are setup for this table, as this might skew the results for any custom function.
  * This means that during a compaction, the table is not able to consolidate data possibly increasing the criteria times for
  * metric data.
- *
- *
+ * <p/>
+ * <p/>
  * Format of the table:
  * Rowid                CF                  CQ                  Value
  * group\u0000revTS     'MINUTES'           type\u0000name      value
@@ -87,7 +87,7 @@ public class AccumuloCustomMetricStore extends AccumuloMetricStore implements Cu
         ScannerBase scanner = metricScanner(start, end, group, type, name, timeUnit, auths);
 
         //Add a scan time SummingCombiner
-        IteratorSetting setting  = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
+        IteratorSetting setting = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY, "stats", SummingCombiner.class);
         SummingCombiner.setColumns(setting, asList(new Column(timeUnit.toString())));
         SummingCombiner.setEncodingType(setting, LongCombiner.Type.STRING);
         scanner.addScanIterator(setting);

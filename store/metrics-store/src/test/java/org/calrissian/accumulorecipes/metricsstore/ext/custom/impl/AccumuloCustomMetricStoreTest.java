@@ -18,14 +18,13 @@ package org.calrissian.accumulorecipes.metricsstore.ext.custom.impl;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.metricsstore.domain.Metric;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.domain.CustomMetric;
-import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SummaryStatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.StatsFunction;
 import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SumFunction;
+import org.calrissian.accumulorecipes.metricsstore.ext.custom.function.SummaryStatsFunction;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.CloseableIterables;
 import org.junit.Test;
 
 import java.util.Date;
@@ -38,7 +37,6 @@ import static org.calrissian.mango.collect.CloseableIterables.autoClose;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloCustomMetricStoreTest {
-
 
 
     private static void checkCustom(CloseableIterable<CustomMetric<Long>> actual, int expectedNum, Long expectedVal) {
@@ -99,7 +97,7 @@ public class AccumuloCustomMetricStoreTest {
 
         metricStore.save(testData);
 
-        CloseableIterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class,  MetricTimeUnit.MINUTES, new Auths());
+        CloseableIterable<CustomMetric<Long>> actual = metricStore.queryCustom(new Date(0), new Date(), "group", "type", "name", SumFunction.class, MetricTimeUnit.MINUTES, new Auths());
 
         checkCustom(actual, 60, 1L);
     }

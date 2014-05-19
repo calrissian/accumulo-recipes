@@ -41,7 +41,7 @@ public class Scanners {
             @Override
             protected void doClose() throws IOException {
                 if (scanner instanceof BatchScanner)
-                    ((BatchScanner)scanner).close();
+                    ((BatchScanner) scanner).close();
             }
 
             @Override

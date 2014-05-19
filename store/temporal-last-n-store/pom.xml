@@ -24,7 +24,8 @@ limitations under the License.
   <artifactId>temporal-lastn-store</artifactId>
   <packaging>jar</packaging>
   <name>Calrissian Accumulo Recipes Temporal LastN Store</name>
-  <description>The temporal last n store provides time-based and count-based groups of windows into events that can be joined in various different ways.</description>
+  <description>The temporal last n store provides time-based and count-based groups of windows into events that can be
+        joined in various different ways.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>
