@@ -24,8 +24,8 @@ import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.BaseEntity;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 

@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.lastn;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.Event;
 
 /**
  * The LastN store is a version-based eviction mechanism- meaning that it will only keep around the last N versions of

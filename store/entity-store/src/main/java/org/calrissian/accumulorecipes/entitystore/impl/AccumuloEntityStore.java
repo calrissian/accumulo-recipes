@@ -34,8 +34,8 @@ import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
 import org.calrissian.accumulorecipes.entitystore.support.*;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Pair;
+import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 

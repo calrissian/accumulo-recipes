@@ -26,8 +26,8 @@ import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
-import org.calrissian.mango.domain.BaseEntity;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.Set;

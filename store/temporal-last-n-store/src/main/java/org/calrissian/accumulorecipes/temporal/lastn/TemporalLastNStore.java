@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.temporal.lastn;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.Event;
 
 import java.util.Collection;
 import java.util.Date;

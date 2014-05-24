@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.eventstore.support.shard;
 
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.Event;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -19,8 +19,8 @@ import com.tinkerpop.blueprints.Element;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
-import org.calrissian.mango.domain.Entity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.Entity;
 
 import java.util.Set;
 

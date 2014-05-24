@@ -22,7 +22,7 @@ import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 import java.util.List;
 import java.util.Set;

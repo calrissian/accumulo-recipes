@@ -27,8 +27,8 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.BaseEntity;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 

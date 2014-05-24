@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.geospatialstore;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.Event;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;

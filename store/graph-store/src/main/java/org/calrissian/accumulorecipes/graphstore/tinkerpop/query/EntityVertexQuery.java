@@ -25,7 +25,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 import java.util.ArrayList;
 import java.util.List;

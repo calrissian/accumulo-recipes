@@ -29,7 +29,7 @@ import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisit
 import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 import java.io.IOException;
 import java.util.HashSet;

@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.entitystore.support;
 
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 import java.util.Collection;
 import java.util.HashSet;

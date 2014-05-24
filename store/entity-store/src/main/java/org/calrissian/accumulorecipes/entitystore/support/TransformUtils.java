@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.entitystore.support;
 
 import com.google.common.base.Function;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 public class TransformUtils {
 

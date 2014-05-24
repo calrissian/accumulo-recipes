@@ -22,7 +22,7 @@ import com.tinkerpop.blueprints.VertexQuery;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.query.EntityVertexQuery;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 
 public class EntityVertex extends EntityElement implements Vertex {

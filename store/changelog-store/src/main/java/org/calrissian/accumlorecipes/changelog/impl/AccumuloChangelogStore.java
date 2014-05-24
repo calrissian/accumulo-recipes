@@ -31,7 +31,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.hash.tree.MerkleTree;
 import org.calrissian.mango.json.tuple.TupleModule;
 

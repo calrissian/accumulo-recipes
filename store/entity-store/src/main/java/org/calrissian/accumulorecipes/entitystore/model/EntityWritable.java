@@ -17,8 +17,8 @@ package org.calrissian.accumulorecipes.entitystore.model;
 
 import org.apache.hadoop.io.WritableComparable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
-import org.calrissian.mango.domain.BaseEntity;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;

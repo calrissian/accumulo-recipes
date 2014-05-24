@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.entitystore.model;
 
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.commons.collect;
 
 import org.calrissian.mango.collect.PeekingCloseableIterator;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.Event;
 
 import java.util.Iterator;
 import java.util.LinkedList;

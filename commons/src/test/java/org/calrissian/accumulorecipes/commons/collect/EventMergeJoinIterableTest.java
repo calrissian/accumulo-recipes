@@ -16,8 +16,8 @@
 package org.calrissian.accumulorecipes.commons.collect;
 
 import com.google.common.collect.Iterables;
-import org.calrissian.mango.domain.BaseEvent;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.BaseEvent;
+import org.calrissian.mango.domain.event.Event;
 import org.junit.Test;
 
 import java.util.Arrays;

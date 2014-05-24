@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.eventstore.support.shard;
 
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.Event;
 
 public interface EventShardBuilder extends ShardBuilder<Event> {
 

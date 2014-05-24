@@ -17,8 +17,8 @@ package org.calrissian.accumulorecipes.commons.hadoop;
 
 import org.apache.hadoop.io.Writable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
-import org.calrissian.mango.domain.BaseEvent;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.BaseEvent;
+import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;

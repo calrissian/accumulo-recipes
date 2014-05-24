@@ -25,8 +25,8 @@ import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
-import org.calrissian.mango.domain.BaseEvent;
-import org.calrissian.mango.domain.Event;
+import org.calrissian.mango.domain.event.BaseEvent;
+import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.Set;

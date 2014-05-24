@@ -30,7 +30,7 @@ import org.calrissian.accumulorecipes.graphstore.tinkerpop.query.EntityGraphQuer
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.criteria.Criteria;
-import org.calrissian.mango.domain.Entity;
+import org.calrissian.mango.domain.entity.Entity;
 
 import java.util.Iterator;
 import java.util.Set;
