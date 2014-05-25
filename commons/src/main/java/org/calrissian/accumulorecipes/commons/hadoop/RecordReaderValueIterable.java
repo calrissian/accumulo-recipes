@@ -26,6 +26,7 @@ public class RecordReaderValueIterable<K,V> implements Iterable<V>{
                     try {
                         if(recordReader.nextKeyValue()) {
                             curVal = recordReader.getCurrentValue();
+                            System.out.println(curVal);
                             return true;
                         }
                     } catch (Exception e) {
@@ -39,8 +40,12 @@ public class RecordReaderValueIterable<K,V> implements Iterable<V>{
             @Override
             public V next() {
 
-                if(hasNext())
-                    return curVal;
+                if(hasNext()) {
+
+                    V tmpVal = curVal;
+                    curVal = null;
+                    return tmpVal;
+                }
                 else
                     throw new RuntimeException("No more items to iterate");
             }
