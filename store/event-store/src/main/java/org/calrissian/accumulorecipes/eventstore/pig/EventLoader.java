@@ -1,6 +1,5 @@
 package org.calrissian.accumulorecipes.eventstore.pig;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
@@ -17,6 +16,7 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterable;
+import org.calrissian.accumulorecipes.commons.transform.GettableTransform;
 import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat;
 import org.calrissian.mango.collect.TupleStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
@@ -96,13 +96,7 @@ public class EventLoader extends LoadFunc {
     @Override
     public void prepareToRead(RecordReader recordReader, PigSplit pigSplit) throws IOException {
         RecordReaderValueIterable<Key, EventWritable> rri = new RecordReaderValueIterable<Key, EventWritable>(recordReader);
-        Iterable<Event> xformed = Iterables.transform(rri, new Function<EventWritable, Event>() {
-            @Override
-            public Event apply(EventWritable eventWritable) {
-                return eventWritable.get();
-            }
-        });
-
+        Iterable<Event> xformed = Iterables.transform(rri, new GettableTransform<Event>());
         itr = new TupleStoreIterator<Event>(xformed);
     }
 
