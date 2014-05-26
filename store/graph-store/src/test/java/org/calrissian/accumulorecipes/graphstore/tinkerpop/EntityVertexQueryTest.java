@@ -18,7 +18,6 @@ package org.calrissian.accumulorecipes.graphstore.tinkerpop;
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
@@ -32,9 +31,9 @@ import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,7 +51,6 @@ public class EntityVertexQueryTest {
     AccumuloEntityGraphStore entityGraphStore;
     EntityGraph graph;
     Connector connector;
-    GraphQuery query;
 
     Entity vertex1 = new BaseEntity("vertexType1", "id1");
     Entity vertex2 = new BaseEntity("vertexType2", "id2");

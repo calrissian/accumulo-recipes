@@ -75,7 +75,6 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
     public RecordReader<Key, W> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
 
         final W sharedWritable = getWritable();
-        final String[] selectFields = context.getConfiguration().getStrings("selectFields");
 
         Kryo kryo = new Kryo();
         initializeKryo(kryo);
