@@ -39,6 +39,8 @@ import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class EventLoader extends LoadFunc {
 
+    public static final String USAGE = "Usage: event://indexTable/shardTable?user=&pass=&inst=&zk=&query=&start=&end=&auths=&[fields=]";
+
     protected TupleStoreIterator<Event> itr;
     protected TypeRegistry<String> registry = SIMPLE_TYPES;
 
@@ -51,7 +53,7 @@ public class EventLoader extends LoadFunc {
 
         String[] indexAndShardTable = StringUtils.splitPreserveAllTokens(path, "/");
         if(indexAndShardTable.length != 2)
-            throw new IOException("Path portion of URI must contain the index and shard tables. Example: event://indexTable/shardTable?opt=val");
+            throw new IOException("Path portion of URI must contain the index and shard tables. " + USAGE);
 
         if(uri.startsWith("event")) {
             String queryPortion = uri.substring(uri.indexOf("?")+1, uri.length());
@@ -62,11 +64,17 @@ public class EventLoader extends LoadFunc {
             String accumuloInst = getProp(queryParams, "inst");
             String zookeepers = getProp(queryParams, "zk");
             if(accumuloUser == null || accumuloPass == null || accumuloInst == null || zookeepers == null)
-                throw new IOException("Some Accumulo connection information is missing. Must supply username, password, instance, and zookeepers");
+                throw new IOException("Some Accumulo connection information is missing. Must supply username, password, instance, and zookeepers. " + USAGE);
 
             String query = getProp(queryParams, "query");
+            if(query == null)
+                throw new IOException("Query builder groovy string must be supplied in the form of: q.and().eq('key1', 'val1').end(). ");
+
             String startTime = getProp(queryParams, "start");
             String endTime = getProp(queryParams, "end");
+            if(startTime == null || endTime == null)
+                throw new IOException("Start and end times are required. " + USAGE);
+
             String auths = getProp(queryParams, "auths");
             String selectFields = getProp(queryParams, "fields");
 
