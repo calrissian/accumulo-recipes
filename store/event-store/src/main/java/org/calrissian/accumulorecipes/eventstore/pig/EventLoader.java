@@ -39,7 +39,7 @@ import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class EventLoader extends LoadFunc {
 
-    public static final String USAGE = "Usage: event://indexTable/shardTable?user=&pass=&inst=&zk=&query=&start=&end=&auths=&[fields=]";
+    public static final String USAGE = "Usage: event://indexTable/shardTable?user=&pass=&inst=&zk=&query=&start=&end=&auths=[&fields=]";
 
     protected TupleStoreIterator<Event> itr;
     protected TypeRegistry<String> registry = SIMPLE_TYPES;
