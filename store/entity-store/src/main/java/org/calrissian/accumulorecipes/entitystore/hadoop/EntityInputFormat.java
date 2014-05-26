@@ -69,7 +69,7 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         Kryo kryo = new Kryo();
         initializeKryo(kryo);
 
-        return new EntityQfdHelper.QueryXform(kryo, ENTITY_TYPES, selectFields != null ?
+        return new EntityQfdHelper.QueryXform(kryo, TYPES, selectFields != null ?
                 new HashSet<String>(asList(selectFields)) : null);
 
     }

@@ -20,7 +20,6 @@ import com.tinkerpop.blueprints.*;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
-import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
@@ -31,6 +30,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.criteria.Criteria;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityRelationship;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -231,7 +231,7 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * A transform function to turn an {@link Entity} into an {@link EnitityEdge}
+     * A transform function to turn an {@link Entity} into an {@link EntityEdge}
      */
     public static class EdgeEntityXform implements Function<Entity, Edge> {
 
