@@ -15,10 +15,10 @@
  */
 package org.calrissian.accumulorecipes.graphstore.model;
 
-import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityRelationship;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

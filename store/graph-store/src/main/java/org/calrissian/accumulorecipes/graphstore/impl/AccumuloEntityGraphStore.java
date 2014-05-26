@@ -28,7 +28,6 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
-import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
@@ -37,9 +36,11 @@ import org.calrissian.accumulorecipes.graphstore.support.TupleStoreCriteriaPredi
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityRelationship;
+import org.calrissian.mango.types.encoders.EntityRelationshipEncoder;
 
 import java.util.*;
 
@@ -50,7 +51,6 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder.ALIAS;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
@@ -83,7 +83,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             String edge = cq.substring(0, idx);
 
             try {
-                EntityRelationship edgeRel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+                EntityRelationship edgeRel = (EntityRelationship) TYPES.decode(EntityRelationshipEncoder.ALIAS, edge);
                 Entity entity = new BaseEntity(edgeRel.getTargetType(), edgeRel.getTargetId());
                 SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
@@ -94,7 +94,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     String[] qualParts = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), ONE_BYTE);
                     String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
 
-                    entity.put(new Tuple(keyALiasValue[0], ENTITY_TYPES.decode(keyALiasValue[1], keyALiasValue[2]),
+                    entity.put(new Tuple(keyALiasValue[0], TYPES.decode(keyALiasValue[1], keyALiasValue[2]),
                             entry.getKey().getColumnVisibility().toString()));
 
                 }
@@ -205,7 +205,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
             Collection<Range> ranges = new ArrayList<Range>();
             for (EntityIndex entity : fromVertices) {
-                String row = ENTITY_TYPES.encode(new EntityRelationship(entity.getType(), entity.getId()));
+                String row = TYPES.encode(new EntityRelationship(entity.getType(), entity.getId()));
                 if (labels != null) {
                     for (String label : labels)
                         populateRange(ranges, row, direction, label);
@@ -253,9 +253,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                 String label = entity.<String>get(LABEL).getValue();
 
                 try {
-                    String fromEncoded = ENTITY_TYPES.encode(fromVertex);
-                    String toEncoded = ENTITY_TYPES.encode(toVertex);
-                    String edgeEncoded = ENTITY_TYPES.encode(edgeRelationship);
+                    String fromEncoded = TYPES.encode(fromVertex);
+                    String toEncoded = TYPES.encode(toVertex);
+                    String edgeEncoded = TYPES.encode(edgeRelationship);
                     Mutation forward = new Mutation(fromEncoded);
                     Mutation reverse = new Mutation(toEncoded);
 
@@ -267,8 +267,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
                     for (Tuple tuple : entity.getTuples()) {
                         String key = tuple.getKey();
-                        String alias = ENTITY_TYPES.getAlias(tuple.getValue());
-                        String value = ENTITY_TYPES.encode(tuple.getValue());
+                        String alias = TYPES.getAlias(tuple.getValue());
+                        String value = TYPES.encode(tuple.getValue());
 
                         String keyAliasValue = key + DELIM + alias + DELIM + value;
 

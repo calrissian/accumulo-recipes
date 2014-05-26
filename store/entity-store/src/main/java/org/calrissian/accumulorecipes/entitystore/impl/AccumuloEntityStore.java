@@ -30,7 +30,6 @@ import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIn
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
-import org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder;
 import org.calrissian.accumulorecipes.entitystore.support.*;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
@@ -64,8 +63,7 @@ public class AccumuloEntityStore implements EntityStore {
     public static final int DEFAULT_PARTITION_SIZE = 5;
     private EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
     public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(5);
-    public static final TypeRegistry<String> ENTITY_TYPES =
-            new TypeRegistry<String>(LEXI_TYPES, new RelationshipTypeEncoder());
+    public static final TypeRegistry<String> TYPES = LEXI_TYPES;
     private final EntityQfdHelper helper;
 
     public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
@@ -79,9 +77,9 @@ public class AccumuloEntityStore implements EntityStore {
         checkNotNull(shardTable);
         checkNotNull(config);
 
-        KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, ENTITY_TYPES);
+        KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, TYPES);
 
-        helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, ENTITY_TYPES, keyValueIndex);
+        helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, TYPES, keyValueIndex);
     }
 
     @Override
