@@ -54,7 +54,7 @@ public class EntityLoader extends LoadFunc {
         if(indexAndShardTable.length != 2)
             throw new IOException("Path portion of URI must contain the index and shard tables. " + USAGE);
 
-        if(uri.startsWith("event")) {
+        if(uri.startsWith("entity")) {
             String queryPortion = uri.substring(uri.indexOf("?")+1, uri.length());
             Multimap<String, String> queryParams = UriUtils.splitQuery(queryPortion);
 
