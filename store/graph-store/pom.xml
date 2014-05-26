@@ -40,7 +40,7 @@ limitations under the License.
     <!-- Mango -->
     <dependency>
       <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-accumulo</artifactId>
+      <artifactId>mango-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.calrissian.mango</groupId>
