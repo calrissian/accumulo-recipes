@@ -53,7 +53,7 @@ public class MetricsInputFormat extends InputFormatBase<Key, MetricWritable> {
             fetchColumns(config, singleton(column));
 
             String cqRegex = null;
-            cqRegex = combine(group, "(.*)");
+            cqRegex = combine(type, "(.*)");
             IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
             RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
             addIterator(config, regexIterator);
