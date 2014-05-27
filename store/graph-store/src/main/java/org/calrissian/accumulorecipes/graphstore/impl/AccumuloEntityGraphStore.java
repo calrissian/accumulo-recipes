@@ -55,7 +55,7 @@ import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
-import static org.calrissian.mango.types.encoders.EntityRelationshipEncoder.ALIAS;
+import static org.calrissian.mango.types.encoders.simple.EntityRelationshipEncoder.ALIAS;
 
 /**
  * The AccumuloEntityGraphStore wraps an {@link AccumuloEntityStore} to provide an extra index which is capable
