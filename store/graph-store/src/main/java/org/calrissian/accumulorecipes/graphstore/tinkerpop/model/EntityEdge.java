@@ -51,7 +51,7 @@ public class EntityEdge extends EntityElement implements Edge {
 
 
         CloseableIterable<Entity> entities =
-                graphStore.get(singletonList(new EntityIndex(rel.getTargetType(), rel.getTargetId())), null, auths);
+                graphStore.get(singletonList(new EntityIndex(rel.getType(), rel.getId())), null, auths);
 
         Iterator<Entity> entityItr = entities.iterator();
 

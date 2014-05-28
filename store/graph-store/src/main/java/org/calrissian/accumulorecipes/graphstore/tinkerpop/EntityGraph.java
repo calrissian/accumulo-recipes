@@ -301,7 +301,7 @@ public class EntityGraph implements Graph {
                 headOrTail = TAIL;
 
             EntityRelationship rel = element.<EntityRelationship>get(headOrTail).getValue();
-            return new EntityIndex(rel.getTargetType(), rel.getTargetId());
+            return new EntityIndex(rel.getType(), rel.getId());
         }
     }
 

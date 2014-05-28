@@ -84,7 +84,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
             try {
                 EntityRelationship edgeRel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-                Entity entity = new BaseEntity(edgeRel.getTargetType(), edgeRel.getTargetId());
+                Entity entity = new BaseEntity(edgeRel.getType(), edgeRel.getId());
                 SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
                 for (Map.Entry<Key, Value> entry : entries.entrySet()) {
