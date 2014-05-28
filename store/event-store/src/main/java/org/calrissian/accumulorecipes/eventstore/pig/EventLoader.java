@@ -76,6 +76,8 @@ public class EventLoader extends LoadFunc {
                 throw new IOException("Start and end times are required. " + USAGE);
 
             String auths = getProp(queryParams, "auths");
+            if(auths == null)
+                auths = "";     // default auths to empty
             String selectFields = getProp(queryParams, "fields");
 
             Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;

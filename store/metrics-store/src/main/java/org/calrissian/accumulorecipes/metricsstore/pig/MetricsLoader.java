@@ -59,7 +59,7 @@ public class MetricsLoader extends LoadFunc {
             if(timeUnitStr != null)
                 timeUnit = MetricTimeUnit.valueOf(timeUnitStr.toUpperCase());
             else
-                throw new IOException("A valid MetricTimeUnit must be supplied");
+                throw new IOException("A valid MetricTimeUnit must be supplied. " + USAGE);
 
             String group = getProp(queryParams, "group");
             String type = getProp(queryParams, "type");
@@ -71,6 +71,8 @@ public class MetricsLoader extends LoadFunc {
                 throw new IOException("Start and end times are required. " + USAGE);
 
             String auths = getProp(queryParams, "auths");
+            if(auths == null)
+                auths = ""; // default to empty auths
 
             DateTime startDT = DateTime.parse(startTime);
             DateTime endDT = DateTime.parse(endTime);

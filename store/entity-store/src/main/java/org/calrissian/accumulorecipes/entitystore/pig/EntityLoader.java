@@ -74,6 +74,9 @@ public class EntityLoader extends LoadFunc {
                 throw new IOException("A comma-separated list of entity types to load is required. " + USAGE);
 
             String auths = getProp(queryParams, "auths");
+            if(auths == null)
+                auths = "";     // default auths to empty
+
             String selectFields = getProp(queryParams, "fields");
 
             Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;
