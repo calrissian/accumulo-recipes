@@ -85,11 +85,16 @@ public class EventLoader extends LoadFunc {
             DateTime startDT = DateTime.parse(startTime);
             DateTime endDT = DateTime.parse(endTime);
 
-            // call groovy expressions from Java code
-            Binding binding = new Binding();
-            binding.setVariable("q", new QueryBuilder());
-            GroovyShell shell = new GroovyShell(binding);
-            QueryBuilder qb = (QueryBuilder) shell.evaluate(query);
+            QueryBuilder qb = null;
+            try {
+                // call groovy expressions from Java code
+                Binding binding = new Binding();
+                binding.setVariable("q", new QueryBuilder());
+                GroovyShell shell = new GroovyShell(binding);
+                qb = (QueryBuilder) shell.evaluate(query);
+            } catch(Exception e) {
+                throw new IOException("There was an error parsing the groovy query string. " + USAGE);
+            }
 
             EventInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
             EventInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
