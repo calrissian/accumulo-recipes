@@ -1,7 +1,6 @@
 package org.calrissian.accumulorecipes.eventstore.pig;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
@@ -30,6 +29,7 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 import static com.google.common.collect.Sets.newHashSet;
@@ -118,7 +118,7 @@ public class EventLoader extends LoadFunc {
     @Override
     public void prepareToRead(RecordReader recordReader, PigSplit pigSplit) throws IOException {
         RecordReaderValueIterator<Key, EventWritable> rri = new RecordReaderValueIterator<Key, EventWritable>(recordReader);
-        Iterable<Event> xformed = Iterables.transform(ImmutableList.copyOf(rri), new GettableTransform<Event>());
+        Iterator<Event> xformed = Iterators.transform(rri, new GettableTransform<Event>());
         itr = new TupleStoreIterator<Event>(xformed);
     }
 

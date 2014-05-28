@@ -1,7 +1,6 @@
 package org.calrissian.accumulorecipes.entitystore.pig;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
@@ -29,6 +28,7 @@ import org.calrissian.mango.uri.support.UriUtils;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 import static com.google.common.collect.Sets.newHashSet;
@@ -115,7 +115,7 @@ public class EntityLoader extends LoadFunc {
     @Override
     public void prepareToRead(RecordReader recordReader, PigSplit pigSplit) throws IOException {
         RecordReaderValueIterator<Key, EntityWritable> rri = new RecordReaderValueIterator<Key, EntityWritable>(recordReader);
-        Iterable<Entity> xformed = Iterables.transform(ImmutableList.copyOf(rri), new GettableTransform<Entity>());
+        Iterator<Entity> xformed = Iterators.transform(rri, new GettableTransform<Entity>());
         itr = new TupleStoreIterator<Entity>(xformed);
     }
 
