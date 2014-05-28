@@ -28,7 +28,6 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
-import org.calrissian.accumulorecipes.entitystore.model.EntityRelationship;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
@@ -37,9 +36,10 @@ import org.calrissian.accumulorecipes.graphstore.support.TupleStoreCriteriaPredi
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityRelationship;
 
 import java.util.*;
 
@@ -50,12 +50,12 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.entitystore.model.RelationshipTypeEncoder.ALIAS;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
+import static org.calrissian.mango.types.encoders.simple.EntityRelationshipEncoder.ALIAS;
 
 /**
  * The AccumuloEntityGraphStore wraps an {@link AccumuloEntityStore} to provide an extra index which is capable
@@ -84,7 +84,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
             try {
                 EntityRelationship edgeRel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
-                Entity entity = new BaseEntity(edgeRel.getTargetType(), edgeRel.getTargetId());
+                Entity entity = new BaseEntity(edgeRel.getType(), edgeRel.getId());
                 SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
                 for (Map.Entry<Key, Value> entry : entries.entrySet()) {

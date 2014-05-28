@@ -61,10 +61,22 @@ limitations under the License.
       <version>1.0.2</version>
     </dependency>
     <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy</artifactId>
+      <version>2.3.0</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.netflix.curator</groupId>
       <artifactId>curator-recipes</artifactId>
       <version>1.0.20</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+      <version>0.8.1</version>
+    </dependency>
+
 
     <!-- JUNIT -->
     <dependency>

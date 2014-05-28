@@ -16,10 +16,11 @@
 package org.calrissian.accumulorecipes.commons.hadoop;
 
 import org.apache.hadoop.io.Writable;
+import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeDecodingException;
 import org.calrissian.mango.types.exception.TypeEncodingException;
@@ -31,7 +32,7 @@ import java.io.IOException;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 
-public class EventWritable implements Writable, Settable<Event> {
+public class EventWritable implements Writable, Settable<Event>, Gettable<Event> {
 
     private static TypeRegistry<String> typeRegistry = LEXI_TYPES;
     Event entry;
