@@ -29,6 +29,7 @@ import org.calrissian.accumulorecipes.commons.collect.EventMergeJoinIterable;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator;
+import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
 import org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIterator;
@@ -164,6 +165,11 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
                 IteratorSetting setting = new IteratorSetting(7, EventGroupingIterator.class);
                 scanner.addScanIterator(setting);
+
+                IteratorSetting timeFilter = new IteratorSetting(6, TimeLimitingFilter.class);
+                TimeLimitingFilter.setCurrentTime(timeFilter, stop.getTime());
+                TimeLimitingFilter.setTTL(timeFilter, stop.getTime() - start.getTime());
+                scanner.addScanIterator(timeFilter);
 
                 IteratorSetting setting2 = new IteratorSetting(15, FirstNEntriesInRowIterator.class);
                 FirstNEntriesInRowIterator.setNumKeysToReturn(setting2, n);

@@ -76,6 +76,38 @@ public class AccumuloTemporalLastNTest {
     }
 
     @Test
+    public void testTimeLimit_downToMillis() throws TableNotFoundException {
+
+        long curTime = System.currentTimeMillis();
+        Event testEntry = new BaseEvent(UUID.randomUUID().toString());
+        testEntry.put(new Tuple("key1", "val1", ""));
+        testEntry.put(new Tuple("key2", "val2", ""));
+
+        Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), curTime - 5000);
+        testEntry2.put(new Tuple("key1", "val1", ""));
+        testEntry2.put(new Tuple("key2", "val2", ""));
+
+        store.put("group", testEntry);
+        store.put("group", testEntry2);
+
+        Iterable<Event> results = store.get(new Date(curTime - 4999), new Date(curTime + 50000),
+                singleton("group"), 2, new Auths());
+
+        Event actualEntry = Iterables.get(results, 0);
+        assertEquals(actualEntry.getId(), testEntry.getId());
+        assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
+        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+
+        assertEquals(1, Iterables.size(results));
+
+
+        results = store.get(new Date(curTime - 5001), new Date(curTime + 50000),
+                singleton("group"), 2, new Auths());
+
+        assertEquals(2, Iterables.size(results));
+    }
+
+    @Test
     public void testMultipleEntries_differentGroups() throws TableNotFoundException {
 
         Event testEntry = new BaseEvent(UUID.randomUUID().toString());

@@ -88,6 +88,30 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
+    public void test_TimeLimit() throws Exception {
+
+        long currentTime = System.currentTimeMillis();
+
+        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTime);
+        event.put(new Tuple("key1", "val1", ""));
+        event.put(new Tuple("key2", "val2", ""));
+
+        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTime - 5000);
+        event2.put(new Tuple("key1", "val1", ""));
+        event2.put(new Tuple("key2", "val2", ""));
+
+        store.save(asList(event, event2));
+
+        Node node = new QueryBuilder().eq("key1", "val1").build();
+
+        CloseableIterable<Event> actualEvent = store.query(new Date(currentTime - 5001), new Date(), node, null, new Auths());
+        assertEquals(2, size(actualEvent));
+
+        actualEvent = store.query(new Date(currentTime - 4999), new Date(), node, null, new Auths());
+        assertEquals(1, size(actualEvent));
+    }
+
+    @Test
     public void testGet_withSelection() throws Exception {
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());

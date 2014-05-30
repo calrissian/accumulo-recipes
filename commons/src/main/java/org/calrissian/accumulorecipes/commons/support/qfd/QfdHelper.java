@@ -171,40 +171,33 @@ public abstract class QfdHelper<T extends TupleStore> {
         }
     }
 
-    public CloseableIterable<T> query(GlobalIndexVisitor globalIndexVisitor, Node query,
+    public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Node query,
                                       Function<Map.Entry<Key, Value>, T> transform, Auths auths) {
         checkNotNull(query);
         checkNotNull(auths);
 
-        try {
-            QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
 
-            if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
-                return wrap(EMPTY_LIST);
+        if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
+            return wrap(EMPTY_LIST);
 
-            String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-            String originalJexl = nodeToJexl.transform(query);
-            Set<String> shards = optimizer.getShards();
+        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+        String originalJexl = nodeToJexl.transform(query);
+        Set<String> shards = optimizer.getShards();
 
-            BatchScanner scanner = connector.createBatchScanner(shardTable, auths.getAuths(), config.getMaxQueryThreads());
+        Collection<Range> ranges = new HashSet<Range>();
+        for (String shard : shards)
+            ranges.add(new Range(shard));
 
-            Collection<Range> ranges = new HashSet<Range>();
-            for (String shard : shards)
-                ranges.add(new Range(shard));
+        scanner.setRanges(ranges);
 
-            scanner.setRanges(ranges);
+        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+        setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
+        setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
-            IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-            setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
-            setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+        scanner.addScanIterator(setting);
 
-            scanner.addScanIterator(setting);
-
-            return transform(closeableIterable(scanner), transform);
-
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return transform(closeableIterable(scanner), transform);
     }
 
     public void shutdown() {

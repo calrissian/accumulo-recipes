@@ -23,6 +23,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
+import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -116,7 +117,14 @@ public class AccumuloEventStore implements EventStore {
         BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
 
-        CloseableIterable<Event> events = helper.query(globalIndexVisitor, query, helper.buildQueryXform(selectFields), auths);
+        BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
+        IteratorSetting timeFilter = new IteratorSetting(7, TimeLimitingFilter.class);
+        TimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
+        TimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
+        scanner.addScanIterator(timeFilter);
+
+        CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, query,
+                helper.buildQueryXform(selectFields), auths);
         indexScanner.close();
 
         return events;
