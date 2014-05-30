@@ -20,11 +20,11 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.FirstEntryInRowIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
+import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -55,8 +55,8 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloEntityStore implements EntityStore {
 
-    public static final String DEFAULT_IDX_TABLE_NAME = "entityStore_index";
-    public static final String DEFAULT_SHARD_TABLE_NAME = "entityStore_shard";
+    public static final String DEFAULT_IDX_TABLE_NAME = "entity_index";
+    public static final String DEFAULT_SHARD_TABLE_NAME = "entity_shard";
 
     public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
@@ -186,7 +186,7 @@ public class AccumuloEntityStore implements EntityStore {
         checkNotNull(auths);
 
         BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
-        IteratorSetting setting = new IteratorSetting(15, FirstEntryInRowIterator.class);
+        IteratorSetting setting = new IteratorSetting(15, FirstEntryInColumnIterator.class);
         scanner.addScanIterator(setting);
         scanner.setRanges(singletonList(Range.prefix(type + "_" + INDEX_K + "_")));
 
