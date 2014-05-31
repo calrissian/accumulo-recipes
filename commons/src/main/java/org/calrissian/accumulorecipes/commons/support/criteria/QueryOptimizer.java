@@ -47,45 +47,55 @@ public class QueryOptimizer implements NodeVisitor {
         this.indexVisitor = indexVisitor;
         this.typeRegistry = typeRegistry;
 
-        init(node);
+        init();
     }
 
     public QueryOptimizer(Node query, TypeRegistry<String> typeRegistry) {
         this(query, null, typeRegistry);
     }
 
-    protected void init(Node query) {
+    protected void init() {
 
-        if (!isEmpty(query)) {
+        if (!isEmpty(node)) {
 
             /**
              * This performs a cardinality optimization
              */
             if (indexVisitor != null) {
-                query.accept(indexVisitor);
+                node.accept(indexVisitor);
                 indexVisitor.exec();
-                query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities(), typeRegistry));
+                node.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities(), typeRegistry));
             }
 
-            query.accept(new SingleClauseCollapseVisitor());
-            query.accept(new EmptyParentCollapseVisitor());
-            query.accept(new CollapseParentClauseVisitor());
-            query.accept(new RangeSplitterVisitor());
+            Node previous = node.clone(null);
+            while(!previous.equals(node)) {
+                runOptimizations(node);
+                previous = node.clone(null);
+            }
 
-            ExtractRangesVisitor extractRangesVisitor = new ExtractRangesVisitor();
-            query.accept(extractRangesVisitor);
-            extractRangesVisitor.extract(); // perform actual extraction
-
-            //visitors
-            query.accept(new NoOrNotEqualsValidator());
-
-            QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
-            query.accept(extractKeysVisitor);
-            keysInQuery = extractKeysVisitor.getKeysFound();
-
-            //develop criteria
-            query.accept(this);
         }
+    }
+
+    protected void runOptimizations(Node query) {
+
+        query.accept(new SingleClauseCollapseVisitor());
+        query.accept(new EmptyParentCollapseVisitor());
+        query.accept(new CollapseParentClauseVisitor());
+        query.accept(new RangeSplitterVisitor());
+
+        ExtractRangesVisitor extractRangesVisitor = new ExtractRangesVisitor();
+        query.accept(extractRangesVisitor);
+        extractRangesVisitor.extract(); // perform actual extraction
+
+        //visitors
+        query.accept(new NoOrNotEqualsValidator());
+
+        QueryKeysExtractorVisitor extractKeysVisitor = new QueryKeysExtractorVisitor();
+        query.accept(extractKeysVisitor);
+        keysInQuery = extractKeysVisitor.getKeysFound();
+
+        //develop criteria
+        query.accept(this);
     }
 
     public Node getOptimizedQuery() {
