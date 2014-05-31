@@ -30,23 +30,32 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 import static java.util.Collections.singleton;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class EntityInputFormatTest {
 
     public static Entity entity;
+    public static Entity entity2;
+    public static Entity entity3;
+
+    @Before
+    public void setup() {
+        TestMapper.entities = new ArrayList<Entity>();
+    }
 
     @Test
-    public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Instance instance = new MockInstance("instName");
         Connector connector = instance.getConnector("root", "".getBytes());
@@ -72,17 +81,64 @@ public class EntityInputFormatTest {
         job.submit();
         job.waitForCompletion(true);
 
-        assertNotNull(TestMapper.entity);
-        assertEquals(TestMapper.entity.getId(), entity.getId());
-        assertEquals(TestMapper.entity.getType(), entity.getType());
-        assertEquals(new HashSet<Tuple>(TestMapper.entity.getTuples()), new HashSet<Tuple>(entity.getTuples()));
+        assertEquals(1, TestMapper.entities.size());
+        assertEquals(TestMapper.entities.get(0).getId(), entity.getId());
+        assertEquals(TestMapper.entities.get(0).getType(), entity.getType());
+        assertEquals(new HashSet<Tuple>(TestMapper.entities.get(0).getTuples()), new HashSet<Tuple>(entity.getTuples()));
 
     }
 
+    @Test
+    public void testGetAllByType() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+
+        Instance instance = new MockInstance("instName");
+        Connector connector = instance.getConnector("root", "".getBytes());
+        AccumuloEntityStore store = new AccumuloEntityStore(connector);
+        entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1", ""));
+        entity.put(new Tuple("key2", false, ""));
+        store.save(singleton(entity));
+
+        entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", "val1", ""));
+        entity2.put(new Tuple("key2", false, ""));
+        store.save(singleton(entity2));
+
+        entity3 = new BaseEntity("type1", "id");
+        entity3.put(new Tuple("key1", "val1", ""));
+        entity3.put(new Tuple("key2", false, ""));
+        store.save(singleton(entity3));
+
+        Job job = new Job(new Configuration());
+        job.setJarByClass(getClass());
+        job.setMapperClass(TestMapper.class);
+        job.setNumReduceTasks(0);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(Text.class);
+        job.setInputFormatClass(EntityInputFormat.class);
+        EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
+        EntityInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
+        EntityInputFormat.setQueryInfo(job.getConfiguration(), Collections.singleton("type"));
+        job.setOutputFormatClass(NullOutputFormat.class);
+
+        job.submit();
+        job.waitForCompletion(true);
+
+        assertEquals(2, TestMapper.entities.size());
+        System.out.println(TestMapper.entities);
+        assertEquals(TestMapper.entities.get(0).getId(), entity.getId());
+        assertEquals(TestMapper.entities.get(0).getType(), entity.getType());
+        assertEquals(new HashSet<Tuple>(entity.getTuples()), new HashSet<Tuple>(TestMapper.entities.get(1).getTuples()));
+        assertEquals(TestMapper.entities.get(1).getId(), entity2.getId());
+        assertEquals(TestMapper.entities.get(1).getType(), entity2.getType());
+        assertEquals(new HashSet<Tuple>(entity2.getTuples()), new HashSet<Tuple>(TestMapper.entities.get(1).getTuples()));
+    }
+
+
     public static class TestMapper extends Mapper<Key, EntityWritable, Text, Text> {
 
-        public static Entity entity;
-
+        public static List<Entity> entities = new ArrayList<Entity>();
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
             super.setup(context);
@@ -90,7 +146,7 @@ public class EntityInputFormatTest {
 
         @Override
         protected void map(Key key, EntityWritable value, Context context) throws IOException, InterruptedException {
-            entity = value.get();
+            entities.add(value.get());
         }
     }
 }

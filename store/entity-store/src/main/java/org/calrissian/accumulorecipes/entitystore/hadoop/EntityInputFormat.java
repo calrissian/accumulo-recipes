@@ -19,10 +19,13 @@ import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
@@ -33,16 +36,21 @@ import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.*;
+import static org.calrissian.mango.io.Serializables.fromBase64;
+import static org.calrissian.mango.io.Serializables.toBase64;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable> {
+
+    private static final String QUERY = "query";
+    private static final String TYPE_REGISTRY = "typeRegistry";
 
     public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
         setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
@@ -62,6 +70,34 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(scanner, shardBuilder, entityTypes);
 
         configureScanner(config, query, globalIndexVisitor, typeRegistry);
+
+        config.setBoolean(QUERY, true);
+        config.set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
+    }
+
+    public static void setQueryInfo(Configuration config, Set<String> entityTypes) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(config, entityTypes, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+    }
+
+
+    public static void setQueryInfo(Configuration config, Set<String> entityTypes, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+
+        validateOptions(config);
+
+        Collection<Range> ranges = new LinkedList<Range>();
+        for (String type : entityTypes) {
+            Set<Text> shards = shardBuilder.buildShardsForTypes(singleton(type));
+            for (Text shard : shards)
+                ranges.add(prefix(shard.toString(), type));
+        }
+
+        setRanges(config, ranges);
+
+        IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
+        addIterator(config, iteratorSetting);
+
+        config.setBoolean(QUERY, false);
+        config.set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
     }
 
     /**
@@ -75,13 +111,27 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
 
     @Override
     protected Function<Map.Entry<Key, Value>, Entity> getTransform(Configuration configuration) {
+
+
         final String[] selectFields = configuration.getStrings("selectFields");
 
-        Kryo kryo = new Kryo();
-        initializeKryo(kryo);
+        Set<String> finalSelectFields = selectFields != null ?
+                new HashSet<String>(asList(selectFields)) : null;
 
-        return new EntityQfdHelper.QueryXform(kryo, ENTITY_TYPES, selectFields != null ?
-                new HashSet<String>(asList(selectFields)) : null);
+        try {
+            TypeRegistry<String> typeRegistry = fromBase64(configuration.get(TYPE_REGISTRY).getBytes());
+
+            Kryo kryo = new Kryo();
+            initializeKryo(kryo);
+
+            if(configuration.getBoolean(QUERY, false))
+                return new EntityQfdHelper.QueryXform(kryo, typeRegistry, finalSelectFields);
+            else
+                return new EntityQfdHelper.WholeColFXform(kryo, typeRegistry, finalSelectFields);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
 
     }
 
