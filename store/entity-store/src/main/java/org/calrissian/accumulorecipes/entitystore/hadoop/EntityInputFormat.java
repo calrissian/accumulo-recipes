@@ -40,6 +40,7 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.*;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable> {
 
@@ -47,16 +48,13 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-        setQueryInfo(config, entityTypes, query, selectFields, DEFAULT_SHARD_BUILDER, typeRegistry);
+    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(config, entityTypes, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
         validateOptions(config);
-
-        if(selectFields != null)
-            config.setStrings("selectFields", selectFields.toArray(new String[] {}));
 
         Instance instance = getInstance(config);
         Connector connector = instance.getConnector(getUsername(config), getPassword(config));
@@ -64,6 +62,15 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(scanner, shardBuilder, entityTypes);
 
         configureScanner(config, query, globalIndexVisitor, typeRegistry);
+    }
+
+    /**
+     * Sets selection fields on the current configuration.
+     */
+    public static void setSelectFields(Configuration config, Set<String> selectFields) {
+
+        if(selectFields != null)
+            config.setStrings("selectFields", selectFields.toArray(new String[] {}));
     }
 
     @Override

@@ -38,7 +38,6 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import static java.util.Collections.singleton;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -67,7 +66,7 @@ public class EventInputFormatTest {
         EventInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
         EventInputFormat.setMockInstance(job.getConfiguration(), "instName");
         EventInputFormat.setQueryInfo(job.getConfiguration(), new Date(System.currentTimeMillis() - 50000), new Date(),
-                new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
+                new QueryBuilder().eq("key1", "val1").build());
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();

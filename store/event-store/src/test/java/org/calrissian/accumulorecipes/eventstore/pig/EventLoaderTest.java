@@ -28,7 +28,6 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 import static java.util.Collections.singleton;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
 public class EventLoaderTest {
@@ -131,7 +130,7 @@ public class EventLoaderTest {
         EventInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());
         EventInputFormat.setMockInstance(conf, "instName");
         EventInputFormat.setQueryInfo(conf, new Date(System.currentTimeMillis() - 50000), new Date(),
-                new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
+                new QueryBuilder().eq("key1", "val1").build());
 
     }
 }

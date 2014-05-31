@@ -34,7 +34,6 @@ import java.util.Set;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class EntityLoader extends LoadFunc {
@@ -97,7 +96,9 @@ public class EntityLoader extends LoadFunc {
             EntityInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
             EntityInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
             try {
-                EntityInputFormat.setQueryInfo(conf, entitytypes, qb.build(), fields, LEXI_TYPES);
+                EntityInputFormat.setQueryInfo(conf, entitytypes, qb.build());
+                if(fields != null)
+                    EntityInputFormat.setSelectFields(conf, fields);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
