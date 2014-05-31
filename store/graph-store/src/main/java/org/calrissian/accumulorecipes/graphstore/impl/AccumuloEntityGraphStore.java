@@ -28,6 +28,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
+import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
@@ -83,7 +84,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             String edge = cq.substring(0, idx);
 
             try {
-                EntityRelationship edgeRel = (EntityRelationship) ENTITY_TYPES.decode(ALIAS, edge);
+                EntityRelationship edgeRel = (EntityRelationship) typeRegistry.decode(ALIAS, edge);
                 Entity entity = new BaseEntity(edgeRel.getType(), edgeRel.getId());
                 SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
@@ -94,7 +95,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     String[] qualParts = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), ONE_BYTE);
                     String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
 
-                    entity.put(new Tuple(keyALiasValue[0], ENTITY_TYPES.decode(keyALiasValue[1], keyALiasValue[2]),
+                    entity.put(new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]),
                             entry.getKey().getColumnVisibility().toString()));
 
                 }
@@ -115,9 +116,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         init();
     }
 
-    public AccumuloEntityGraphStore(Connector connector, String indexTable, String shardTable, String edgeTable, StoreConfig config)
+    public AccumuloEntityGraphStore(Connector connector, String indexTable, String shardTable, String edgeTable, EntityShardBuilder shardBuilder, StoreConfig config)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, indexTable, shardTable, config);
+        super(connector, indexTable, shardTable, shardBuilder, config);
         table = edgeTable;
         init();
     }
@@ -205,7 +206,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
             Collection<Range> ranges = new ArrayList<Range>();
             for (EntityIndex entity : fromVertices) {
-                String row = ENTITY_TYPES.encode(new EntityRelationship(entity.getType(), entity.getId()));
+                String row = typeRegistry.encode(new EntityRelationship(entity.getType(), entity.getId()));
                 if (labels != null) {
                     for (String label : labels)
                         populateRange(ranges, row, direction, label);
@@ -253,9 +254,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                 String label = entity.<String>get(LABEL).getValue();
 
                 try {
-                    String fromEncoded = ENTITY_TYPES.encode(fromVertex);
-                    String toEncoded = ENTITY_TYPES.encode(toVertex);
-                    String edgeEncoded = ENTITY_TYPES.encode(edgeRelationship);
+                    String fromEncoded = typeRegistry.encode(fromVertex);
+                    String toEncoded = typeRegistry.encode(toVertex);
+                    String edgeEncoded = typeRegistry.encode(edgeRelationship);
                     Mutation forward = new Mutation(fromEncoded);
                     Mutation reverse = new Mutation(toEncoded);
 
@@ -267,8 +268,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
                     for (Tuple tuple : entity.getTuples()) {
                         String key = tuple.getKey();
-                        String alias = ENTITY_TYPES.getAlias(tuple.getValue());
-                        String value = ENTITY_TYPES.encode(tuple.getValue());
+                        String alias = typeRegistry.getAlias(tuple.getValue());
+                        String value = typeRegistry.encode(tuple.getValue());
 
                         String keyAliasValue = key + DELIM + alias + DELIM + value;
 

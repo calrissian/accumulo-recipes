@@ -61,25 +61,31 @@ public class AccumuloEntityStore implements EntityStore {
     public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
     public static final int DEFAULT_PARTITION_SIZE = 5;
-    private EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
     public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(5);
-    public static final TypeRegistry<String> ENTITY_TYPES = LEXI_TYPES;
-    private final EntityQfdHelper helper;
+
+    protected EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
+    protected EntityQfdHelper helper;
+    protected TypeRegistry<String> typeRegistry = LEXI_TYPES;
 
     public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG);
     }
 
-    public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, StoreConfig config)
+    public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, EntityShardBuilder shardBuilder, StoreConfig config)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         checkNotNull(connector);
         checkNotNull(indexTable);
         checkNotNull(shardTable);
         checkNotNull(config);
 
-        KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, ENTITY_TYPES);
+        KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
 
-        helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, ENTITY_TYPES, keyValueIndex);
+        this.shardBuilder = shardBuilder;
+        helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
+    }
+
+    public void setTypeRegistry(TypeRegistry<String> typeRegistry) {
+        this.typeRegistry = typeRegistry;
     }
 
     @Override
