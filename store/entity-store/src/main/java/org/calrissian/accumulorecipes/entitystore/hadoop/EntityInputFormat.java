@@ -30,6 +30,7 @@ import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -46,20 +47,23 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-        setQueryInfo(config, entityTypes, query, selectFields, DEFAULT_SHARD_BUILDER);
+    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(config, entityTypes, query, selectFields, DEFAULT_SHARD_BUILDER, typeRegistry);
     }
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields, EntityShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, Set<String> selectFields, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
         validateOptions(config);
+
+        if(selectFields != null)
+            config.setStrings("selectFields", selectFields.toArray(new String[] {}));
 
         Instance instance = getInstance(config);
         Connector connector = instance.getConnector(getUsername(config), getPassword(config));
         BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(scanner, shardBuilder, entityTypes);
 
-        configureScanner(config, query, globalIndexVisitor);
+        configureScanner(config, query, globalIndexVisitor, typeRegistry);
     }
 
     @Override

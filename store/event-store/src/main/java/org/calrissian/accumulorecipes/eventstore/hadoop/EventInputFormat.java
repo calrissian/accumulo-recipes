@@ -34,6 +34,7 @@ import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
 import java.util.*;
@@ -50,11 +51,14 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
         setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        setQueryInfo(config, start, end, query, selectFields, DEFAULT_SHARD_BUILDER);
+    public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        setQueryInfo(config, start, end, query, selectFields, DEFAULT_SHARD_BUILDER, typeRegistry);
     }
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, EventShardBuilder shardBuilder) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public static void setQueryInfo(Configuration config, Date start, Date end, Node query, Set<String> selectFields, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+
+        if(selectFields != null)
+            config.setStrings("selectFields", selectFields.toArray(new String[] {}));
 
         try {
             validateOptions(config);
@@ -66,8 +70,8 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
         Connector connector = instance.getConnector(getUsername(config), getPassword(config));
         BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
-        NodeToJexl nodeToJexl = new NodeToJexl();
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor, typeRegistry);
+        NodeToJexl nodeToJexl = new NodeToJexl(typeRegistry);
         String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
 
         Collection<Range> ranges = new ArrayList<Range>();

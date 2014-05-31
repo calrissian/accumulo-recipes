@@ -23,6 +23,7 @@ import org.calrissian.mango.criteria.visitor.CollapseParentClauseVisitor;
 import org.calrissian.mango.criteria.visitor.EmptyParentCollapseVisitor;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.Set;
 
@@ -37,18 +38,20 @@ public class QueryOptimizer implements NodeVisitor {
     protected Node node;
     protected Set<String> keysInQuery;
     protected GlobalIndexVisitor indexVisitor;
+    protected TypeRegistry<String> typeRegistry;
 
-    public QueryOptimizer(Node query, GlobalIndexVisitor indexVisitor) {
+    public QueryOptimizer(Node query, GlobalIndexVisitor indexVisitor, TypeRegistry<String> typeRegistry) {
         checkNotNull(query);
 
         this.node = query.clone(null);  // cloned so that original is not modified during optimization
         this.indexVisitor = indexVisitor;
+        this.typeRegistry = typeRegistry;
 
         init(node);
     }
 
-    public QueryOptimizer(Node query) {
-        this(query, null);
+    public QueryOptimizer(Node query, TypeRegistry<String> typeRegistry) {
+        this(query, null, typeRegistry);
     }
 
     protected void init(Node query) {
@@ -61,7 +64,7 @@ public class QueryOptimizer implements NodeVisitor {
             if (indexVisitor != null) {
                 query.accept(indexVisitor);
                 indexVisitor.exec();
-                query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities()));
+                query.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities(), typeRegistry));
             }
 
             query.accept(new SingleClauseCollapseVisitor());

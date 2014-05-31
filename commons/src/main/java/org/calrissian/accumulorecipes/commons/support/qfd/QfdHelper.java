@@ -56,7 +56,6 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public abstract class QfdHelper<T extends TupleStore> {
 
@@ -66,7 +65,7 @@ public abstract class QfdHelper<T extends TupleStore> {
     private final String shardTable;
     private final StoreConfig config;
     private final BatchWriter shardWriter;
-    private final NodeToJexl nodeToJexl = new NodeToJexl();
+    private final NodeToJexl nodeToJexl;
     private ShardBuilder<T> shardBuilder;
     private TypeRegistry<String> typeRegistry;
 
@@ -87,11 +86,12 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.connector = connector;
         this.indexTable = indexTable;
         this.shardTable = shardTable;
-        this.typeRegistry = LEXI_TYPES;
+        this.typeRegistry = typeRegistry;
         this.config = config;
         this.shardBuilder = shardBuilder;
         this.typeRegistry = typeRegistry;
         this.keyValueIndex = keyValueIndex;
+        this.nodeToJexl = new NodeToJexl(typeRegistry);
 
 
         if (!connector.tableOperations().exists(this.indexTable)) {
@@ -176,7 +176,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         checkNotNull(query);
         checkNotNull(auths);
 
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor);
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor, typeRegistry);
 
         if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
             return wrap(EMPTY_LIST);

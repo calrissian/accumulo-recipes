@@ -37,6 +37,7 @@ import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.TupleStore;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,10 +49,10 @@ import static org.calrissian.accumulorecipes.commons.iterators.support.EventFiel
 
 public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settable> extends InputFormatBase<Key, W> {
 
-    protected static void configureScanner(Configuration config, Node query, GlobalIndexVisitor globalInexVisitor) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    protected static void configureScanner(Configuration config, Node query, GlobalIndexVisitor globalInexVisitor, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor);
-        NodeToJexl nodeToJexl = new NodeToJexl();
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor, typeRegistry);
+        NodeToJexl nodeToJexl = new NodeToJexl(typeRegistry);
         String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
 
         Collection<Range> ranges = new ArrayList<Range>();

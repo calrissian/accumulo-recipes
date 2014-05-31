@@ -31,6 +31,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
 public class EntityLoaderTest {
@@ -97,8 +100,8 @@ public class EntityLoaderTest {
         Instance instance = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
         Connector conn = instance.getConnector("root", "".getBytes());
 
-        conn.tableOperations().create("entityStore_index");
-        conn.tableOperations().create("entityStore_shard");
+        conn.tableOperations().create(DEFAULT_IDX_TABLE_NAME);
+        conn.tableOperations().create(DEFAULT_SHARD_TABLE_NAME);
         Job job = new Job();
         URI location = new URI("entity://eventStore_index/eventStore_shard?user=root&pass=&inst=" +
                 inst + "&zk=" + zk  +
@@ -117,7 +120,7 @@ public class EntityLoaderTest {
         assertEquals("", job.getConfiguration().get(CONFIG_PREFIX + "password"));
         assertEquals(zk, job.getConfiguration().get(CONFIG_PREFIX + "zooKeepers"));
         assertEquals(inst, job.getConfiguration().get(CONFIG_PREFIX + "instanceName"));
-        assertEquals("entityStore_shard", job.getConfiguration().get(CONFIG_PREFIX + "tablename"));
+        assertEquals(DEFAULT_SHARD_TABLE_NAME, job.getConfiguration().get(CONFIG_PREFIX + "tablename"));
 
     }
 
@@ -133,7 +136,7 @@ public class EntityLoaderTest {
         EntityInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setMockInstance(conf, "instName");
         EntityInputFormat.setQueryInfo(conf, Collections.singleton("myType"),
-                new QueryBuilder().eq("key1", "val1").build(), null);
+                new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
 
     }
 }

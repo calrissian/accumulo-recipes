@@ -18,11 +18,12 @@ package org.calrissian.accumulorecipes.commons.iterators.support;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.junit.Test;
 
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
 public class NodeToJexlTest {
 
-    private NodeToJexl nodeToJexl = new NodeToJexl();
+    private NodeToJexl nodeToJexl = new NodeToJexl(LEXI_TYPES);
 
     @Test
     public void testSimpleEquals_AndNode() {

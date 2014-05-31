@@ -25,16 +25,16 @@ import org.calrissian.mango.types.exception.TypeEncodingException;
 import java.util.*;
 
 import static java.util.Collections.sort;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class CardinalityReorderVisitor implements NodeVisitor {
 
-    private static TypeRegistry<String> registry = LEXI_TYPES;
+    private static TypeRegistry<String> registry;
     private Map<CardinalityKey, Long> cardinalities;
     private Map<String, Set<CardinalityKey>> keyToCarinalityKey = new HashMap<String, Set<CardinalityKey>>();
 
-    public CardinalityReorderVisitor(Map<CardinalityKey, Long> cardinalities) {
+    public CardinalityReorderVisitor(Map<CardinalityKey, Long> cardinalities, TypeRegistry<String> typeRegistry) {
         this.cardinalities = cardinalities;
+        this.registry = typeRegistry;
         for (CardinalityKey key : cardinalities.keySet()) {
             Set<CardinalityKey> cardinalityKey = keyToCarinalityKey.get(key.getKey());
             if (cardinalityKey == null) {

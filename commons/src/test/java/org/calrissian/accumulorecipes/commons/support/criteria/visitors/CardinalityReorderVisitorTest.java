@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -41,9 +42,9 @@ public class CardinalityReorderVisitorTest {
         Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
-        node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
 
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof AndNode);
@@ -63,9 +64,9 @@ public class CardinalityReorderVisitorTest {
         Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
-        node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
 
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof EqualsLeaf);
@@ -84,9 +85,9 @@ public class CardinalityReorderVisitorTest {
         Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
-        node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
 
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof EqualsLeaf);
@@ -105,9 +106,9 @@ public class CardinalityReorderVisitorTest {
         Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
-        node.accept(new CardinalityReorderVisitor(cardinalities));
+        node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl().transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
 
         assertTrue(node instanceof OrNode);
         assertEquals(0, node.children().size());

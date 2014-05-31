@@ -21,6 +21,8 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.junit.Test;
 
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+
 public class QueryOptimizerTest {
 
     @Test
@@ -28,9 +30,9 @@ public class QueryOptimizerTest {
 
         Node query = new QueryBuilder().and().and().or().end().end().end().build();
 
-        QueryOptimizer optimizer = new QueryOptimizer(query);
+        QueryOptimizer optimizer = new QueryOptimizer(query, LEXI_TYPES);
 
-        System.out.println(new NodeToJexl().transform(optimizer.getOptimizedQuery()));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(optimizer.getOptimizedQuery()));
 
     }
 }

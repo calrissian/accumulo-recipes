@@ -43,6 +43,7 @@ import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME;
 import static org.junit.Assert.*;
 
 public class AccumuloEntityStoreTest {
@@ -74,7 +75,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Scanner scanner = connector.createScanner("entityStore_index", new Authorizations());
+        Scanner scanner = connector.createScanner(DEFAULT_SHARD_TABLE_NAME, new Authorizations());
         for (Map.Entry<Key, Value> entry : scanner) {
             System.out.println("ENTRY: " + entry);
         }

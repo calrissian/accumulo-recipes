@@ -19,11 +19,14 @@ import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class NodeToJexl {
 
-    TypeRegistry<String> registry = LEXI_TYPES; //TODO make types configurable
+    TypeRegistry<String> registry; //TODO make types configurable
+
+    public NodeToJexl(TypeRegistry<String> registry) {
+        this.registry = registry;
+    }
 
     public String transform(Node node) {
         try {

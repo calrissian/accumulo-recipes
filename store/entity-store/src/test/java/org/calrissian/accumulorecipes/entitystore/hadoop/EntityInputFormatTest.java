@@ -27,9 +27,9 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 import static java.util.Collections.singleton;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -65,7 +66,7 @@ public class EntityInputFormatTest {
         EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
         EntityInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setQueryInfo(job.getConfiguration(), Collections.singleton("type"),
-                new QueryBuilder().eq("key1", "val1").build(), null);
+                new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();

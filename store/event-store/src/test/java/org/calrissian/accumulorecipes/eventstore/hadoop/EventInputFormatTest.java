@@ -27,9 +27,9 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.Tuple;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import static java.util.Collections.singleton;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -66,7 +67,7 @@ public class EventInputFormatTest {
         EventInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
         EventInputFormat.setMockInstance(job.getConfiguration(), "instName");
         EventInputFormat.setQueryInfo(job.getConfiguration(), new Date(System.currentTimeMillis() - 50000), new Date(),
-                new QueryBuilder().eq("key1", "val1").build(), null);
+                new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();
