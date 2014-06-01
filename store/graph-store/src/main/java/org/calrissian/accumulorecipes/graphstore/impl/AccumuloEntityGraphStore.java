@@ -56,7 +56,7 @@ import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
-import static org.calrissian.mango.types.encoders.simple.EntityRelationshipEncoder.ALIAS;
+import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_RELATIONSHIP_ALIAS;
 
 /**
  * The AccumuloEntityGraphStore wraps an {@link AccumuloEntityStore} to provide an extra index which is capable
@@ -84,7 +84,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             String edge = cq.substring(0, idx);
 
             try {
-                EntityRelationship edgeRel = (EntityRelationship) typeRegistry.decode(ALIAS, edge);
+                EntityRelationship edgeRel = (EntityRelationship) typeRegistry.decode(ENTITY_RELATIONSHIP_ALIAS, edge);
                 Entity entity = new BaseEntity(edgeRel.getType(), edgeRel.getId());
                 SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 

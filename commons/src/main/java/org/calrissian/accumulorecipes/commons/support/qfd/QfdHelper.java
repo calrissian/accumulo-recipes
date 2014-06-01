@@ -53,7 +53,7 @@ import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
-import static org.calrissian.mango.accumulo.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 

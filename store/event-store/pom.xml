@@ -35,10 +35,6 @@ limitations under the License.
     <!-- Mango -->
     <dependency>
       <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-accumulo</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.calrissian.mango</groupId>
       <artifactId>mango-json</artifactId>
     </dependency>
     <!-- Hadoop / CB -->

@@ -50,11 +50,6 @@ limitations under the License.
       </dependency>
       <dependency>
         <groupId>org.calrissian.mango</groupId>
-        <artifactId>mango-accumulo</artifactId>
-        <version>${mango.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.calrissian.mango</groupId>
         <artifactId>mango-json</artifactId>
         <version>${mango.version}</version>
       </dependency>
