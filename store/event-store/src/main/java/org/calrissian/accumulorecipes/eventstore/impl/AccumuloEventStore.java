@@ -150,28 +150,31 @@ public class AccumuloEventStore implements EventStore {
                     ranges.add(new Range(INDEX_V + "_string__" + uuid.getUuid()));
             }
 
-            scanner.setRanges(ranges);
-            scanner.fetchColumnFamily(new Text("@id"));
-
-            Iterator<Map.Entry<Key, Value>> itr = scanner.iterator();
-
-            /**
-             * Should just be one index for the shard containing the uuid
-             */
             BatchScanner eventScanner = helper.buildShardScanner(auths.getAuths());
             Collection<Range> eventRanges = new LinkedList<Range>();
-            while (itr.hasNext()) {
-                Map.Entry<Key, Value> entry = itr.next();
-                String shardId = entry.getKey().getColumnQualifier().toString();
-                String[] rowParts = splitByWholeSeparatorPreserveAllTokens(entry.getKey().getRow().toString(), "__");
-                eventRanges.add(Range.prefix(shardId, rowParts[1]));
+            if(ranges.size() > 0) {
+                scanner.setRanges(ranges);
+                scanner.fetchColumnFamily(new Text("@id"));
+
+                Iterator<Map.Entry<Key, Value>> itr = scanner.iterator();
+
+                /**
+                 * Should just be one index for the shard containing the uuid
+                 */
+                while (itr.hasNext()) {
+                    Map.Entry<Key, Value> entry = itr.next();
+                    String shardId = entry.getKey().getColumnQualifier().toString();
+                    String[] rowParts = splitByWholeSeparatorPreserveAllTokens(entry.getKey().getRow().toString(), "__");
+                    eventRanges.add(Range.prefix(shardId, rowParts[1]));
+                }
+
+                scanner.close();
             }
 
-            scanner.close();
             for (EventIndex curIndex : uuids) {
                 if (curIndex.getTimestamp() != null) {
                     String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getUuid(), curIndex.getTimestamp()));
-                    ranges.add(Range.prefix(shardId, curIndex.getUuid()));
+                    eventRanges.add(Range.prefix(shardId, curIndex.getUuid()));
                 }
             }
 

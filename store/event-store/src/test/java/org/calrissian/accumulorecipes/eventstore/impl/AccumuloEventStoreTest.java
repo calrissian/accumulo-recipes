@@ -63,11 +63,12 @@ public class AccumuloEventStoreTest {
     @Test
     public void testGet() throws Exception {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        long time = currentTimeMillis();
+        Event event = new BaseEvent(UUID.randomUUID().toString(), time);
         event.put(new Tuple("key1", "val1", ""));
         event.put(new Tuple("key2", "val2", ""));
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        Event event2 = new BaseEvent(UUID.randomUUID().toString(), time);
         event2.put(new Tuple("key1", "val1", ""));
         event2.put(new Tuple("key2", "val2", ""));
 
@@ -85,6 +86,15 @@ public class AccumuloEventStoreTest {
         assertEquals(new HashSet(actual.getTuples()), new HashSet(event.getTuples()));
         assertEquals(actual.getId(), event.getId());
         assertEquals(actual.getTimestamp(), event.getTimestamp());
+
+        actualEvent = store.get(singletonList(new EventIndex(event.getId(), time)), null, new Auths());
+
+        assertEquals(1, size(actualEvent));
+        actual = actualEvent.iterator().next();
+        assertEquals(new HashSet(actual.getTuples()), new HashSet(event.getTuples()));
+        assertEquals(actual.getId(), event.getId());
+        assertEquals(actual.getTimestamp(), event.getTimestamp());
+
     }
 
     @Test
