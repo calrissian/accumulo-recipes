@@ -53,7 +53,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
     }
 
     @Override
-    public void indexKeyValues(Iterable<Event> items) {
+    public void indexKeyValues(Iterable<? extends Event> items) {
 
         Map<String, Long> indexCache = new HashMap<String, Long>();
 

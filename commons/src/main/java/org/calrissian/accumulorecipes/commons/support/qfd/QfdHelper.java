@@ -122,7 +122,7 @@ public abstract class QfdHelper<T extends TupleStore> {
     /**
      * Items get saved into a sharded table to parallelize queries & ingest.
      */
-    public void save(Iterable<T> items) {
+    public void save(Iterable<? extends T> items) {
         checkNotNull(items);
         try {
 

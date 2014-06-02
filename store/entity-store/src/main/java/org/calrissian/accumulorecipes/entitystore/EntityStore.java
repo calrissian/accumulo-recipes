@@ -28,7 +28,7 @@ import java.util.Set;
 
 public interface EntityStore {
 
-    void save(Iterable<Entity> entities);
+    void save(Iterable<? extends Entity> entities);
 
     CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths);
 

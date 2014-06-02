@@ -53,7 +53,7 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
     }
 
     @Override
-    public void indexKeyValues(Iterable<Entity> items) {
+    public void indexKeyValues(Iterable<? extends Entity> items) {
 
         Map<String, Long> indexCache = new HashMap<String, Long>();
 

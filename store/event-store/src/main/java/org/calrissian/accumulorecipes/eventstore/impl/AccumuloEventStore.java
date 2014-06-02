@@ -98,7 +98,7 @@ public class AccumuloEventStore implements EventStore {
      * @throws Exception
      */
     @Override
-    public void save(Iterable<Event> events) {
+    public void save(Iterable<? extends Event> events) {
         helper.save(events);
     }
 
