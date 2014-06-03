@@ -112,4 +112,9 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
     public void commit() throws Exception {
         writer.flush();
     }
+
+    @Override
+    public void shutdown() throws Exception {
+        writer.close();
+    }
 }

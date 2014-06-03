@@ -22,4 +22,6 @@ public interface KeyValueIndex<T extends TupleStore> {
     void indexKeyValues(Iterable<? extends T> items);
 
     void commit() throws Exception;
+
+    void shutdown() throws Exception;
 }

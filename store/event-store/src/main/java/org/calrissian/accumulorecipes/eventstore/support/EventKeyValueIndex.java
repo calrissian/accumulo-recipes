@@ -114,4 +114,9 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
     public void commit() throws Exception {
         writer.flush();
     }
+
+    @Override
+    public void shutdown() throws Exception {
+        writer.close();
+    }
 }
