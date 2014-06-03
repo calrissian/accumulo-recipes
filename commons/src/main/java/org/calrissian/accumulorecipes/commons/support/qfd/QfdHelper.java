@@ -140,9 +140,10 @@ public abstract class QfdHelper<T extends TupleStore> {
                         String aliasValue = typeRegistry.getAlias(tuple.getValue()) + INNER_DELIM +
                                 typeRegistry.encode(tuple.getValue());
 
+                        String keyAliasValueId = tuple.getKey() + DELIM + aliasValue + DELIM + tuple.getId();
                         // forward mutation
                         shardMutation.put(new Text(buildId(item)),
-                                new Text(tuple.getKey() + DELIM + aliasValue),
+                                new Text(keyAliasValueId),
                                 new ColumnVisibility(tuple.getVisibility()),
                                 buildTimestamp(item),
                                 EMPTY_VALUE);

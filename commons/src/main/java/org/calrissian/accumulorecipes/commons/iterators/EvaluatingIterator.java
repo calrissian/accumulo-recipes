@@ -76,10 +76,14 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         // separated by a \0.
         String colq = key.getColumnQualifier().toString();
         int idx = colq.indexOf(NULL_BYTE_STRING);
+        int idx2 = colq.lastIndexOf(NULL_BYTE_STRING);
         String fieldName = colq.substring(0, idx);
-        String fieldValue = colq.substring(idx + 1);
+        String id = fieldName;  // Unless explicitly defined, the fieldValue's unique id should be the same as the key.
+                String fieldValue = idx2 != idx ? colq.substring(idx + 1, idx2) : colq.substring(idx + 1);
+        if(idx2 != idx)
+            id = colq.substring(idx2 + 1);
 
-        event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes()));
+        event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes(), id));
     }
 
     /**
