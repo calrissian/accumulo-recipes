@@ -66,9 +66,13 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                     entry = buildEntryFromKey(curEntry.getKey());
                 String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
+                String tupleId = colQParts[0];
+                if(aliasValue.length == 3)
+                    tupleId = aliasValue[2];
+
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
                 try {
-                    entry.put(new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), visibility));
+                    entry.put(new Tuple(tupleId, colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), visibility));
                 } catch (TypeDecodingException e) {
                     throw new RuntimeException(e);
                 }

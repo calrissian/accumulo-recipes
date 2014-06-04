@@ -152,7 +152,7 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
     public void readObjectData(Kryo kryo, ByteBuffer buf) {
         if (!kryoInitialized)
             EventFields.initializeKryo(kryo);
-        // Read in the number of map entries
+        // Read zin the number of map entries
         int entries = IntSerializer.get(buf, true);
         for (int i = 0; i < entries; i++) {
             // Read in the key
@@ -160,7 +160,8 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
             // Read in the fields in the value
             ColumnVisibility vis = new ColumnVisibility(valueSerializer.readObjectData(buf, byte[].class));
             byte[] value = valueSerializer.readObjectData(buf, byte[].class);
-            map.put(key, new FieldValue(vis, value));
+            byte[] id = valueSerializer.readObject(buf, byte[].class);
+            map.put(key, new FieldValue(vis, value, new String(id)));
         }
 
     }
@@ -177,17 +178,20 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
 
             valueSerializer.writeObjectData(buf, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : entry.getValue().getVisibility().getExpression());
             valueSerializer.writeObjectData(buf, entry.getValue().getValue());
+            valueSerializer.writeObjectData(buf, entry.getValue().getId().getBytes());
         }
     }
 
     public static class FieldValue {
         ColumnVisibility visibility;
         byte[] value;
+        String id;
 
-        public FieldValue(ColumnVisibility visibility, byte[] value) {
+        public FieldValue(ColumnVisibility visibility, byte[] value, String id) {
             super();
             this.visibility = visibility;
             this.value = value;
+            this.id = id;
         }
 
         public ColumnVisibility getVisibility() {
@@ -200,6 +204,10 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
 
         public byte[] getValue() {
             return value;
+        }
+
+        public String getId() {
+            return id;
         }
 
         public void setValue(byte[] value) {
@@ -219,6 +227,8 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
                 buf.append(" value size: ").append(value.length);
             if (null != value)
                 buf.append(" value: ").append(new String(value));
+            if (null != id)
+                buf.append(" id: ").append(id);
             return buf.toString();
         }
 
