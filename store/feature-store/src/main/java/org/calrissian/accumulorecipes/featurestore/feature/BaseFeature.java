@@ -70,4 +70,44 @@ public abstract class BaseFeature<T extends FeatureVector> implements Writable {
         visibility = dataInput.readUTF();
         vector = buildVector(dataInput);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        BaseFeature that = (BaseFeature) o;
+
+        if (timestamp != that.timestamp) return false;
+        if (group != null ? !group.equals(that.group) : that.group != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        if (vector != null ? !vector.equals(that.vector) : that.vector != null) return false;
+        if (visibility != null ? !visibility.equals(that.visibility) : that.visibility != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (timestamp ^ (timestamp >>> 32));
+        result = 31 * result + (group != null ? group.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (visibility != null ? visibility.hashCode() : 0);
+        result = 31 * result + (vector != null ? vector.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "BaseFeature{" +
+                "timestamp=" + timestamp +
+                ", group='" + group + '\'' +
+                ", type='" + type + '\'' +
+                ", name='" + name + '\'' +
+                ", visibility='" + visibility + '\'' +
+                ", vector=" + vector +
+                '}';
+    }
 }
