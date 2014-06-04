@@ -20,6 +20,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Combiner;
 import org.apache.commons.lang.StringUtils;
 
+import java.math.BigInteger;
 import java.util.Iterator;
 
 import static java.lang.Long.parseLong;
@@ -44,7 +45,7 @@ public class StatsCombiner extends Combiner {
         long max = Long.MIN_VALUE;
         long sum = 0;
         long count = 0;
-        long sumSquare = 0;
+        BigInteger sumSquare = BigInteger.valueOf(0);
 
         while (iter.hasNext()) {
 
@@ -56,13 +57,13 @@ public class StatsCombiner extends Combiner {
                 max = max(val, max);
                 sum += val;
                 count += 1;
-                sumSquare += (val * val);
+                sumSquare = sumSquare.add(BigInteger.valueOf(val * val));
             } else {
                 min = min(parseLong(stats[0]), min);
                 max = max(parseLong(stats[1]), max);
                 sum += parseLong(stats[2]);
                 count += parseLong(stats[3]);
-                sumSquare += parseLong(stats[4]);
+                sumSquare = sumSquare.add(new BigInteger(stats[4]));
             }
         }
 
@@ -71,7 +72,7 @@ public class StatsCombiner extends Combiner {
                 Long.toString(max),
                 Long.toString(sum),
                 Long.toString(count),
-                Long.toString(sumSquare)
+                sumSquare.toString()
         );
 
         return new Value(ret.getBytes());

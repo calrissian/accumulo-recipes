@@ -13,7 +13,7 @@ public class FeatureRegistry {
 
     public FeatureRegistry(AccumuloFeatureConfig... transforms) {
 
-        for(AccumuloFeatureConfig featureTransform : transforms) 
+        for(AccumuloFeatureConfig featureTransform : transforms)
             classToTransform.put(featureTransform.transforms(), featureTransform);
     }
 
