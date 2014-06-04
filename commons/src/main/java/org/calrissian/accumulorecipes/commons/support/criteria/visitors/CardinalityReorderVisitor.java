@@ -18,6 +18,7 @@ package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
@@ -103,7 +104,7 @@ public class CardinalityReorderVisitor implements NodeVisitor {
         AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
 
         // hasKey and hasNotKey need special treatment since we don't know the aliases
-        if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+        if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf)) {
             Set<CardinalityKey> cardinalityKeys = keyToCarinalityKey.get(kvLeaf.getKey());
 
             Long cardinality = 0l;

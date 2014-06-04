@@ -89,7 +89,7 @@ public class NodeToJexl {
             return builder.append(leaf.getKey()).append(" >= '")
                     .append(registry.getAlias(leaf.getStart())).append(INNER_DELIM)
                     .append(registry.encode(leaf.getStart())).append("')")
-                    .append(" and ('").append(leaf.getKey()).append(" <= '")
+                    .append(" and (").append(leaf.getKey()).append(" <= '")
                     .append(registry.getAlias(leaf.getEnd())).append(INNER_DELIM)
                     .append(registry.encode(leaf.getEnd())).append("')")
                     .toString();

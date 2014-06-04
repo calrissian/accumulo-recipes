@@ -28,7 +28,7 @@ import org.calrissian.mango.types.exception.TypeEncodingException;
 import java.util.*;
 
 import static java.lang.Long.parseLong;
-import static org.apache.accumulo.core.data.Range.exact;
+import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
@@ -83,13 +83,13 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
             for (String type : types) {
                 if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
                     if (alias != null)
-                        ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
+                        ranges.add(prefix(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
                     else
-                        ranges.add(exact(type + "_" + INDEX_K + "_" + kvLeaf.getKey()));
+                        ranges.add(prefix(type + "_" + INDEX_K + "_" + kvLeaf.getKey()));
                 } else {
                     try {
                         String normVal = registry.encode(kvLeaf.getValue());
-                        ranges.add(exact(type + "_" + INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey()));
+                        ranges.add(prefix(type + "_" + INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey()));
                     } catch (TypeEncodingException e) {
                         throw new RuntimeException(e);
                     }
