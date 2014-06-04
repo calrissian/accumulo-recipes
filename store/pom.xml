@@ -31,7 +31,7 @@ limitations under the License.
     <module>geospatial-store</module>
     <module>graph-store</module>
     <module>lastn-store</module>
-    <module>metrics-store</module>
+    <module>feature-store</module>
     <module>range-store</module>
     <module>temporal-last-n-store</module>
   </modules>
