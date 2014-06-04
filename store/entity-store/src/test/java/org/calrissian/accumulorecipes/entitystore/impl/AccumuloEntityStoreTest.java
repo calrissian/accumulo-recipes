@@ -24,6 +24,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -253,6 +254,119 @@ public class AccumuloEntityStoreTest {
         assertEquals(0, Iterables.size(itr));
     }
 
+    @Test
+    public void testQuery_greaterThan() {
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", 5));
+
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", 10));
+
+        store.save(asList(entity, entity2));
+
+        Node node = new QueryBuilder().greaterThan("key1", 4).build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(2, Iterables.size(itr));
+
+        node = new QueryBuilder().greaterThan("key1", 9).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(1, Iterables.size(itr));
+
+        node = new QueryBuilder().greaterThan("key1", 10).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(0, Iterables.size(itr));
+    }
+
+    @Test
+    public void testQuery_greaterThanEq() {
+
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", 5));
+
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", 10));
+
+        store.save(asList(entity, entity2));
+
+        Node node = new QueryBuilder().greaterThanEq("key1", 4).build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(2, Iterables.size(itr));
+
+        node = new QueryBuilder().greaterThanEq("key1", 9).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(1, Iterables.size(itr));
+
+        node = new QueryBuilder().greaterThanEq("key1", 10).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(1, Iterables.size(itr));
+    }
+
+    @Test
+    public void testQuery_lessThan() {
+
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", 5));
+
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", 10));
+
+        store.save(asList(entity, entity2));
+
+        Node node = new QueryBuilder().lessThan("key1", 11).build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(2, Iterables.size(itr));
+
+        node = new QueryBuilder().lessThan("key1", 10).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(1, Iterables.size(itr));
+
+        node = new QueryBuilder().lessThan("key1", 5).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(0, Iterables.size(itr));
+    }
+
+
+    @Test
+    public void testQuery_lessThanEq() throws TableNotFoundException {
+
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", 5));
+
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", 10));
+
+        store.save(asList(entity, entity2));
+
+        Node node = new QueryBuilder().lessThanEq("key1", 11).build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(2, Iterables.size(itr));
+
+        node = new QueryBuilder().lessThanEq("key1", 10).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(2, Iterables.size(itr));
+
+        AccumuloTestUtils.dumpTable(connector, "entity_shard", new Authorizations());
+
+        node = new QueryBuilder().lessThanEq("key1", 5).build();
+
+        itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(1, Iterables.size(itr));
+    }
 
     @Test
     public void testKeys() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {

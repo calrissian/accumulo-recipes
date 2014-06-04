@@ -27,7 +27,6 @@ import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlEngine;
 import org.apache.commons.jexl2.MapContext;
-import org.apache.commons.jexl2.parser.ParserTreeConstants;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -580,10 +579,28 @@ public class FieldIndexIterator extends WrappingIterator {
     }
 
     private Range buildRange(Text rowId) {
-        if (type == ParserTreeConstants.JJTGTNODE || type == ParserTreeConstants.JJTGENODE || type == ParserTreeConstants.JJTLTNODE
-                || type == ParserTreeConstants.JJTLENODE || type == ParserTreeConstants.JJTERNODE || type == ParserTreeConstants.JJTNRNODE) {
-            Key startKey = new Key(rowId, fName);
+
+        if (fOperator.equals(">")) {
+            Key startKey = new Key(rowId, fName, new Text(fValue));
             Key endKey = new Key(rowId, new Text(fName + NULL_BYTE));
+            return (new Range(startKey, false, endKey, true));
+        } else
+
+        if(fOperator.equals(">=")) {
+            Key startKey = new Key(rowId, fName, new Text(fValue));
+            Key endKey = new Key(rowId, new Text(fName + NULL_BYTE));
+            return (new Range(startKey, true, endKey, true));
+        } else
+
+        if(fOperator.equals("<")) {
+            Key startKey = new Key(rowId, fName);
+            Key endKey = new Key(rowId, new Text(fName), new Text(fValue));
+            return (new Range(startKey, true, endKey, false));
+        } else
+
+        if(fOperator.equals("<=")) {
+            Key startKey = new Key(rowId, fName);
+            Key endKey = new Key(rowId, new Text(fName), new Text(fValue + ONE_BYTE));
             return (new Range(startKey, true, endKey, false));
         } else {
             // construct new range
