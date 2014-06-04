@@ -10,22 +10,15 @@ import java.util.Map;
 public class FeatureRegistry {
 
     private Map<Class, AccumuloFeatureConfig> classToTransform = new HashMap<Class, AccumuloFeatureConfig>();
-    private Map<String, AccumuloFeatureConfig> nameToTransform = new HashMap<String, AccumuloFeatureConfig>();
 
     public FeatureRegistry(AccumuloFeatureConfig... transforms) {
 
-        for(AccumuloFeatureConfig featureTransform : transforms) {
+        for(AccumuloFeatureConfig featureTransform : transforms) 
             classToTransform.put(featureTransform.transforms(), featureTransform);
-            nameToTransform.put(featureTransform.featureName(), featureTransform);
-        }
     }
 
     public AccumuloFeatureConfig transformForClass(Class<? extends BaseFeature> clazz) {
         return classToTransform.get(clazz);
-    }
-
-    public AccumuloFeatureConfig transformForName(String featureName) {
-        return nameToTransform.get(featureName);
     }
 
     public static final FeatureRegistry BASE_FEATURES = new FeatureRegistry(new MetricFeatureTransform());
