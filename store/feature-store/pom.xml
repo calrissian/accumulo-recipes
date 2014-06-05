@@ -36,10 +36,7 @@ limitations under the License.
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-math3</artifactId>
-    </dependency>
+
     <!-- Hadoop / CB -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
@@ -52,12 +49,6 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
-      <version>0.8.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-      <version>3.3.6</version>
     </dependency>
 
     <!-- JUNIT -->
@@ -66,9 +57,15 @@ limitations under the License.
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <version>${zookeeper.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-      <version>1.4.4</version>
+      <version>${accumulo.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

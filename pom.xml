@@ -32,12 +32,15 @@ limitations under the License.
   <properties>
     <accumulo.version>1.4.4</accumulo.version>
     <commons.math.version>3.2</commons.math.version>
+    <groovy.version>2.3.0</groovy.version>
     <hadoop.version>0.20.2</hadoop.version>
     <jackson.version>2.2.2</jackson.version>
     <joda.time.version>2.2</joda.time.version>
     <junit.version>4.11</junit.version>
     <mango.version>1.1.1-SNAPSHOT</mango.version>
+    <pig.version>0.8.1</pig.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <tinkerpop.version>2.4.0</tinkerpop.version>
     <zookeeper.version>3.3.5</zookeeper.version>
   </properties>
   <dependencyManagement>
@@ -85,6 +88,12 @@ limitations under the License.
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.apache.pig</groupId>
+        <artifactId>pig</artifactId>
+        <version>${pig.version}</version>
+      </dependency>
+
       <!-- Junit -->
       <dependency>
         <groupId>junit</groupId>
