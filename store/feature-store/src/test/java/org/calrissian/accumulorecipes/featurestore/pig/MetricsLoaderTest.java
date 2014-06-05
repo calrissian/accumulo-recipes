@@ -11,6 +11,7 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.commons.mock.MockRecordReader;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
+import org.calrissian.accumulorecipes.featurestore.model.Metric;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
@@ -106,7 +107,7 @@ public class MetricsLoaderTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloFeatureStore store = new AccumuloFeatureStore(connector);
         store.initialize();
-        metric = new MetricFeature(System.currentTimeMillis(), "group", "type", "name", "", 1);
+        metric = new MetricFeature(System.currentTimeMillis(), "group", "type", "name", "", new Metric(1));
         store.save(singleton(metric));
 
         FeaturesInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());

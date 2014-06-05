@@ -10,6 +10,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
+import org.calrissian.accumulorecipes.featurestore.model.Metric;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
 import org.junit.Test;
@@ -23,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 
 public class MetricsInputFormatTest {
 
-    public static final MetricFeature metric = new MetricFeature(currentTimeMillis(), "group", "type", "name", "", 1);
+    public static final MetricFeature metric = new MetricFeature(currentTimeMillis(), "group", "type", "name", "", new Metric(1));
 
     @Test
     public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {

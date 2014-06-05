@@ -1,6 +1,7 @@
 package org.calrissian.accumulorecipes.featurestore.support.config;
 
 import org.apache.accumulo.core.data.Value;
+import org.calrissian.accumulorecipes.featurestore.model.Metric;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.junit.Test;
 
@@ -10,7 +11,6 @@ import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 
 public class MetricFeatureConfigTest {
-
 
     @Test
     public void testBuildFeatureFromValue() {
@@ -50,7 +50,7 @@ public class MetricFeatureConfigTest {
 
         long currentTime = currentTimeMillis();
 
-        MetricFeature feature = new MetricFeature(currentTimeMillis(), "group", "type", "name", "vis", 1);
+        MetricFeature feature = new MetricFeature(currentTimeMillis(), "group", "type", "name", "vis", new Metric(1));
         Value value = new MetricFeatureConfig().buildValue(feature);
 
         assertEquals("1,1,1,1,1", new String(value.get()));

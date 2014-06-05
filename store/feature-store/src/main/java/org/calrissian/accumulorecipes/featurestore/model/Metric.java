@@ -26,6 +26,14 @@ public class Metric implements Writable {
     public Metric() {
     }
 
+    public Metric(long value) {
+        this.min = value;
+        this.max = value;
+        this.sum = value;
+        this.count = 1;
+        this.sumSquare = BigInteger.valueOf(value).multiply(BigInteger.valueOf(value));
+    }
+
     public Metric(long min, long max, long sum, long count, BigInteger sumSquare) {
         this.min = min;
         this.max = max;

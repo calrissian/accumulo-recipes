@@ -4,7 +4,6 @@ import org.calrissian.accumulorecipes.featurestore.FeatureStore;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.math.BigInteger;
 
 /**
  * A metric feature combines statistical summary information in a feature vector with the basic identifying information
@@ -14,10 +13,6 @@ public class MetricFeature extends Feature<Metric> {
 
     public MetricFeature(long timestamp, String group, String type, String name, String visibility, Metric vector) {
         super(timestamp, group, type, name, visibility, vector);
-    }
-
-    public MetricFeature(long timestamp, String group, String type, String name, String visibility, long metricValue) {
-        super(timestamp, group, type, name, visibility, new Metric(1,1,1,1, BigInteger.valueOf(1)));
     }
 
     @Override

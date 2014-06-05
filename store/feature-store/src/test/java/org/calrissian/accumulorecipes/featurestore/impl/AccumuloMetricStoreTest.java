@@ -17,12 +17,11 @@ package org.calrissian.accumulorecipes.featurestore.impl;
 
 
 import com.google.common.collect.AbstractIterator;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
+import org.calrissian.accumulorecipes.featurestore.model.Metric;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.junit.Test;
@@ -35,6 +34,7 @@ import static com.google.common.collect.Iterables.limit;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.calrissian.mango.collect.CloseableIterables.autoClose;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class AccumuloMetricStoreTest {
 
@@ -70,7 +70,7 @@ public class AccumuloMetricStoreTest {
                             @Override
                             protected MetricFeature computeNext() {
                                 current -= offset;
-                                return new MetricFeature(current, "group", "type", "name", "", 1);
+                                return new MetricFeature(current, "group", "type", "name", "", new Metric(1));
                             }
                         };
                     }
@@ -122,5 +122,23 @@ public class AccumuloMetricStoreTest {
         CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
 
         checkMetrics(actual, 60, 3);
+    }
+
+    @Test
+    public void testExceptionThrownWhenNotInitialized() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Connector connector = getConnector();
+        AccumuloFeatureStore metricStore = new AccumuloFeatureStore(connector);
+        Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
+
+        try {
+            metricStore.save(testData);
+            fail("Should have failed while store wasn't initialized()");
+        } catch(Exception e) {}
+
+        try {
+            metricStore.query(new Date(), new Date(), "group", "type", "name", TimeUnit.DAYS, MetricFeature.class, new Auths());
+            fail("Should have failed while store wasn't initialized()");
+        } catch(Exception e) {}
     }
 }
