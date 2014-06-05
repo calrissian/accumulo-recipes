@@ -1,12 +1,10 @@
-package org.calrissian.accumulorecipes.featurestore.feature;
-
-import org.calrissian.accumulorecipes.featurestore.feature.vector.MetricFeatureVector;
+package org.calrissian.accumulorecipes.featurestore.model;
 
 import java.io.DataInput;
 import java.io.IOException;
 import java.math.BigInteger;
 
-public class MetricFeature extends BaseFeature<MetricFeatureVector> {
+public class MetricFeature extends Feature<MetricFeatureVector> {
 
     public MetricFeature(long timestamp, String group, String type, String name, String visibility, MetricFeatureVector vector) {
         super(timestamp, group, type, name, visibility, vector);

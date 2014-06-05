@@ -10,7 +10,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
-import org.calrissian.accumulorecipes.featurestore.feature.MetricFeature;
+import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
 import org.junit.Test;
 

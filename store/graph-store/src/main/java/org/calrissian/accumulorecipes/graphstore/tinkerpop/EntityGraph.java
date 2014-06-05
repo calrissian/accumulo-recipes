@@ -231,7 +231,7 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * A transform function to turn an {@link Entity} into an {@link EntityEdge}
+     * A config function to turn an {@link Entity} into an {@link EntityEdge}
      */
     public static class EdgeEntityXform implements Function<Entity, Edge> {
 
@@ -250,7 +250,7 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * A transform function to turn an {@link Entity} into an {@link EntityVertex}.
+     * A config function to turn an {@link Entity} into an {@link EntityVertex}.
      */
     public static class VertexEntityXform implements Function<Entity, Vertex> {
 
@@ -269,7 +269,7 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * A transform function to turn an {@link EntityElement} into an {@link EntityIndex} so that it can be directly
+     * A config function to turn an {@link EntityElement} into an {@link EntityIndex} so that it can be directly
      * applied to the {@link EntityStore}.
      */
     public static class EntityIndexXform implements Function<Element, EntityIndex> {
@@ -280,7 +280,7 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * This transform function will pull the vertex index from the correct side of given the edge based on the given
+     * This config function will pull the vertex index from the correct side of given the edge based on the given
      * direction and will structure the result as an index to be used to query the entity store.
      */
     public static class EdgeToVertexIndexXform implements Function<Entity, EntityIndex> {

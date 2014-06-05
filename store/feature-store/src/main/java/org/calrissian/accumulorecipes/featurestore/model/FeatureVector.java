@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.featurestore.feature.vector;
+package org.calrissian.accumulorecipes.featurestore.model;
 
 import org.apache.hadoop.io.Writable;
 

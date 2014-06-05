@@ -11,7 +11,7 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.commons.mock.MockRecordReader;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
-import org.calrissian.accumulorecipes.featurestore.feature.MetricFeature;
+import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
 import org.calrissian.mango.domain.Pair;

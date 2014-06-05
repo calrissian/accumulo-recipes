@@ -26,11 +26,11 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
-import org.calrissian.accumulorecipes.featurestore.MetricStore;
-import org.calrissian.accumulorecipes.featurestore.feature.BaseFeature;
+import org.calrissian.accumulorecipes.featurestore.FeatureStore;
+import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureEntryTransform;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
-import org.calrissian.accumulorecipes.featurestore.feature.transform.AccumuloFeatureConfig;
+import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
@@ -42,9 +42,9 @@ import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
 import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.featurestore.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
@@ -53,14 +53,14 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
  * <p/>
  * Format of the table:
  * Rowid                CF                       CQ                  Value
- * group\u0000revTS     feature\u0000'MINUTES'   type\u0000name      value
- * group\u0000revTS     feature\u0000'HOURS'     type\u0000name      value
- * group\u0000revTS     feature\u0000'DAYS'      type\u0000name      value
- * group\u0000revTS     feature\u0000'MONTHS'    type\u0000name      value
+ * group\u0000revTS     model\u0000'MINUTES'   type\u0000name      value
+ * group\u0000revTS     model\u0000'HOURS'     type\u0000name      value
+ * group\u0000revTS     model\u0000'DAYS'      type\u0000name      value
+ * group\u0000revTS     model\u0000'MONTHS'    type\u0000name      value
  * <p/>
  * The table is configured to use a SummingCombiner against each of the columns specified.
  */
-public class AccumuloFeatureStore implements MetricStore {
+public class AccumuloFeatureStore implements FeatureStore {
 
     public static final String DEFAULT_TABLE_NAME = "metrics";
     public static final String REVERSE_SUFFIX = "_reverse";
@@ -170,24 +170,24 @@ public class AccumuloFeatureStore implements MetricStore {
      * {@inheritDoc}
      */
     @Override
-    public void save(Iterable<? extends BaseFeature> metricData) {
+    public void save(Iterable<? extends Feature> featureData) {
         try {
-            for (BaseFeature metric : metricData) {
+            for (Feature feature : featureData) {
 
-                AccumuloFeatureConfig featureConfig = registry.transformForClass(metric.getClass());
+                AccumuloFeatureConfig featureConfig = registry.transformForClass(feature.getClass());
 
                 if(featureConfig == null)
-                    throw new RuntimeException("Skipping unknown feature type: " + metric.getClass());
+                    throw new RuntimeException("Skipping unknown model type: " + feature.getClass());
 
                 //fix null values
-                String group = defaultString(metric.getGroup());
-                String type = defaultString(metric.getType());
-                String name = defaultString(metric.getName());
-                ColumnVisibility visibility = new ColumnVisibility(defaultString(metric.getVisibility()));
+                String group = defaultString(feature.getGroup());
+                String type = defaultString(feature.getType());
+                String name = defaultString(feature.getName());
+                ColumnVisibility visibility = new ColumnVisibility(defaultString(feature.getVisibility()));
 
                 for (MetricTimeUnit timeUnit : MetricTimeUnit.values()) {
 
-                    String timestamp = generateTimestamp(metric.getTimestamp(), timeUnit);
+                    String timestamp = generateTimestamp(feature.getTimestamp(), timeUnit);
                     //Create mutation with:
                     //rowID: group\u0000timestamp
                     Mutation group_mutation = new Mutation(
@@ -207,8 +207,8 @@ public class AccumuloFeatureStore implements MetricStore {
                             combine(featureConfig.featureName(), timeUnit.toString()),
                             combine(type, name),
                             visibility,
-                            metric.getTimestamp(),
-                            featureConfig.buildValue(metric)
+                            feature.getTimestamp(),
+                            featureConfig.buildValue(feature)
                     );
 
                     //CF: Timeunit
@@ -217,8 +217,8 @@ public class AccumuloFeatureStore implements MetricStore {
                             combine(featureConfig.featureName(), timeUnit.toString()),
                             combine(group, name),
                             visibility,
-                            metric.getTimestamp(),
-                            featureConfig.buildValue(metric)
+                            feature.getTimestamp(),
+                            featureConfig.buildValue(feature)
                     );
 
                     groupWriter.addMutation(group_mutation);
@@ -239,7 +239,7 @@ public class AccumuloFeatureStore implements MetricStore {
      * {@inheritDoc}
      */
     @Override
-    public <T extends BaseFeature>CloseableIterable<T> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Class<T> featureType,  Auths auths) {
+    public <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Class<T> featureType,  Auths auths) {
 
         final AccumuloFeatureConfig<T> featureConfig = registry.transformForClass(featureType);
 

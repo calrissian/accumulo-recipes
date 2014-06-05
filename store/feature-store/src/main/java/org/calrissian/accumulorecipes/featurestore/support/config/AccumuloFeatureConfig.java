@@ -1,13 +1,13 @@
-package org.calrissian.accumulorecipes.featurestore.feature.transform;
+package org.calrissian.accumulorecipes.featurestore.support.config;
 
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.featurestore.feature.BaseFeature;
+import org.calrissian.accumulorecipes.featurestore.model.Feature;
 
 import java.io.Serializable;
 import java.util.List;
 
-public interface AccumuloFeatureConfig<T extends BaseFeature> extends Serializable {
+public interface AccumuloFeatureConfig<T extends Feature> extends Serializable {
 
     Class<T> transforms();
 

@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.featurestore.feature.transform;
+package org.calrissian.accumulorecipes.featurestore.support.config;
 
 
 import com.google.common.base.Function;
@@ -6,8 +6,8 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Value;
 import org.apache.commons.lang.StringUtils;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
-import org.calrissian.accumulorecipes.featurestore.feature.MetricFeature;
-import org.calrissian.accumulorecipes.featurestore.feature.vector.MetricFeatureVector;
+import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
+import org.calrissian.accumulorecipes.featurestore.model.MetricFeatureVector;
 import org.calrissian.accumulorecipes.featurestore.support.StatsCombiner;
 
 import java.math.BigInteger;
@@ -20,7 +20,7 @@ import static java.lang.Long.parseLong;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.combine;
 
-public class MetricFeatureTransform implements AccumuloFeatureConfig<MetricFeature> {
+public class MetricFeatureConfig implements AccumuloFeatureConfig<MetricFeature> {
 
     @Override
     public Class<MetricFeature> transforms() {

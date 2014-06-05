@@ -1,13 +1,12 @@
-package org.calrissian.accumulorecipes.featurestore.feature;
+package org.calrissian.accumulorecipes.featurestore.model;
 
 import org.apache.hadoop.io.Writable;
-import org.calrissian.accumulorecipes.featurestore.feature.vector.FeatureVector;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public abstract class BaseFeature<T extends FeatureVector> implements Writable {
+public abstract class Feature<T extends FeatureVector> implements Writable {
 
     protected long timestamp;
     protected String group;
@@ -16,7 +15,7 @@ public abstract class BaseFeature<T extends FeatureVector> implements Writable {
     protected String visibility;
     protected T vector;
 
-    protected BaseFeature(long timestamp, String group, String type, String name, String visibility, T vector) {
+    protected Feature(long timestamp, String group, String type, String name, String visibility, T vector) {
         this.timestamp = timestamp;
         this.group = group;
         this.type = type;
@@ -76,7 +75,7 @@ public abstract class BaseFeature<T extends FeatureVector> implements Writable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        BaseFeature that = (BaseFeature) o;
+        Feature that = (Feature) o;
 
         if (timestamp != that.timestamp) return false;
         if (group != null ? !group.equals(that.group) : that.group != null) return false;
@@ -101,7 +100,7 @@ public abstract class BaseFeature<T extends FeatureVector> implements Writable {
 
     @Override
     public String toString() {
-        return "BaseFeature{" +
+        return "Feature{" +
                 "timestamp=" + timestamp +
                 ", group='" + group + '\'' +
                 ", type='" + type + '\'' +

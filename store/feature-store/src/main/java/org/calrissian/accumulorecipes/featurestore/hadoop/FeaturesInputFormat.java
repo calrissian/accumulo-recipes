@@ -15,10 +15,10 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
-import org.calrissian.accumulorecipes.featurestore.feature.BaseFeature;
-import org.calrissian.accumulorecipes.featurestore.feature.transform.AccumuloFeatureConfig;
+import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureEntryTransform;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
+import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 
 import java.io.IOException;
 import java.util.Date;
@@ -33,18 +33,18 @@ import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistr
 import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 
-public class FeaturesInputFormat extends InputFormatBase<Key, BaseFeature> {
+public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
     public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
         setInputInfo(config, username, password, DEFAULT_TABLE_NAME, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, MetricTimeUnit timeUnit, String group, String type, String name, Class<? extends BaseFeature> featureType) throws IOException {
+    public static void setQueryInfo(Configuration config, Date start, Date end, MetricTimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType) throws IOException {
         setQueryInfo(config, start, end, timeUnit, group, type, name, featureType, BASE_FEATURES);
     }
 
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, MetricTimeUnit timeUnit, String group, String type, String name, Class<? extends BaseFeature> featureType, FeatureRegistry registry) throws IOException {
+    public static void setQueryInfo(Configuration config, Date start, Date end, MetricTimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType, FeatureRegistry registry) throws IOException {
 
         AccumuloFeatureConfig featureConfig = registry.transformForClass(featureType);
 
@@ -74,21 +74,21 @@ public class FeaturesInputFormat extends InputFormatBase<Key, BaseFeature> {
     }
 
     @Override
-    public RecordReader<Key, BaseFeature> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
+    public RecordReader<Key, Feature> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
 
 
         MetricTimeUnit timeUnit = MetricTimeUnit.valueOf(context.getConfiguration().get("timeUnit"));
 
         try {
-            final AccumuloFeatureConfig<? extends BaseFeature> config = fromBase64(context.getConfiguration().get("featureConfig").getBytes());
-            final FeatureEntryTransform<? extends BaseFeature> entryTransform = new FeatureEntryTransform<BaseFeature>(timeUnit) {
+            final AccumuloFeatureConfig<? extends Feature> config = fromBase64(context.getConfiguration().get("featureConfig").getBytes());
+            final FeatureEntryTransform<? extends Feature> entryTransform = new FeatureEntryTransform<Feature>(timeUnit) {
                 @Override
-                protected BaseFeature transform(long timestamp, String group, String type, String name, String visibility, Value value) {
+                protected Feature transform(long timestamp, String group, String type, String name, String visibility, Value value) {
                     return config.buildFeatureFromValue(timestamp, type, group, name, visibility, value);
                 }
             };
 
-            return new RecordReaderBase<Key, BaseFeature>() {
+            return new RecordReaderBase<Key, Feature>() {
                 @Override
                 public boolean nextKeyValue() throws IOException, InterruptedException {
                     if (scannerIterator.hasNext()) {
