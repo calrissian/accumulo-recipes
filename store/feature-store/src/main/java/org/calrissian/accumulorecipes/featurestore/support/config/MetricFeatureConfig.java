@@ -44,12 +44,12 @@ public class MetricFeatureConfig implements AccumuloFeatureConfig<MetricFeature>
     }
 
     @Override
-    public List<IteratorSetting> buildIterators() {
+    public List<IteratorSetting> buildIterators(int priority) {
         List<IteratorSetting.Column> columns = new ArrayList<IteratorSetting.Column>();
         for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
             columns.add(new IteratorSetting.Column(combine(featureName(), timeUnit.toString())));
 
-        IteratorSetting setting = new IteratorSetting(14, "stats", StatsCombiner.class);
+        IteratorSetting setting = new IteratorSetting(priority, "stats", StatsCombiner.class);
         StatsCombiner.setColumns(setting, columns);
 
         return Collections.singletonList(setting);

@@ -116,12 +116,19 @@ public class AccumuloFeatureStore implements FeatureStore {
     }
 
     private void createTable(String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        int priority = DEFAULT_ITERATOR_PRIORITY;
         if (!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName, false);
             for(AccumuloFeatureConfig featureConfig : registry.getConfigs()) {
-                List<IteratorSetting> settings = featureConfig.buildIterators();
-                for(IteratorSetting setting : settings)
+                List<IteratorSetting> settings = featureConfig.buildIterators(priority);
+
+                int numSettings = 0;
+                for(IteratorSetting setting : settings) {
+                    numSettings++;
                     connector.tableOperations().attachIterator(tableName, setting);
+                }
+
+                priority += numSettings;
             }
         }
     }

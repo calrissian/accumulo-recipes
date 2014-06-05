@@ -7,6 +7,9 @@ import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Represents the methods necessary for pluggin in a new feature type
+ */
 public interface AccumuloFeatureConfig<T extends Feature> extends Serializable {
 
     Class<T> transforms();
@@ -17,5 +20,11 @@ public interface AccumuloFeatureConfig<T extends Feature> extends Serializable {
 
     String featureName();
 
-    List<IteratorSetting> buildIterators();
+    /**
+     * Called for iterators to be built and returned. The priority MUST be used as the beginning priority. It is
+     * expected that, after the iterators are returned, the priority will increment by 1 for reach iterator.
+     * Therefore, the caller knows the increment the priority for each call to buildIterators() by the number
+     * of items in the resulting list.
+     */
+    List<IteratorSetting> buildIterators(int priority);
 }

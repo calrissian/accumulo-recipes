@@ -7,6 +7,9 @@ import org.calrissian.accumulorecipes.featurestore.support.config.MetricFeatureC
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Holds a set of feature classes and their mappings to config objects.
+ */
 public class FeatureRegistry {
 
     public static final FeatureRegistry BASE_FEATURES = new FeatureRegistry(new MetricFeatureConfig());
@@ -26,5 +29,4 @@ public class FeatureRegistry {
     public Iterable<AccumuloFeatureConfig> getConfigs() {
         return classToTransform.values();
     }
-
 }
