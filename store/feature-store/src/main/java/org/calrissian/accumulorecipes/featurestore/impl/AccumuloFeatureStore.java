@@ -25,7 +25,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.FeatureStore;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
@@ -133,7 +133,7 @@ public class AccumuloFeatureStore implements FeatureStore {
         }
     }
 
-    protected ScannerBase metricScanner(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
+    protected ScannerBase metricScanner(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
         checkNotNull(group);
         checkNotNull(type);
         checkNotNull(start);
@@ -143,7 +143,7 @@ public class AccumuloFeatureStore implements FeatureStore {
         try {
             //fix null values
             group = defaultString(group);
-            timeUnit = (timeUnit == null ? MetricTimeUnit.MINUTES : timeUnit);
+            timeUnit = (timeUnit == null ? TimeUnit.MINUTES : timeUnit);
 
             //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
             //timestamp.  Which is used to provide the latest results first.
@@ -207,7 +207,7 @@ public class AccumuloFeatureStore implements FeatureStore {
                 String name = defaultString(feature.getName());
                 ColumnVisibility visibility = new ColumnVisibility(defaultString(feature.getVisibility()));
 
-                for (MetricTimeUnit timeUnit : MetricTimeUnit.values()) {
+                for (TimeUnit timeUnit : TimeUnit.values()) {
 
                     String timestamp = generateTimestamp(feature.getTimestamp(), timeUnit);
                     //Create mutation with:
@@ -261,7 +261,7 @@ public class AccumuloFeatureStore implements FeatureStore {
      * {@inheritDoc}
      */
     @Override
-    public <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Class<T> featureType,  Auths auths) {
+    public <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Class<T> featureType,  Auths auths) {
 
         if(!isInitialized)
             throw new RuntimeException("Please call initialize() on the store first.");

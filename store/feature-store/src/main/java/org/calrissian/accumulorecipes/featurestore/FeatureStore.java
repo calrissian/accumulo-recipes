@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.featurestore;
 
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.mango.collect.CloseableIterable;
 
@@ -45,7 +45,7 @@ public interface FeatureStore {
      * @return
      */
     <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type,
-                                                      String name, MetricTimeUnit timeUnit, Class<T> featureType,  Auths auths);
+                                                      String name, TimeUnit timeUnit, Class<T> featureType,  Auths auths);
 
 
 }

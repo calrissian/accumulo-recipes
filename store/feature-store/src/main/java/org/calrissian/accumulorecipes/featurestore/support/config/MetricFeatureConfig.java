@@ -5,7 +5,7 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Value;
 import org.apache.commons.lang.StringUtils;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Metric;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.support.StatsCombiner;
@@ -46,7 +46,7 @@ public class MetricFeatureConfig implements AccumuloFeatureConfig<MetricFeature>
     @Override
     public List<IteratorSetting> buildIterators(int priority) {
         List<IteratorSetting.Column> columns = new ArrayList<IteratorSetting.Column>();
-        for (MetricTimeUnit timeUnit : MetricTimeUnit.values())
+        for (TimeUnit timeUnit : TimeUnit.values())
             columns.add(new IteratorSetting.Column(combine(featureName(), timeUnit.toString())));
 
         IteratorSetting setting = new IteratorSetting(priority, "stats", StatsCombiner.class);

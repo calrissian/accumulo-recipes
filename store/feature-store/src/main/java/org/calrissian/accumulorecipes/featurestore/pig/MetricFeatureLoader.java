@@ -12,7 +12,7 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
@@ -31,7 +31,7 @@ public class MetricFeatureLoader extends LoadFunc {
 
     protected TypeRegistry<String> registry = SIMPLE_TYPES;
     protected RecordReader<Key, ? extends Feature> reader;
-    protected MetricTimeUnit timeUnit;
+    protected TimeUnit timeUnit;
 
     @Override
     public void setLocation(String uri, Job job) throws IOException {
@@ -57,9 +57,9 @@ public class MetricFeatureLoader extends LoadFunc {
 
             String timeUnitStr = getProp(queryParams, "timeUnit");
             if(timeUnitStr != null)
-                timeUnit = MetricTimeUnit.valueOf(timeUnitStr.toUpperCase());
+                timeUnit = TimeUnit.valueOf(timeUnitStr.toUpperCase());
             else
-                throw new IOException("A valid MetricTimeUnit must be supplied. " + USAGE);
+                throw new IOException("A valid TimeUnit must be supplied. " + USAGE);
 
             String group = getProp(queryParams, "group");
             String type = getProp(queryParams, "type");

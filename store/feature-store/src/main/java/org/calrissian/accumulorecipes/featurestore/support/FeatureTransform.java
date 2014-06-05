@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.featurestore.support;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 
 import static java.util.Map.Entry;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
@@ -32,9 +32,9 @@ import static org.calrissian.accumulorecipes.featurestore.support.Constants.DELI
  */
 public abstract class FeatureTransform<T> implements Function<Entry<Key, Value>, T> {
 
-    MetricTimeUnit timeUnit;
+    TimeUnit timeUnit;
 
-    public FeatureTransform(MetricTimeUnit timeUnit) {
+    public FeatureTransform(TimeUnit timeUnit) {
         this.timeUnit = timeUnit;
     }
 

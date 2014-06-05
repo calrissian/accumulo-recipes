@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.commons.support;
 
-public enum MetricTimeUnit {
+public enum TimeUnit {
     MINUTES,
     HOURS,
     DAYS,

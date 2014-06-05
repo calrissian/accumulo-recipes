@@ -15,7 +15,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
@@ -43,7 +43,7 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
         setInputInfo(config, username, password, DEFAULT_TABLE_NAME, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, MetricTimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType) throws IOException {
+    public static void setQueryInfo(Configuration config, Date start, Date end, TimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType) throws IOException {
         setQueryInfo(config, start, end, timeUnit, group, type, name, featureType, BASE_FEATURES);
     }
 
@@ -55,7 +55,7 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
      *
      * NOTE: It can be dangerous to apply a registry to a feature
      */
-    public static void setQueryInfo(Configuration config, Date start, Date end, MetricTimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType, FeatureRegistry registry) throws IOException {
+    public static void setQueryInfo(Configuration config, Date start, Date end, TimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType, FeatureRegistry registry) throws IOException {
 
         AccumuloFeatureConfig featureConfig = registry.transformForClass(featureType);
 
@@ -89,7 +89,7 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
     @Override
     public RecordReader<Key, Feature> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
 
-        MetricTimeUnit timeUnit = MetricTimeUnit.valueOf(context.getConfiguration().get("timeUnit"));
+        TimeUnit timeUnit = TimeUnit.valueOf(context.getConfiguration().get("timeUnit"));
 
         try {
             final AccumuloFeatureConfig<? extends Feature> config = fromBase64(context.getConfiguration().get("featureConfig").getBytes());

@@ -10,7 +10,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.commons.mock.MockRecordReader;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
@@ -57,7 +57,7 @@ public class MetricsLoaderTest {
         org.apache.pig.data.Tuple t;
         while((t = loader.getNext()) != null) {
             assertEquals(metric.getTimestamp(), t.get(0));
-            assertEquals(MetricTimeUnit.MINUTES.toString(), t.get(1));
+            assertEquals(TimeUnit.MINUTES.toString(), t.get(1));
             assertEquals(metric.getGroup(), t.get(2));
             assertEquals(metric.getType(), t.get(3));
             assertEquals(metric.getName(), t.get(4));
@@ -111,7 +111,7 @@ public class MetricsLoaderTest {
 
         FeaturesInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());
         FeaturesInputFormat.setMockInstance(conf, "instName");
-        FeaturesInputFormat.setQueryInfo(conf, new Date(System.currentTimeMillis() - 50000), new Date(), MetricTimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
+        FeaturesInputFormat.setQueryInfo(conf, new Date(System.currentTimeMillis() - 50000), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
 
     }
 

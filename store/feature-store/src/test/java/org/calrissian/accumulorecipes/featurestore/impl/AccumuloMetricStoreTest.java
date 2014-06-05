@@ -22,7 +22,7 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.junit.Test;
@@ -30,7 +30,6 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.collect.Iterables.limit;
 import static com.google.common.collect.Lists.newArrayList;
@@ -43,21 +42,21 @@ public class AccumuloMetricStoreTest {
         return new MockInstance().getConnector("root", "".getBytes());
     }
 
-    public static long getTimeOffset(MetricTimeUnit timeUnit) {
+    public static long getTimeOffset(TimeUnit timeUnit) {
         switch (timeUnit) {
             case MINUTES:
-                return TimeUnit.MINUTES.toMillis(1);
+                return java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
             case HOURS:
-                return TimeUnit.HOURS.toMillis(1);
+                return java.util.concurrent.TimeUnit.HOURS.toMillis(1);
             case DAYS:
-                return TimeUnit.DAYS.toMillis(1);
+                return java.util.concurrent.TimeUnit.DAYS.toMillis(1);
             case MONTHS:
-                return TimeUnit.DAYS.toMillis(31);
+                return java.util.concurrent.TimeUnit.DAYS.toMillis(31);
         }
-        return TimeUnit.MINUTES.toMillis(1);
+        return java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
     }
 
-    public static Iterable<MetricFeature> generateTestData(MetricTimeUnit timeUnit, int limit) {
+    public static Iterable<MetricFeature> generateTestData(TimeUnit timeUnit, int limit) {
         final long startTime = System.currentTimeMillis();
         final long offset = getTimeOffset(timeUnit);
 
@@ -99,11 +98,11 @@ public class AccumuloMetricStoreTest {
         AccumuloFeatureStore metricStore = new AccumuloFeatureStore(getConnector());
         metricStore.initialize();
 
-        Iterable<MetricFeature> testData = generateTestData(MetricTimeUnit.MINUTES, 60);
+        Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
 
         metricStore.save(testData);
 
-        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, MetricFeature.class, new Auths());
+        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
 
         checkMetrics(actual, 60, 1);
     }
@@ -114,13 +113,13 @@ public class AccumuloMetricStoreTest {
         Connector connector = getConnector();
         AccumuloFeatureStore metricStore = new AccumuloFeatureStore(connector);
         metricStore.initialize();
-        Iterable<MetricFeature> testData = generateTestData(MetricTimeUnit.MINUTES, 60);
+        Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
 
         metricStore.save(testData);
         metricStore.save(testData);
         metricStore.save(testData);
 
-        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", MetricTimeUnit.MINUTES, MetricFeature.class, new Auths());
+        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
 
         checkMetrics(actual, 60, 3);
     }

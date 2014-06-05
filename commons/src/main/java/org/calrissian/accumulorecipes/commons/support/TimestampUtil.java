@@ -51,7 +51,7 @@ public class TimestampUtil {
      * @param timeUnit
      * @return
      */
-    public static String generateTimestamp(long timestamp, MetricTimeUnit timeUnit) {
+    public static String generateTimestamp(long timestamp, TimeUnit timeUnit) {
         switch (timeUnit) {
             case MINUTES:
                 return reverse(MINUTES_FORMAT.print(timestamp));
@@ -74,7 +74,7 @@ public class TimestampUtil {
      * @param timeUnit
      * @return
      */
-    public static long revertTimestamp(String timestamp, MetricTimeUnit timeUnit) {
+    public static long revertTimestamp(String timestamp, TimeUnit timeUnit) {
         switch (timeUnit) {
             case MINUTES:
                 return MINUTES_FORMAT.parseMillis(reverse(timestamp));

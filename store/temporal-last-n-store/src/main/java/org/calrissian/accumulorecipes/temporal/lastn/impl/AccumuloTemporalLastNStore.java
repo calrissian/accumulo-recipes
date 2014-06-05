@@ -30,7 +30,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator;
 import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
 import org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIterator;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -111,9 +111,9 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         try {
             for (Tuple tuple : entry.getTuples()) {
 
-                Mutation m = new Mutation(group + GROUP_DELIM + generateTimestamp(entry.getTimestamp(), MetricTimeUnit.DAYS));
+                Mutation m = new Mutation(group + GROUP_DELIM + generateTimestamp(entry.getTimestamp(), TimeUnit.DAYS));
                 m.put(
-                        new Text(generateTimestamp(entry.getTimestamp(), MetricTimeUnit.MINUTES)),
+                        new Text(generateTimestamp(entry.getTimestamp(), TimeUnit.MINUTES)),
                         new Text(""),
                         new ColumnVisibility(tuple.getVisibility()),
                         entry.getTimestamp(),
@@ -148,11 +148,11 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     public CloseableIterable<Event> get(Date start, Date stop, Collection<String> groups, int n, Auths auths) {
 
         List<Iterable<Event>> cursors = new LinkedList<Iterable<Event>>();
-        String stopDay = generateTimestamp(start.getTime(), MetricTimeUnit.DAYS);
-        String startDay = generateTimestamp(stop.getTime(), MetricTimeUnit.DAYS);
+        String stopDay = generateTimestamp(start.getTime(), TimeUnit.DAYS);
+        String startDay = generateTimestamp(stop.getTime(), TimeUnit.DAYS);
 
-        String stopMinute = generateTimestamp(start.getTime(), MetricTimeUnit.MINUTES);
-        String startMinute = generateTimestamp(stop.getTime(), MetricTimeUnit.MINUTES);
+        String stopMinute = generateTimestamp(start.getTime(), TimeUnit.MINUTES);
+        String startMinute = generateTimestamp(stop.getTime(), TimeUnit.MINUTES);
 
         for (String group : groups) {
 

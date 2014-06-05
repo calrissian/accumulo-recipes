@@ -9,7 +9,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
+import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class MetricsInputFormatTest {
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(FeaturesInputFormat.class);
         FeaturesInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
-        FeaturesInputFormat.setQueryInfo(job.getConfiguration(), new Date(0), new Date(), MetricTimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
+        FeaturesInputFormat.setQueryInfo(job.getConfiguration(), new Date(0), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
         FeaturesInputFormat.setMockInstance(job.getConfiguration(), "instName");
         job.setOutputFormatClass(NullOutputFormat.class);
 
