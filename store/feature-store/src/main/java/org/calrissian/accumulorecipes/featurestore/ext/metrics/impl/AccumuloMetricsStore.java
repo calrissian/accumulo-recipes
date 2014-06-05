@@ -12,6 +12,10 @@ import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
 
+/**
+ * The Accumulo implementation of the metrics store allows the statistical summaries to be aggregated during the
+ * compaction and scan phases. Metrics gets automatically rolled up for the given time units.
+ */
 public class AccumuloMetricsStore implements MetricStore{
 
     protected FeatureStore featureStore;

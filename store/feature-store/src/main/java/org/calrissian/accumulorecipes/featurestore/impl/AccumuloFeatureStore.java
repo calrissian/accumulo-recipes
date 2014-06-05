@@ -48,29 +48,30 @@ import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistr
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
- * This class will store simple metric data into accumulo.  The metrics will aggregate over predefined time intervals
- * but are available immediately to criteria.
+ * This class will store simple feature vectors into accumulo.  The features will aggregate over predefined time intervals
+ * and the aggregations are available immediately.
  * <p/>
  * Format of the table:
  * Rowid                CF                       CQ                  Value
- * group\u0000revTS     model\u0000'MINUTES'   type\u0000name      value
- * group\u0000revTS     model\u0000'HOURS'     type\u0000name      value
- * group\u0000revTS     model\u0000'DAYS'      type\u0000name      value
- * group\u0000revTS     model\u0000'MONTHS'    type\u0000name      value
+ * group\u0000revTS     model\u0000'MINUTES'     type\u0000name      value
+ * group\u0000revTS     model\u0000'HOURS'       type\u0000name      value
+ * group\u0000revTS     model\u0000'DAYS'        type\u0000name      value
+ * group\u0000revTS     model\u0000'MONTHS'      type\u0000name      value
  * <p/>
- * The table is configured to use a SummingCombiner against each of the columns specified.
  */
 public class AccumuloFeatureStore implements FeatureStore {
 
-    public static final String DEFAULT_TABLE_NAME = "metrics";
+    public static final String DEFAULT_TABLE_NAME = "features";
     public static final String REVERSE_SUFFIX = "_reverse";
     protected static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000, 100, 10);
 
     private final Connector connector;
     private final StoreConfig config;
-    private final String tableName;
-    private final BatchWriter groupWriter;
-    private final BatchWriter typeWriter;
+    private String tableName;
+    private BatchWriter groupWriter;
+    private BatchWriter typeWriter;
+
+    private boolean isInitialized = false;
 
     protected FeatureRegistry registry = BASE_FEATURES;
 
@@ -82,6 +83,10 @@ public class AccumuloFeatureStore implements FeatureStore {
         this.registry = registry;
     }
 
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
     public AccumuloFeatureStore(Connector connector, String tableName, StoreConfig config) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         checkNotNull(connector);
         checkNotNull(tableName);
@@ -91,12 +96,18 @@ public class AccumuloFeatureStore implements FeatureStore {
         this.tableName = tableName;
         this.config = config;
 
+    }
+
+    public void initialize() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
         createTable(this.tableName);
         createTable(this.tableName + REVERSE_SUFFIX);
 
         this.groupWriter = this.connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
         this.typeWriter = this.connector.createBatchWriter(tableName + REVERSE_SUFFIX, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+
+        isInitialized = true;
     }
+
 
     public static String combine(String... items) {
         if (items == null)
@@ -171,6 +182,10 @@ public class AccumuloFeatureStore implements FeatureStore {
      */
     @Override
     public void save(Iterable<? extends Feature> featureData) {
+
+        if(!isInitialized)
+            throw new RuntimeException("Please called initialize() on the store first");
+
         try {
             for (Feature feature : featureData) {
 
@@ -240,6 +255,9 @@ public class AccumuloFeatureStore implements FeatureStore {
      */
     @Override
     public <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type, String name, MetricTimeUnit timeUnit, Class<T> featureType,  Auths auths) {
+
+        if(!isInitialized)
+            throw new RuntimeException("Please call initialize() on the store first.");
 
         final AccumuloFeatureConfig<T> featureConfig = registry.transformForClass(featureType);
 

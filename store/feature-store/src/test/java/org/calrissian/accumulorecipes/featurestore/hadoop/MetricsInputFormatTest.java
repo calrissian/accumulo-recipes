@@ -31,6 +31,7 @@ public class MetricsInputFormatTest {
         Instance instance = new MockInstance("instName");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloFeatureStore store = new AccumuloFeatureStore(connector);
+        store.initialize();
         store.save(singleton(metric));
 
         Job job = new Job(new Configuration());

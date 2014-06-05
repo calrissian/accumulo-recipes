@@ -81,7 +81,7 @@ public class MetricsLoaderTest {
         Instance instance = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
         Connector conn = instance.getConnector("root", "".getBytes());
 
-        conn.tableOperations().create("metrics");
+        conn.tableOperations().create("features");
         Job job = new Job();
 
         MetricFeatureLoader loader = new MetricFeatureLoader();
@@ -97,7 +97,7 @@ public class MetricsLoaderTest {
         assertEquals("", job.getConfiguration().get(CONFIG_PREFIX + "password"));
         assertEquals(zk, job.getConfiguration().get(CONFIG_PREFIX + "zooKeepers"));
         assertEquals(inst, job.getConfiguration().get(CONFIG_PREFIX + "instanceName"));
-        assertEquals("metrics", job.getConfiguration().get(CONFIG_PREFIX + "tablename"));
+        assertEquals("features", job.getConfiguration().get(CONFIG_PREFIX + "tablename"));
 
     }
 
@@ -105,6 +105,7 @@ public class MetricsLoaderTest {
         Instance instance = new MockInstance("instName");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloFeatureStore store = new AccumuloFeatureStore(connector);
+        store.initialize();
         metric = new MetricFeature(System.currentTimeMillis(), "group", "type", "name", "", 1);
         store.save(singleton(metric));
 

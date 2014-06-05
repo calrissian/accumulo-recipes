@@ -1,5 +1,7 @@
 package org.calrissian.accumulorecipes.featurestore.model;
 
+import org.apache.hadoop.io.Writable;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -10,7 +12,10 @@ import static java.lang.Math.sqrt;
 import static java.math.BigDecimal.valueOf;
 import static java.math.RoundingMode.FLOOR;
 
-public class MetricFeatureVector implements FeatureVector {
+/**
+ * Contains statistical summary information (min, max, sum, count, std dev, etc...).
+ */
+public class Metric implements Writable {
 
     private long min;
     private long max;
@@ -18,10 +23,10 @@ public class MetricFeatureVector implements FeatureVector {
     private long count;
     private BigInteger sumSquare;
 
-    public MetricFeatureVector() {
+    public Metric() {
     }
 
-    public MetricFeatureVector(long min, long max, long sum, long count, BigInteger sumSquare) {
+    public Metric(long min, long max, long sum, long count, BigInteger sumSquare) {
         this.min = min;
         this.max = max;
         this.sum = sum;
@@ -60,7 +65,7 @@ public class MetricFeatureVector implements FeatureVector {
     }
 
     /**
-     * The sample variance for the values encountered for the time range
+     * The population variance for the values encountered for the time range
      */
     public double getVariance() {
         BigDecimal sumSquare = new BigDecimal(this.sumSquare);
@@ -73,7 +78,10 @@ public class MetricFeatureVector implements FeatureVector {
     }
 
 
-    public double getStdDev(boolean asSample) {
+    /**
+     * The population standard deviation
+     */
+    public double getStdDev() {
         return sqrt(getVariance());
     }
 
@@ -100,7 +108,7 @@ public class MetricFeatureVector implements FeatureVector {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        MetricFeatureVector that = (MetricFeatureVector) o;
+        Metric that = (Metric) o;
 
         if (count != that.count) return false;
         if (max != that.max) return false;
@@ -123,7 +131,7 @@ public class MetricFeatureVector implements FeatureVector {
 
     @Override
     public String toString() {
-        return "MetricFeatureVector{" +
+        return "Metric{" +
                 "min=" + min +
                 ", max=" + max +
                 ", sum=" + sum +

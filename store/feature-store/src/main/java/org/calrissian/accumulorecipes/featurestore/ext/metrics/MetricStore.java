@@ -1,6 +1,5 @@
 package org.calrissian.accumulorecipes.featurestore.ext.metrics;
 
-
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
@@ -8,9 +7,16 @@ import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
 
+/**
+ * A metrics store API for persisting and querying statistical summaries of things. These statistical summaries
+ * are min, max, sum, count, and sumSquare (for std deviation).
+ */
 public interface MetricStore {
 
-    void save(Iterable<? extends MetricFeature> features);
+    /**
+     * Saves a bunch of metrics to the metrics store
+     */
+    void save(Iterable<? extends MetricFeature> metrics);
 
     /**
      * Query metrics back from the store.

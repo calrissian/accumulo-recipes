@@ -11,6 +11,7 @@ import org.apache.accumulo.core.util.Pair;
 import org.apache.accumulo.core.util.format.DefaultFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -33,6 +34,9 @@ import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistr
 import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 
+/**
+ * A Hadoop {@link InputFormat} that allows any Feature to be streamed into a map/reduce job based on a given query.
+ */
 public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
     public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
@@ -43,7 +47,14 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
         setQueryInfo(config, start, end, timeUnit, group, type, name, featureType, BASE_FEATURES);
     }
 
-
+    /**
+     * Query for a specific set of feature rollups for a specific time range and unit of time. At a minimum, a group
+     * needs to be specified. Type and name are optional. The requested feature type to query determines the vector
+     * that will be streamed into the map/reduce job. A registry allows pluggable feature types to be propagated down
+     * to a store where features have been ingested with matching feature configs.
+     *
+     * NOTE: It can be dangerous to apply a registry to a feature
+     */
     public static void setQueryInfo(Configuration config, Date start, Date end, MetricTimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType, FeatureRegistry registry) throws IOException {
 
         AccumuloFeatureConfig featureConfig = registry.transformForClass(featureType);
@@ -65,17 +76,18 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
             Pair<Text, Text> column = new Pair<Text, Text>(new Text(combine(featureConfig.featureName(), timeUnit.toString())), null);
             fetchColumns(config, singleton(column));
 
-            String cqRegex = null;
-            cqRegex = combine(type, "(.*)");
-            IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
-            RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
-            addIterator(config, regexIterator);
+            if(type != null) {
+                String cqRegex = null;
+                cqRegex = combine(type, "(.*)");
+                IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
+                RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
+                addIterator(config, regexIterator);
+            }
         }
     }
 
     @Override
     public RecordReader<Key, Feature> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
-
 
         MetricTimeUnit timeUnit = MetricTimeUnit.valueOf(context.getConfiguration().get("timeUnit"));
 

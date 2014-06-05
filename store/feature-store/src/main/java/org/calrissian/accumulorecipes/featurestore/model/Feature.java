@@ -6,7 +6,13 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public abstract class Feature<T extends FeatureVector> implements Writable {
+/**
+ * A feature models defining properties of a thing. These defining properties generally take on the form of
+ * some mathematical representation that can be used for machine learning, trending, and other statistical
+ * analysis. This model of a feature provides some common identification information as well as a vector
+ * that houses the actual mathematical summary data.
+ */
+public abstract class Feature<T extends Writable> implements Writable {
 
     protected long timestamp;
     protected String group;

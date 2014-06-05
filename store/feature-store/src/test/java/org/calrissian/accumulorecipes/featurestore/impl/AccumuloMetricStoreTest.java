@@ -97,6 +97,7 @@ public class AccumuloMetricStoreTest {
     @Test
     public void testStoreAndQuery() throws Exception {
         AccumuloFeatureStore metricStore = new AccumuloFeatureStore(getConnector());
+        metricStore.initialize();
 
         Iterable<MetricFeature> testData = generateTestData(MetricTimeUnit.MINUTES, 60);
 
@@ -112,7 +113,7 @@ public class AccumuloMetricStoreTest {
 
         Connector connector = getConnector();
         AccumuloFeatureStore metricStore = new AccumuloFeatureStore(connector);
-
+        metricStore.initialize();
         Iterable<MetricFeature> testData = generateTestData(MetricTimeUnit.MINUTES, 60);
 
         metricStore.save(testData);
