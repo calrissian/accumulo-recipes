@@ -26,23 +26,17 @@ import java.util.Date;
 public interface FeatureStore {
 
     /**
-     * Save a set of metrics to the store
-     *
-     * @param metricData
+     * Save a set of features to the store
      */
-    void save(Iterable<? extends Feature> metricData);
+    void save(Iterable<? extends Feature> featureData);
 
     /**
-     * Query metrics back from the store.
-     *
-     * @param start
-     * @param end
-     * @param group
-     * @param type
-     * @param name
-     * @param timeUnit
-     * @param auths
-     * @return
+     * Save a set of features to the store for the specified time units
+     */
+    void save(Iterable<? extends Feature> features, Iterable<TimeUnit> timeUnits);
+
+    /**
+     * Query features back from the store.
      */
     <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type,
                                                       String name, TimeUnit timeUnit, Class<T> featureType,  Auths auths);

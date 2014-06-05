@@ -17,6 +17,7 @@ package org.calrissian.accumulorecipes.featurestore.impl;
 
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
@@ -32,11 +33,12 @@ import java.util.List;
 
 import static com.google.common.collect.Iterables.limit;
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.singleton;
 import static org.calrissian.mango.collect.CloseableIterables.autoClose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class AccumuloMetricStoreTest {
+public class AccumuloFeatureStoreTest {
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
         return new MockInstance().getConnector("root", "".getBytes());
@@ -105,6 +107,29 @@ public class AccumuloMetricStoreTest {
         CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
 
         checkMetrics(actual, 60, 1);
+    }
+
+
+    @Test
+    public void testStoreAndQuery_specificTimeUnits() throws Exception {
+        AccumuloFeatureStore metricStore = new AccumuloFeatureStore(getConnector());
+        metricStore.initialize();
+
+        Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
+        metricStore.save(testData, singleton(TimeUnit.MINUTES));
+
+        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
+        checkMetrics(actual, 60, 1);
+
+        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.HOURS, MetricFeature.class, new Auths());
+        assertEquals(0, Iterables.size(actual));
+
+        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.DAYS, MetricFeature.class, new Auths());
+        assertEquals(0, Iterables.size(actual));
+
+        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MONTHS, MetricFeature.class, new Auths());
+        assertEquals(0, Iterables.size(actual));
+
     }
 
     @Test

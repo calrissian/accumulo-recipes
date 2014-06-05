@@ -28,8 +28,8 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.FeatureStore;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
-import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
+import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 import org.calrissian.mango.collect.CloseableIterable;
 
@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
@@ -184,11 +185,16 @@ public class AccumuloFeatureStore implements FeatureStore {
         groupWriter.close();
     }
 
+
+    public void save(Iterable<? extends Feature> featureData) {
+        save(featureData, asList(TimeUnit.values()));
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void save(Iterable<? extends Feature> featureData) {
+    public void save(Iterable<? extends Feature> featureData, Iterable<TimeUnit> timeUnits) {
 
         if(!isInitialized)
             throw new RuntimeException("Please called initialize() on the store first");
@@ -207,7 +213,7 @@ public class AccumuloFeatureStore implements FeatureStore {
                 String name = defaultString(feature.getName());
                 ColumnVisibility visibility = new ColumnVisibility(defaultString(feature.getVisibility()));
 
-                for (TimeUnit timeUnit : TimeUnit.values()) {
+                for (TimeUnit timeUnit : timeUnits) {
 
                     String timestamp = generateTimestamp(feature.getTimestamp(), timeUnit);
                     //Create mutation with:

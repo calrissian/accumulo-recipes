@@ -19,6 +19,6 @@ public class MetricTest {
 
         metric = new Metric(1, 1, 5, 5, BigInteger.valueOf(5));
         assertEquals(0.0, metric.getVariance());
-        
+
     }
 }
