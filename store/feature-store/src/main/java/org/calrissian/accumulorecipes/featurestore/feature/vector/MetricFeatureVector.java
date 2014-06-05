@@ -3,9 +3,12 @@ package org.calrissian.accumulorecipes.featurestore.feature.vector;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import static java.lang.Math.sqrt;
+import static java.math.BigDecimal.valueOf;
+import static java.math.RoundingMode.FLOOR;
 
 public class MetricFeatureVector implements FeatureVector {
 
@@ -57,37 +60,21 @@ public class MetricFeatureVector implements FeatureVector {
     }
 
     /**
-     * The population variance for the values encountered for the time range
+     * The sample variance for the values encountered for the time range
      */
     public double getVariance() {
-        return getVariance(false);
+        BigDecimal sumSquare = new BigDecimal(this.sumSquare);
+
+        if(count < 2)
+            return 0;
+
+        BigDecimal sumSquareDivideByCount = sumSquare.divide(valueOf(count), 15, FLOOR);
+        return (sumSquareDivideByCount.subtract(new BigDecimal(getMean() * getMean()))).doubleValue();
     }
 
-    /**
-     * The variance of the values encountered for the time range.  The asSample option
-     * allows the user to get the variance of the data as if the data was a sample population.
-     *
-     * @see https://statistics.laerd.com/statistical-guides/measures-of-spread-standard-deviation.php
-     */
-    public double getVariance(boolean asSample) {
-        return 0.0;     //TODO: FIX THIS FOR BIGDECIMAL
-    }
 
-    /**
-     * The population standard deviation for the values encountered for the time range.
-     */
-    public double getStdDev() {
-        return getStdDev(false);
-    }
-
-    /**
-     * The standard deviation for the values encountered for the time range.  The asSample option
-     * allows the user to get the standard deviation of the data as if the data was a sample population.
-     *
-     * @see https://statistics.laerd.com/statistical-guides/measures-of-spread-standard-deviation.php
-     */
     public double getStdDev(boolean asSample) {
-        return sqrt(getVariance(asSample));
+        return sqrt(getVariance());
     }
 
     @Override

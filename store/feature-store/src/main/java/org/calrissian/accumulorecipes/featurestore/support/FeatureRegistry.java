@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class FeatureRegistry {
 
+    public static final FeatureRegistry BASE_FEATURES = new FeatureRegistry(new MetricFeatureTransform());
+
     private Map<Class, AccumuloFeatureConfig> classToTransform = new HashMap<Class, AccumuloFeatureConfig>();
 
     public FeatureRegistry(AccumuloFeatureConfig... transforms) {
@@ -20,8 +22,6 @@ public class FeatureRegistry {
     public AccumuloFeatureConfig transformForClass(Class<? extends BaseFeature> clazz) {
         return classToTransform.get(clazz);
     }
-
-    public static final FeatureRegistry BASE_FEATURES = new FeatureRegistry(new MetricFeatureTransform());
 
     public Iterable<AccumuloFeatureConfig> getConfigs() {
         return classToTransform.values();
