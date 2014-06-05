@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
 
 /**
- * Visit criteria to validate and transform to perform the criteria against the swift event service.
+ * Visit criteria to validate and config to perform the criteria against the swift event service.
  */
 public class QueryOptimizer implements NodeVisitor {
 
