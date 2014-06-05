@@ -28,7 +28,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.featurestore.FeatureStore;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
-import org.calrissian.accumulorecipes.featurestore.support.FeatureEntryTransform;
+import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -270,7 +270,7 @@ public class AccumuloFeatureStore implements FeatureStore {
 
         return transform(
                 closeableIterable(metricScanner(start, end, group, type, name, timeUnit, featureConfig, auths)),
-                new FeatureEntryTransform<T>(timeUnit) {
+                new FeatureTransform<T>(timeUnit) {
                     @Override
                     protected T transform(long timestamp, String group, String type, String name, String visibility, Value value) {
                         return featureConfig.buildFeatureFromValue(timestamp, group, type, name, visibility, value);

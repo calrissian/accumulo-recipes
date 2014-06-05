@@ -17,7 +17,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.accumulorecipes.commons.support.MetricTimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
-import org.calrissian.accumulorecipes.featurestore.support.FeatureEntryTransform;
+import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 
@@ -93,7 +93,7 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
         try {
             final AccumuloFeatureConfig<? extends Feature> config = fromBase64(context.getConfiguration().get("featureConfig").getBytes());
-            final FeatureEntryTransform<? extends Feature> entryTransform = new FeatureEntryTransform<Feature>(timeUnit) {
+            final FeatureTransform<? extends Feature> entryTransform = new FeatureTransform<Feature>(timeUnit) {
                 @Override
                 protected Feature transform(long timestamp, String group, String type, String name, String visibility, Value value) {
                     return config.buildFeatureFromValue(timestamp, type, group, name, visibility, value);

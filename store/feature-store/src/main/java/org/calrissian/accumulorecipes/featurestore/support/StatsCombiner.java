@@ -82,7 +82,7 @@ public class StatsCombiner extends Combiner {
     public IteratorOptions describeOptions() {
         IteratorOptions io = super.describeOptions();
         io.setName("statsCombiner");
-        io.setDescription("Combiner that keeps track of min, max, sum, and count");
+        io.setDescription("Combiner that keeps track of min, max, sum, count, and sumSquare");
         return io;
     }
 }

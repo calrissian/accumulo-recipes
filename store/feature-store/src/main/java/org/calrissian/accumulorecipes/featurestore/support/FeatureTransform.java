@@ -30,11 +30,11 @@ import static org.calrissian.accumulorecipes.featurestore.support.Constants.DELI
  *
  * @param <T>
  */
-public abstract class FeatureEntryTransform<T> implements Function<Entry<Key, Value>, T> {
+public abstract class FeatureTransform<T> implements Function<Entry<Key, Value>, T> {
 
     MetricTimeUnit timeUnit;
 
-    public FeatureEntryTransform(MetricTimeUnit timeUnit) {
+    public FeatureTransform(MetricTimeUnit timeUnit) {
         this.timeUnit = timeUnit;
     }
 

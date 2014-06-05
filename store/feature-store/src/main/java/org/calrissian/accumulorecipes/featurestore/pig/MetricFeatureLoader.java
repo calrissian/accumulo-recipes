@@ -27,7 +27,7 @@ import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class MetricFeatureLoader extends LoadFunc {
 
-    public static final String USAGE = "Usage: metric://tablePrefix?user=&pass=&inst=&zk=&timeUnit=&start=&end=&auths=&group=[&type=&name=]";
+    public static final String USAGE = "Usage: metrics://tablePrefix?user=&pass=&inst=&zk=&timeUnit=&start=&end=&auths=&group=[&type=&name=]";
 
     protected TypeRegistry<String> registry = SIMPLE_TYPES;
     protected RecordReader<Key, ? extends Feature> reader;
