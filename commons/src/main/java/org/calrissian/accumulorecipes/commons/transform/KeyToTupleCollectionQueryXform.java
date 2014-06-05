@@ -64,10 +64,14 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
         for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
             if (selectFields == null || selectFields.contains(fieldValue.getKey())) {
                 String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
+
                 try {
                     Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
+                    String tupleId = fieldValue.getKey();
+                    if(aliasVal.length == 3)
+                        tupleId = aliasVal[2];
                     String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                    entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
+                    entry.put(new Tuple(tupleId, fieldValue.getKey(), javaVal, vis));
                 } catch (TypeDecodingException e) {
                     throw new RuntimeException(e);
                 }
