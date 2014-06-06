@@ -30,7 +30,6 @@ import org.calrissian.mango.domain.entity.Entity;
 
 import java.util.Set;
 
-import static com.tinkerpop.blueprints.Query.Compare.*;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
@@ -80,18 +79,22 @@ public class EntityGraphQuery implements GraphQuery {
 
     @Override
     public GraphQuery has(String key, Predicate predicate, Object value) {
-        if (predicate == EQUAL)
+        if (predicate.toString().equals("EQUAL"))
             return has(key, value);
-        else if (predicate == NOT_EQUAL)
+        else if (predicate.toString().equals("NOT_EQUAL"))
             return hasNot(key, value);
-        else if (predicate == GREATER_THAN)
+        else if (predicate.toString().equals("GREATER_THAN"))
             queryBuilder = queryBuilder.greaterThan(key, value);
-        else if (predicate == LESS_THAN)
+        else if (predicate.toString().equals("LESS_THAN"))
             queryBuilder = queryBuilder.lessThan(key, value);
-        else if (predicate == GREATER_THAN_EQUAL)
+        else if (predicate.toString().equals("GREATER_THAN_EQUAL"))
             queryBuilder = queryBuilder.greaterThanEq(key, value);
-        else if (predicate == LESS_THAN_EQUAL)
+        else if (predicate.toString().equals("LESS_THAN_EQUAL"))
             queryBuilder = queryBuilder.lessThanEq(key, value);
+        else if (predicate.toString().equals("IN"))
+            queryBuilder = queryBuilder.in(key, value);
+        else if(predicate.toString().equals("NOT_IN"))
+            queryBuilder = queryBuilder.notIn(key, value);
         else
             throw new UnsupportedOperationException("Predicate with type " + predicate + " is not supported.");
 
