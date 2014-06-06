@@ -16,9 +16,7 @@
 package org.calrissian.accumulorecipes.graphstore.tinkerpop;
 
 import com.google.common.collect.Iterables;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
@@ -175,6 +173,7 @@ public class EntityGraphQueryTest {
         edges = (CloseableIterable<Edge>) query.hasNot("edgeProp").edges();
         assertEquals(0, Iterables.size(edges));
     }
+
 
 
     @Test

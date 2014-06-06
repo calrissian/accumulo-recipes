@@ -254,6 +254,52 @@ public class AccumuloEntityStoreTest {
         assertEquals(0, Iterables.size(itr));
     }
 
+
+    @Test
+    public void testQuery_in_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1", ""));
+
+        store.save(asList(entity));
+
+        Node node = new QueryBuilder().in("key1", "val2", "val3", "val4").build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(0, Iterables.size(itr));
+    }
+
+    @Test
+    public void testQuery_in_results() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1", ""));
+
+        store.save(asList(entity));
+
+        Node node = new QueryBuilder().in("key1", "val1", "val2", "val3").build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(1, Iterables.size(itr));
+    }
+
+    @Test
+    public void testQuery_notIn_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1", ""));
+
+        store.save(asList(entity));
+
+        Node node = new QueryBuilder().notIn("key1", "val1", "val2", "val3").build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
+        assertEquals(0, Iterables.size(itr));
+    }
+
+
+
+
     @Test
     public void testQuery_greaterThan() {
 
