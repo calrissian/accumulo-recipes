@@ -58,6 +58,8 @@ public class QueryOptimizer implements NodeVisitor {
 
         if (!isEmpty(node)) {
 
+            node.accept(new ExtractInNotInVisitor());
+
             /**
              * This performs a cardinality optimization
              */

@@ -18,6 +18,9 @@ package org.calrissian.accumulorecipes.commons.iterators.support;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 
 public class NodeToJexl {
@@ -131,6 +134,42 @@ public class NodeToJexl {
             HasNotLeaf leaf = (HasNotLeaf) node;
             return builder.append(leaf.getKey()).append(" >= '\u0000')")
                     .toString();
+        } else if (node instanceof InLeaf) {
+            builder.append("(");
+            InLeaf leaf = (InLeaf) node;
+            Collection<Object> objs = (Collection<Object>) leaf.getValue();
+            Iterator<Object> objectIterator = objs.iterator();
+            while(objectIterator.hasNext()) {
+                Object val = objectIterator.next();
+                builder.append(leaf.getKey()).append(" == '")
+                        .append(registry.getAlias(val)).append(INNER_DELIM)
+                        .append(registry.encode(val))
+                        .toString();
+
+                if(objectIterator.hasNext())
+                    builder.append("' or ");
+            }
+
+            return builder.append("')").toString();
+
+        } else if (node instanceof NotInLeaf) {
+            builder.append("(");
+            NotInLeaf leaf = (NotInLeaf) node;
+            Collection<Object> objs = (Collection<Object>) leaf.getValue();
+            Iterator<Object> objectIterator = objs.iterator();
+            while(objectIterator.hasNext()) {
+                Object val = objectIterator.next();
+                builder.append(leaf.getKey()).append(" != '")
+                        .append(registry.getAlias(val)).append(INNER_DELIM)
+                        .append(registry.encode(val))
+                        .toString();
+
+                if(objectIterator.hasNext())
+                    builder.append("' and ");
+            }
+
+            return builder.append("')").toString();
+
         } else {
             throw new RuntimeException("An unsupported leaf type was encountered: " + node.getClass().getName());
         }

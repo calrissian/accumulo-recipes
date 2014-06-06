@@ -80,5 +80,18 @@ public class NodeToJexlTest {
         assertEquals("(!(hello >= '\u0000'))", jexl);
     }
 
+
+    @Test
+    public void testIn() {
+        String jexl = nodeToJexl.transform(new QueryBuilder().in("key", "hello", "goodbye").build());
+        assertEquals("((key == 'string\u0001hello' or key == 'string\u0001goodbye'))", jexl);
+    }
+
+    @Test
+    public void testNotIn() {
+        String jexl = nodeToJexl.transform(new QueryBuilder().notIn("key", "hello", "goodbye").build());
+        assertEquals("((key != 'string\u0001hello' and key != 'string\u0001goodbye'))", jexl);
+    }
+
 }
 
