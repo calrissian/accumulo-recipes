@@ -28,10 +28,10 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.entity.Entity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static com.tinkerpop.blueprints.Query.Compare.*;
 import static java.util.Collections.singletonList;
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
 import static org.calrissian.mango.collect.CloseableIterables.chain;
@@ -111,18 +111,22 @@ public class EntityVertexQuery implements VertexQuery {
 
     @Override
     public VertexQuery has(String key, Predicate predicate, Object value) {
-        if (predicate == EQUAL)
+        if (predicate.toString().equals("EQUAL"))
             return has(key, value);
-        else if (predicate == NOT_EQUAL)
+        else if (predicate.toString().equals("NOT_EQUAL"))
             return hasNot(key, value);
-        else if (predicate == GREATER_THAN)
+        else if (predicate.toString().equals("GREATER_THAN"))
             queryBuilder = queryBuilder.greaterThan(key, value);
-        else if (predicate == LESS_THAN)
+        else if (predicate.toString().equals("LESS_THAN"))
             queryBuilder = queryBuilder.lessThan(key, value);
-        else if (predicate == GREATER_THAN_EQUAL)
+        else if (predicate.toString().equals("GREATER_THAN_EQUAL"))
             queryBuilder = queryBuilder.greaterThanEq(key, value);
-        else if (predicate == LESS_THAN_EQUAL)
+        else if (predicate.toString().equals("LESS_THAN_EQUAL"))
             queryBuilder = queryBuilder.lessThanEq(key, value);
+        else if (predicate.toString().equals("IN"))
+            queryBuilder = queryBuilder.in(key, (Collection<Object>)value);
+        else if (predicate.toString().equals("NOT_IN"))
+            queryBuilder = queryBuilder.notIn(key, (Collection<Object>)value);
         else
             throw new UnsupportedOperationException("Predicate with type " + predicate + " is not supported.");
 

@@ -28,6 +28,7 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.entity.Entity;
 
+import java.util.Collection;
 import java.util.Set;
 
 import static org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph.*;
@@ -92,9 +93,9 @@ public class EntityGraphQuery implements GraphQuery {
         else if (predicate.toString().equals("LESS_THAN_EQUAL"))
             queryBuilder = queryBuilder.lessThanEq(key, value);
         else if (predicate.toString().equals("IN"))
-            queryBuilder = queryBuilder.in(key, value);
+            queryBuilder = queryBuilder.in(key, (Collection<Object>)value);
         else if(predicate.toString().equals("NOT_IN"))
-            queryBuilder = queryBuilder.notIn(key, value);
+            queryBuilder = queryBuilder.notIn(key, (Collection<Object>)value);
         else
             throw new UnsupportedOperationException("Predicate with type " + predicate + " is not supported.");
 
