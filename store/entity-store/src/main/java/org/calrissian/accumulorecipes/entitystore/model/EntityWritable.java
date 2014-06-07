@@ -18,25 +18,22 @@ package org.calrissian.accumulorecipes.entitystore.model;
 import org.apache.hadoop.io.WritableComparable;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.accumulorecipes.commons.hadoop.TupleWritable;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeDecodingException;
-import org.calrissian.mango.types.exception.TypeEncodingException;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 
 public class EntityWritable implements WritableComparable, Settable<Entity>, Gettable<Entity> {
 
-    private static TypeRegistry<String> typeRegistry = LEXI_TYPES;
-    Entity entity;
+    private TupleWritable tupleWritable = new TupleWritable();
+    private Entity entity;
 
     public EntityWritable() {
     }
@@ -46,20 +43,18 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
         this.entity = entity;
     }
 
+    public void setTupleWritable(TupleWritable sharedTupleWritable) {
+        this.tupleWritable = sharedTupleWritable;
+    }
+
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(entity.getType());
         dataOutput.writeUTF(entity.getId());
         dataOutput.writeInt(entity.getTuples() != null ? entity.getTuples().size() : 0);
         for (Tuple tuple : entity.getTuples()) {
-            dataOutput.writeUTF(tuple.getKey());
-            dataOutput.writeUTF(typeRegistry.getAlias(tuple.getValue()));
-            try {
-                dataOutput.writeUTF(typeRegistry.encode(tuple.getValue()));
-                dataOutput.writeUTF(tuple.getVisibility());
-            } catch (TypeEncodingException e) {
-                throw new RuntimeException(e);
-            }
+            tupleWritable.set(tuple);
+            tupleWritable.write(dataOutput);
         }
     }
 
@@ -70,15 +65,8 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
 
         entity = new BaseEntity(entityType, id);
         for (int i = 0; i < dataInput.readInt(); i++) {
-            String key = dataInput.readUTF();
-            String type = dataInput.readUTF();
-            String val = dataInput.readUTF();
-            String vis = dataInput.readUTF();
-            try {
-                entity.put(new Tuple(key, typeRegistry.decode(type, val), vis));
-            } catch (TypeDecodingException e) {
-                throw new RuntimeException(e);
-            }
+            tupleWritable.readFields(dataInput);
+            entity.put(tupleWritable.get());
         }
     }
 

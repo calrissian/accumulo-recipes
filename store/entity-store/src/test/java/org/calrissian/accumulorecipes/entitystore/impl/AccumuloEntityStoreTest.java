@@ -277,7 +277,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity));
 
-        Node node = new QueryBuilder().in("key1", "val1", "val2", "val3").build();
+        Node node = new QueryBuilder().and().in("key1", "val1", "val2", "val3").eq("key1", "val1").end().build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, new Auths());
         assertEquals(1, Iterables.size(itr));

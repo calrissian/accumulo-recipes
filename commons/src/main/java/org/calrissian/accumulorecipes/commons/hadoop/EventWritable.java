@@ -21,20 +21,16 @@ import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeDecodingException;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-
 
 public class EventWritable implements Writable, Settable<Event>, Gettable<Event> {
 
-    private static TypeRegistry<String> typeRegistry = LEXI_TYPES;
+    private TupleWritable tupleWritable = new TupleWritable();
+
     Event entry;
 
     public EventWritable() {
@@ -44,21 +40,20 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
         this.entry = entry;
     }
 
+    public void setTupleWritable(TupleWritable sharedTupleWritable) {
+        this.tupleWritable = sharedTupleWritable;
+    }
+
     @Override
     public void write(DataOutput dataOutput) throws IOException {
+
         dataOutput.writeUTF(entry.getId());
         dataOutput.writeLong(entry.getTimestamp());
 
         dataOutput.writeInt(entry.getTuples() != null ? entry.getTuples().size() : 0);
         for (Tuple tuple : entry.getTuples()) {
-            dataOutput.writeUTF(tuple.getKey());
-            dataOutput.writeUTF(typeRegistry.getAlias(tuple.getValue()));
-            try {
-                dataOutput.writeUTF(typeRegistry.encode(tuple.getValue()));
-            } catch (TypeEncodingException e) {
-                throw new RuntimeException(e);
-            }
-            dataOutput.writeUTF(tuple.getVisibility());
+            tupleWritable.set(tuple);
+            tupleWritable.write(dataOutput);
         }
     }
 
@@ -70,15 +65,8 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
 
         int count = dataInput.readInt();
         for (int i = 0; i < count; i++) {
-            String key = dataInput.readUTF();
-            String type = dataInput.readUTF();
-            String val = dataInput.readUTF();
-            String vis = dataInput.readUTF();
-            try {
-                entry.put(new Tuple(key, typeRegistry.decode(type, val), vis));
-            } catch (TypeDecodingException e) {
-                throw new RuntimeException(e);
-            }
+            tupleWritable.readFields(dataInput);
+            entry.put(tupleWritable.get());
         }
     }
 
