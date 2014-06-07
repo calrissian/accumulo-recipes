@@ -50,12 +50,12 @@ public class AccumuloTemporalLastNTest {
     public void testMultipleEntries_sameGroup() throws TableNotFoundException {
 
         Event testEntry = new BaseEvent(UUID.randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1", ""));
-        testEntry.put(new Tuple("key2", "val2", ""));
+        testEntry.put(new Tuple("key1", "val1"));
+        testEntry.put(new Tuple("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
-        testEntry2.put(new Tuple("key1", "val1", ""));
-        testEntry2.put(new Tuple("key2", "val2", ""));
+        testEntry2.put(new Tuple("key1", "val1"));
+        testEntry2.put(new Tuple("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
@@ -80,12 +80,12 @@ public class AccumuloTemporalLastNTest {
 
         long curTime = System.currentTimeMillis();
         Event testEntry = new BaseEvent(UUID.randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1", ""));
-        testEntry.put(new Tuple("key2", "val2", ""));
+        testEntry.put(new Tuple("key1", "val1"));
+        testEntry.put(new Tuple("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), curTime - 5000);
-        testEntry2.put(new Tuple("key1", "val1", ""));
-        testEntry2.put(new Tuple("key2", "val2", ""));
+        testEntry2.put(new Tuple("key1", "val1"));
+        testEntry2.put(new Tuple("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
@@ -111,12 +111,12 @@ public class AccumuloTemporalLastNTest {
     public void testMultipleEntries_differentGroups() throws TableNotFoundException {
 
         Event testEntry = new BaseEvent(UUID.randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1", ""));
-        testEntry.put(new Tuple("key2", "val2", ""));
+        testEntry.put(new Tuple("key1", "val1"));
+        testEntry.put(new Tuple("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
-        testEntry2.put(new Tuple("key1", "val1", ""));
-        testEntry2.put(new Tuple("key2", "val2", ""));
+        testEntry2.put(new Tuple("key1", "val1"));
+        testEntry2.put(new Tuple("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group1", testEntry2);
@@ -140,16 +140,16 @@ public class AccumuloTemporalLastNTest {
     public void testMultipleEntries_differentGroupsSomeInSameGroup() throws TableNotFoundException {
 
         Event testEntry = new BaseEvent(UUID.randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1", ""));
-        testEntry.put(new Tuple("key2", "val2", ""));
+        testEntry.put(new Tuple("key1", "val1"));
+        testEntry.put(new Tuple("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
-        testEntry2.put(new Tuple("key1", "val1", ""));
-        testEntry2.put(new Tuple("key2", "val2", ""));
+        testEntry2.put(new Tuple("key1", "val1"));
+        testEntry2.put(new Tuple("key2", "val2"));
 
         Event testEntry3 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 500);
-        testEntry3.put(new Tuple("key1", "val1", ""));
-        testEntry3.put(new Tuple("key2", "val2", ""));
+        testEntry3.put(new Tuple("key1", "val1"));
+        testEntry3.put(new Tuple("key2", "val2"));
 
 
         store.put("group", testEntry);

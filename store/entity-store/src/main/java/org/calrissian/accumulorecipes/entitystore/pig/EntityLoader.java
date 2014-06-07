@@ -149,7 +149,6 @@ public class EntityLoader extends LoadFunc {
         } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }
-        t.append(entityTuple.getVisibility());
 
         return t;
     }

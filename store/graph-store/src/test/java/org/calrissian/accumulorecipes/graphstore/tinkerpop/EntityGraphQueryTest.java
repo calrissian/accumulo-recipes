@@ -36,6 +36,7 @@ import java.util.HashSet;
 
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.junit.Assert.assertEquals;
 
 public class EntityGraphQueryTest {
@@ -60,19 +61,50 @@ public class EntityGraphQueryTest {
                 newHashSet("edgeType1", "edgeType2"),
                 new Auths("U,ADMIN"));
 
-        vertex1.put(new Tuple("key1", "val1", "U"));
-        vertex1.put(new Tuple("key2", "val2", "U"));
-        vertex2.put(new Tuple("key3", "val3", "U"));
-        vertex2.put(new Tuple("key4", "val4", "U"));
-        vertex1.put(new Tuple("key", "val", "U"));
-        vertex2.put(new Tuple("key", "val", "U"));
+        Tuple v1t1 = new Tuple("key1", "val1");
+        setVisibility(v1t1, "U");
+        vertex1.put(v1t1);
 
-        edge.put(new Tuple("edgeProp1", "edgeVal1", "ADMIN"));
-        edge.put(new Tuple("edgeProp2", "edgeVal2", "U"));
-        edge2.put(new Tuple("edgeProp3", "edgeVal3", "ADMIN"));
-        edge2.put(new Tuple("edgeProp4", "edgeVal4", "U"));
-        edge.put(new Tuple("edgeProp", "edgeVal", "U"));
-        edge2.put(new Tuple("edgeProp", "edgeVal", "U"));
+        Tuple v1t2 = new Tuple("key2", "val2");
+        setVisibility(v1t2, "U");
+        vertex1.put(v1t2);
+
+        Tuple v2t1 = new Tuple("key3", "val3");
+        setVisibility(v2t1, "U");
+        vertex2.put(v2t1);
+
+        Tuple v2t2 = new Tuple("key4", "val4");
+        setVisibility(v2t2, "U");
+        vertex2.put(v2t2);
+
+        Tuple keyVal = new Tuple("key", "val");
+        setVisibility(keyVal, "U");
+        vertex1.put(keyVal);
+        vertex2.put(keyVal);
+
+        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1");
+        setVisibility(e1t1, "ADMIN");
+        edge.put(e1t1);
+
+        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2");
+        setVisibility(e1t2, "U");
+        edge.put(e1t2);
+
+        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3");
+        setVisibility(e2t1, "ADMIN");
+        edge2.put(e2t1);
+
+        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4");
+        setVisibility(e2t2, "U");
+        edge2.put(e2t2);
+
+        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal");
+        setVisibility(edgeKeyVal, "U");
+
+        edge.put(edgeKeyVal);
+        edge2.put(edgeKeyVal);
+
+
 
         entityGraphStore.save(Arrays.asList(new Entity[]{vertex1, vertex2, edge, edge2}));
     }

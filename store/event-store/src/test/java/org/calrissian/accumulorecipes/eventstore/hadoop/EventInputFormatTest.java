@@ -52,8 +52,8 @@ public class EventInputFormatTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEventStore store = new AccumuloEventStore(connector);
         event = new BaseEvent(UUID.randomUUID().toString());
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", false, ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", false));
         store.save(singleton(event));
 
         Job job = new Job(new Configuration());

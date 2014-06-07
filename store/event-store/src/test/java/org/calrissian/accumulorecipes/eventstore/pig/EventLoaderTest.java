@@ -65,14 +65,12 @@ public class EventLoaderTest {
                 assertEquals(tuple.getKey(), t.get(2));
                 assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
                 assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
-                assertEquals(tuple.getVisibility(), t.get(5));
             } else if(count == 2) {
                 assertEquals(event.getId(), t.get(0));
                 assertEquals(event.getTimestamp(), t.get(1));
                 assertEquals(tuple.getKey(), t.get(2));
                 assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
                 assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
-                assertEquals(tuple.getVisibility(), t.get(5));
             }
         }
 
@@ -123,8 +121,8 @@ public class EventLoaderTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEventStore store = new AccumuloEventStore(connector);
         event = new BaseEvent(UUID.randomUUID().toString());
-        event.put(new Tuple("key1", "val1", "vis1"));
-        event.put(new Tuple("key2", false, "vis2"));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", false));
         store.save(singleton(event));
 
         EventInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());

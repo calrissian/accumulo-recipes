@@ -14,7 +14,7 @@ public class TupleWritableTest {
     @Test
     public void testSerializesAndDeserializes() throws IOException {
 
-        Tuple tuple = new Tuple("key", "val", "vis");
+        Tuple tuple = new Tuple("key", "val");
         tuple.setMetadataValue("metaKey", "metaVal");
 
         byte[] serialized = WritableUtils2.serialize(new TupleWritable(tuple));

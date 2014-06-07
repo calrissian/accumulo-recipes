@@ -31,9 +31,9 @@ import org.calrissian.accumulorecipes.geospatialstore.support.BoundingBoxFilter;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeHelper;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeScanRange;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
@@ -46,6 +46,8 @@ import java.util.Map;
 import static java.lang.Math.abs;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
@@ -63,7 +65,11 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                 Map<Key, Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
                 for (Map.Entry<Key, Value> curEntry : map.entrySet()) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
-                    entry.put(new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), curEntry.getKey().getColumnVisibility().toString()));
+                    String vis = curEntry.getKey().getColumnVisibility().toString();
+                    Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]));
+                    if(!vis.equals(""))
+                        setVisibility(tuple, vis);
+                    entry.put(tuple);
                 }
                 return entry;
             } catch (Exception e) {
@@ -146,7 +152,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                     // put in the forward mutation
                     m.put(new Text(buildId(entry.getId(), entry.getTimestamp(), location)),
                             new Text(buildKeyValue(tuple)),
-                            new ColumnVisibility(tuple.getVisibility()),
+                            new ColumnVisibility(getVisibility(tuple, "")),
                             entry.getTimestamp(),
                             new Value("".getBytes()));
                 } catch (Exception e) {

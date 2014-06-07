@@ -26,8 +26,8 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.exception.TypeEncodingException;
 
@@ -37,6 +37,7 @@ import java.util.Map;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 
 public class EventKeyValueIndex implements KeyValueIndex<Event> {
 
@@ -66,7 +67,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
                             tuple.getKey(),
                             typeRegistry.getAlias(tuple.getValue()),
                             typeRegistry.encode(tuple.getValue()),
-                            tuple.getVisibility()
+                            getVisibility(tuple, "")
                     };
 
                     String cacheKey = join(strings, INNER_DELIM);

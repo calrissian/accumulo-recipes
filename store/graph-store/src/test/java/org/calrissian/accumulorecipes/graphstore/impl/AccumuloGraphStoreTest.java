@@ -40,6 +40,7 @@ import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloGraphStoreTest {
@@ -54,13 +55,25 @@ public class AccumuloGraphStoreTest {
     @Before
     public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        vertex1.put(new Tuple("key1", "val1", "U"));
-        vertex1.put(new Tuple("key2", "val2", "U"));
-        vertex2.put(new Tuple("key3", "val3", "U"));
-        vertex2.put(new Tuple("key4", "val4", "U"));
 
-        edge.put(new Tuple("edgeProp1", "edgeVal1", "ADMIN"));
+        Tuple tuple = new Tuple("key1", "val1");
+        Tuple tuple2 = new Tuple("key2", "val2");
+        Tuple tuple3 = new Tuple("key3", "val3");
+        Tuple tuple4 = new Tuple("key4", "val4");
 
+        setVisibility(tuple, "U");
+        setVisibility(tuple2, "U");
+        setVisibility(tuple3, "U");
+        setVisibility(tuple4, "U");
+
+        vertex1.put(tuple);
+        vertex1.put(tuple2);
+        vertex2.put(tuple3);
+        vertex2.put(tuple4);
+
+        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1");
+        setVisibility(edgeTuple, "ADMIN");
+        edge.put(edgeTuple);
         Instance instance = new MockInstance();
         connector = instance.getConnector("root", "".getBytes());
         graphStore = new AccumuloEntityGraphStore(connector);

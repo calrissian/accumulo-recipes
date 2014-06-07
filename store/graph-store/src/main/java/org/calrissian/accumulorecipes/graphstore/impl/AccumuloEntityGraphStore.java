@@ -51,6 +51,8 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
@@ -95,8 +97,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     String[] qualParts = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), ONE_BYTE);
                     String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
 
-                    entity.put(new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]),
-                            entry.getKey().getColumnVisibility().toString()));
+                    String vis = entry.getKey().getColumnVisibility().toString();
+                    Tuple tuple = new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]));
+                    if(!vis.equals(""))
+                        setVisibility(tuple, vis);
+                    entity.put(tuple);
 
                 }
 
@@ -248,8 +253,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                 EntityRelationship toVertex = entity.<EntityRelationship>get(TAIL).getValue();
                 EntityRelationship fromVertex = entity.<EntityRelationship>get(HEAD).getValue();
 
-                String toVertexVis = entity.get(TAIL).getVisibility();
-                String fromVertexVis = entity.get(HEAD).getVisibility();
+                String toVertexVis = getVisibility(entity.get(TAIL), "");
+                String fromVertexVis = getVisibility(entity.get(HEAD), "");
 
                 String label = entity.<String>get(LABEL).getValue();
 
@@ -275,11 +280,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
                         forward.put(new Text(OUT.toString() + DELIM + label),
                                 new Text(edgeEncoded + DELIM + toEncoded + ONE_BYTE + keyAliasValue),
-                                new ColumnVisibility(tuple.getVisibility()), EMPTY_VALUE);
+                                new ColumnVisibility(getVisibility(tuple, "")), EMPTY_VALUE);
 
                         reverse.put(new Text(IN.toString() + DELIM + label),
                                 new Text(edgeEncoded + DELIM + fromEncoded + ONE_BYTE + keyAliasValue),
-                                new ColumnVisibility(tuple.getVisibility()), EMPTY_VALUE);
+                                new ColumnVisibility(getVisibility(tuple, "")), EMPTY_VALUE);
                     }
 
                     writer.addMutation(forward);

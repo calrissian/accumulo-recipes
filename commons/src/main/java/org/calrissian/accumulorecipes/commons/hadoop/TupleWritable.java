@@ -44,7 +44,6 @@ public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>
         } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }
-        dataOutput.writeUTF(tuple.getVisibility());
 
         Set<Map.Entry<String, Object>> metaMap = tuple.getMetadata().entrySet();
         int finalMeta = 0;
@@ -75,9 +74,8 @@ public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>
         String key = dataInput.readUTF();
         String type = dataInput.readUTF();
         String val = dataInput.readUTF();
-        String vis = dataInput.readUTF();
         try {
-            tuple = new Tuple(key, typeRegistry.decode(type, val), vis);
+            tuple = new Tuple(key, typeRegistry.decode(type, val));
         } catch (TypeDecodingException e) {
             throw new RuntimeException(e);
         }

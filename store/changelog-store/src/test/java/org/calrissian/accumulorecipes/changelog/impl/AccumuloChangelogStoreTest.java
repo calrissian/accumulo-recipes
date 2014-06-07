@@ -198,8 +198,8 @@ public class AccumuloChangelogStoreTest {
 
     private Event createStoreEntry(String uuid, long timestamp) {
         Event entry = new BaseEvent(uuid, timestamp);
-        entry.put(new Tuple("key2", "val2", ""));
-        entry.put(new Tuple("key3", "val3", ""));
+        entry.put(new Tuple("key2", "val2"));
+        entry.put(new Tuple("key3", "val3"));
 
         return entry;
     }

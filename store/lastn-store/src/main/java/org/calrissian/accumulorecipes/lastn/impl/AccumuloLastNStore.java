@@ -29,8 +29,8 @@ import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
-import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
@@ -41,6 +41,7 @@ import static java.util.EnumSet.allOf;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -162,7 +163,7 @@ public class AccumuloLastNStore implements LastNStore {
                 String serialize = typeRegistry.encode(value);
                 String aliasForType = typeRegistry.getAlias(value);
                 String qual = String.format("%s%s%s%s%s", tuple.getKey(), DELIM, serialize, DELIM, aliasForType);
-                indexMutation.put(fam, qual, new ColumnVisibility(tuple.getVisibility()), entry.getTimestamp(),
+                indexMutation.put(fam, qual, new ColumnVisibility(getVisibility(tuple, "")), entry.getTimestamp(),
                         new Value("".getBytes()));
             } catch (Exception e) {
                 throw new RuntimeException(e);

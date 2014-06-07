@@ -24,9 +24,9 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -97,11 +98,14 @@ public class EntryIterator extends WrappingIterator {
 
                     if (keyValueDatatype.length == 3) {
 
+                        String vis = nextKey.getColumnVisibility().toString();
 
                         Tuple tuple = new Tuple(
                                 keyValueDatatype[0],
-                                typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]),
-                                nextKey.getColumnVisibility().toString());
+                                typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]));
+
+                        if(!vis.equals(""))
+                            setVisibility(tuple, vis);
 
                         tuples.add(tuple);
                         timestamp = nextKey.getTimestamp();

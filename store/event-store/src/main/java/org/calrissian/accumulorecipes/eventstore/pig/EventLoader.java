@@ -152,7 +152,6 @@ public class EventLoader extends LoadFunc {
         } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }
-        t.append(eventTuple.getVisibility());
 
         return t;
     }
