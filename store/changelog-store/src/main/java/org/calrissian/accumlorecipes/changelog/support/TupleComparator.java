@@ -18,7 +18,6 @@ package org.calrissian.accumlorecipes.changelog.support;
 import com.google.common.collect.ComparisonChain;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.Comparator;
 
@@ -32,13 +31,9 @@ public class TupleComparator implements Comparator<Tuple> {
 
     @Override
     public int compare(Tuple tuple, Tuple tuple1) {
-        try {
-            return ComparisonChain.start()
-                    .compare(tuple.getKey(), tuple1.getKey())
-                    .compare(typeRegistry.encode(tuple.getValue()), typeRegistry.encode(tuple.getValue()))
-                    .result();
-        } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return ComparisonChain.start()
+                .compare(tuple.getKey(), tuple1.getKey())
+                .compare(typeRegistry.encode(tuple.getValue()), typeRegistry.encode(tuple.getValue()))
+                .result();
     }
 }

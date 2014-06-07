@@ -17,7 +17,6 @@ import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -47,7 +46,7 @@ public class EntityLoaderTest {
     }
 
     @Test
-    public void testGetNext() throws AccumuloException, TableExistsException, TableNotFoundException, AccumuloSecurityException, IOException, InterruptedException, TypeEncodingException {
+    public void testGetNext() throws Exception {
         setUpJob();
 
         List<Pair<String, EntityWritable>> mocks = new ArrayList<Pair<String, EntityWritable>>();

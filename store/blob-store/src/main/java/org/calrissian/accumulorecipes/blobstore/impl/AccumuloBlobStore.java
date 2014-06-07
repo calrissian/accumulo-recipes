@@ -28,7 +28,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.mango.io.AbstractBufferedInputStream;
 import org.calrissian.mango.io.AbstractBufferedOutputStream;
 import org.calrissian.mango.types.TypeEncoder;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -137,9 +136,8 @@ public class AccumuloBlobStore implements BlobStore {
      * @param timestamp
      * @param visibility
      * @return
-     * @throws TypeEncodingException
      */
-    protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) throws TypeEncodingException {
+    protected Mutation generateMutation(String key, String type, byte[] data, int sequenceNum, long timestamp, ColumnVisibility visibility) {
 
         Mutation mutation = new Mutation(generateRowId(key, type));
         mutation.put(DATA_CF, encoder.encode(sequenceNum), visibility, timestamp, new Value(data));

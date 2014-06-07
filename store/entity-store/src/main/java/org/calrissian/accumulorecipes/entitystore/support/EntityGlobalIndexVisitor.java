@@ -23,7 +23,6 @@ import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.*;
 
@@ -87,12 +86,8 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
                     else
                         ranges.add(prefix(type + "_" + INDEX_K + "_" + kvLeaf.getKey()));
                 } else {
-                    try {
-                        String normVal = registry.encode(kvLeaf.getValue());
-                        ranges.add(prefix(type + "_" + INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey()));
-                    } catch (TypeEncodingException e) {
-                        throw new RuntimeException(e);
-                    }
+                    String normVal = registry.encode(kvLeaf.getValue());
+                    ranges.add(prefix(type + "_" + INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey()));
                 }
             }
         }

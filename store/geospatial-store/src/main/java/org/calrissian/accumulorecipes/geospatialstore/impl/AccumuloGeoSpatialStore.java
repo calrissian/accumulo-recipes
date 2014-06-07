@@ -35,7 +35,6 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -135,7 +134,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
         return String.format("%s%s%s%s%s%s%s", id, DELIM, timestamp, DELIM, location.getX(), DELIM, location.getY());
     }
 
-    protected String buildKeyValue(Tuple tuple) throws TypeEncodingException {
+    protected String buildKeyValue(Tuple tuple) {
         return tuple.getKey() + DELIM + registry.getAlias(tuple.getValue()) + DELIM + registry.encode(tuple.getValue());
     }
 

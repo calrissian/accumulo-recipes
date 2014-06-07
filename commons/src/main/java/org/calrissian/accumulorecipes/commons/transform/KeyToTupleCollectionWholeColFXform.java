@@ -22,7 +22,6 @@ import org.apache.accumulo.core.data.Value;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeDecodingException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -68,14 +67,11 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
-                try {
-                    Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]));
-                    if(!visibility.equals(""))
-                        setVisibility(tuple, visibility);
-                    entry.put(tuple);
-                } catch (TypeDecodingException e) {
-                    throw new RuntimeException(e);
-                }
+                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]));
+                if(!visibility.equals(""))
+                    setVisibility(tuple, visibility);
+                entry.put(tuple);
+
             }
 
             return entry;

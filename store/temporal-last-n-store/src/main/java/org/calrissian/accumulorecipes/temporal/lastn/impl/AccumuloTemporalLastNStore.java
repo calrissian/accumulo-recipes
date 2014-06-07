@@ -38,7 +38,6 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.IOException;
 import java.util.*;
@@ -137,7 +136,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         }
     }
 
-    private String buildEventValue(String id, long timestamp, Tuple tuple) throws TypeEncodingException {
+    private String buildEventValue(String id, long timestamp, Tuple tuple) {
 
         String[] fields = new String[]{
                 id,

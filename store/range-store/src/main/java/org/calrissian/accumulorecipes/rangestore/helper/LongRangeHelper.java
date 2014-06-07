@@ -17,8 +17,6 @@ package org.calrissian.accumulorecipes.rangestore.helper;
 
 import org.calrissian.mango.domain.ValueRange;
 import org.calrissian.mango.types.TypeEncoder;
-import org.calrissian.mango.types.exception.TypeDecodingException;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import static org.calrissian.mango.types.LexiTypeEncoders.longEncoder;
 
@@ -47,11 +45,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public String encode(Long value) {
-        try {
-            return encoder.encode(value);
-        } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return encoder.encode(value);
     }
 
     /**
@@ -67,11 +61,7 @@ public class LongRangeHelper implements RangeHelper<Long> {
      */
     @Override
     public Long decode(String value) {
-        try {
-            return encoder.decode(value);
-        } catch (TypeDecodingException e) {
-            throw new RuntimeException(e);
-        }
+        return encoder.decode(value);
     }
 
     /**

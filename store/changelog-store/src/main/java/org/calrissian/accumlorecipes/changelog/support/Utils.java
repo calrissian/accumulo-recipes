@@ -15,10 +15,9 @@
  */
 package org.calrissian.accumlorecipes.changelog.support;
 
-import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -91,11 +90,6 @@ public class Utils {
     }
 
     public static String tupleToString(Tuple tuple, TypeRegistry<String> typeRegistry) {
-
-        try {
-            return tuple.getKey() + DELIM + typeRegistry.encode(tuple.getValue()) + DELIM + tuple.getMetadata();
-        } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return tuple.getKey() + DELIM + typeRegistry.encode(tuple.getValue()) + DELIM + tuple.getMetadata();
     }
 }

@@ -29,7 +29,6 @@ import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,25 +60,21 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
         for (Entity entity : items) {
             String shardId = shardBuilder.buildShard(entity);
             for (Tuple tuple : entity.getTuples()) {
-                try {
-                    String[] strings = new String[]{
-                            entity.getType(),
-                            shardId,
-                            tuple.getKey(),
-                            typeRegistry.getAlias(tuple.getValue()),
-                            typeRegistry.encode(tuple.getValue()),
-                            getVisibility(tuple, ""),
-                    };
+                String[] strings = new String[]{
+                        entity.getType(),
+                        shardId,
+                        tuple.getKey(),
+                        typeRegistry.getAlias(tuple.getValue()),
+                        typeRegistry.encode(tuple.getValue()),
+                        getVisibility(tuple, ""),
+                };
 
-                    String cacheKey = join(strings, INNER_DELIM);
-                    Long count = indexCache.get(cacheKey);
-                    if (count == null)
-                        count = 0l;
-                    indexCache.put(cacheKey, ++count);
+                String cacheKey = join(strings, INNER_DELIM);
+                Long count = indexCache.get(cacheKey);
+                if (count == null)
+                    count = 0l;
+                indexCache.put(cacheKey, ++count);
 
-                } catch (TypeEncodingException e) {
-                    throw new RuntimeException(e);
-                }
             }
         }
 

@@ -21,7 +21,6 @@ import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.*;
 
@@ -121,11 +120,7 @@ public class CardinalityReorderVisitor implements NodeVisitor {
         } else {
             String alias = registry.getAlias(kvLeaf.getValue());
             String normalizedVal = null;
-            try {
-                normalizedVal = registry.encode(kvLeaf.getValue());
-            } catch (TypeEncodingException e) {
-                throw new RuntimeException(e);
-            }
+            normalizedVal = registry.encode(kvLeaf.getValue());
 
             CardinalityKey cardinalityKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
             Long cardinality = cardinalities.get(cardinalityKey);

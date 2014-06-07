@@ -29,7 +29,6 @@ import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,24 +60,19 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
         for (Event item : items) {
             String shardId = shardBuilder.buildShard(item);
             for (Tuple tuple : item.getTuples()) {
-                try {
-                    String[] strings = new String[]{
-                            shardId,
-                            tuple.getKey(),
-                            typeRegistry.getAlias(tuple.getValue()),
-                            typeRegistry.encode(tuple.getValue()),
-                            getVisibility(tuple, "")
-                    };
+                String[] strings = new String[]{
+                        shardId,
+                        tuple.getKey(),
+                        typeRegistry.getAlias(tuple.getValue()),
+                        typeRegistry.encode(tuple.getValue()),
+                        getVisibility(tuple, "")
+                };
 
-                    String cacheKey = join(strings, INNER_DELIM);
-                    Long count = indexCache.get(cacheKey);
-                    if (count == null)
-                        count = 0l;
-                    indexCache.put(cacheKey, ++count);
-
-                } catch (TypeEncodingException e) {
-                    throw new RuntimeException(e);
-                }
+                String cacheKey = join(strings, INNER_DELIM);
+                Long count = indexCache.get(cacheKey);
+                if (count == null)
+                    count = 0l;
+                indexCache.put(cacheKey, ++count);
             }
 
             String[] idIndex = new String[]{

@@ -23,7 +23,6 @@ import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeDecodingException;
 
 import java.util.Map;
 import java.util.Set;
@@ -65,16 +64,13 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
         for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
             if (selectFields == null || selectFields.contains(fieldValue.getKey())) {
                 String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
-                try {
-                    Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
-                    Tuple tuple = new Tuple(fieldValue.getKey(), javaVal);
-                    String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                    if(!vis.equals(""))
-                        setVisibility(tuple, vis);
-                    entry.put(tuple);
-                } catch (TypeDecodingException e) {
-                    throw new RuntimeException(e);
-                }
+                Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
+                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal);
+                String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
+                if(!vis.equals(""))
+                    setVisibility(tuple, vis);
+                entry.put(tuple);
+
             }
         }
         return entry;

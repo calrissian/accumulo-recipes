@@ -6,8 +6,6 @@ import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeDecodingException;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -39,11 +37,8 @@ public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(tuple.getKey());
         dataOutput.writeUTF(typeRegistry.getAlias(tuple.getValue()));
-        try {
-            dataOutput.writeUTF(typeRegistry.encode(tuple.getValue()));
-        } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        dataOutput.writeUTF(typeRegistry.encode(tuple.getValue()));
+
 
         Set<Map.Entry<String, Object>> metaMap = tuple.getMetadata().entrySet();
         int finalMeta = 0;
@@ -57,11 +52,7 @@ public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>
             if(meta.getValue() != null) {
                 dataOutput.writeUTF(meta.getKey());
                 dataOutput.writeUTF(typeRegistry.getAlias(meta.getValue()));
-                try {
-                    dataOutput.writeUTF(typeRegistry.encode(meta.getValue()));
-                } catch (TypeEncodingException e) {
-                    throw new RuntimeException(e);
-                }
+                dataOutput.writeUTF(typeRegistry.encode(meta.getValue()));
             }
         }
 
@@ -74,22 +65,16 @@ public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>
         String key = dataInput.readUTF();
         String type = dataInput.readUTF();
         String val = dataInput.readUTF();
-        try {
-            tuple = new Tuple(key, typeRegistry.decode(type, val));
-        } catch (TypeDecodingException e) {
-            throw new RuntimeException(e);
-        }
+
+        tuple = new Tuple(key, typeRegistry.decode(type, val));
+
 
         int count = dataInput.readInt();
         for (int i = 0; i < count; i++) {
             String metaKey = dataInput.readUTF();
             String metaType = dataInput.readUTF();
             String metaVal = dataInput.readUTF();
-            try {
-                tuple.setMetadataValue(metaKey, typeRegistry.decode(metaType, metaVal));
-            } catch (TypeDecodingException e) {
-                throw new RuntimeException(e);
-            }
+            tuple.setMetadataValue(metaKey, typeRegistry.decode(metaType, metaVal));
         }
     }
 

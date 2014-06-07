@@ -24,7 +24,6 @@ import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIn
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 
 import java.util.*;
 
@@ -85,17 +84,14 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
                 );
             } else {
 
-                try {
-                    String normVal = registry.encode(kvLeaf.getValue());
-                    ranges.add(
-                            new Range(
-                                    new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), startShard),
-                                    new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), stopShard)
-                            )
-                    );
-                } catch (TypeEncodingException e) {
-                    throw new RuntimeException(e);
-                }
+                String normVal = registry.encode(kvLeaf.getValue());
+                ranges.add(
+                        new Range(
+                                new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), startShard),
+                                new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), stopShard)
+                        )
+                );
+
             }
         }
 

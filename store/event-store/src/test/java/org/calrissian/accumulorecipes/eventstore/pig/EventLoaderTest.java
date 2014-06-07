@@ -17,7 +17,6 @@ import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -41,7 +40,7 @@ public class EventLoaderTest {
     }
 
     @Test
-    public void testGetNext() throws AccumuloException, TableExistsException, TableNotFoundException, AccumuloSecurityException, IOException, InterruptedException, TypeEncodingException {
+    public void testGetNext() throws Exception {
         setUpJob();
 
         List<Pair<String, EventWritable>> mocks = new ArrayList<Pair<String, EventWritable>>();

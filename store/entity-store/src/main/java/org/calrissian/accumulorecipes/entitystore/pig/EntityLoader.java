@@ -23,7 +23,6 @@ import org.calrissian.mango.collect.TupleStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 import org.calrissian.mango.uri.support.UriUtils;
 
 import java.io.IOException;
@@ -143,12 +142,9 @@ public class EntityLoader extends LoadFunc {
         t.append(itr.getTopStore().getType());
         t.append(itr.getTopStore().getId());
         t.append(entityTuple.getKey());
-        try {
-            t.append(registry.getAlias(entityTuple.getValue()));
-            t.append(registry.encode(entityTuple.getValue()));
-        } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        t.append(registry.getAlias(entityTuple.getValue()));
+        t.append(registry.encode(entityTuple.getValue()));
+
 
         return t;
     }

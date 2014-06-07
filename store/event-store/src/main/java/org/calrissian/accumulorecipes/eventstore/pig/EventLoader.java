@@ -23,7 +23,6 @@ import org.calrissian.mango.collect.TupleStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 import org.calrissian.mango.uri.support.UriUtils;
 import org.joda.time.DateTime;
 
@@ -146,12 +145,8 @@ public class EventLoader extends LoadFunc {
         t.append(itr.getTopStore().getId());
         t.append(itr.getTopStore().getTimestamp());
         t.append(eventTuple.getKey());
-        try {
-            t.append(registry.getAlias(eventTuple.getValue()));
-            t.append(registry.encode(eventTuple.getValue()));
-        } catch (TypeEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        t.append(registry.getAlias(eventTuple.getValue()));
+        t.append(registry.encode(eventTuple.getValue()));
 
         return t;
     }

@@ -26,12 +26,11 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.commons.mock.MockRecordReader;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
-import org.calrissian.accumulorecipes.featurestore.model.Metric;
-import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
+import org.calrissian.accumulorecipes.featurestore.model.Metric;
+import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.types.exception.TypeEncodingException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -57,7 +56,7 @@ public class MetricsLoaderTest {
     }
 
     @Test
-    public void testGetNext() throws AccumuloException, TableExistsException, TableNotFoundException, AccumuloSecurityException, IOException, InterruptedException, TypeEncodingException, URISyntaxException {
+    public void testGetNext() throws Exception {
         setUpJob();
 
         List<Pair<String, MetricFeature>> mocks = new ArrayList<Pair<String, MetricFeature>>();
