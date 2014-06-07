@@ -27,9 +27,9 @@ import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.junit.Assert.assertEquals;
 
 public class BlueprintsGraphStoreTest {
@@ -59,12 +60,24 @@ public class BlueprintsGraphStoreTest {
                 new Auths("U,ADMIN"));
 
 
-        vertex1.put(new Tuple("key1", "val1", "U"));
-        vertex1.put(new Tuple("key2", "val2", "U"));
-        vertex2.put(new Tuple("key3", "val3", "U"));
-        vertex2.put(new Tuple("key4", "val4", "U"));
+        Tuple tuple = new Tuple("key1", "val1");
+        Tuple tuple2 = new Tuple("key2", "val2");
+        Tuple tuple3 = new Tuple("key3", "val3");
+        Tuple tuple4 = new Tuple("key4", "val4");
 
-        edge.put(new Tuple("edgeProp1", "edgeVal1", "ADMIN"));
+        setVisibility(tuple, "U");
+        setVisibility(tuple2, "U");
+        setVisibility(tuple3, "U");
+        setVisibility(tuple4, "U");
+
+        vertex1.put(tuple);
+        vertex1.put(tuple2);
+        vertex2.put(tuple3);
+        vertex2.put(tuple4);
+
+        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1");
+        setVisibility(edgeTuple, "ADMIN");
+        edge.put(edgeTuple);
 
         entityGraphStore.save(Arrays.asList(new Entity[]{vertex1, vertex2, edge}));
 

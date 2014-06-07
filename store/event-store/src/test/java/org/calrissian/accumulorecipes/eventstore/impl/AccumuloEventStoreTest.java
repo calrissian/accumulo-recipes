@@ -65,12 +65,12 @@ public class AccumuloEventStoreTest {
 
         long time = currentTimeMillis();
         Event event = new BaseEvent(UUID.randomUUID().toString(), time);
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", "val2", ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), time);
-        event2.put(new Tuple("key1", "val1", ""));
-        event2.put(new Tuple("key2", "val2", ""));
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", "val2"));
 
         store.save(asList(event, event2));
 
@@ -103,12 +103,12 @@ public class AccumuloEventStoreTest {
         long currentTime = System.currentTimeMillis();
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTime);
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", "val2", ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTime - 5000);
-        event2.put(new Tuple("key1", "val1", ""));
-        event2.put(new Tuple("key2", "val2", ""));
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", "val2"));
 
         store.save(asList(event, event2));
 
@@ -125,12 +125,12 @@ public class AccumuloEventStoreTest {
     public void testGet_withSelection() throws Exception {
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", "val2", ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Tuple("key1", "val1", ""));
-        event2.put(new Tuple("key2", "val2", ""));
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", "val2"));
 
         store.save(asList(event, event2));
 
@@ -147,12 +147,12 @@ public class AccumuloEventStoreTest {
     public void testQuery_withSelection() throws Exception {
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", "val2", ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Tuple("key1", "val1", ""));
-        event2.put(new Tuple("key2", "val2", ""));
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", "val2"));
 
 
         store.save(asList(event, event2));
@@ -175,12 +175,12 @@ public class AccumuloEventStoreTest {
     public void testQuery_AndQuery() throws Exception {
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", "val2", ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Tuple("key1", "val1", ""));
-        event2.put(new Tuple("key2", "val2", ""));
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", "val2"));
 
         store.save(asList(event, event2));
 
@@ -209,12 +209,12 @@ public class AccumuloEventStoreTest {
 
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", "val2", ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Tuple("key1", "val1", ""));
-        event2.put(new Tuple("key3", "val3", ""));
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key3", "val3"));
 
         store.save(asList(event, event2));
 
@@ -246,12 +246,12 @@ public class AccumuloEventStoreTest {
     public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Tuple("key1", "val1", ""));
-        event.put(new Tuple("key2", "val2", ""));
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Tuple("key1", "val1", ""));
-        event2.put(new Tuple("key3", "val3", ""));
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key3", "val3"));
 
         store.save(asList(event, event2));
 
@@ -291,18 +291,18 @@ public class AccumuloEventStoreTest {
 
         Event event = new BaseEvent(UUID.randomUUID().toString(),
                 currentTimeMillis());
-        event.put(new Tuple("hasIp", "true", ""));
-        event.put(new Tuple("ip", "1.1.1.1", ""));
+        event.put(new Tuple("hasIp", "true"));
+        event.put(new Tuple("ip", "1.1.1.1"));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(),
                 currentTimeMillis());
-        event2.put(new Tuple("hasIp", "true", ""));
-        event2.put(new Tuple("ip", "2.2.2.2", ""));
+        event2.put(new Tuple("hasIp", "true"));
+        event2.put(new Tuple("ip", "2.2.2.2"));
 
         Event event3 = new BaseEvent(UUID.randomUUID().toString(),
                 currentTimeMillis());
-        event3.put(new Tuple("hasIp", "true", ""));
-        event3.put(new Tuple("ip", "3.3.3.3", ""));
+        event3.put(new Tuple("hasIp", "true"));
+        event3.put(new Tuple("ip", "3.3.3.3"));
 
         store.save(asList(event, event2, event3));
 
@@ -334,7 +334,7 @@ public class AccumuloEventStoreTest {
     public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event event = new BaseEvent("id");
-        event.put(new Tuple("key1", "val1", ""));
+        event.put(new Tuple("key1", "val1"));
 
         store.save(asList(event));
 
@@ -350,7 +350,7 @@ public class AccumuloEventStoreTest {
     public void testQuery_hasNot() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event event = new BaseEvent("id");
-        event.put(new Tuple("key1", "val1", ""));
+        event.put(new Tuple("key1", "val1"));
 
         store.save(asList(event));
 

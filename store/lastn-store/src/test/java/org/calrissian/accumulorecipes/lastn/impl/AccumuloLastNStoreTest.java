@@ -43,20 +43,20 @@ public class AccumuloLastNStoreTest {
         AccumuloLastNStore lastNStore = new AccumuloLastNStore(getConnector(), 3);
 
         Event entry1 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
-        entry1.put(new Tuple("key1", "val1", ""));
-        entry1.put(new Tuple("key3", "val3", ""));
+        entry1.put(new Tuple("key1", "val1"));
+        entry1.put(new Tuple("key3", "val3"));
 
         Event entry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
-        entry2.put(new Tuple("key1", "val1", ""));
-        entry2.put(new Tuple("key3", "val3", ""));
+        entry2.put(new Tuple("key1", "val1"));
+        entry2.put(new Tuple("key3", "val3"));
 
         Event entry3 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
-        entry3.put(new Tuple("key1", "val1", ""));
-        entry3.put(new Tuple("key3", "val3", ""));
+        entry3.put(new Tuple("key1", "val1"));
+        entry3.put(new Tuple("key3", "val3"));
 
         Event entry4 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() + 5000);
-        entry4.put(new Tuple("key1", "val1", ""));
-        entry4.put(new Tuple("key3", "val3", ""));
+        entry4.put(new Tuple("key1", "val1"));
+        entry4.put(new Tuple("key3", "val3"));
 
         lastNStore.put("index1", entry1);
         lastNStore.put("index1", entry2);

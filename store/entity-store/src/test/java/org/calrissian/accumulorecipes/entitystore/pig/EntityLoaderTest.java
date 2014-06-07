@@ -71,14 +71,12 @@ public class EntityLoaderTest {
                 assertEquals(tuple.getKey(), t.get(2));
                 assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
                 assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
-                assertEquals(tuple.getVisibility(), t.get(5));
             } else if(count == 2) {
                 assertEquals(entity.getType(), t.get(0));
                 assertEquals(entity.getId(), t.get(1));
                 assertEquals(tuple.getKey(), t.get(2));
                 assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
                 assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
-                assertEquals(tuple.getVisibility(), t.get(5));
             }
         }
 
@@ -129,8 +127,8 @@ public class EntityLoaderTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("myType");
-        entity.put(new Tuple("key1", "val1", "vis1"));
-        entity.put(new Tuple("key2", false, "vis2"));
+        entity.put(new Tuple("key1", "val1"));
+        entity.put(new Tuple("key2", false));
         store.save(singleton(entity));
 
         EntityInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());

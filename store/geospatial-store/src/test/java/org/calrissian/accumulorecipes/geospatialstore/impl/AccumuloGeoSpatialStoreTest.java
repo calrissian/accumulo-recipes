@@ -50,8 +50,8 @@ public class AccumuloGeoSpatialStoreTest {
     public void test_singleEntryReturns() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event entry = new BaseEvent();
-        entry.put(new Tuple("Key1", "Val1", ""));
-        entry.put(new Tuple("key2", "val2", ""));
+        entry.put(new Tuple("Key1", "Val1"));
+        entry.put(new Tuple("key2", "val2"));
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
 
@@ -64,12 +64,12 @@ public class AccumuloGeoSpatialStoreTest {
     public void test_singleEntryReturns_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event entry = new BaseEvent();
-        entry.put(new Tuple("Key1", "Val1", ""));
-        entry.put(new Tuple("key2", "val2", ""));
+        entry.put(new Tuple("Key1", "Val1"));
+        entry.put(new Tuple("key2", "val2"));
 
         Event entry2 = new BaseEvent();
-        entry2.put(new Tuple("Key1", "Val1", ""));
-        entry2.put(new Tuple("key2", "val2", ""));
+        entry2.put(new Tuple("Key1", "Val1"));
+        entry2.put(new Tuple("key2", "val2"));
 
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
@@ -84,16 +84,16 @@ public class AccumuloGeoSpatialStoreTest {
     public void test_multipleEntriesReturn_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event entry = new BaseEvent();
-        entry.put(new Tuple("Key1", "Val1", ""));
-        entry.put(new Tuple("key2", "val2", ""));
+        entry.put(new Tuple("Key1", "Val1"));
+        entry.put(new Tuple("key2", "val2"));
 
         Event entry2 = new BaseEvent();
-        entry2.put(new Tuple("Key1", "Val1", ""));
-        entry2.put(new Tuple("key2", "val2", ""));
+        entry2.put(new Tuple("Key1", "Val1"));
+        entry2.put(new Tuple("key2", "val2"));
 
         Event entry3 = new BaseEvent();
-        entry3.put(new Tuple("Key1", "Val1", ""));
-        entry3.put(new Tuple("key2", "val2", ""));
+        entry3.put(new Tuple("Key1", "Val1"));
+        entry3.put(new Tuple("key2", "val2"));
 
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
@@ -111,7 +111,6 @@ public class AccumuloGeoSpatialStoreTest {
 
         Event actualEntry3 = Iterables.get(entries, 0);
         assertTrue(actualEntry3.equals(entry) || actualEntry3.equals(entry2) || actualEntry3.equals(entry3));
-
     }
 
 }

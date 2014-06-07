@@ -36,9 +36,7 @@ public class TupleComparator implements Comparator<Tuple> {
             return ComparisonChain.start()
                     .compare(tuple.getKey(), tuple1.getKey())
                     .compare(typeRegistry.encode(tuple.getValue()), typeRegistry.encode(tuple.getValue()))
-                    .compare(tuple.getVisibility(), tuple.getVisibility())
                     .result();
-
         } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }

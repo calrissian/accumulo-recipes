@@ -54,6 +54,7 @@ import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
@@ -143,14 +144,14 @@ public abstract class QfdHelper<T extends TupleStore> {
                         // forward mutation
                         shardMutation.put(new Text(buildId(item)),
                                 new Text(tuple.getKey() + DELIM + aliasValue),
-                                new ColumnVisibility(tuple.getVisibility()),
+                                new ColumnVisibility(getVisibility(tuple, "")),
                                 buildTimestamp(item),
                                 EMPTY_VALUE);
 
                         // reverse mutation
                         shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
                                 new Text(aliasValue + DELIM + buildId(item)),
-                                new ColumnVisibility(tuple.getVisibility()),
+                                new ColumnVisibility(getVisibility(tuple, "")),
                                 buildTimestamp(item),
                                 EMPTY_VALUE);  // forward mutation
                     }

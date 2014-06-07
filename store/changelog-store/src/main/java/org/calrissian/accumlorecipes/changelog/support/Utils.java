@@ -93,8 +93,7 @@ public class Utils {
     public static String tupleToString(Tuple tuple, TypeRegistry<String> typeRegistry) {
 
         try {
-            return tuple.getKey() + DELIM + typeRegistry.encode(tuple.getValue()) +
-                    "\u0000" + tuple.getVisibility();
+            return tuple.getKey() + DELIM + typeRegistry.encode(tuple.getValue()) + DELIM + tuple.getMetadata();
         } catch (TypeEncodingException e) {
             throw new RuntimeException(e);
         }

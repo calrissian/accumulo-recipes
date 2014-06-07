@@ -61,8 +61,8 @@ public class EntityInputFormatTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", ""));
-        entity.put(new Tuple("key2", false, ""));
+        entity.put(new Tuple("key1", "val1"));
+        entity.put(new Tuple("key2", false));
         store.save(singleton(entity));
 
         Job job = new Job(new Configuration());
@@ -96,18 +96,18 @@ public class EntityInputFormatTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", ""));
-        entity.put(new Tuple("key2", false, ""));
+        entity.put(new Tuple("key1", "val1"));
+        entity.put(new Tuple("key2", false));
         store.save(singleton(entity));
 
         entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", ""));
-        entity2.put(new Tuple("key2", false, ""));
+        entity2.put(new Tuple("key1", "val1"));
+        entity2.put(new Tuple("key2", false));
         store.save(singleton(entity2));
 
         entity3 = new BaseEntity("type1", "id");
-        entity3.put(new Tuple("key1", "val1", ""));
-        entity3.put(new Tuple("key2", false, ""));
+        entity3.put(new Tuple("key1", "val1"));
+        entity3.put(new Tuple("key2", false));
         store.save(singleton(entity3));
 
         Job job = new Job(new Configuration());

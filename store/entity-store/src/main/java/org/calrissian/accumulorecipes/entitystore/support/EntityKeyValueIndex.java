@@ -37,6 +37,7 @@ import java.util.Map;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 
 public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
 
@@ -67,7 +68,7 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
                             tuple.getKey(),
                             typeRegistry.getAlias(tuple.getValue()),
                             typeRegistry.encode(tuple.getValue()),
-                            tuple.getVisibility(),
+                            getVisibility(tuple, ""),
                     };
 
                     String cacheKey = join(strings, INNER_DELIM);

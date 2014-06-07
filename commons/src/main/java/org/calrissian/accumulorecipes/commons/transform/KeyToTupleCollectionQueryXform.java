@@ -31,6 +31,7 @@ import java.util.Set;
 import static java.nio.ByteBuffer.wrap;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 
 public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
 
@@ -66,8 +67,11 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                 String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
                 try {
                     Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
+                    Tuple tuple = new Tuple(fieldValue.getKey(), javaVal);
                     String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                    entry.put(new Tuple(fieldValue.getKey(), javaVal, vis));
+                    if(!vis.equals(""))
+                        setVisibility(tuple, vis);
+                    entry.put(tuple);
                 } catch (TypeDecodingException e) {
                     throw new RuntimeException(e);
                 }

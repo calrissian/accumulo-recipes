@@ -21,6 +21,7 @@ import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityRelationship;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 
 public class EdgeEntity extends BaseEntity {
 
@@ -37,8 +38,17 @@ public class EdgeEntity extends BaseEntity {
         checkNotNull(tailVis);
         checkNotNull(label);
 
-        put(new Tuple(HEAD, new EntityRelationship(head), headVis));
-        put(new Tuple(TAIL, new EntityRelationship(tail), tailVis));
+
+        Tuple headTuple = new Tuple(HEAD, new EntityRelationship(head));
+        if(!headVis.equals(""))
+            setVisibility(headTuple, headVis);
+
+        Tuple tailTuple = new Tuple(TAIL, new EntityRelationship(tail));
+        if(!tailVis.equals(""))
+            setVisibility(tailTuple, tailVis);
+
+        put(headTuple);
+        put(tailTuple);
         put(new Tuple(LABEL, label));
     }
 
