@@ -19,7 +19,7 @@ import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterator;
 import org.calrissian.accumulorecipes.commons.transform.GettableTransform;
 import org.calrissian.accumulorecipes.entitystore.hadoop.EntityInputFormat;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
-import org.calrissian.mango.collect.TupleStoreIterator;
+import org.calrissian.accumulorecipes.commons.collect.TupleStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
