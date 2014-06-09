@@ -24,13 +24,14 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import static java.nio.ByteBuffer.wrap;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.addVisibility;
 
 public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
 
@@ -65,10 +66,10 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
             if (selectFields == null || selectFields.contains(fieldValue.getKey())) {
                 String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
                 Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
-                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal);
+
                 String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                if(!vis.equals(""))
-                    setVisibility(tuple, vis);
+                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, addVisibility(new HashMap<String, Object>(1), vis));
+
                 entry.put(tuple);
 
             }

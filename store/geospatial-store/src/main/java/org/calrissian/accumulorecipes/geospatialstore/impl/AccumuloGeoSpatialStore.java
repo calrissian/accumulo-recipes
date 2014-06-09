@@ -40,13 +40,14 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.Math.abs;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.addVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
@@ -65,9 +66,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                 for (Map.Entry<Key, Value> curEntry : map.entrySet()) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
-                    Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]));
-                    if(!vis.equals(""))
-                        setVisibility(tuple, vis);
+                    Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), addVisibility(new HashMap<String, Object>(1), vis));
                     entry.put(tuple);
                 }
                 return entry;

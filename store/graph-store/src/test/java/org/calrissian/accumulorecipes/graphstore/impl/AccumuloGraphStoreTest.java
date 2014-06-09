@@ -26,13 +26,14 @@ import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.addVisibility;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloGraphStoreTest {
@@ -56,29 +57,23 @@ public class AccumuloGraphStoreTest {
     public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
 
-        Tuple tuple = new Tuple("key1", "val1");
-        Tuple tuple2 = new Tuple("key2", "val2");
-        Tuple tuple3 = new Tuple("key3", "val3");
-        Tuple tuple4 = new Tuple("key4", "val4");
-
-        setVisibility(tuple, "U");
-        setVisibility(tuple2, "U");
-        setVisibility(tuple3, "U");
-        setVisibility(tuple4, "U");
+        Tuple tuple = new Tuple("key1", "val1", addVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple tuple2 = new Tuple("key2", "val2", addVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple tuple3 = new Tuple("key3", "val3", addVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple tuple4 = new Tuple("key4", "val4", addVisibility(new HashMap<String, Object>(1), "U"));
 
         vertex1.put(tuple);
         vertex1.put(tuple2);
         vertex2.put(tuple3);
         vertex2.put(tuple4);
 
-        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1");
-        setVisibility(edgeTuple, "ADMIN");
+        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1", addVisibility(new HashMap<String, Object>(1), "ADMIN"));
         edge.put(edgeTuple);
         Instance instance = new MockInstance();
         connector = instance.getConnector("root", "".getBytes());
         graphStore = new AccumuloEntityGraphStore(connector);
 
-        graphStore.save(asList(new Entity[]{vertex1, edge, vertex2}));
+        graphStore.save(asList(vertex1, edge, vertex2));
     }
 
     @Test
@@ -99,7 +94,7 @@ public class AccumuloGraphStoreTest {
         }
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 singleton("label1"),
@@ -121,7 +116,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacentEdges_withLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 singleton("label1"),
@@ -143,7 +138,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacentEdges_noLabels_outDirection() throws TableNotFoundException {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 new Auths("U,ADMIN")
@@ -164,7 +159,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacentEdges_noLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 new Auths("U,ADMIN")
@@ -184,7 +179,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_withLabels_outDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 Collections.singleton("label1"),
@@ -205,7 +200,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_withLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 Collections.singleton("label1"),
@@ -227,7 +222,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_noLabels_outDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex[]{new EntityIndex(vertex1.getType(), vertex1.getId())}),
+                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 new Auths("U,ADMIN")
@@ -247,7 +242,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_noLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex[]{new EntityIndex(vertex2.getType(), vertex2.getId())}),
+                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 new Auths("U,ADMIN")

@@ -51,8 +51,8 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.addVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
@@ -98,9 +98,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
 
                     String vis = entry.getKey().getColumnVisibility().toString();
-                    Tuple tuple = new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]));
-                    if(!vis.equals(""))
-                        setVisibility(tuple, vis);
+                    Tuple tuple = new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), addVisibility(new HashMap<String, Object>(1), vis));
                     entity.put(tuple);
 
                 }
