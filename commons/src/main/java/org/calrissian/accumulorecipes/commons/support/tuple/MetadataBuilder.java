@@ -11,7 +11,7 @@ import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visi
 
 public class MetadataBuilder {
 
-    private final Map<String, Object> metadata;
+    protected final Map<String, Object> metadata;
 
     public MetadataBuilder() {
         this(new HashMap<String, Object>());

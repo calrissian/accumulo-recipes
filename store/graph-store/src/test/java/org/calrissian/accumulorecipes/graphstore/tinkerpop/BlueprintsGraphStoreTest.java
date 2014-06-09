@@ -21,6 +21,7 @@ import com.tinkerpop.blueprints.Vertex;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
@@ -33,12 +34,11 @@ import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 
+import static com.google.common.collect.Iterables.size;
 import static com.google.common.collect.Sets.newHashSet;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class BlueprintsGraphStoreTest {
@@ -61,20 +61,20 @@ public class BlueprintsGraphStoreTest {
                 new Auths("U,ADMIN"));
 
 
-        Tuple tuple = new Tuple("key1", "val1", setVisibility(new HashMap<String, Object>(1), "U"));
-        Tuple tuple2 = new Tuple("key2", "val2", setVisibility(new HashMap<String, Object>(1), "U"));
-        Tuple tuple3 = new Tuple("key3", "val3", setVisibility(new HashMap<String, Object>(1), "U"));
-        Tuple tuple4 = new Tuple("key4", "val4", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple tuple = new Tuple("key1", "val1", new MetadataBuilder().setVisibility("U").build());
+        Tuple tuple2 = new Tuple("key2", "val2", new MetadataBuilder().setVisibility("U").build());
+        Tuple tuple3 = new Tuple("key3", "val3", new MetadataBuilder().setVisibility("U").build());
+        Tuple tuple4 = new Tuple("key4", "val4", new MetadataBuilder().setVisibility("U").build());
 
         vertex1.put(tuple);
         vertex1.put(tuple2);
         vertex2.put(tuple3);
         vertex2.put(tuple4);
 
-        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
+        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
         edge.put(edgeTuple);
 
-        entityGraphStore.save(Arrays.asList(new Entity[]{vertex1, vertex2, edge}));
+        entityGraphStore.save(asList(vertex1, vertex2, edge));
 
     }
 
@@ -100,7 +100,7 @@ public class BlueprintsGraphStoreTest {
     public void testVertices() {
 
         CloseableIterable<Vertex> vertices = graph.getVertices();
-        assertEquals(2, Iterables.size(vertices));
+        assertEquals(2, size(vertices));
 
         EntityVertex entity1 = (EntityVertex) Iterables.get(vertices, 0);
         assertEntitiesEqual(vertex1, entity1.getEntity());
@@ -114,7 +114,7 @@ public class BlueprintsGraphStoreTest {
 
         CloseableIterable<Edge> edges = graph.getEdges();
 
-        assertEquals(1, Iterables.size(edges));
+        assertEquals(1, size(edges));
 
         EntityEdge actualEdge = (EntityEdge) Iterables.get(edges, 0);
         assertEntitiesEqual(edge, actualEdge.getEntity());
@@ -123,16 +123,16 @@ public class BlueprintsGraphStoreTest {
     @Test
     public void testVertices_propertyQuery() {
 
-        CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) graph.getVertices("key1", "val1");
+        CloseableIterable<Vertex> vertices = graph.getVertices("key1", "val1");
 
-        assertEquals(1, Iterables.size(vertices));
+        assertEquals(1, size(vertices));
 
         EntityVertex actualVertex = (EntityVertex) Iterables.get(vertices, 0);
         assertEntitiesEqual(vertex1, actualVertex.getEntity());
 
-        vertices = (CloseableIterable<Vertex>) graph.getVertices("key3", "val3");
+        vertices = graph.getVertices("key3", "val3");
 
-        assertEquals(1, Iterables.size(vertices));
+        assertEquals(1, size(vertices));
 
         actualVertex = (EntityVertex) Iterables.get(vertices, 0);
         assertEntitiesEqual(vertex2, actualVertex.getEntity());
@@ -143,7 +143,7 @@ public class BlueprintsGraphStoreTest {
 
         CloseableIterable<Edge> edges = graph.getEdges("edgeProp1", "edgeVal1");
 
-        assertEquals(1, Iterables.size(edges));
+        assertEquals(1, size(edges));
 
         EntityEdge actualEdge = (EntityEdge) Iterables.get(edges, 0);
         assertEntitiesEqual(edge, actualEdge.getEntity());
