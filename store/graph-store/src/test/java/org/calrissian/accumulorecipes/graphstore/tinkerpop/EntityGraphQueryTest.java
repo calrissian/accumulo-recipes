@@ -22,6 +22,7 @@ import com.tinkerpop.blueprints.Vertex;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
@@ -34,12 +35,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.junit.Assert.assertEquals;
 
 public class EntityGraphQueryTest {
@@ -64,35 +63,35 @@ public class EntityGraphQueryTest {
                 newHashSet("edgeType1", "edgeType2"),
                 new Auths("U,ADMIN"));
 
-        Tuple v1t1 = new Tuple("key1", "val1", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v1t1 = new Tuple("key1", "val1", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(v1t1);
 
-        Tuple v1t2 = new Tuple("key2", "val2", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v1t2 = new Tuple("key2", "val2", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(v1t2);
 
-        Tuple v2t1 = new Tuple("key3", "val3", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v2t1 = new Tuple("key3", "val3", new MetadataBuilder().setVisibility("U").build());
         vertex2.put(v2t1);
 
-        Tuple v2t2 = new Tuple("key4", "val4", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v2t2 = new Tuple("key4", "val4", new MetadataBuilder().setVisibility("U").build());
         vertex2.put(v2t2);
 
-        Tuple keyVal = new Tuple("key", "val", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple keyVal = new Tuple("key", "val", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(keyVal);
         vertex2.put(keyVal);
 
-        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
+        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
         edge.put(e1t1);
 
-        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2", new MetadataBuilder().setVisibility("U").build());
         edge.put(e1t2);
 
-        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
+        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3", new MetadataBuilder().setVisibility("ADMIN").build());
         edge2.put(e2t1);
 
-        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4", new MetadataBuilder().setVisibility("U").build());
         edge2.put(e2t2);
 
-        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal", new MetadataBuilder().setVisibility("U").build());
 
         edge.put(edgeKeyVal);
         edge2.put(edgeKeyVal);

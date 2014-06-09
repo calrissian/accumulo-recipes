@@ -21,6 +21,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
@@ -41,7 +42,6 @@ import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloGraphStoreTest {
@@ -57,17 +57,17 @@ public class AccumuloGraphStoreTest {
     public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
 
-        Tuple tuple = new Tuple("key1", "val1", setVisibility(new HashMap<String, Object>(1), "U"));
-        Tuple tuple2 = new Tuple("key2", "val2", setVisibility(new HashMap<String, Object>(1), "U"));
-        Tuple tuple3 = new Tuple("key3", "val3", setVisibility(new HashMap<String, Object>(1), "U"));
-        Tuple tuple4 = new Tuple("key4", "val4", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple tuple = new Tuple("key1", "val1", new MetadataBuilder().setVisibility("U").build());
+        Tuple tuple2 = new Tuple("key2", "val2", new MetadataBuilder().setVisibility("U").build());
+        Tuple tuple3 = new Tuple("key3", "val3", new MetadataBuilder().setVisibility("U").build());
+        Tuple tuple4 = new Tuple("key4", "val4", new MetadataBuilder().setVisibility("U").build());
 
         vertex1.put(tuple);
         vertex1.put(tuple2);
         vertex2.put(tuple3);
         vertex2.put(tuple4);
 
-        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
+        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
         edge.put(edgeTuple);
         Instance instance = new MockInstance();
         connector = instance.getConnector("root", "".getBytes());
