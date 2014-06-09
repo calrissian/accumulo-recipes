@@ -32,7 +32,7 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.addVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 
 public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
 
@@ -68,7 +68,7 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
-                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), addVisibility(new HashMap<String, Object>(1), visibility));
+                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), setVisibility(new HashMap<String, Object>(1), visibility));
 
                 entry.put(tuple);
 

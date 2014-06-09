@@ -13,7 +13,7 @@ public class Metadata {
 
         private Expiration(){}
 
-        public static Map<String, Object> addExpiration(Map<String, Object> metadata, long expiration) {
+        public static Map<String, Object> setExpiration(Map<String, Object> metadata, long expiration) {
             metadata.put(EXPIRATION, expiration);
             return metadata;
         }
@@ -32,7 +32,7 @@ public class Metadata {
 
         private Visiblity(){}
 
-        public static Map<String, Object> addVisibility(Map<String, Object> metadata, String visibility) {
+        public static Map<String, Object> setVisibility(Map<String, Object> metadata, String visibility) {
             if (visibility != null && !visibility.isEmpty())
                 metadata.put(VISIBILITY, visibility);
 

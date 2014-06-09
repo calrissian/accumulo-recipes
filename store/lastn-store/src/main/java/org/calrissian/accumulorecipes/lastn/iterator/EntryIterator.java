@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.addVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -104,7 +104,7 @@ public class EntryIterator extends WrappingIterator {
                         Tuple tuple = new Tuple(
                                 keyValueDatatype[0],
                                 typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]),
-                                addVisibility(new HashMap<String, Object>(1), vis)
+                                setVisibility(new HashMap<String, Object>(1), vis)
                         );
 
 

@@ -46,7 +46,7 @@ import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.addVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -65,7 +65,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                         toReturn = new BaseEvent(splits[0], Long.parseLong(splits[1]));
                     }
                     String vis = splits[5];
-                    toReturn.put(new Tuple(splits[2], typeRegistry.decode(splits[3], splits[4]), addVisibility(new HashMap<String, Object>(1), vis)));
+                    toReturn.put(new Tuple(splits[2], typeRegistry.decode(splits[3], splits[4]), setVisibility(new HashMap<String, Object>(1), vis)));
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
