@@ -24,6 +24,7 @@ import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,9 +68,8 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
-                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]));
-                if(!visibility.equals(""))
-                    setVisibility(tuple, visibility);
+                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), setVisibility(new HashMap<String, Object>(1), visibility));
+
                 entry.put(tuple);
 
             }

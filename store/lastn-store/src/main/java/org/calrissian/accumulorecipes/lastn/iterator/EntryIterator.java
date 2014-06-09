@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
@@ -102,10 +103,10 @@ public class EntryIterator extends WrappingIterator {
 
                         Tuple tuple = new Tuple(
                                 keyValueDatatype[0],
-                                typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]));
+                                typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]),
+                                setVisibility(new HashMap<String, Object>(1), vis)
+                        );
 
-                        if(!vis.equals(""))
-                            setVisibility(tuple, vis);
 
                         tuples.add(tuple);
                         timestamp = nextKey.getTimestamp();

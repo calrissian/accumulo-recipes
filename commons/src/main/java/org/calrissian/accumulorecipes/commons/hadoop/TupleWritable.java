@@ -10,6 +10,7 @@ import org.calrissian.mango.types.TypeRegistry;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,16 +67,16 @@ public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>
         String type = dataInput.readUTF();
         String val = dataInput.readUTF();
 
-        tuple = new Tuple(key, typeRegistry.decode(type, val));
-
-
         int count = dataInput.readInt();
+        Map<String, Object> metadata = new HashMap<String, Object>(count);
         for (int i = 0; i < count; i++) {
             String metaKey = dataInput.readUTF();
             String metaType = dataInput.readUTF();
             String metaVal = dataInput.readUTF();
-            tuple.setMetadataValue(metaKey, typeRegistry.decode(metaType, metaVal));
+            metadata.put(metaKey, typeRegistry.decode(metaType, metaVal));
         }
+
+        tuple = new Tuple(key, typeRegistry.decode(type, val), metadata);
     }
 
     @Override

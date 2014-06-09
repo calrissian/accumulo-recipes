@@ -24,6 +24,7 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -65,10 +66,10 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
             if (selectFields == null || selectFields.contains(fieldValue.getKey())) {
                 String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), INNER_DELIM);
                 Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
-                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal);
+
                 String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                if(!vis.equals(""))
-                    setVisibility(tuple, vis);
+                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, setVisibility(new HashMap<String, Object>(1), vis));
+
                 entry.put(tuple);
 
             }

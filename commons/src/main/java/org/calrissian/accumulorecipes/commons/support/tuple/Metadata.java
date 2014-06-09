@@ -3,6 +3,8 @@ package org.calrissian.accumulorecipes.commons.support.tuple;
 
 import org.calrissian.mango.domain.Tuple;
 
+import java.util.Map;
+
 public class Metadata {
 
     public static class Expiration {
@@ -11,8 +13,9 @@ public class Metadata {
 
         private Expiration(){}
 
-        public static void setExpiration(Tuple tuple, long expiration) {
-            tuple.setMetadataValue(EXPIRATION, expiration);
+        public static Map<String, Object> setExpiration(Map<String, Object> metadata, long expiration) {
+            metadata.put(EXPIRATION, expiration);
+            return metadata;
         }
 
         public static Long getExpiration(Tuple tuple, long defaultExpiration) {
@@ -29,8 +32,11 @@ public class Metadata {
 
         private Visiblity(){}
 
-        public static void setVisibility(Tuple tuple, String visibility) {
-            tuple.setMetadataValue(VISIBILITY, visibility);
+        public static Map<String, Object> setVisibility(Map<String, Object> metadata, String visibility) {
+            if (visibility != null && !visibility.isEmpty())
+                metadata.put(VISIBILITY, visibility);
+
+            return metadata;
         }
 
         public static String getVisibility(Tuple tuple, String defaultVisibility) {

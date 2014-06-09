@@ -38,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -70,55 +71,43 @@ public class EntityVertexQueryTest {
                 new Auths("U,ADMIN"));
 
 
-        Tuple v1t1 = new Tuple("key1", "val1");
-        setVisibility(v1t1, "U");
+        Tuple v1t1 = new Tuple("key1", "val1", setVisibility(new HashMap<String, Object>(1), "U"));
         vertex1.put(v1t1);
 
-        Tuple v1t2 = new Tuple("key2", "val2");
-        setVisibility(v1t2, "U");
+        Tuple v1t2 = new Tuple("key2", "val2", setVisibility(new HashMap<String, Object>(1), "U"));
         vertex1.put(v1t2);
 
-        Tuple v2t1 = new Tuple("key3", "val3");
-        setVisibility(v2t1, "U");
+        Tuple v2t1 = new Tuple("key3", "val3", setVisibility(new HashMap<String, Object>(1), "U"));
         vertex2.put(v2t1);
 
-        Tuple v2t2 = new Tuple("key4", "val4");
-        setVisibility(v2t2, "U");
+        Tuple v2t2 = new Tuple("key4", "val4", setVisibility(new HashMap<String, Object>(1), "U"));
         vertex2.put(v2t2);
 
-        Tuple v3t1 = new Tuple("key5", "val5");
-        setVisibility(v3t1, "U");
+        Tuple v3t1 = new Tuple("key5", "val5", setVisibility(new HashMap<String, Object>(1), "U"));
         vertex3.put(v3t1);
 
-        Tuple keyVal = new Tuple("key", "val");
-        setVisibility(keyVal, "U");
+        Tuple keyVal = new Tuple("key", "val", setVisibility(new HashMap<String, Object>(1), "U"));
         vertex1.put(keyVal);
         vertex2.put(keyVal);
 
-        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1");
-        setVisibility(e1t1, "ADMIN");
+        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
         edge.put(e1t1);
 
-        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2");
-        setVisibility(e1t2, "U");
+        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2", setVisibility(new HashMap<String, Object>(1), "U"));
         edge.put(e1t2);
 
-        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3");
-        setVisibility(e2t1, "ADMIN");
+        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
         edge2.put(e2t1);
 
-        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4");
-        setVisibility(e2t2, "U");
+        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4", setVisibility(new HashMap<String, Object>(1), "U"));
         edge2.put(e2t2);
 
-        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal");
-        setVisibility(edgeKeyVal, "U");
+        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal", setVisibility(new HashMap<String, Object>(1), "U"));
 
         edge.put(edgeKeyVal);
         edge2.put(edgeKeyVal);
 
-        Tuple e3t1 = new Tuple("edgeProp3", "edgeVal3");
-        setVisibility(e3t1,  "U");
+        Tuple e3t1 = new Tuple("edgeProp3", "edgeVal3", setVisibility(new HashMap<String, Object>(1), "U"));
         edge3.put(e3t1);
 
         entityGraphStore.save(Arrays.asList(new Entity[]{vertex1, vertex2, vertex3, edge, edge2, edge3}));
