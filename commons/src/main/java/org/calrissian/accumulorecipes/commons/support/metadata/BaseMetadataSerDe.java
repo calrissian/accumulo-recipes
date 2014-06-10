@@ -7,12 +7,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A base serializer/deserializer for a hashmap of metadata. This will encode the data into and from a byte array.
+ * A base serializer/deserializer for a hashmap of metadata. This will encode the data into and from a simple byte array.
  */
 public class BaseMetadataSerDe implements MetadataSerDe {
 
     private TypeRegistry<String> typeRegistry;
 
+    public BaseMetadataSerDe(TypeRegistry<String> typeRegistry) {
+        this.typeRegistry = typeRegistry;
+    }
 
     @Override
     public byte[] serialize(Map<String, Object> metadata) {
@@ -41,17 +44,16 @@ public class BaseMetadataSerDe implements MetadataSerDe {
                 dataOutput.writeUTF(typeRegistry.encode(entry.getValue()));
             }
 
-            return baos.toByteArray();
+            byte[] bytes =  baos.toByteArray();
+
+            baos.flush();
+            baos.close();
+
+            return bytes;
 
         } catch(Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void setTypeRegistry(TypeRegistry<String> registry) {
-
-        this.typeRegistry = registry;
     }
 
     @Override
@@ -72,6 +74,9 @@ public class BaseMetadataSerDe implements MetadataSerDe {
 
                 metadata.put(key, typeRegistry.decode(alias, encodedVal));
             }
+
+            bais.close();
+            dis.close();
 
             return metadata;
         } catch(Exception e) {

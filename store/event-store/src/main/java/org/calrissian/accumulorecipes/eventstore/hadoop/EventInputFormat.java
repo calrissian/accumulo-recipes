@@ -25,6 +25,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.metadata.BaseMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -41,6 +43,8 @@ import static java.util.Arrays.asList;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.*;
 import static org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper.QueryXform;
+import static org.calrissian.mango.io.Serializables.fromBase64;
+import static org.calrissian.mango.io.Serializables.toBase64;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
@@ -62,7 +66,13 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
         BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
 
+        config.set("typeRegistry", new String(toBase64(typeRegistry)));
+
         configureScanner(config, query, globalIndexVisitor, typeRegistry);
+    }
+
+    public static void setMetadataSerDe(Configuration configuration, MetadataSerDe metadataSerDe) throws IOException {
+        configuration.set("metadataSerDe", new String(toBase64(metadataSerDe)));
     }
 
     /**
@@ -77,12 +87,25 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
     @Override
     protected Function<Map.Entry<Key, Value>, Event> getTransform(Configuration configuration) {
-        final String[] selectFields = configuration.getStrings("selectFields");
 
-        final Kryo kryo = new Kryo();
-        initializeKryo(kryo);
+        try {
+            final String[] selectFields = configuration.getStrings("selectFields");
 
-        return new QueryXform(kryo, LEXI_TYPES, selectFields != null ? new HashSet<String>(asList(selectFields)) : null);
+            TypeRegistry<String> typeRegistry = fromBase64(configuration.get("typeRegistry").getBytes());
+
+            MetadataSerDe metadataSerDe;
+            if(configuration.get("metadataSerDe") != null)
+                metadataSerDe = fromBase64(configuration.get("metadataSerDe").getBytes());
+            else
+                metadataSerDe = new BaseMetadataSerDe(typeRegistry);
+
+            final Kryo kryo = new Kryo();
+            initializeKryo(kryo);
+
+            return new QueryXform(kryo, typeRegistry, selectFields != null ? new HashSet<String>(asList(selectFields)) : null, metadataSerDe);
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

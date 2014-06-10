@@ -160,7 +160,8 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
             // Read in the fields in the value
             ColumnVisibility vis = new ColumnVisibility(valueSerializer.readObjectData(buf, byte[].class));
             byte[] value = valueSerializer.readObjectData(buf, byte[].class);
-            map.put(key, new FieldValue(vis, value));
+            byte[] metadata = valueSerializer.readObjectData(buf, byte[].class);
+            map.put(key, new FieldValue(vis, value, metadata));
         }
 
     }
@@ -177,17 +178,20 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
 
             valueSerializer.writeObjectData(buf, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : entry.getValue().getVisibility().getExpression());
             valueSerializer.writeObjectData(buf, entry.getValue().getValue());
+            valueSerializer.writeObjectData(buf, entry.getValue().getMetadata());
         }
     }
 
     public static class FieldValue {
         ColumnVisibility visibility;
         byte[] value;
+        byte[] metadata;
 
-        public FieldValue(ColumnVisibility visibility, byte[] value) {
+        public FieldValue(ColumnVisibility visibility, byte[] value, byte[] metadata) {
             super();
             this.visibility = visibility;
             this.value = value;
+            this.metadata = metadata;
         }
 
         public ColumnVisibility getVisibility() {
@@ -202,12 +206,16 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
             return value;
         }
 
+        public byte[] getMetadata() {
+            return metadata;
+        }
+
         public void setValue(byte[] value) {
             this.value = value;
         }
 
         public int size() {
-            return visibility.getExpression().length > 0 ? visibility.flatten().length + value.length : value.length;
+            return visibility.getExpression().length > 0 ? visibility.flatten().length + value.length + metadata.length : value.length + metadata.length;
         }
 
         @Override
@@ -219,6 +227,11 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
                 buf.append(" value size: ").append(value.length);
             if (null != value)
                 buf.append(" value: ").append(new String(value));
+            if (null != metadata)
+                buf.append(" value size: ").append(metadata.length);
+            if (null != metadata)
+                buf.append(" value: ").append(new String(metadata));
+
             return buf.toString();
         }
 

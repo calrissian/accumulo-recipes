@@ -79,7 +79,7 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         String fieldName = colq.substring(0, idx);
         String fieldValue = colq.substring(idx + 1);
 
-        event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes()));
+        event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes(), value.get()));
     }
 
     /**

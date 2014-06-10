@@ -97,7 +97,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.keyValueIndex = keyValueIndex;
         this.nodeToJexl = new NodeToJexl(typeRegistry);
 
-        this.metadataSerDe = new BaseMetadataSerDe();
+        this.metadataSerDe = new BaseMetadataSerDe(typeRegistry);
 
         if (!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);

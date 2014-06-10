@@ -27,6 +27,8 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.metadata.BaseMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
@@ -75,6 +77,10 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         config.set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
     }
 
+    public static void setMetadataSerDe(Configuration configuration, MetadataSerDe metadataSerDe) throws IOException {
+        configuration.set("metadataSerDe", new String(toBase64(metadataSerDe)));
+    }
+
     public static void setQueryInfo(Configuration config, Set<String> entityTypes) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
         setQueryInfo(config, entityTypes, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
@@ -115,24 +121,29 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
 
         final String[] selectFields = configuration.getStrings("selectFields");
 
+
         Set<String> finalSelectFields = selectFields != null ?
                 new HashSet<String>(asList(selectFields)) : null;
 
         try {
             TypeRegistry<String> typeRegistry = fromBase64(configuration.get(TYPE_REGISTRY).getBytes());
 
+            MetadataSerDe metadataSerDe;
+            if(configuration.get("metadataSerDe") != null)
+                metadataSerDe = fromBase64(configuration.get("metadataSerDe").getBytes());
+            else
+                metadataSerDe = new BaseMetadataSerDe(typeRegistry);
+
             Kryo kryo = new Kryo();
             initializeKryo(kryo);
 
             if(configuration.getBoolean(QUERY, false))
-                return new EntityQfdHelper.QueryXform(kryo, typeRegistry, finalSelectFields);
+                return new EntityQfdHelper.QueryXform(kryo, typeRegistry, finalSelectFields, metadataSerDe);
             else
-                return new EntityQfdHelper.WholeColFXform(kryo, typeRegistry, finalSelectFields);
+                return new EntityQfdHelper.WholeColFXform(kryo, typeRegistry, finalSelectFields, metadataSerDe);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
     @Override

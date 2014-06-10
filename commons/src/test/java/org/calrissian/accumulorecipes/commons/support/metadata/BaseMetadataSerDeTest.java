@@ -1,6 +1,5 @@
 package org.calrissian.accumulorecipes.commons.support.metadata;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -11,12 +10,7 @@ import static org.junit.Assert.assertEquals;
 
 public class BaseMetadataSerDeTest {
 
-    MetadataSerDe metadataSerDe = new BaseMetadataSerDe();
-
-    @Before
-    public void setup() {
-        metadataSerDe.setTypeRegistry(SIMPLE_TYPES);
-    }
+    MetadataSerDe metadataSerDe = new BaseMetadataSerDe(SIMPLE_TYPES);
 
     @Test
     public void testSimpleSerializationDeserialization() {

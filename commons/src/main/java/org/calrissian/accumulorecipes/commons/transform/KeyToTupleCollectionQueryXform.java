@@ -70,7 +70,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                 Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
 
                 String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                Map<String,Object> metadata = metadataSerDe.deserialize(keyValueEntry.getValue().get());
+                Map<String,Object> metadata = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
                 setVisibility(metadata, vis);
                 Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
 

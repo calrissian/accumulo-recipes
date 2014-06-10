@@ -71,7 +71,7 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
 
-                Map<String, Object> metadata = metadataSerDe.deserialize(keyValueEntry.getValue().get());
+                Map<String, Object> metadata = metadataSerDe.deserialize(curEntry.getValue().get());
                 setVisibility(metadata, visibility);
                 Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
 
