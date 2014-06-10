@@ -26,6 +26,11 @@ public class GroupedKey implements WritableComparable<GroupedKey> {
 
     private String group;
     private Key key;
+    
+    public GroupedKey(String group, Key key) {
+        this.group = group;
+        this.key = key;
+    }
 
     public String getGroup() {
         return group;
