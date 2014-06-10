@@ -63,7 +63,7 @@ public class AccumuloLastNStore implements LastNStore {
     private final String tableName;
     private final BatchWriter writer;
 
-    private  TypeRegistry<String> typeRegistry;
+    private final TypeRegistry<String> typeRegistry;
 
     private Function<Entry<Key, Value>, Event> storeTransform = new Function<Entry<Key, Value>, Event>() {
         @Override
@@ -91,7 +91,7 @@ public class AccumuloLastNStore implements LastNStore {
      * @param connector
      */
     public AccumuloLastNStore(Connector connector, int maxVersions) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
-        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG, maxVersions);
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG, maxVersions, LEXI_TYPES);
     }
 
     /**
@@ -99,14 +99,15 @@ public class AccumuloLastNStore implements LastNStore {
      *
      * @param connector
      */
-    public AccumuloLastNStore(Connector connector, String tableName, StoreConfig config, int maxVersions) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloLastNStore(Connector connector, String tableName, StoreConfig config, int maxVersions, TypeRegistry<String> typeRegistry) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         checkNotNull(connector);
         checkNotNull(tableName);
         checkNotNull(config);
+        checkNotNull(typeRegistry);
 
         this.connector = connector;
         this.tableName = tableName;
-        this.typeRegistry = LEXI_TYPES;
+        this.typeRegistry = typeRegistry;
 
         if (!connector.tableOperations().exists(this.tableName)) {
             connector.tableOperations().create(this.tableName, true);
@@ -114,10 +115,6 @@ public class AccumuloLastNStore implements LastNStore {
         }
 
         this.writer = this.connector.createBatchWriter(this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
-    }
-
-    public void setTypeRegistry(TypeRegistry<String> typeRegistry) {
-        this.typeRegistry = typeRegistry;
     }
 
     /**
