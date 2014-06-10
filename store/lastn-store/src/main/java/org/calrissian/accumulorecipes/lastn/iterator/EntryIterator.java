@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.lastn.iterator;
 
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -27,25 +28,25 @@ import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.io.Serializables;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
  * An iterator to return StoreEntry objects serialized to JSON so that grouping can be done server side instead of
  * client side.
  */
 public class EntryIterator extends WrappingIterator {
+
+    public static final String TYPE_REGISTRY = "typeRegistry";
 
     private TypeRegistry<String> typeRegistry;
     private SortedKeyValueIterator<Key, Value> sourceItr;
@@ -56,8 +57,30 @@ public class EntryIterator extends WrappingIterator {
 
         super.init(source, options, env);
         sourceItr = source.deepCopy(env);
-        this.typeRegistry = LEXI_TYPES; //TODO make types configurable.
+        this.typeRegistry = getTypeRegistry(options);
         this.writable = new EventWritable();
+    }
+
+    public static void setTypeRegistry(IteratorSetting setting, TypeRegistry<String> registry) {
+        checkNotNull(registry);
+        try {
+            setting.addOption(TYPE_REGISTRY, new String(Serializables.toBase64(registry)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private TypeRegistry<String> getTypeRegistry(Map<String,String> options) {
+        if(options.containsKey(TYPE_REGISTRY)) {
+            try {
+                return Serializables.fromBase64(options.get(TYPE_REGISTRY).getBytes());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        else
+            throw new RuntimeException("Error: Type registry was not configured on iterator.");
     }
 
     /**
@@ -128,4 +151,6 @@ public class EntryIterator extends WrappingIterator {
 
         return new Value("".getBytes());
     }
+
+
 }
