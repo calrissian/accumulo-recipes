@@ -27,6 +27,7 @@ import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIter
 import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
@@ -82,6 +83,10 @@ public class AccumuloEntityStore implements EntityStore {
 
         this.shardBuilder = shardBuilder;
         helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
+    }
+
+    public void setMetadataSerDe(MetadataSerDe metadataSerDe) {
+        helper.setMetadataSerDe(metadataSerDe);
     }
 
     public void setTypeRegistry(TypeRegistry<String> typeRegistry) {

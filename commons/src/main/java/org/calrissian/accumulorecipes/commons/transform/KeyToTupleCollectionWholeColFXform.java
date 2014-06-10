@@ -19,12 +19,12 @@ import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,11 +40,13 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
     private Set<String> selectFields;
     private Kryo kryo;
     private TypeRegistry<String> typeRegistry;
+    private MetadataSerDe metadataSerDe;
 
-    public KeyToTupleCollectionWholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
+    public KeyToTupleCollectionWholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
         this.selectFields = selectFields;
         this.kryo = kryo;
         this.typeRegistry = typeRegistry;
+        this.metadataSerDe = metadataSerDe;
     }
 
     protected Set<String> getSelectFields() {
@@ -68,7 +70,10 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], INNER_DELIM);
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
-                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), setVisibility(new HashMap<String, Object>(1), visibility));
+
+                Map<String, Object> metadata = metadataSerDe.deserialize(curEntry.getValue().get());
+                setVisibility(metadata, visibility);
+                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
 
                 entry.put(tuple);
 

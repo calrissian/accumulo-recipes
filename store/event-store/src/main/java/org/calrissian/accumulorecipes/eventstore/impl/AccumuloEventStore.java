@@ -26,6 +26,7 @@ import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIter
 import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
@@ -80,6 +81,9 @@ public class AccumuloEventStore implements EventStore {
         helper = new EventQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
     }
 
+    public void setMetadataSerDe(MetadataSerDe metadataSerDe) {
+        helper.setMetadataSerDe(metadataSerDe);
+    }
 
     /**
      * Free up any resources used by the store.
