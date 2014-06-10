@@ -44,10 +44,7 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.EMPTY_LIST;
@@ -56,6 +53,7 @@ import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.VISIBILITY;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -153,19 +151,23 @@ public abstract class QfdHelper<T extends TupleStore> {
                         String aliasValue = typeRegistry.getAlias(tuple.getValue()) + INNER_DELIM +
                                 typeRegistry.encode(tuple.getValue());
 
+                        ColumnVisibility columnVisibility = new ColumnVisibility(getVisibility(tuple, ""));
+                        Map<String,Object> metadata = new HashMap<String, Object>(tuple.getMetadata());
+                        metadata.remove(VISIBILITY);    // save a little space by removing this.
+
                         // forward mutation
                         shardMutation.put(new Text(buildId(item)),
                                 new Text(tuple.getKey() + DELIM + aliasValue),
-                                new ColumnVisibility(getVisibility(tuple, "")),
+                                columnVisibility,
                                 buildTimestamp(item),
-                                new Value(metadataSerDe.serialize(tuple.getMetadata())));
+                                new Value(metadataSerDe.serialize(metadata)));
 
                         // reverse mutation
                         shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
                                 new Text(aliasValue + DELIM + buildId(item)),
-                                new ColumnVisibility(getVisibility(tuple, "")),
+                                columnVisibility,
                                 buildTimestamp(item),
-                                new Value(metadataSerDe.serialize(tuple.getMetadata())));  // forward mutation
+                                new Value(metadataSerDe.serialize(metadata)));  // forward mutation
                     }
 
                     shardWriter.addMutation(shardMutation);
