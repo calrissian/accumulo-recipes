@@ -25,7 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
-import org.calrissian.accumulorecipes.commons.support.metadata.BaseMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
@@ -97,7 +97,7 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
             if(configuration.get("metadataSerDe") != null)
                 metadataSerDe = fromBase64(configuration.get("metadataSerDe").getBytes());
             else
-                metadataSerDe = new BaseMetadataSerDe(typeRegistry);
+                metadataSerDe = new SimpleMetadataSerDe(typeRegistry);
 
             final Kryo kryo = new Kryo();
             initializeKryo(kryo);

@@ -27,7 +27,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
-import org.calrissian.accumulorecipes.commons.support.metadata.BaseMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
@@ -132,7 +132,7 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
             if(configuration.get("metadataSerDe") != null)
                 metadataSerDe = fromBase64(configuration.get("metadataSerDe").getBytes());
             else
-                metadataSerDe = new BaseMetadataSerDe(typeRegistry);
+                metadataSerDe = new SimpleMetadataSerDe(typeRegistry);
 
             Kryo kryo = new Kryo();
             initializeKryo(kryo);

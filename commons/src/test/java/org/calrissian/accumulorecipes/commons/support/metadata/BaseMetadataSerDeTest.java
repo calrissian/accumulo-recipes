@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 
 public class BaseMetadataSerDeTest {
 
-    MetadataSerDe metadataSerDe = new BaseMetadataSerDe(SIMPLE_TYPES);
+    MetadataSerDe metadataSerDe = new SimpleMetadataSerDe(SIMPLE_TYPES);
 
     @Test
     public void testSimpleSerializationDeserialization() {

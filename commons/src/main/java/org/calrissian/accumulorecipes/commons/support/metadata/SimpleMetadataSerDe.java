@@ -9,11 +9,11 @@ import java.util.Map;
 /**
  * A base serializer/deserializer for a hashmap of metadata. This will encode the data into and from a simple byte array.
  */
-public class BaseMetadataSerDe implements MetadataSerDe {
+public class SimpleMetadataSerDe implements MetadataSerDe {
 
     private TypeRegistry<String> typeRegistry;
 
-    public BaseMetadataSerDe(TypeRegistry<String> typeRegistry) {
+    public SimpleMetadataSerDe(TypeRegistry<String> typeRegistry) {
         this.typeRegistry = typeRegistry;
     }
 
