@@ -22,6 +22,7 @@ import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.Date;
+import java.util.Set;
 
 public interface FeatureStore {
 
@@ -38,8 +39,13 @@ public interface FeatureStore {
     /**
      * Query features back from the store.
      */
-    <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type,
-                                                      String name, TimeUnit timeUnit, Class<T> featureType,  Auths auths);
+    <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, String type,
+                                                   String name, TimeUnit timeUnit, Class<T> featureType, Auths auths);
 
 
+    /**
+     * Queries features back from the store for a group and multiple types
+     */
+    <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, Set<String> types,
+                                                   String name, TimeUnit timeUnit, Class<T> featureType, Auths auths);
 }

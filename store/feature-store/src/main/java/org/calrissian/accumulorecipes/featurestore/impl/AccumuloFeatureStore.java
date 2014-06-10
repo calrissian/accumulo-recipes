@@ -33,12 +33,10 @@ import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 import org.calrissian.mango.collect.CloseableIterable;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
@@ -120,11 +118,11 @@ public class AccumuloFeatureStore implements FeatureStore {
         int priority = DEFAULT_ITERATOR_PRIORITY;
         if (!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName, false);
-            for(AccumuloFeatureConfig featureConfig : registry.getConfigs()) {
+            for (AccumuloFeatureConfig featureConfig : registry.getConfigs()) {
                 List<IteratorSetting> settings = featureConfig.buildIterators(priority);
 
                 int numSettings = 0;
-                for(IteratorSetting setting : settings) {
+                for (IteratorSetting setting : settings) {
                     numSettings++;
                     connector.tableOperations().attachIterator(tableName, setting);
                 }
@@ -135,8 +133,12 @@ public class AccumuloFeatureStore implements FeatureStore {
     }
 
     protected ScannerBase metricScanner(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
+        return metricScanner(start, end, group, Collections.singleton(type), name, timeUnit, featureConfig, auths);
+    }
+
+    protected ScannerBase metricScanner(Date start, Date end, String group, Set<String> types, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
         checkNotNull(group);
-        checkNotNull(type);
+        checkNotNull(types);
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
@@ -149,10 +151,15 @@ public class AccumuloFeatureStore implements FeatureStore {
             //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
             //timestamp.  Which is used to provide the latest results first.
             BatchScanner scanner = connector.createBatchScanner(tableName + REVERSE_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
-            scanner.setRanges(singleton(new Range(
-                    combine(type, generateTimestamp(end.getTime(), timeUnit)),
-                    combine(type, generateTimestamp(start.getTime(), timeUnit))
-            )));
+
+            Set<Range> ranges = new HashSet<Range>();
+            for (String type : types) {
+                ranges.add(new Range(
+                        combine(type, generateTimestamp(end.getTime(), timeUnit)),
+                        combine(type, generateTimestamp(start.getTime(), timeUnit))
+                ));
+            }
+            scanner.setRanges(ranges);
 
             //If both type and name are here then simply fetch the column
             //else fetch the timeunit column family and apply a regex filter for the CQ containing the type and name.
@@ -176,6 +183,7 @@ public class AccumuloFeatureStore implements FeatureStore {
         }
     }
 
+
     /**
      * Will close all underlying resources
      *
@@ -196,7 +204,7 @@ public class AccumuloFeatureStore implements FeatureStore {
     @Override
     public void save(Iterable<? extends Feature> featureData, Iterable<TimeUnit> timeUnits) {
 
-        if(!isInitialized)
+        if (!isInitialized)
             throw new RuntimeException("Please called initialize() on the store first");
 
         try {
@@ -204,7 +212,7 @@ public class AccumuloFeatureStore implements FeatureStore {
 
                 AccumuloFeatureConfig featureConfig = registry.transformForClass(feature.getClass());
 
-                if(featureConfig == null)
+                if (featureConfig == null)
                     throw new RuntimeException("Skipping unknown model type: " + feature.getClass());
 
                 //fix null values
@@ -262,20 +270,24 @@ public class AccumuloFeatureStore implements FeatureStore {
         }
     }
 
-
     /**
      * {@inheritDoc}
      */
     @Override
-    public <T extends Feature>CloseableIterable<T> query(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Class<T> featureType,  Auths auths) {
+    public <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Class<T> featureType, Auths auths) {
+        return query(start, end, group, Collections.singleton(type), name, timeUnit, featureType, auths);
+    }
 
-        if(!isInitialized)
+    @Override
+    public <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, Set<String> types, String name, TimeUnit timeUnit, Class<T> featureType, Auths auths) {
+
+        if (!isInitialized)
             throw new RuntimeException("Please call initialize() on the store first.");
 
         final AccumuloFeatureConfig<T> featureConfig = registry.transformForClass(featureType);
 
         return transform(
-                closeableIterable(metricScanner(start, end, group, type, name, timeUnit, featureConfig, auths)),
+                closeableIterable(metricScanner(start, end, group, types, name, timeUnit, featureConfig, auths)),
                 new FeatureTransform<T>(timeUnit) {
                     @Override
                     protected T transform(long timestamp, String group, String type, String name, String visibility, Value value) {
