@@ -36,6 +36,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.join;
@@ -133,12 +134,14 @@ public class AccumuloFeatureStore implements FeatureStore {
     }
 
     protected ScannerBase metricScanner(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
+        checkNotNull(type);
         return metricScanner(start, end, group, Collections.singleton(type), name, timeUnit, featureConfig, auths);
     }
 
     protected ScannerBase metricScanner(Date start, Date end, String group, Set<String> types, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
         checkNotNull(group);
         checkNotNull(types);
+        checkArgument(types.size() > 0)
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
