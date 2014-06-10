@@ -22,7 +22,6 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.LongCombiner;
 import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.Authorizations;
@@ -31,6 +30,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
+import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
@@ -49,6 +49,7 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
+import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
@@ -74,7 +75,8 @@ public abstract class QfdHelper<T extends TupleStore> {
     private KeyValueIndex<T> keyValueIndex;
 
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-                     ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
+                     ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
+                     MetadataSerDe metadataSerDe)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         checkNotNull(connector);
@@ -84,6 +86,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         checkNotNull(shardBuilder);
         checkNotNull(typeRegistry);
         checkNotNull(keyValueIndex);
+        checkNotNull(metadataSerDe);
 
         this.connector = connector;
         this.indexTable = indexTable;
@@ -95,7 +98,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.keyValueIndex = keyValueIndex;
         this.nodeToJexl = new NodeToJexl(typeRegistry);
 
-        this.metadataSerDe = new SimpleMetadataSerDe(typeRegistry);
+        this.metadataSerDe = metadataSerDe;
 
         if (!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -106,20 +109,26 @@ public abstract class QfdHelper<T extends TupleStore> {
             IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
             SummingCombiner.setCombineAllColumns(setting, true);
             SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
-            connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorUtil.IteratorScope.class));
+            connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorScope.class));
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
             connector.tableOperations().create(this.shardTable);
             configureShardTable(connector, this.shardTable);
+            IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
+            MetadataExpirationFilter.setMetadataSerde(expirationFilter, metadataSerDe);
+            connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
         }
 
         initializeKryo(kryo);
         this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
-    public void setMetadataSerDe(MetadataSerDe metadataSerDe) {
-        this.metadataSerDe = metadataSerDe;
+
+    public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
+                     ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
+            throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerDe(typeRegistry));
     }
 
     public MetadataSerDe getMetadataSerDe() {
@@ -152,7 +161,7 @@ public abstract class QfdHelper<T extends TupleStore> {
                                 typeRegistry.encode(tuple.getValue());
 
                         ColumnVisibility columnVisibility = new ColumnVisibility(getVisibility(tuple, ""));
-                        Map<String,Object> metadata = new HashMap<String, Object>(tuple.getMetadata());
+                        Map<String, Object> metadata = new HashMap<String, Object>(tuple.getMetadata());
                         metadata.remove(VISIBILITY);    // save a little space by removing this.
 
                         // forward mutation

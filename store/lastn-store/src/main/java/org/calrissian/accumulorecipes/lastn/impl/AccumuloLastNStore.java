@@ -62,7 +62,8 @@ public class AccumuloLastNStore implements LastNStore {
     private final Connector connector;
     private final String tableName;
     private final BatchWriter writer;
-    private final TypeRegistry<String> typeRegistry;
+
+    private  TypeRegistry<String> typeRegistry;
 
     private Function<Entry<Key, Value>, Event> storeTransform = new Function<Entry<Key, Value>, Event>() {
         @Override
@@ -105,7 +106,7 @@ public class AccumuloLastNStore implements LastNStore {
 
         this.connector = connector;
         this.tableName = tableName;
-        this.typeRegistry = LEXI_TYPES; //TODO allow caller to pass in types.
+        this.typeRegistry = LEXI_TYPES;
 
         if (!connector.tableOperations().exists(this.tableName)) {
             connector.tableOperations().create(this.tableName, true);
@@ -113,6 +114,10 @@ public class AccumuloLastNStore implements LastNStore {
         }
 
         this.writer = this.connector.createBatchWriter(this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+    }
+
+    public void setTypeRegistry(TypeRegistry<String> typeRegistry) {
+        this.typeRegistry = typeRegistry;
     }
 
     /**
@@ -196,6 +201,7 @@ public class AccumuloLastNStore implements LastNStore {
             scanner.fetchColumnFamily(new Text(DELIM + "INDEX"));
 
             IteratorSetting iteratorSetting = new IteratorSetting(16, "eventIterator", EntryIterator.class);
+            EntryIterator.setTypeRegistry(iteratorSetting, typeRegistry);
             scanner.addScanIterator(iteratorSetting);
 
             return transform(scanner, storeTransform);
