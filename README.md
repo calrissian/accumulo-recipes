@@ -12,7 +12,7 @@ Be sure to check the README files at the root of each store's folder to get deta
 ##Stores
 
 - <b>Blob Store</b>: This store demonstrates how to effectively stream bytes into and out of Accumulo tables. Large streams can be chunked up over several columns so that they don't need to fit into memory.
-- <b>Changelog Store</b>: This store is for distributed systems that need to be able to summarize data for determining how it may differ from other data.
+- <b>Changelog Store</b>: This store is for distributed systems that need to be able to summarize data for determining how it may differ from other data. It uses [merkle trees](http://en.wikipedia.org/wiki/Merkle_tree) which get created on the server-side in parallel across a cluster.
 - <b>Entity Store</b>: This store is for common documents & objects that can be modelled using keys/values representing things in the real world (people, places, things, etc...). It takes full advantage of Accumulo's cell-level security and also provides a custom cell-level expiration policy. Rich query can be performed on the server side in parallel across the cloud. 
 - <b>Event Store</b>: This is a document/object store for time-based events that shards the data to make it very scalable to store and process. Like the Entity Store, it takes advantage of Accumulo's cell-level security and also provides a custom cell-level expiration policy. It also provides a query language for finding events of interest.
 - <b>Geospatial Store</b>: This store indexes events under geohashes. The data is partitioned in a way where even geopoints that are geographically close to each other can be spread across a cluster. The events can be queried back using rectangular "bounding boxes" representing a space on the earth.
