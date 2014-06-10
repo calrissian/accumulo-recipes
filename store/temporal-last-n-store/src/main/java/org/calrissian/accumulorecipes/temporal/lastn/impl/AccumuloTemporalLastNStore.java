@@ -58,17 +58,14 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         @Override
         public Event apply(List<Map.Entry<Key, Value>> entries) {
             Event toReturn = null;
-            try {
-                for (Map.Entry<Key, Value> tupleCol : entries) {
-                    String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), DELIM);
-                    if (toReturn == null) {
-                        toReturn = new BaseEvent(splits[0], Long.parseLong(splits[1]));
-                    }
-                    String vis = splits[5];
-                    toReturn.put(new Tuple(splits[2], typeRegistry.decode(splits[3], splits[4]), setVisibility(new HashMap<String, Object>(1), vis)));
+
+            for (Map.Entry<Key, Value> tupleCol : entries) {
+                String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), DELIM);
+                if (toReturn == null) {
+                    toReturn = new BaseEvent(splits[0], Long.parseLong(splits[1]));
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                String vis = splits[5];
+                toReturn.put(new Tuple(splits[2], typeRegistry.decode(splits[3], splits[4]), setVisibility(new HashMap<String, Object>(1), vis)));
             }
 
             return toReturn;

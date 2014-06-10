@@ -25,6 +25,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
 import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
@@ -42,10 +43,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import static com.google.common.collect.Iterables.size;
 import static com.google.common.collect.Sets.newHashSet;
 import static com.tinkerpop.blueprints.Direction.IN;
 import static com.tinkerpop.blueprints.Direction.OUT;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.junit.Assert.assertEquals;
 
 public class EntityVertexQueryTest {
@@ -71,46 +72,46 @@ public class EntityVertexQueryTest {
                 new Auths("U,ADMIN"));
 
 
-        Tuple v1t1 = new Tuple("key1", "val1", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v1t1 = new Tuple("key1", "val1", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(v1t1);
 
-        Tuple v1t2 = new Tuple("key2", "val2", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v1t2 = new Tuple("key2", "val2", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(v1t2);
 
-        Tuple v2t1 = new Tuple("key3", "val3", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v2t1 = new Tuple("key3", "val3", new MetadataBuilder().setVisibility("U").build());
         vertex2.put(v2t1);
 
-        Tuple v2t2 = new Tuple("key4", "val4", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v2t2 = new Tuple("key4", "val4", new MetadataBuilder().setVisibility("U").build());
         vertex2.put(v2t2);
 
-        Tuple v3t1 = new Tuple("key5", "val5", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple v3t1 = new Tuple("key5", "val5", new MetadataBuilder().setVisibility("U").build());
         vertex3.put(v3t1);
 
-        Tuple keyVal = new Tuple("key", "val", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple keyVal = new Tuple("key", "val", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(keyVal);
         vertex2.put(keyVal);
 
-        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
+        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
         edge.put(e1t1);
 
-        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2", new MetadataBuilder().setVisibility("U").build());
         edge.put(e1t2);
 
-        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3", setVisibility(new HashMap<String, Object>(1), "ADMIN"));
+        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3", new MetadataBuilder().setVisibility("ADMIN").build());
         edge2.put(e2t1);
 
-        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4", new MetadataBuilder().setVisibility("U").build());
         edge2.put(e2t2);
 
-        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal", new MetadataBuilder().setVisibility("U").build());
 
         edge.put(edgeKeyVal);
         edge2.put(edgeKeyVal);
 
-        Tuple e3t1 = new Tuple("edgeProp3", "edgeVal3", setVisibility(new HashMap<String, Object>(1), "U"));
+        Tuple e3t1 = new Tuple("edgeProp3", "edgeVal3", new MetadataBuilder().setVisibility("ADMIN").build());
         edge3.put(e3t1);
 
-        entityGraphStore.save(Arrays.asList(new Entity[]{vertex1, vertex2, vertex3, edge, edge2, edge3}));
+        entityGraphStore.save(Arrays.asList(vertex1, vertex2, vertex3, edge, edge2, edge3));
     }
 
 
@@ -157,7 +158,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().vertexIds();
         System.out.println(vertexIds);
-        assertEquals(3, Iterables.size(vertexIds));
+        assertEquals(3, size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEquals(new EntityIndex(vertex3), Iterables.get(vertexIds, 0));
         assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 1));
@@ -172,7 +173,7 @@ public class EntityVertexQueryTest {
         }
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().labels("label1").vertexIds();
-        assertEquals(2, Iterables.size(vertexIds));
+        assertEquals(2, size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEquals(new EntityIndex(vertex3), Iterables.get(vertexIds, 0));
         assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 1));
@@ -188,7 +189,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<EntityIndex> vertexIds =
                 (CloseableIterable<EntityIndex>) v1.query().has("edgeProp1").labels("label1").vertexIds();
-        assertEquals(1, Iterables.size(vertexIds));
+        assertEquals(1, size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 0));
     }
@@ -198,7 +199,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) v1.query().vertices();
         System.out.println(vertices);
-        assertEquals(3, Iterables.size(vertices));
+        assertEquals(3, size(vertices));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEntitiesEqual(vertex3, ((EntityVertex) Iterables.get(vertices, 0)).getEntity());
         assertEntitiesEqual(vertex2, ((EntityVertex) Iterables.get(vertices, 1)).getEntity());
@@ -211,7 +212,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) v1.query().labels("label1").vertices();
         System.out.println(vertices);
-        assertEquals(2, Iterables.size(vertices));
+        assertEquals(2, size(vertices));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEntitiesEqual(vertex3, ((EntityVertex) Iterables.get(vertices, 0)).getEntity());
         assertEntitiesEqual(vertex2, ((EntityVertex) Iterables.get(vertices, 1)).getEntity());
@@ -222,7 +223,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) v1.query().has("edgeProp1", "edgeVal1").labels("label1").vertices();
         System.out.println(vertices);
-        assertEquals(1, Iterables.size(vertices));
+        assertEquals(1, size(vertices));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEntitiesEqual(vertex2, ((EntityVertex) Iterables.get(vertices, 0)).getEntity());
     }
@@ -232,7 +233,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<Edge> edges = (CloseableIterable<Edge>) v1.query().edges();
         System.out.println(edges);
-        assertEquals(3, Iterables.size(edges));
+        assertEquals(3, size(edges));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEntitiesEqual(edge3, ((EntityEdge) Iterables.get(edges, 0)).getEntity());
         assertEntitiesEqual(edge, ((EntityEdge) Iterables.get(edges, 1)).getEntity());
@@ -245,7 +246,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<Edge> edges = (CloseableIterable<Edge>) v1.query().labels("label1").edges();
         System.out.println(edges);
-        assertEquals(2, Iterables.size(edges));
+        assertEquals(2, size(edges));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEntitiesEqual(edge3, ((EntityEdge) Iterables.get(edges, 0)).getEntity());
         assertEntitiesEqual(edge, ((EntityEdge) Iterables.get(edges, 1)).getEntity());
@@ -256,7 +257,7 @@ public class EntityVertexQueryTest {
         EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
         CloseableIterable<Edge> edges = (CloseableIterable<Edge>) v1.query().has("edgeProp1", "edgeVal1").labels("label1").edges();
         System.out.println(edges);
-        assertEquals(1, Iterables.size(edges));
+        assertEquals(1, size(edges));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         assertEntitiesEqual(edge, ((EntityEdge) Iterables.get(edges, 0)).getEntity());
     }
