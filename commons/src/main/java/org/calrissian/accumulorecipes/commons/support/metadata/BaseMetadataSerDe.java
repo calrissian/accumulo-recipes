@@ -34,11 +34,6 @@ public class BaseMetadataSerDe implements MetadataSerDe {
             dataOutput.writeInt(count);
 
             for(Map.Entry<String, Object> entry : metadata.entrySet()) {
-                if(entry.getValue() != null)
-                    count++;
-            }
-
-            for(Map.Entry<String, Object> entry : metadata.entrySet()) {
                 dataOutput.writeUTF(entry.getKey());
                 dataOutput.writeUTF(typeRegistry.getAlias(entry.getValue()));
                 dataOutput.writeUTF(typeRegistry.encode(entry.getValue()));
@@ -67,7 +62,6 @@ public class BaseMetadataSerDe implements MetadataSerDe {
 
             Map<String, Object> metadata = new HashMap<String, Object>();
             for(int i = 0; i < count; i++) {
-
                 String key = dis.readUTF();
                 String alias = dis.readUTF();
                 String encodedVal = dis.readUTF();
