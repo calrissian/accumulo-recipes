@@ -35,6 +35,8 @@ import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.metadata.BaseMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -69,6 +71,7 @@ public abstract class QfdHelper<T extends TupleStore> {
     private final NodeToJexl nodeToJexl;
     private ShardBuilder<T> shardBuilder;
     private TypeRegistry<String> typeRegistry;
+    private MetadataSerDe metadataSerDe;
 
     private KeyValueIndex<T> keyValueIndex;
 
@@ -94,6 +97,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.keyValueIndex = keyValueIndex;
         this.nodeToJexl = new NodeToJexl(typeRegistry);
 
+        this.metadataSerDe = new BaseMetadataSerDe();
 
         if (!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -114,6 +118,14 @@ public abstract class QfdHelper<T extends TupleStore> {
 
         initializeKryo(kryo);
         this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+    }
+
+    public void setMetadataSerDe(MetadataSerDe metadataSerDe) {
+        this.metadataSerDe = metadataSerDe;
+    }
+
+    public MetadataSerDe getMetadataSerDe() {
+        return metadataSerDe;
     }
 
     public static Kryo getKryo() {
@@ -146,14 +158,14 @@ public abstract class QfdHelper<T extends TupleStore> {
                                 new Text(tuple.getKey() + DELIM + aliasValue),
                                 new ColumnVisibility(getVisibility(tuple, "")),
                                 buildTimestamp(item),
-                                EMPTY_VALUE);
+                                new Value(metadataSerDe.serialize(tuple.getMetadata())));
 
                         // reverse mutation
                         shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
                                 new Text(aliasValue + DELIM + buildId(item)),
                                 new ColumnVisibility(getVisibility(tuple, "")),
                                 buildTimestamp(item),
-                                EMPTY_VALUE);  // forward mutation
+                                new Value(metadataSerDe.serialize(tuple.getMetadata())));  // forward mutation
                     }
 
                     shardWriter.addMutation(shardMutation);

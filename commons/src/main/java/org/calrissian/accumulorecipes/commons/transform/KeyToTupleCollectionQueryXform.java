@@ -20,11 +20,11 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,11 +38,13 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
     private Set<String> selectFields;
     private Kryo kryo;
     private TypeRegistry<String> typeRegistry;
+    private MetadataSerDe metadataSerDe;
 
-    public KeyToTupleCollectionQueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
+    public KeyToTupleCollectionQueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
         this.selectFields = selectFields;
         this.kryo = kryo;
         this.typeRegistry = typeRegistry;
+        this.metadataSerDe = metadataSerDe;
     }
 
     protected Set<String> getSelectFields() {
@@ -68,7 +70,9 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                 Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
 
                 String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, setVisibility(new HashMap<String, Object>(1), vis));
+                Map<String,Object> metadata = metadataSerDe.deserialize(keyValueEntry.getValue().get());
+                setVisibility(metadata, vis);
+                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
 
                 entry.put(tuple);
 

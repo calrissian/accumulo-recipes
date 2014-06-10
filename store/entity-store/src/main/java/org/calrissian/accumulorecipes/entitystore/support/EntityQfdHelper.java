@@ -21,6 +21,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.commons.lang.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
@@ -61,11 +62,11 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
     }
 
     public QueryXform buildQueryXform(Set<String> selectFields) {
-        return new QueryXform(getKryo(), getTypeRegistry(), selectFields);
+        return new QueryXform(getKryo(), getTypeRegistry(), selectFields, getMetadataSerDe());
     }
 
     public WholeColFXform buildWholeColFXform(Set<String> selectFields) {
-        return new WholeColFXform(getKryo(), getTypeRegistry(), selectFields);
+        return new WholeColFXform(getKryo(), getTypeRegistry(), selectFields, getMetadataSerDe());
     }
 
     @Override
@@ -78,8 +79,8 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     public static class QueryXform extends KeyToTupleCollectionQueryXform<Entity> {
 
-        public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
-            super(kryo, typeRegistry, selectFields);
+        public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
+            super(kryo, typeRegistry, selectFields, metadataSerDe);
         }
 
         @Override
@@ -91,8 +92,8 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     public static class WholeColFXform extends KeyToTupleCollectionWholeColFXform<Entity> {
 
-        public WholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
-            super(kryo, typeRegistry, selectFields);
+        public WholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
+            super(kryo, typeRegistry, selectFields, metadataSerDe);
         }
 
         @Override

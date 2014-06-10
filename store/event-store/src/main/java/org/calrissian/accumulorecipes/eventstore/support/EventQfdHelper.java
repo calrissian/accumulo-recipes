@@ -20,6 +20,7 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
@@ -58,11 +59,11 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
 
     public QueryXform buildQueryXform(Set<String> selectFields) {
-        return new QueryXform(getKryo(), getTypeRegistry(), selectFields);
+        return new QueryXform(getKryo(), getTypeRegistry(), selectFields, getMetadataSerDe());
     }
 
     public WholeColFXForm buildWholeColFXform() {
-        return new WholeColFXForm(getKryo(), getTypeRegistry());
+        return new WholeColFXForm(getKryo(), getTypeRegistry(), getMetadataSerDe());
     }
 
 
@@ -76,8 +77,8 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
     public static class QueryXform extends KeyToTupleCollectionQueryXform<Event> {
 
-        public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields) {
-            super(kryo, typeRegistry, selectFields);
+        public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
+            super(kryo, typeRegistry, selectFields, metadataSerDe);
         }
 
         @Override
@@ -87,8 +88,8 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
 
     public static class WholeColFXForm extends KeyToTupleCollectionWholeColFXform<Event> {
-        public WholeColFXForm(Kryo kryo, TypeRegistry<String> typeRegistry) {
-            super(kryo, typeRegistry, null);
+        public WholeColFXForm(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
+            super(kryo, typeRegistry, null, metadataSerDe);
         }
 
         @Override

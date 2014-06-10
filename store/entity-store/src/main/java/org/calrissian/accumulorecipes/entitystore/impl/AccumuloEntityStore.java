@@ -179,7 +179,7 @@ public class AccumuloEntityStore implements EntityStore {
 
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
         CloseableIterable<Entity> entities = helper.query(scanner, globalIndexVisitor, query,
-                helper.buildQueryXform(selectFields), auths);
+                helper.buildQueryXform(selectFields, helper.getMetadataSerDe()), auths);
         indexScanner.close();
 
         return entities;
