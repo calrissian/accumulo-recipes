@@ -64,28 +64,26 @@ public class AccumuloEntityStore implements EntityStore {
     public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(5);
 
     protected EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
-    protected EntityQfdHelper helper;
-    protected TypeRegistry<String> typeRegistry = LEXI_TYPES;
+    protected final EntityQfdHelper helper;
+    protected final TypeRegistry<String> typeRegistry = LEXI_TYPES;
 
     public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG);
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG, LEXI_TYPES);
     }
 
-    public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, EntityShardBuilder shardBuilder, StoreConfig config)
+    public AccumuloEntityStore(Connector connector, String indexTable, String shardTable, EntityShardBuilder shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         checkNotNull(connector);
         checkNotNull(indexTable);
         checkNotNull(shardTable);
         checkNotNull(config);
+        checkNotNull(typeRegistry);
+        checkNotNull(shardBuilder);
 
         KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
 
         this.shardBuilder = shardBuilder;
         helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
-    }
-
-    public void setTypeRegistry(TypeRegistry<String> typeRegistry) {
-        this.typeRegistry = typeRegistry;
     }
 
     @Override

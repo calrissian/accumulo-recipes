@@ -41,6 +41,7 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityRelationship;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.*;
 
@@ -109,6 +110,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             }
         }
     };
+
+
     protected String table;
     protected BatchWriter writer;
 
@@ -119,9 +122,10 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         init();
     }
 
-    public AccumuloEntityGraphStore(Connector connector, String indexTable, String shardTable, String edgeTable, EntityShardBuilder shardBuilder, StoreConfig config)
+    public AccumuloEntityGraphStore(Connector connector, String indexTable, String shardTable, String edgeTable, EntityShardBuilder shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry, int bufferSize)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, indexTable, shardTable, shardBuilder, config);
+        super(connector, indexTable, shardTable, shardBuilder, config, typeRegistry);
+        this.bufferSize = bufferSize;
         table = edgeTable;
         init();
     }
@@ -132,10 +136,6 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
         writer = getConnector().createBatchWriter(table, getConfig().getMaxMemory(), getConfig().getMaxLatency(),
                 getConfig().getMaxWriteThreads());
-    }
-
-    public void setBufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
     }
 
     @Override

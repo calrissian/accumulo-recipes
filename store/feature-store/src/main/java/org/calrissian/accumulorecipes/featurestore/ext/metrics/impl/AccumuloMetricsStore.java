@@ -43,8 +43,7 @@ public class AccumuloMetricsStore implements MetricStore{
     }
 
     public AccumuloMetricsStore(Connector connector, String tableName, StoreConfig config) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        featureStore = new AccumuloFeatureStore(connector, tableName, config);
-        featureStore.setFeatureRegistry(new FeatureRegistry(new MetricFeatureConfig()));    // make sure the only feature type is the metrics feature type
+        featureStore = new AccumuloFeatureStore(connector, tableName, config, new FeatureRegistry(new MetricFeatureConfig()));
         featureStore.initialize();
     }
 

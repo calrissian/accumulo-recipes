@@ -62,18 +62,21 @@ public class AccumuloEventStore implements EventStore {
     public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
     public static final EventShardBuilder DEFAULT_SHARD_BUILDER = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
     private final EventShardBuilder shardBuilder = DEFAULT_SHARD_BUILDER;
-    private final TypeRegistry<String> typeRegistry = LEXI_TYPES;
+    private final TypeRegistry<String> typeRegistry;
     private final EventQfdHelper helper;
 
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG);
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, LEXI_TYPES);
     }
 
-    public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         checkNotNull(connector);
         checkNotNull(indexTable);
         checkNotNull(shardTable);
         checkNotNull(config);
+        checkNotNull(typeRegistry);
+
+        this.typeRegistry = typeRegistry;
 
         KeyValueIndex<Event> keyValueIndex = new EventKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
 

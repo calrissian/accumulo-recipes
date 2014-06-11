@@ -67,27 +67,19 @@ public class AccumuloFeatureStore implements FeatureStore {
 
     private final Connector connector;
     private final StoreConfig config;
-    private String tableName;
+    private final String tableName;
     private BatchWriter groupWriter;
     private BatchWriter typeWriter;
 
     private boolean isInitialized = false;
 
-    protected FeatureRegistry registry = BASE_FEATURES;
+    protected final FeatureRegistry registry;
 
     public AccumuloFeatureStore(Connector connector) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
-        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG);
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG, BASE_FEATURES);
     }
 
-    public void setFeatureRegistry(FeatureRegistry registry) {
-        this.registry = registry;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
-    public AccumuloFeatureStore(Connector connector, String tableName, StoreConfig config) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
+    public AccumuloFeatureStore(Connector connector, String tableName, StoreConfig config, FeatureRegistry featureRegistry) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         checkNotNull(connector);
         checkNotNull(tableName);
         checkNotNull(config);
@@ -95,6 +87,7 @@ public class AccumuloFeatureStore implements FeatureStore {
         this.connector = connector;
         this.tableName = tableName;
         this.config = config;
+        this.registry = featureRegistry;
 
     }
 

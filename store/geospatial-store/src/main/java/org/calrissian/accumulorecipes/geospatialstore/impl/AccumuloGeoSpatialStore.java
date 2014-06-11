@@ -80,22 +80,24 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
     private static final TypeRegistry registry = LEXI_TYPES;
     private final QuadTreeHelper helper = new QuadTreeHelper();
     private final BatchWriter writer;
-    private int numPartitions = 50;
-    private double maxPrecision = .002;
+    private final int numPartitions;
+    private final double maxPrecision;
     private Connector connector;
     private StoreConfig config;
     private String tableName;
 
     public AccumuloGeoSpatialStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_TABLE_NAME, new StoreConfig());
+        this(connector, DEFAULT_TABLE_NAME, new StoreConfig(), .002, 50);
     }
 
-    public AccumuloGeoSpatialStore(Connector connector, String tableName, StoreConfig config) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public AccumuloGeoSpatialStore(Connector connector, String tableName, StoreConfig config, double maxPrecision, int numPartitions) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         this.connector = connector;
         this.config = config;
 
         this.tableName = tableName;
+        this.maxPrecision = maxPrecision;
+        this.numPartitions = numPartitions;
 
 
         if (!connector.tableOperations().exists(tableName))
@@ -107,14 +109,6 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
     // for extensions
     protected Connector getConnector() {
         return connector;
-    }
-
-    public void setMaxPrecision(double maxPrecision) {
-        this.maxPrecision = maxPrecision;
-    }
-
-    public void setNumPartitions(int numPartitions) {
-        this.numPartitions = numPartitions;
     }
 
     protected int getPartitionWidth() {
