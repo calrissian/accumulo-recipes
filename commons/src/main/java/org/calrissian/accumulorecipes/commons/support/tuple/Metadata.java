@@ -19,11 +19,16 @@ public class Metadata {
         }
 
         public static Long getExpiration(Tuple tuple, long defaultExpiration) {
-            if(tuple.getMetadataValue(EXPIRATION) == null)
+            return getExpiration(tuple.getMetadata(), defaultExpiration);
+        }
+
+        public static Long getExpiration(Map<String,Object> metadata, long defaultExpiration) {
+            if(!metadata.containsKey(EXPIRATION))
                 return defaultExpiration;
             else
-                return (Long)tuple.getMetadataValue(EXPIRATION);
+                return (Long)metadata.get(EXPIRATION);
         }
+
     }
 
     public static class Visiblity {
