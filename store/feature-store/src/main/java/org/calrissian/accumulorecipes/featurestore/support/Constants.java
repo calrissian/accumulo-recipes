@@ -15,9 +15,17 @@
  */
 package org.calrissian.accumulorecipes.featurestore.support;
 
+import static org.apache.commons.lang.StringUtils.join;
+
 public class Constants {
 
     public static final int DEFAULT_ITERATOR_PRIORITY = 15;
     public static final String DELIM = "\u0000";
+
+    public static String combine(String... items) {
+        if (items == null)
+            return null;
+        return join(items, DELIM);
+    }
 
 }

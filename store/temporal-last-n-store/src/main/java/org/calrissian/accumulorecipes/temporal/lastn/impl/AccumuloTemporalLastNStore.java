@@ -46,15 +46,24 @@ import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
-    public static final String DELIM = "\0";
-    Function<List<Map.Entry<Key, Value>>, Event> entryXform = new Function<List<Map.Entry<Key, Value>>, Event>() {
+    private static final String DELIM = "\0";
+
+    private static final String DEFAULT_TABLE_NAME = "temporalLastN";
+    private static final String GROUP_DELIM = "____";
+    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000L, 10000L, 3);
+    private final Connector connector;
+    private final String tableName;
+    private final BatchWriter writer;
+    private final TypeRegistry<String> typeRegistry;
+
+    private final Function<List<Map.Entry<Key, Value>>, Event> entryXform = new Function<List<Map.Entry<Key, Value>>, Event>() {
         @Override
         public Event apply(List<Map.Entry<Key, Value>> entries) {
             Event toReturn = null;
@@ -71,13 +80,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             return toReturn;
         }
     };
-    private static final String DEFAULT_TABLE_NAME = "temporalLastN";
-    private static final String GROUP_DELIM = "____";
-    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000L, 10000L, 3);
-    private final Connector connector;
-    private final String tableName;
-    private final BatchWriter writer;
-    private final TypeRegistry<String> typeRegistry;
+
     Function<Map.Entry<Key, Value>, List<Map.Entry<Key, Value>>> rowDecodeXform =
             new Function<Map.Entry<Key, Value>, List<Map.Entry<Key, Value>>>() {
                 @Override

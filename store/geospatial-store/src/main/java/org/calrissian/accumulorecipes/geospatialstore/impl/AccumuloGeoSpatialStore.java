@@ -53,9 +53,9 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
-    public static final String DEFAULT_TABLE_NAME = "geoStore";
+    private static final String DEFAULT_TABLE_NAME = "geoStore";
     public static final String DELIM = "\0";
-    public static Function<Map.Entry<Key, Value>, Event> xform = new Function<Map.Entry<Key, Value>, Event>() {
+    private static Function<Map.Entry<Key, Value>, Event> xform = new Function<Map.Entry<Key, Value>, Event>() {
         @Override
         public Event apply(Map.Entry<Key, Value> keyValueEntry) {
 
@@ -76,15 +76,15 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
         }
     };
     public static final String DELIM_ONE = "\1";
-    public static final String PARTITION_DELIM = "_";
+    private static final String PARTITION_DELIM = "_";
     private static final TypeRegistry registry = LEXI_TYPES;
     private final QuadTreeHelper helper = new QuadTreeHelper();
     private final BatchWriter writer;
     private final int numPartitions;
     private final double maxPrecision;
-    private Connector connector;
-    private StoreConfig config;
-    private String tableName;
+    private final Connector connector;
+    private final StoreConfig config;
+    private final String tableName;
 
     public AccumuloGeoSpatialStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this(connector, DEFAULT_TABLE_NAME, new StoreConfig(), .002, 50);

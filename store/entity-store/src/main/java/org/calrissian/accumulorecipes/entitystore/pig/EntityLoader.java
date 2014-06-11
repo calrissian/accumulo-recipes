@@ -96,7 +96,7 @@ public class EntityLoader extends LoadFunc {
             Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;
             Set<String> entitytypes = newHashSet(asList(splitPreserveAllTokens(types, ",")));
 
-            QueryBuilder qb = null;
+            QueryBuilder qb;
             try {
                 // call groovy expressions from Java code
                 Binding binding = new Binding();

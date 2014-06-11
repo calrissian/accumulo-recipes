@@ -99,7 +99,7 @@ public class EventLoader extends LoadFunc {
             DateTime startDT = DateTime.parse(startTime);
             DateTime endDT = DateTime.parse(endTime);
 
-            QueryBuilder qb = null;
+            QueryBuilder qb;
             try {
                 // call groovy expressions from Java code
                 Binding binding = new Binding();

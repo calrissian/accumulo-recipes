@@ -71,7 +71,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     public static final String DEFAULT_TABLE_NAME = "entityStore_graph";
 
     public static final int DEFAULT_BUFFER_SIZE = 50;
-    protected int bufferSize = DEFAULT_BUFFER_SIZE;
+    private final int bufferSize;
     public static final String ONE_BYTE = "\u0001";
     /**
      * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex
@@ -118,6 +118,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     public AccumuloEntityGraphStore(Connector connector)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector);
+        this.bufferSize = DEFAULT_BUFFER_SIZE;
         table = DEFAULT_TABLE_NAME;
         init();
     }
