@@ -22,7 +22,7 @@ import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 
 import static java.util.Map.Entry;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.revertTimestamp;
 
 /**
@@ -43,8 +43,8 @@ public abstract class FeatureTransform<T> implements Function<Entry<Key, Value>,
     @Override
     public T apply(Entry<Key, Value> entry) {
 
-        String row[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), DELIM);
-        String colQ[] = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), DELIM);
+        String row[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), NULL_BYTE);
+        String colQ[] = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), NULL_BYTE);
 
         return transform(
                 revertTimestamp(row[1], timeUnit),

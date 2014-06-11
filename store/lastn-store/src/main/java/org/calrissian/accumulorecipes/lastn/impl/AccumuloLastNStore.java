@@ -40,8 +40,8 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.EnumSet.allOf;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -154,17 +154,17 @@ public class AccumuloLastNStore implements LastNStore {
         checkNotNull(group);
         checkNotNull(entry);
 
-        // first put the main index pointing to the contextId (The column family is prefixed with the DELIM to guarantee it shows up first
+        // first put the main index pointing to the contextId (The column family is prefixed with the NULL_BYTE to guarantee it shows up first
         Mutation indexMutation = new Mutation(group);
-        indexMutation.put(DELIM + "INDEX", "", new ColumnVisibility(), entry.getTimestamp(), new Value(entry.getId().getBytes()));
+        indexMutation.put(NULL_BYTE + "INDEX", "", new ColumnVisibility(), entry.getTimestamp(), new Value(entry.getId().getBytes()));
 
         for (Tuple tuple : entry.getTuples()) {
-            String fam = String.format("%s%s", DELIM_END, entry.getId());
+            String fam = String.format("%s%s", END_BYTE, entry.getId());
             Object value = tuple.getValue();
             try {
                 String serialize = typeRegistry.encode(value);
                 String aliasForType = typeRegistry.getAlias(value);
-                String qual = String.format("%s%s%s%s%s", tuple.getKey(), DELIM, serialize, DELIM, aliasForType);
+                String qual = String.format("%s%s%s%s%s", tuple.getKey(), NULL_BYTE, serialize, NULL_BYTE, aliasForType);
                 indexMutation.put(fam, qual, new ColumnVisibility(getVisibility(tuple, "")), entry.getTimestamp(),
                         new Value("".getBytes()));
             } catch (Exception e) {
@@ -195,7 +195,7 @@ public class AccumuloLastNStore implements LastNStore {
         try {
             Scanner scanner = connector.createScanner(tableName, auths.getAuths());
             scanner.setRange(new Range(index));
-            scanner.fetchColumnFamily(new Text(DELIM + "INDEX"));
+            scanner.fetchColumnFamily(new Text(NULL_BYTE + "INDEX"));
 
             IteratorSetting iteratorSetting = new IteratorSetting(16, "eventIterator", EntryIterator.class);
             EntryIterator.setTypeRegistry(iteratorSetting, typeRegistry);

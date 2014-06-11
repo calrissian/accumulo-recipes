@@ -104,7 +104,7 @@ public class AccumuloEntityStore implements EntityStore {
             Collection<Range> ranges = new LinkedList<Range>();
             for (EntityIndex curIndex : typesAndIds) {
                 String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
-                ranges.add(exact(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
+                ranges.add(exact(shardId, curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
 
             scanner.setRanges(ranges);

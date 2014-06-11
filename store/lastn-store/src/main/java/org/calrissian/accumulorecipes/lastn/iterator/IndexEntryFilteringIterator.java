@@ -25,8 +25,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 
 /**
  * A cleanup filtering iterator to get rid of getTuples that should not exist after the versioning iterator evicts an
@@ -67,7 +67,7 @@ public class IndexEntryFilteringIterator extends Filter {
 
         try {
             // first find out if we are inside of an index row
-            if (key.getColumnFamily().toString().equals(DELIM + "INDEX")) {
+            if (key.getColumnFamily().toString().equals(NULL_BYTE + "INDEX")) {
 
                 if (!key.getRow().toString().equals(currentIndex)) {
                     currentIndex = key.getRow().toString();
@@ -82,25 +82,25 @@ public class IndexEntryFilteringIterator extends Filter {
             // otherwise, assume we are in an event row
             else {
 
-                String uuid = key.getColumnFamily().toString().replace(DELIM_END, "");
+                String uuid = key.getColumnFamily().toString().replace(END_BYTE, "");
                 String hash = new String(value.get());
 
-                if (!uuidSet.contains(uuid + DELIM + hash)) {
+                if (!uuidSet.contains(uuid + NULL_BYTE + hash)) {
                     return false;
                 }
 
-                String[] keyValue = key.getColumnQualifier().toString().split(DELIM);
+                String[] keyValue = key.getColumnQualifier().toString().split(NULL_BYTE);
 
                 // here we want to make sure that any duplicate events added are filtered out (this is possible simply
                 // because the maxVersions > 1)
 
-                if (previousEvent != null && previousEvent.equals(key.getRow() + DELIM + uuid + DELIM + hash
-                        + DELIM + keyValue[0] + DELIM + keyValue[1])) {
+                if (previousEvent != null && previousEvent.equals(key.getRow() + NULL_BYTE + uuid + NULL_BYTE + hash
+                        + NULL_BYTE + keyValue[0] + NULL_BYTE + keyValue[1])) {
                     return false;
                 }
 
-                previousEvent = key.getRow() + DELIM + uuid + DELIM + hash + DELIM
-                        + keyValue[0] + DELIM + keyValue[1];
+                previousEvent = key.getRow() + NULL_BYTE + uuid + NULL_BYTE + hash + NULL_BYTE
+                        + keyValue[0] + NULL_BYTE + keyValue[1];
 
             }
         } catch (Exception e) {

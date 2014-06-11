@@ -45,7 +45,7 @@ import static org.apache.accumulo.core.client.IteratorSetting.Column;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.apache.commons.lang.Validate.notNull;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 /**
  * This implementation is an extension of the {@link AccumuloBlobStore} which stores additional data
@@ -165,7 +165,7 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
 
             Map<String, String> properties = new LinkedHashMap<String, String>();
             while (iterator.hasNext()) {
-                String[] keyVal = splitPreserveAllTokens(iterator.next().getKey().getColumnQualifier().toString().replaceFirst(DELIM, ""), DELIM, 2);
+                String[] keyVal = splitPreserveAllTokens(iterator.next().getKey().getColumnQualifier().toString().replaceFirst(NULL_BYTE, ""), NULL_BYTE, 2);
 
                 if (keyVal.length == 2)
                     properties.put(keyVal[0], keyVal[1]);
@@ -196,7 +196,7 @@ public class ExtendedAccumuloBlobStore extends AccumuloBlobStore implements Exte
 
                 Mutation m = new Mutation(generateRowId(key, type));
                 for (Entry<String, String> prop : properties.entrySet()) {
-                    m.put(PROP_CF, DELIM + defaultString(prop.getKey()) + DELIM + defaultString(prop.getValue()),
+                    m.put(PROP_CF, NULL_BYTE + defaultString(prop.getKey()) + NULL_BYTE + defaultString(prop.getValue()),
                             colVis, timestamp, new Value(new byte[]{}));
                 }
                 writer.addMutation(m);

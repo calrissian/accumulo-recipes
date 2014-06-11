@@ -68,7 +68,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
                         getVisibility(tuple, "")
                 };
 
-                String cacheKey = join(strings, INNER_DELIM);
+                String cacheKey = join(strings, ONE_BYTE);
                 Long count = indexCache.get(cacheKey);
                 if (count == null)
                     count = 0l;
@@ -83,13 +83,13 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
                     ""
             };
 
-            indexCache.put(join(idIndex, INNER_DELIM), 1l);
+            indexCache.put(join(idIndex, ONE_BYTE), 1l);
 
         }
 
         for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
 
-            String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), INNER_DELIM);
+            String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), ONE_BYTE);
             Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
             Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
 

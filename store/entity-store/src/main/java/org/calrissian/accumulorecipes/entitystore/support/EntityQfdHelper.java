@@ -35,7 +35,7 @@ import java.util.Set;
 
 import static java.lang.System.currentTimeMillis;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
 
 public class EntityQfdHelper extends QfdHelper<Entity> {
@@ -48,7 +48,7 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     @Override
     protected String buildId(Entity item) {
-        return item.getType() + INNER_DELIM + item.getId();
+        return item.getType() + ONE_BYTE + item.getId();
     }
 
     @Override
@@ -85,7 +85,7 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
         @Override
         protected Entity buildTupleCollectionFromKey(Key k) {
-            String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
+            String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
             return new BaseEntity(typeId[0], typeId[1]);
         }
     }
@@ -98,7 +98,7 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
         @Override
         protected Entity buildEntryFromKey(Key k) {
-            String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), INNER_DELIM);
+            String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
             return new BaseEntity(typeId[0], typeId[1]);
         }
 

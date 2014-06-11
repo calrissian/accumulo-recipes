@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 /**
  * An iterator that handles "OR" criteria constructs on the server side. This code has been adapted/merged from Heap and Multi Iterators.
@@ -65,7 +65,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
         try {
             int idx = 0;
             String sKey = key.getColumnQualifier().toString();
-            idx = sKey.lastIndexOf(DELIM);
+            idx = sKey.lastIndexOf(NULL_BYTE);
             return sKey.substring(idx + 1);
         } catch (Exception e) {
             return null;
@@ -102,7 +102,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
         int idx = 0;
         String sKey = key.getColumnQualifier().toString();
 
-        idx = sKey.indexOf(DELIM);
+        idx = sKey.indexOf(NULL_BYTE);
         return new Text(sKey.substring(0, idx));
     }
 
@@ -116,7 +116,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
         int idx = 0;
         String sKey = key.getColumnQualifier().toString();
 
-        idx = sKey.indexOf(DELIM);
+        idx = sKey.indexOf(NULL_BYTE);
         return new Text(sKey.substring(idx + 1));
     }
 
@@ -300,7 +300,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
                 }
 
                 if (startKey.getColumnQualifier() != null) {
-                    sourceKey = new Key(startKey.getRow(), (TS.dataLocation == null) ? nullText : TS.dataLocation, new Text(((TS.term == null) ? "" : TS.term + DELIM)
+                    sourceKey = new Key(startKey.getRow(), (TS.dataLocation == null) ? nullText : TS.dataLocation, new Text(((TS.term == null) ? "" : TS.term + NULL_BYTE)
                             + range.getStartKey().getColumnQualifier()));
                 } else {
                     sourceKey = new Key(startKey.getRow(), (TS.dataLocation == null) ? nullText : TS.dataLocation, (TS.term == null) ? nullText : TS.term);
@@ -579,7 +579,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
                 if (log.isDebugEnabled()) {
                     log.debug("jump called, but ts.topKey is null, this one needs to move to next row.");
                 }
-                Key startKey = new Key(jumpKey.getRow(), ts.dataLocation, new Text(ts.term + DELIM + jumpKey.getColumnFamily()));
+                Key startKey = new Key(jumpKey.getRow(), ts.dataLocation, new Text(ts.term + NULL_BYTE + jumpKey.getColumnFamily()));
                 Key endKey = null;
                 if (parentEndRow != null) {
                     endKey = new Key(parentEndRow);
@@ -758,7 +758,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
                 } else {
                     String cqString = this.topKey.getColumnQualifier().toString();
 
-                    int idx = cqString.indexOf(DELIM);
+                    int idx = cqString.indexOf(NULL_BYTE);
                     this.fieldTerm = new Text(cqString.substring(0, idx));
                     this.docid = new Text(cqString.substring(idx + 1));
                 }

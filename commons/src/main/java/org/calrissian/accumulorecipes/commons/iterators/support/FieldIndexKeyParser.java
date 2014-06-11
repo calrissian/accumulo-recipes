@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import org.apache.accumulo.core.data.Key;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 public class FieldIndexKeyParser extends KeyParser {
 
@@ -26,10 +26,10 @@ public class FieldIndexKeyParser extends KeyParser {
     public void parse(Key key) {
         super.parse(key);
 
-        String[] colFamParts = this.keyFields.get(COLUMN_FAMILY_FIELD).split(DELIM);
+        String[] colFamParts = this.keyFields.get(COLUMN_FAMILY_FIELD).split(NULL_BYTE);
         this.keyFields.put(FIELDNAME_FIELD, colFamParts.length >= 2 ? colFamParts[1] : "");
 
-        String[] colQualParts = this.keyFields.get(COLUMN_QUALIFIER_FIELD).split(DELIM);
+        String[] colQualParts = this.keyFields.get(COLUMN_QUALIFIER_FIELD).split(NULL_BYTE);
         this.keyFields.put(SELECTOR_FIELD, colQualParts.length >= 1 ? colQualParts[0] : "");
         this.keyFields.put(DATATYPE_FIELD, "");
         this.keyFields.put(UID_FIELD, colQualParts.length >= 2 ? colQualParts[1] : "");
@@ -61,7 +61,7 @@ public class FieldIndexKeyParser extends KeyParser {
     }
 
     public String getDataTypeUid() {
-        return getDataType() + DELIM + getUid();
+        return getDataType() + NULL_BYTE + getUid();
     }
 
     // An alias for getSelector

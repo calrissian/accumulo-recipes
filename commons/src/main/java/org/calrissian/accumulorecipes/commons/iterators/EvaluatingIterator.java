@@ -29,12 +29,11 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 
 public class EvaluatingIterator extends AbstractEvaluatingIterator {
 
-    public static final String NULL_BYTE_STRING = DELIM;
     LRUMap visibilityMap = new LRUMap();
 
     public EvaluatingIterator() {
@@ -58,7 +57,7 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
     public Key getReturnKey(Key k) {
         // If we were using column visibility, then we would get the merged visibility here and use it in the key.
         // Remove the COLQ from the key and use the combined visibility
-        Key r = new Key(k.getRowData().getBackingArray(), k.getColumnFamilyData().getBackingArray(), NULL_BYTE, k.getColumnVisibility().getBytes(),
+        Key r = new Key(k.getRowData().getBackingArray(), k.getColumnFamilyData().getBackingArray(), EMPTY_BYTE, k.getColumnVisibility().getBytes(),
                 k.getTimestamp(), k.isDeleted(), false);
         return r;
     }
@@ -70,14 +69,14 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         // Pull the datatype from the colf in case we need to do anything datatype specific.
 //    String colf = key.getColumnFamily().toString();
 //
-//    if(colf.indexOf(NULL_BYTE_STRING) > -1) {
+//    if(colf.indexOf(NULL_BYTE) > -1) {
 //
 //    }
 //
         // For the partitioned table, the field name and field value are stored in the column qualifier
         // separated by a \0.
         String colq = key.getColumnQualifier().toString();
-        int idx = colq.indexOf(NULL_BYTE_STRING);
+        int idx = colq.indexOf(NULL_BYTE);
         String fieldName = colq.substring(0, idx);
         String fieldValue = colq.substring(idx + 1);
 

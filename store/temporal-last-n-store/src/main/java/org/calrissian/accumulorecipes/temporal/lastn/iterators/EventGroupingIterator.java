@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.immutableEntry;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 
 public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value> {
@@ -181,7 +181,7 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value>
 
     private String getUUIDFromValue(Value value) {
         String valString = new String(sourceIter.getTopValue().get());
-        String currentUUID = valString.substring(0, valString.indexOf(DELIM));
+        String currentUUID = valString.substring(0, valString.indexOf(NULL_BYTE));
         return currentUUID;
     }
 

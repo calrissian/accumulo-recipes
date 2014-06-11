@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.geospatialstore.impl.AccumuloGeoSpatialStore.DELIM_ONE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
 /**
  * This filter will make sure no events pass through if they have geobounds that are no
@@ -69,10 +69,10 @@ public class BoundingBoxFilter extends Filter {
 
         try {
             String colF = key.getColumnFamily().toString();
-            int lastIdx = colF.lastIndexOf(DELIM);
+            int lastIdx = colF.lastIndexOf(NULL_BYTE);
             String geoCoords = colF.substring(lastIdx, colF.length() - 1);
 
-            lastIdx = geoCoords.lastIndexOf(DELIM_ONE);
+            lastIdx = geoCoords.lastIndexOf(ONE_BYTE);
             Double x = Double.parseDouble(geoCoords.substring(0, lastIdx));
             Double y = Double.parseDouble(geoCoords.substring(lastIdx, geoCoords.length() - 1));
 

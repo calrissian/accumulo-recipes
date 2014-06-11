@@ -157,7 +157,7 @@ public abstract class QfdHelper<T extends TupleStore> {
 
                     for (Tuple tuple : item.getTuples()) {
 
-                        String aliasValue = typeRegistry.getAlias(tuple.getValue()) + INNER_DELIM +
+                        String aliasValue = typeRegistry.getAlias(tuple.getValue()) + ONE_BYTE +
                                 typeRegistry.encode(tuple.getValue());
 
                         ColumnVisibility columnVisibility = new ColumnVisibility(getVisibility(tuple, ""));
@@ -166,14 +166,14 @@ public abstract class QfdHelper<T extends TupleStore> {
 
                         // forward mutation
                         shardMutation.put(new Text(buildId(item)),
-                                new Text(tuple.getKey() + DELIM + aliasValue),
+                                new Text(tuple.getKey() + NULL_BYTE + aliasValue),
                                 columnVisibility,
                                 buildTimestamp(item),
                                 new Value(metadataSerDe.serialize(metadata)));
 
                         // reverse mutation
-                        shardMutation.put(new Text(PREFIX_FI + DELIM + tuple.getKey()),
-                                new Text(aliasValue + DELIM + buildId(item)),
+                        shardMutation.put(new Text(PREFIX_FI + NULL_BYTE + tuple.getKey()),
+                                new Text(aliasValue + NULL_BYTE + buildId(item)),
                                 columnVisibility,
                                 buildTimestamp(item),
                                 new Value(metadataSerDe.serialize(metadata)));  // forward mutation

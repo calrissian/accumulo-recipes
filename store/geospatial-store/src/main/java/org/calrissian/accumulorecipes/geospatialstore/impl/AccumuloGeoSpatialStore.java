@@ -45,7 +45,7 @@ import java.util.Map;
 
 import static java.lang.Math.abs;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
@@ -59,12 +59,12 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
         @Override
         public Event apply(Map.Entry<Key, Value> keyValueEntry) {
 
-            String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), DELIM);
+            String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), NULL_BYTE);
             Event entry = new BaseEvent(cfParts[0], Long.parseLong(cfParts[1]));
             try {
                 Map<Key, Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
                 for (Map.Entry<Key, Value> curEntry : map.entrySet()) {
-                    String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), DELIM);
+                    String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
                     Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, Object>(1), vis));
                     entry.put(tuple);
@@ -75,7 +75,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
             }
         }
     };
-    public static final String DELIM_ONE = "\1";
+
     private static final String PARTITION_DELIM = "_";
     private static final TypeRegistry registry = LEXI_TYPES;
     private final QuadTreeHelper helper = new QuadTreeHelper();
@@ -124,11 +124,11 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
     }
 
     protected String buildId(String id, long timestamp, Point2D.Double location) {
-        return String.format("%s%s%s%s%s%s%s", id, DELIM, timestamp, DELIM, location.getX(), DELIM, location.getY());
+        return String.format("%s%s%s%s%s%s%s", id, NULL_BYTE, timestamp, NULL_BYTE, location.getX(), NULL_BYTE, location.getY());
     }
 
     protected String buildKeyValue(Tuple tuple) {
-        return tuple.getKey() + DELIM + registry.getAlias(tuple.getValue()) + DELIM + registry.encode(tuple.getValue());
+        return tuple.getKey() + NULL_BYTE + registry.getAlias(tuple.getValue()) + NULL_BYTE + registry.encode(tuple.getValue());
     }
 
     @Override

@@ -30,12 +30,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+
 
 public class UniqFieldNameValueIterator extends WrappingIterator {
 
     protected static final Logger log = Logger.getLogger(UniqFieldNameValueIterator.class);
     private static final Collection<ByteSequence> EMPTY_COL_FAMS = new ArrayList<ByteSequence>();
-    private static final String ONE_BYTE = "\1";
     // Wrapping iterator only accesses its private source in setSource and getSource
     // Since this class overrides these methods, it's safest to keep the source declaration here
     private SortedKeyValueIterator<Key, Value> source;

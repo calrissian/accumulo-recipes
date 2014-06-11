@@ -73,7 +73,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
             String alias = registry.getAlias(kvLeaf.getValue());
             String startShard = shardBuilder.buildShard(start.getTime(), 0);
-            String stopShard = shardBuilder.buildShard(end.getTime(), DEFAULT_PARTITION_SIZE - 1) + DELIM_END;
+            String stopShard = shardBuilder.buildShard(end.getTime(), DEFAULT_PARTITION_SIZE - 1) + END_BYTE;
 
             if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
                 ranges.add(

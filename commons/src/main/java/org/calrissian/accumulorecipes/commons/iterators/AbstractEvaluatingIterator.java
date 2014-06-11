@@ -49,7 +49,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
 
     public static final String QUERY_OPTION = "expr";
     public static final String UNEVALUTED_EXPRESSIONS = "unevaluated.expressions";
-    protected static final byte[] NULL_BYTE = new byte[0];
+    protected static final byte[] EMPTY_BYTE = new byte[0];
     private static Logger log = Logger.getLogger(AbstractEvaluatingIterator.class);
     private static Kryo kryo = new Kryo();
     protected SortedKeyValueIterator<Key, Value> iterator;

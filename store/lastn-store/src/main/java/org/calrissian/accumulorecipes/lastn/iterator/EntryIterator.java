@@ -35,8 +35,8 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 
@@ -98,8 +98,8 @@ public class EntryIterator extends WrappingIterator {
             Value topVal = super.getTopValue();
             String entryId = new String(topVal.get());
 
-            Key startRangeKey = new Key(topKey.getRow(), new Text(DELIM_END + entryId));
-            Key stopRangeKey = new Key(topKey.getRow(), new Text(DELIM_END + entryId + DELIM_END));
+            Key startRangeKey = new Key(topKey.getRow(), new Text(END_BYTE + entryId));
+            Key stopRangeKey = new Key(topKey.getRow(), new Text(END_BYTE + entryId + END_BYTE));
 
             Range range = new Range(startRangeKey, stopRangeKey);
 
@@ -118,7 +118,7 @@ public class EntryIterator extends WrappingIterator {
                         break;
                     }
 
-                    String[] keyValueDatatype = nextKey.getColumnQualifier().toString().split(DELIM);
+                    String[] keyValueDatatype = nextKey.getColumnQualifier().toString().split(NULL_BYTE);
 
                     if (keyValueDatatype.length == 3) {
 

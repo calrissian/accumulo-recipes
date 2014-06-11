@@ -39,7 +39,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
 /**
  * This iterator should only return keys from the fi\0{fieldName}:{fieldValue} part of the shard table. Expect topKey to be CF, {UID}
@@ -48,8 +49,6 @@ public class FieldIndexIterator extends WrappingIterator {
 
     protected static final Logger log = Logger.getLogger(FieldIndexIterator.class);
     private static final Collection<ByteSequence> EMPTY_COL_FAMS = new ArrayList<ByteSequence>();
-    private static final String NULL_BYTE = DELIM;
-    private static final String ONE_BYTE = "\1";
     // According to the JEXL 2.0 docs, the engine is thread-safe. Let's create 1 engine per VM and
     // cache 128 expressions
     private static JexlEngine engine = new JexlEngine();
