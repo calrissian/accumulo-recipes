@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static java.lang.System.currentTimeMillis;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Expiration.EXPIRATION;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Expiration.getExpiration;
 import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 
@@ -45,13 +45,17 @@ public class MetadataExpirationFilter extends Filter {
     @Override
     public boolean accept(Key k, Value v) {
 
-        if(v.get().length > 0) {
+        if (v.get().length > 0) {
             Map<String, Object> metadata = metadataSerDe.deserialize(v.get());
-            if(metadata != null && metadata.containsKey(EXPIRATION)) {
-                long threshold = (Long)metadata.get(EXPIRATION);
-                long currentTime = currentTimeMillis();
-                if (k.getTimestamp() > currentTime || currentTime - k.getTimestamp() > threshold)
-                    return false;
+            if (metadata != null) {
+
+                long threshold = getExpiration(metadata, -1);
+
+                if (threshold > -1) {
+                    long currentTime = currentTimeMillis();
+                    if (k.getTimestamp() > currentTime || currentTime - k.getTimestamp() > threshold)
+                        return false;
+                }
                 return true;
             }
         }
@@ -89,7 +93,7 @@ public class MetadataExpirationFilter extends Filter {
     public boolean validateOptions(Map<String, String> options) {
         super.validateOptions(options);
         try {
-            fromBase64(options.get(EXPIRATION).getBytes());
+            fromBase64(options.get(METADATA_SERDE).getBytes());
         } catch (Exception e) {
             return false;
         }

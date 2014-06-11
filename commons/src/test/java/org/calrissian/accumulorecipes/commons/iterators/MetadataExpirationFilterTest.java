@@ -8,8 +8,8 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.support.metadata.BaseMetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
 import org.junit.Test;
 
@@ -30,7 +30,7 @@ public class MetadataExpirationFilterTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         connector.tableOperations().create("test");
 
-        MetadataSerDe metadataSerDe = new BaseMetadataSerDe(LEXI_TYPES);
+        MetadataSerDe metadataSerDe = new SimpleMetadataSerDe(LEXI_TYPES);
 
         IteratorSetting setting = new IteratorSetting(10, "filter", MetadataExpirationFilter.class);
         MetadataExpirationFilter.setMetadataSerde(setting, metadataSerDe);
