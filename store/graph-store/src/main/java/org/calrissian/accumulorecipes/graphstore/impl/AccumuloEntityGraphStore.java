@@ -59,6 +59,7 @@ import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_RELATIONSHIP_ALIAS;
 
 /**
@@ -73,6 +74,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     public static final int DEFAULT_BUFFER_SIZE = 50;
     private final int bufferSize;
     public static final String ONE_BYTE = "\u0001";
+    private final TypeRegistry<String> typeRegistry;
     /**
      * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex
      */
@@ -119,7 +121,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector);
         this.bufferSize = DEFAULT_BUFFER_SIZE;
-        table = DEFAULT_TABLE_NAME;
+        this.table = DEFAULT_TABLE_NAME;
+        this.typeRegistry = LEXI_TYPES;
         init();
     }
 
@@ -127,7 +130,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, indexTable, shardTable, shardBuilder, config, typeRegistry);
         this.bufferSize = bufferSize;
-        table = edgeTable;
+        this.table = edgeTable;
+        this.typeRegistry = typeRegistry;
         init();
     }
 

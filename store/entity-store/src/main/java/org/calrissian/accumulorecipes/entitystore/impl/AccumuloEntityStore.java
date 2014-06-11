@@ -63,7 +63,6 @@ public class AccumuloEntityStore implements EntityStore {
 
     private final EntityShardBuilder shardBuilder;
     private final EntityQfdHelper helper;
-    protected final TypeRegistry<String> typeRegistry;
 
     public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG, LEXI_TYPES);
@@ -77,8 +76,6 @@ public class AccumuloEntityStore implements EntityStore {
         checkNotNull(config);
         checkNotNull(typeRegistry);
         checkNotNull(shardBuilder);
-
-        this.typeRegistry = typeRegistry;
 
         KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
 
