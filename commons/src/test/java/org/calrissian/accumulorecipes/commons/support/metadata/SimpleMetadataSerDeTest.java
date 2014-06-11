@@ -23,7 +23,7 @@ import java.util.Map;
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 import static org.junit.Assert.assertEquals;
 
-public class SimpleqMetadataSerDeTest {
+public class SimpleMetadataSerDeTest {
 
     MetadataSerDe metadataSerDe = new SimpleMetadataSerDe(SIMPLE_TYPES);
 
