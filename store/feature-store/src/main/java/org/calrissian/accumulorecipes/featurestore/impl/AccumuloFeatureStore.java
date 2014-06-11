@@ -141,7 +141,7 @@ public class AccumuloFeatureStore implements FeatureStore {
     protected ScannerBase metricScanner(Date start, Date end, String group, Set<String> types, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
         checkNotNull(group);
         checkNotNull(types);
-        checkArgument(types.size() > 0)
+        checkArgument(types.size() > 0);
         checkNotNull(start);
         checkNotNull(end);
         checkNotNull(auths);
