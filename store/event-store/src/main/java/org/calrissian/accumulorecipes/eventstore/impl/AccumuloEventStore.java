@@ -29,7 +29,6 @@ import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIn
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
-import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
@@ -38,6 +37,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventIndex;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.*;
@@ -146,7 +146,7 @@ public class AccumuloEventStore implements EventStore {
             Collection<Range> ranges = new LinkedList<Range>();
             for (EventIndex uuid : uuids) {
                 if (uuid.getTimestamp() == null)
-                    ranges.add(new Range(INDEX_V + "_string__" + uuid.getUuid()));
+                    ranges.add(new Range(INDEX_V + "_string__" + uuid.getId()));
             }
 
             BatchScanner eventScanner = helper.buildShardScanner(auths.getAuths());
@@ -172,8 +172,8 @@ public class AccumuloEventStore implements EventStore {
 
             for (EventIndex curIndex : uuids) {
                 if (curIndex.getTimestamp() != null) {
-                    String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getUuid(), curIndex.getTimestamp()));
-                    eventRanges.add(Range.prefix(shardId, curIndex.getUuid()));
+                    String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getId(), curIndex.getTimestamp()));
+                    eventRanges.add(Range.prefix(shardId, curIndex.getId()));
                 }
             }
 

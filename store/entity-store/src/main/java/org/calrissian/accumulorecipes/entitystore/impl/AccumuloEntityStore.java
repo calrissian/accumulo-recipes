@@ -29,12 +29,12 @@ import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterato
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.support.*;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -46,9 +46,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;

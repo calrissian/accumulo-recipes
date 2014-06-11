@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.tinkerpop.blueprints.*;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
@@ -30,6 +29,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.criteria.Criteria;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.domain.entity.EntityRelationship;
 
 import java.util.Iterator;
@@ -275,7 +275,8 @@ public class EntityGraph implements Graph {
     public static class EntityIndexXform implements Function<Element, EntityIndex> {
         @Override
         public EntityIndex apply(Element element) {
-            return new EntityIndex(((EntityElement) element).getEntity());
+            Entity entity = ((EntityElement) element).getEntity();
+            return new EntityIndex(entity.getType(), entity.getId());
         }
     }
 

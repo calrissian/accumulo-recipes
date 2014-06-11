@@ -20,11 +20,11 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.domain.entity.EntityRelationship;
 
 import java.util.Iterator;

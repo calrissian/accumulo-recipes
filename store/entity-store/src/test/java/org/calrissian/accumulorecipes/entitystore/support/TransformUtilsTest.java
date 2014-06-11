@@ -15,9 +15,10 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
-import org.calrissian.mango.domain.entity.Entity;
+
 import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

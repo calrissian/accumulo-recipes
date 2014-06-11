@@ -16,18 +16,18 @@
 package org.calrissian.accumulorecipes.entitystore.support;
 
 import com.google.common.base.Function;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 
 public class TransformUtils {
+    private TransformUtils() {/**private constructor*/}
 
     public static Function<Entity, EntityIndex> entityToEntityIndex = new Function<Entity, EntityIndex>() {
         @Override
         public EntityIndex apply(Entity entity) {
-            return new EntityIndex(entity);
+            return new EntityIndex(entity.getType(), entity.getId());
         }
     };
 
-    private TransformUtils() {
-    }
+
 }

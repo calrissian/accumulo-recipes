@@ -17,10 +17,10 @@ package org.calrissian.accumulorecipes.graphstore.tinkerpop.model;
 
 import com.tinkerpop.blueprints.Element;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 
 import java.util.Set;
 
@@ -76,6 +76,6 @@ public class EntityElement implements Element {
 
     @Override
     public Object getId() {
-        return new EntityIndex(entity);
+        return new EntityIndex(entity.getType(), entity.getId());
     }
 }
