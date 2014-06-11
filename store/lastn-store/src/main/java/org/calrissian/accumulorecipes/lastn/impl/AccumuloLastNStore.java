@@ -117,6 +117,10 @@ public class AccumuloLastNStore implements LastNStore {
         this.writer = this.connector.createBatchWriter(this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
+    public void setTypeRegistry(TypeRegistry<String> typeRegistry) {
+        this.typeRegistry = typeRegistry;
+    }
+
     /**
      * Utility method to update the correct iterators to the table.
      *
