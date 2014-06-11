@@ -21,6 +21,7 @@ import org.calrissian.mango.types.TypeRegistry;
 import java.util.Collection;
 import java.util.Iterator;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 
 public class NodeToJexl {
@@ -127,12 +128,12 @@ public class NodeToJexl {
         } else if (node instanceof HasLeaf) {
             builder.append("(");
             HasLeaf leaf = (HasLeaf) node;
-            return builder.append(leaf.getKey()).append(" >= '\u0000')")
+            return builder.append(leaf.getKey()).append(" >= '").append(DELIM).append("')")
                     .toString();
         } else if (node instanceof HasNotLeaf) {
             builder.append("!(");
             HasNotLeaf leaf = (HasNotLeaf) node;
-            return builder.append(leaf.getKey()).append(" >= '\u0000')")
+            return builder.append(leaf.getKey()).append(" >= '").append(DELIM).append("')")
                     .toString();
         } else if (node instanceof InLeaf) {
             builder.append("(");

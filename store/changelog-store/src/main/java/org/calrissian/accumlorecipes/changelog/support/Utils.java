@@ -28,7 +28,7 @@ import java.util.List;
 import static java.lang.Long.parseLong;
 import static java.util.Collections.sort;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
-import static org.calrissian.accumlorecipes.changelog.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 
 public class Utils {
 

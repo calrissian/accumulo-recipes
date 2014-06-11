@@ -45,6 +45,8 @@ import java.util.*;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
@@ -52,8 +54,6 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
-
-    private static final String DELIM = "\0";
 
     private static final String DEFAULT_TABLE_NAME = "temporalLastN";
     private static final String GROUP_DELIM = "____";
@@ -159,7 +159,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         for (String group : groups) {
 
             Key startKey = new Key(group + GROUP_DELIM + startDay, startMinute);
-            Key stopKey = new Key(group + GROUP_DELIM + stopDay, stopMinute + "\uffff");
+            Key stopKey = new Key(group + GROUP_DELIM + stopDay, stopMinute + DELIM_END);
 
             try {
                 BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), 1);

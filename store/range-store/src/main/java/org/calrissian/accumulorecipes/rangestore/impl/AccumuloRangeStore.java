@@ -39,8 +39,9 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
 import static org.calrissian.accumulorecipes.rangestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.rangestore.support.Constants.DELIM;
 import static org.calrissian.mango.collect.Iterables2.emptyIterable;
 
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
@@ -198,7 +199,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
                 LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
-                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
+                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + DELIM_END
         ));
 
         return transform(scanner, new RangeTransform<T>(helper, true));
@@ -213,7 +214,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
                 UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
-                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
+                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + DELIM_END
         ));
 
         //Configure filter to remove any ranges that are fully contained in the criteria range, as they

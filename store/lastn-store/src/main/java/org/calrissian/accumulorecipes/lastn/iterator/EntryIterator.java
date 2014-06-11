@@ -35,10 +35,10 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
 import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
-import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
 
 /**
  * An iterator to return StoreEntry objects serialized to JSON so that grouping can be done server side instead of

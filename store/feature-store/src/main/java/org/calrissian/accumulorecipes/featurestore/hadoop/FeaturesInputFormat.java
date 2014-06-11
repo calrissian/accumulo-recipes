@@ -44,8 +44,8 @@ import static java.util.Collections.singleton;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.DEFAULT_TABLE_NAME;
 import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.featurestore.support.Constants.combine;
 import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
+import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
 import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 

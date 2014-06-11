@@ -25,8 +25,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 
-import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM;
-import static org.calrissian.accumulorecipes.lastn.support.Constants.DELIM_END;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
 
 /**
  * A cleanup filtering iterator to get rid of getTuples that should not exist after the versioning iterator evicts an

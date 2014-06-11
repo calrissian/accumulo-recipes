@@ -33,7 +33,7 @@ import java.util.List;
 
 import static java.lang.Long.parseLong;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.featurestore.support.Constants.combine;
+import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
 
 public class MetricFeatureConfig implements AccumuloFeatureConfig<MetricFeature> {
 

@@ -36,12 +36,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+
 public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>, OptionDescriber {
 
     public static final String QUERY_OPTION = "expr";
     public static final String TERM_CARDINALITIES = "TERM_CARDINALITIES"; // comma separated list of term : count
     public static final String FIELD_INDEX_QUERY = "FIELD_INDEX_QUERY";
-    public static final String FIELD_NAME_PREFIX = "fi\0";
+    public static final String FIELD_NAME_PREFIX = "fi" + DELIM;
     protected static final Logger log = Logger.getLogger(BooleanLogicIterator.class);
     private static final Collection<ByteSequence> EMPTY_COL_FAMS = new ArrayList<ByteSequence>();
     // --------------------------------------------------------------------------
@@ -1716,8 +1718,8 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
         Text colFam = k.getColumnFamily();
 
         for (BooleanLogicTreeNode neg : negatives) {
-            Key startKey = new Key(rowID, neg.getFieldName(), new Text(neg.getFieldValue() + "\0" + colFam));
-            Key endKey = new Key(rowID, neg.getFieldName(), new Text(neg.getFieldValue() + "\0" + colFam + "\1"));
+            Key startKey = new Key(rowID, neg.getFieldName(), new Text(neg.getFieldValue() + DELIM + colFam));
+            Key endKey = new Key(rowID, neg.getFieldName(), new Text(neg.getFieldValue() + DELIM + colFam + "\1"));
             Range range = new Range(startKey, true, endKey, false);
 
             if (log.isDebugEnabled()) {
@@ -1897,10 +1899,10 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
                 String t1 = "null";
                 String t2 = "null";
                 if (k1 != null) {
-                    t1 = k1.getRow().toString() + "\0" + k1.getColumnFamily().toString();
+                    t1 = k1.getRow().toString() + DELIM + k1.getColumnFamily().toString();
                 }
                 if (k2 != null) {
-                    t2 = k2.getRow().toString() + "\0" + k2.getColumnFamily().toString();
+                    t2 = k2.getRow().toString() + DELIM + k2.getColumnFamily().toString();
                 }
                 log.debug("BooleanLogicTreeNodeComparator   \tt1: " + t1 + "  t2: " + t2);
             }

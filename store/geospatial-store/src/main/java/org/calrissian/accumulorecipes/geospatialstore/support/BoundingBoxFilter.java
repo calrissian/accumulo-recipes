@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.calrissian.accumulorecipes.geospatialstore.impl.AccumuloGeoSpatialStore.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.geospatialstore.impl.AccumuloGeoSpatialStore.DELIM_ONE;
 
 /**

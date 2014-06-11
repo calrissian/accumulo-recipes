@@ -29,10 +29,12 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+
 
 public class EvaluatingIterator extends AbstractEvaluatingIterator {
 
-    public static final String NULL_BYTE_STRING = "\u0000";
+    public static final String NULL_BYTE_STRING = DELIM;
     LRUMap visibilityMap = new LRUMap();
 
     public EvaluatingIterator() {

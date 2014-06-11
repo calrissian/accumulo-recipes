@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.rangestore.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 
 /**
  * Filters out all intervals that have a lower bound greater than the criteria lower bound.

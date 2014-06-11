@@ -51,6 +51,7 @@ import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
@@ -73,7 +74,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
     public static final int DEFAULT_BUFFER_SIZE = 50;
     private final int bufferSize;
-    public static final String ONE_BYTE = "\u0001";
+    public static final String ONE_BYTE = INNER_DELIM;
     private final TypeRegistry<String> typeRegistry;
     /**
      * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex

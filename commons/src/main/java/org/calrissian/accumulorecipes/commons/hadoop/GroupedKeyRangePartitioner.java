@@ -33,13 +33,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM_END;
+
 /**
  * Hadoop partitioner that uses ranges, and optionally sub-bins based on hashing. This range partitioner will use multiple
  * groups to determine the partition, therefore allowing several reducers to represent several different writes to files
  * for different tables. It could be used, for instance, for a multi-table bulk ingest.
  */
 public class GroupedKeyRangePartitioner extends Partitioner<GroupedKey, Writable> implements Configurable {
-    public static final String DELIM = "\0";
     private static final String PREFIX = GroupedKeyRangePartitioner.class.getName();
     private static final String CUTFILE_KEY = PREFIX + ".cutFile";
     private static final String NUM_SUBBINS = PREFIX + ".subBins";
@@ -135,7 +137,7 @@ public class GroupedKeyRangePartitioner extends Partitioner<GroupedKey, Writable
                                 for (String string : entry.getValue())
                                     treeSet.add(new Text(entry.getKey() + DELIM + string));
 
-                                treeSet.add(new Text(entry.getKey() + DELIM + "\uffff"));
+                                treeSet.add(new Text(entry.getKey() + DELIM + DELIM_END));
                             }
 
                             cutPointArray = treeSet.toArray(new Text[]{});

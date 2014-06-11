@@ -18,18 +18,18 @@ package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import org.apache.accumulo.core.data.Key;
 
-public class FieldIndexKeyParser extends KeyParser {
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 
-    public static final String DELIMITER = "\0";
+public class FieldIndexKeyParser extends KeyParser {
 
     @Override
     public void parse(Key key) {
         super.parse(key);
 
-        String[] colFamParts = this.keyFields.get(COLUMN_FAMILY_FIELD).split(DELIMITER);
+        String[] colFamParts = this.keyFields.get(COLUMN_FAMILY_FIELD).split(DELIM);
         this.keyFields.put(FIELDNAME_FIELD, colFamParts.length >= 2 ? colFamParts[1] : "");
 
-        String[] colQualParts = this.keyFields.get(COLUMN_QUALIFIER_FIELD).split(DELIMITER);
+        String[] colQualParts = this.keyFields.get(COLUMN_QUALIFIER_FIELD).split(DELIM);
         this.keyFields.put(SELECTOR_FIELD, colQualParts.length >= 1 ? colQualParts[0] : "");
         this.keyFields.put(DATATYPE_FIELD, "");
         this.keyFields.put(UID_FIELD, colQualParts.length >= 2 ? colQualParts[1] : "");
@@ -61,7 +61,7 @@ public class FieldIndexKeyParser extends KeyParser {
     }
 
     public String getDataTypeUid() {
-        return getDataType() + DELIMITER + getUid();
+        return getDataType() + DELIM + getUid();
     }
 
     // An alias for getSelector

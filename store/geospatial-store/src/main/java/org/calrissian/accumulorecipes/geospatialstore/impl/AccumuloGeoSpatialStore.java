@@ -45,16 +45,16 @@ import java.util.Map;
 
 import static java.lang.Math.abs;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
     private static final String DEFAULT_TABLE_NAME = "geoStore";
-    public static final String DELIM = "\0";
     private static Function<Map.Entry<Key, Value>, Event> xform = new Function<Map.Entry<Key, Value>, Event>() {
         @Override
         public Event apply(Map.Entry<Key, Value> keyValueEntry) {
