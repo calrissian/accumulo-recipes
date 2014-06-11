@@ -30,11 +30,11 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.calrissian.accumulorecipes.commons.collect.TupleStoreIterator;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterator;
 import org.calrissian.accumulorecipes.commons.transform.GettableTransform;
 import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat;
-import org.calrissian.accumulorecipes.commons.collect.TupleStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
@@ -99,7 +99,7 @@ public class EventLoader extends LoadFunc {
             DateTime startDT = DateTime.parse(startTime);
             DateTime endDT = DateTime.parse(endTime);
 
-            QueryBuilder qb = null;
+            QueryBuilder qb;
             try {
                 // call groovy expressions from Java code
                 Binding binding = new Binding();

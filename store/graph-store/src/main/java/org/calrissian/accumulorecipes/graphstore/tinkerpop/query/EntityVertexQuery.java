@@ -18,7 +18,6 @@ package org.calrissian.accumulorecipes.graphstore.tinkerpop.query;
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.*;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -26,6 +25,7 @@ import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -155,7 +155,7 @@ public class EntityVertexQuery implements VertexQuery {
 
         Node query = queryBuilder.end().build();
 
-        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
+        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity().getType(), vertex.getEntity().getId()));
 
         List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
                 new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
@@ -190,7 +190,7 @@ public class EntityVertexQuery implements VertexQuery {
     public CloseableIterable<Vertex> vertices() {
         Node query = queryBuilder.end().build();
 
-        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity()));
+        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity().getType(), vertex.getEntity().getId()));
 
         List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
                 new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();

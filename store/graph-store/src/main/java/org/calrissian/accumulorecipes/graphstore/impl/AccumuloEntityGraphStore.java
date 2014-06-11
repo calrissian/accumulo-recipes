@@ -27,7 +27,6 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
@@ -40,6 +39,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.domain.entity.EntityRelationship;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -49,16 +49,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
 import static org.calrissian.mango.collect.CloseableIterables.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_RELATIONSHIP_ALIAS;
 
 /**
@@ -71,8 +73,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     public static final String DEFAULT_TABLE_NAME = "entityStore_graph";
 
     public static final int DEFAULT_BUFFER_SIZE = 50;
-    protected int bufferSize = DEFAULT_BUFFER_SIZE;
-    public static final String ONE_BYTE = "\u0001";
+    private final int bufferSize;
+    private final TypeRegistry<String> typeRegistry;
     /**
      * Extracts an edge/vertex (depending on what is requested) on the far side of a given vertex
      */
@@ -83,7 +85,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
             String cq = keyValueEntry.getKey().getColumnQualifier().toString();
 
-            int idx = cq.indexOf(DELIM);
+            int idx = cq.indexOf(NULL_BYTE);
             String edge = cq.substring(0, idx);
 
             try {
@@ -96,7 +98,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                         continue;
 
                     String[] qualParts = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), ONE_BYTE);
-                    String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], DELIM);
+                    String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], NULL_BYTE);
 
                     String vis = entry.getKey().getColumnVisibility().toString();
                     Tuple tuple = new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, Object>(1), vis));
@@ -118,7 +120,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     public AccumuloEntityGraphStore(Connector connector)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector);
-        table = DEFAULT_TABLE_NAME;
+        this.bufferSize = DEFAULT_BUFFER_SIZE;
+        this.table = DEFAULT_TABLE_NAME;
+        this.typeRegistry = LEXI_TYPES;
         init();
     }
 
@@ -126,7 +130,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, indexTable, shardTable, shardBuilder, config, typeRegistry);
         this.bufferSize = bufferSize;
-        table = edgeTable;
+        this.table = edgeTable;
+        this.typeRegistry = typeRegistry;
         init();
     }
 
@@ -236,7 +241,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     private void populateRange(Collection<Range> ranges, String row, Direction direction, String label) {
-        ranges.add(prefix(row, direction.toString() + DELIM + defaultString(label)));
+        ranges.add(prefix(row, direction.toString() + NULL_BYTE + defaultString(label)));
     }
 
     @Override
@@ -263,10 +268,10 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     Mutation forward = new Mutation(fromEncoded);
                     Mutation reverse = new Mutation(toEncoded);
 
-                    forward.put(new Text(OUT.toString() + DELIM + label), new Text(edgeEncoded + DELIM + toEncoded),
+                    forward.put(new Text(OUT.toString() + NULL_BYTE + label), new Text(edgeEncoded + NULL_BYTE + toEncoded),
                             new ColumnVisibility(toVertexVis), EMPTY_VALUE);
 
-                    reverse.put(new Text(IN.toString() + DELIM + label), new Text(edgeEncoded + DELIM + fromEncoded),
+                    reverse.put(new Text(IN.toString() + NULL_BYTE + label), new Text(edgeEncoded + NULL_BYTE + fromEncoded),
                             new ColumnVisibility(fromVertexVis), EMPTY_VALUE);
 
                     for (Tuple tuple : entity.getTuples()) {
@@ -274,14 +279,14 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                         String alias = typeRegistry.getAlias(tuple.getValue());
                         String value = typeRegistry.encode(tuple.getValue());
 
-                        String keyAliasValue = key + DELIM + alias + DELIM + value;
+                        String keyAliasValue = key + NULL_BYTE + alias + NULL_BYTE + value;
 
-                        forward.put(new Text(OUT.toString() + DELIM + label),
-                                new Text(edgeEncoded + DELIM + toEncoded + ONE_BYTE + keyAliasValue),
+                        forward.put(new Text(OUT.toString() + NULL_BYTE + label),
+                                new Text(edgeEncoded + NULL_BYTE + toEncoded + ONE_BYTE + keyAliasValue),
                                 new ColumnVisibility(getVisibility(tuple, "")), EMPTY_VALUE);
 
-                        reverse.put(new Text(IN.toString() + DELIM + label),
-                                new Text(edgeEncoded + DELIM + fromEncoded + ONE_BYTE + keyAliasValue),
+                        reverse.put(new Text(IN.toString() + NULL_BYTE + label),
+                                new Text(edgeEncoded + NULL_BYTE + fromEncoded + ONE_BYTE + keyAliasValue),
                                 new ColumnVisibility(getVisibility(tuple, "")), EMPTY_VALUE);
                     }
 

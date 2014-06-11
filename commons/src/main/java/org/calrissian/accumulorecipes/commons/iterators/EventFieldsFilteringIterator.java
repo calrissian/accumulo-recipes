@@ -30,6 +30,7 @@ import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 public class EventFieldsFilteringIterator extends Filter {
 
@@ -37,13 +38,13 @@ public class EventFieldsFilteringIterator extends Filter {
     private Set<String> selectFields;
 
     public static void setSelectFields(IteratorSetting is, Set<String> selectFields) {
-        is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, "\u0000"));
+        is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, NULL_BYTE));
     }
 
     @Override
     public boolean accept(Key k, Value v) {
         if (!k.getColumnFamily().toString().startsWith("fi")) {
-            int ifx = k.getColumnQualifier().toString().indexOf("\u0000");
+            int ifx = k.getColumnQualifier().toString().indexOf(NULL_BYTE);
             String key = k.getColumnQualifier().toString().substring(0, ifx);
             return selectFields.contains(key);
         }
@@ -60,7 +61,7 @@ public class EventFieldsFilteringIterator extends Filter {
         if (eventFieldsOpt == null)
             throw new IllegalArgumentException(SELECT_FIELDS + " must be set for " + EventFieldsFilteringIterator.class.getName());
 
-        selectFields = new HashSet<String>(asList(splitPreserveAllTokens(eventFieldsOpt, "\u0000")));
+        selectFields = new HashSet<String>(asList(splitPreserveAllTokens(eventFieldsOpt, NULL_BYTE)));
     }
 
     @Override

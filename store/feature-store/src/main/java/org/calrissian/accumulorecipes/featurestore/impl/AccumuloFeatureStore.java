@@ -35,16 +35,15 @@ import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.*;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.defaultString;
-import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.featurestore.support.Constants.DELIM;
 import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
+import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 /**
@@ -101,12 +100,6 @@ public class AccumuloFeatureStore implements FeatureStore {
         isInitialized = true;
     }
 
-
-    public static String combine(String... items) {
-        if (items == null)
-            return null;
-        return join(items, DELIM);
-    }
 
     private void createTable(String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         int priority = DEFAULT_ITERATOR_PRIORITY;

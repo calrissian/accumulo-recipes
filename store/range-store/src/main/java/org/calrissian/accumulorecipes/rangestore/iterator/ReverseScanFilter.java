@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.rangestore.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 /**
  * Filters out all intervals that have a lower bound greater than the criteria lower bound.
@@ -59,7 +59,7 @@ public class ReverseScanFilter extends Filter {
 
     @Override
     public boolean accept(Key key, Value value) {
-        String vals[] = splitPreserveAllTokens(key.getRow().toString(), DELIM);
+        String vals[] = splitPreserveAllTokens(key.getRow().toString(), NULL_BYTE);
         return vals.length == 3 && vals[2].compareTo(queryLowBound) < 0;
     }
 }

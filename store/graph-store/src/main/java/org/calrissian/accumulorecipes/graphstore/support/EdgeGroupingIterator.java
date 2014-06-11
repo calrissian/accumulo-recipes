@@ -46,7 +46,7 @@ public class EdgeGroupingIterator implements SortedKeyValueIterator<Key, Value> 
     }
 
     // decode a bunch of key value pairs that have been encoded into a single value
-    public static final SortedMap<Key, Value> decodeRow(Key rowKey, Value rowValue) throws IOException {
+    public static SortedMap<Key, Value> decodeRow(Key rowKey, Value rowValue) throws IOException {
         SortedMap<Key, Value> map = new TreeMap<Key, Value>();
         ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
         DataInputStream din = new DataInputStream(in);
@@ -89,7 +89,7 @@ public class EdgeGroupingIterator implements SortedKeyValueIterator<Key, Value> 
 
     // take a stream of keys and values and output a value that encodes everything but their row
     // keys and values must be paired one for one
-    public static final Value encodeRow(List<Key> keys, List<Value> values) throws IOException {
+    public static Value encodeRow(List<Key> keys, List<Value> values) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         DataOutputStream dout = new DataOutputStream(out);
         dout.writeInt(keys.size());
@@ -131,10 +131,9 @@ public class EdgeGroupingIterator implements SortedKeyValueIterator<Key, Value> 
         Text currentRow;
         Text currentCF;
         Text currentCQ;
-        String cqPrefix;
 
         do {
-            if (sourceIter.hasTop() == false)
+            if (!sourceIter.hasTop())
                 return;
             currentRow = new Text(sourceIter.getTopKey().getRow());
             currentCF = new Text(sourceIter.getTopKey().getColumnFamily());

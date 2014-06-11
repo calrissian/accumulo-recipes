@@ -28,7 +28,7 @@ import java.util.List;
 import static java.lang.Long.parseLong;
 import static java.util.Collections.sort;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
-import static org.calrissian.accumlorecipes.changelog.support.Constants.DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 public class Utils {
 
@@ -90,6 +90,6 @@ public class Utils {
     }
 
     public static String tupleToString(Tuple tuple, TypeRegistry<String> typeRegistry) {
-        return tuple.getKey() + DELIM + typeRegistry.encode(tuple.getValue()) + DELIM + tuple.getMetadata();
+        return tuple.getKey() + NULL_BYTE + typeRegistry.encode(tuple.getValue()) + NULL_BYTE + tuple.getMetadata();
     }
 }

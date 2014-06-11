@@ -16,10 +16,10 @@
 package org.calrissian.accumulorecipes.eventstore;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventIndex;
 
 import java.util.Collection;
 import java.util.Date;

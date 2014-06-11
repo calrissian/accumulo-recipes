@@ -33,7 +33,7 @@ import java.util.List;
 
 import static java.lang.Long.parseLong;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.combine;
+import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
 
 public class MetricFeatureConfig implements AccumuloFeatureConfig<MetricFeature> {
 
@@ -75,11 +75,11 @@ public class MetricFeatureConfig implements AccumuloFeatureConfig<MetricFeature>
         public Metric apply(Value value) {
             String[] vals = splitPreserveAllTokens(new String(value.get()), ",");
             return new Metric(
-                parseLong(vals[0]),
-                parseLong(vals[1]),
-                parseLong(vals[2]),
-                parseLong(vals[3]),
-                new BigInteger(vals[4])
+                    parseLong(vals[0]),
+                    parseLong(vals[1]),
+                    parseLong(vals[2]),
+                    parseLong(vals[3]),
+                    new BigInteger(vals[4])
             );
         }
     };
@@ -88,12 +88,12 @@ public class MetricFeatureConfig implements AccumuloFeatureConfig<MetricFeature>
         @Override
         public Value apply(Metric metricFeatureVector) {
             return new Value(StringUtils.join(Arrays.asList(
-                metricFeatureVector.getMin(),
-                metricFeatureVector.getMax(),
-                metricFeatureVector.getSum(),
-                metricFeatureVector.getCount(),
-                metricFeatureVector.getSumSquare().toString()),
-                ",").getBytes());
+                            metricFeatureVector.getMin(),
+                            metricFeatureVector.getMax(),
+                            metricFeatureVector.getSum(),
+                            metricFeatureVector.getCount(),
+                            metricFeatureVector.getSumSquare().toString()),
+                    ",").getBytes());
         }
     };
 }

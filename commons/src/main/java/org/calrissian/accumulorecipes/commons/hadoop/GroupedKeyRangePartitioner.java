@@ -33,13 +33,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+
 /**
  * Hadoop partitioner that uses ranges, and optionally sub-bins based on hashing. This range partitioner will use multiple
  * groups to determine the partition, therefore allowing several reducers to represent several different writes to files
  * for different tables. It could be used, for instance, for a multi-table bulk ingest.
  */
 public class GroupedKeyRangePartitioner extends Partitioner<GroupedKey, Writable> implements Configurable {
-    public static final String DELIM = "\0";
     private static final String PREFIX = GroupedKeyRangePartitioner.class.getName();
     private static final String CUTFILE_KEY = PREFIX + ".cutFile";
     private static final String NUM_SUBBINS = PREFIX + ".subBins";
@@ -81,7 +83,7 @@ public class GroupedKeyRangePartitioner extends Partitioner<GroupedKey, Writable
     int findPartition(String group, Text key, Text[] array, int numSubBins) {
 
         // find the bin for the range, and guarantee it is positive
-        int index = Arrays.binarySearch(array, new Text(group + DELIM + key));
+        int index = Arrays.binarySearch(array, new Text(group + NULL_BYTE + key));
         index = index < 0 ? (index + 1) * -1 : index;
 
         // both conditions work with numSubBins == 1, but this check is to avoid
@@ -130,12 +132,12 @@ public class GroupedKeyRangePartitioner extends Partitioner<GroupedKey, Writable
 
                             SortedSet<Text> treeSet = new TreeSet<Text>();
                             for (Map.Entry<String, SortedSet<String>> entry : cutPointMap.entrySet()) {
-                                treeSet.add(new Text(entry.getKey() + DELIM + DELIM));
+                                treeSet.add(new Text(entry.getKey() + NULL_BYTE + NULL_BYTE));
 
                                 for (String string : entry.getValue())
-                                    treeSet.add(new Text(entry.getKey() + DELIM + string));
+                                    treeSet.add(new Text(entry.getKey() + NULL_BYTE + string));
 
-                                treeSet.add(new Text(entry.getKey() + DELIM + "\uffff"));
+                                treeSet.add(new Text(entry.getKey() + NULL_BYTE + END_BYTE));
                             }
 
                             cutPointArray = treeSet.toArray(new Text[]{});

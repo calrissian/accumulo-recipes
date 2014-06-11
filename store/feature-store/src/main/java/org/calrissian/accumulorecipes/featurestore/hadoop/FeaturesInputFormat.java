@@ -32,8 +32,8 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
-import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
+import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 
 import java.io.IOException;
@@ -43,9 +43,9 @@ import java.util.Map;
 import static java.util.Collections.singleton;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
 import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.DEFAULT_TABLE_NAME;
-import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.combine;
 import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
+import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
 import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 
@@ -78,10 +78,10 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
         config.set("timeUnit", timeUnit.toString());
 
         setRanges(config,
-            singleton(new Range(
-                combine(group, generateTimestamp(end.getTime(), timeUnit)),
-                combine(group, generateTimestamp(start.getTime(), timeUnit))
-            ))
+                singleton(new Range(
+                        combine(group, generateTimestamp(end.getTime(), timeUnit)),
+                        combine(group, generateTimestamp(start.getTime(), timeUnit))
+                ))
         );
 
         if (name != null) {

@@ -22,7 +22,6 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
@@ -31,6 +30,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,18 +81,18 @@ public class BlueprintsGraphStoreTest {
     @Test
     public void testGetVertex() {
         // get first vertex
-        EntityVertex v = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v = (EntityVertex) graph.getVertex(new EntityIndex(vertex1.getType(), vertex1.getId()));
         assertEntitiesEqual(vertex1, v.getEntity());
 
         // get second vertex
-        v = (EntityVertex) graph.getVertex(new EntityIndex(vertex2));
+        v = (EntityVertex) graph.getVertex(new EntityIndex(vertex2.getType(), vertex2.getId()));
         assertEntitiesEqual(vertex2, v.getEntity());
 
     }
 
     @Test
     public void testGetEdge() {
-        EntityEdge e = (EntityEdge) graph.getEdge(new EntityIndex(edge));
+        EntityEdge e = (EntityEdge) graph.getEdge(new EntityIndex(edge.getType(), edge.getId()));
         assertEntitiesEqual(edge, e.getEntity());
     }
 

@@ -24,17 +24,17 @@ import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
 import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME;
-import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_PARTITION_SIZE;
 import static org.calrissian.accumulorecipes.test.AccumuloTestUtils.dumpTable;
 import static org.junit.Assert.assertEquals;
 

@@ -30,11 +30,11 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.calrissian.accumulorecipes.commons.collect.TupleStoreIterator;
 import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterator;
 import org.calrissian.accumulorecipes.commons.transform.GettableTransform;
 import org.calrissian.accumulorecipes.entitystore.hadoop.EntityInputFormat;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
-import org.calrissian.accumulorecipes.commons.collect.TupleStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
@@ -96,7 +96,7 @@ public class EntityLoader extends LoadFunc {
             Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;
             Set<String> entitytypes = newHashSet(asList(splitPreserveAllTokens(types, ",")));
 
-            QueryBuilder qb = null;
+            QueryBuilder qb;
             try {
                 // call groovy expressions from Java code
                 Binding binding = new Binding();

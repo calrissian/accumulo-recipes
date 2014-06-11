@@ -26,9 +26,9 @@ public class Constants {
     public static final String INDEX_V = "v";           // key index
     public static final String INDEX_K = "k";           // value index prefix
 
-    public static final String DELIM = "\u0000";
-    public static final String INNER_DELIM = "\u0001";
-    public static final String DELIM_END = "\uffff";
+    public static final String NULL_BYTE = "\u0000";
+    public static final String ONE_BYTE = "\u0001";
+    public static final String END_BYTE = "\uffff";
 
     public static final Value EMPTY_VALUE = new Value("".getBytes());
 

@@ -35,6 +35,8 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+
 
 /**
  *
@@ -113,7 +115,7 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
             return null;
         }
         // Build Key(Text row, Text colfam) where colFam is dataype\0uid
-        String[] cq = key.getColumnQualifier().toString().split("\0");
+        String[] cq = key.getColumnQualifier().toString().split(NULL_BYTE);
 
         Text uuid = new Text(cq.length > 1 ? cq[1] : cq[0]);
         Text row = key.getRow();

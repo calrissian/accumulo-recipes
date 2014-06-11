@@ -24,14 +24,14 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
-import org.calrissian.accumulorecipes.eventstore.support.EventIndex;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.event.EventIndex;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -79,7 +79,7 @@ public class AccumuloEventStoreTest {
             System.out.println(entry);
         }
 
-        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex(event.getId())), null, new Auths());
+        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex(event.getId(), event.getTimestamp())), null, new Auths());
 
         assertEquals(1, size(actualEvent));
         Event actual = actualEvent.iterator().next();
@@ -134,7 +134,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex(event.getId())),
+        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex(event.getId(), event.getTimestamp())),
                 Collections.singleton("key1"), new Auths());
 
         assertEquals(1, size(actualEvent));

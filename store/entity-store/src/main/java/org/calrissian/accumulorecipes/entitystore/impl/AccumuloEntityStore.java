@@ -29,12 +29,12 @@ import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterato
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.entitystore.support.*;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -46,8 +46,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -58,14 +57,12 @@ public class AccumuloEntityStore implements EntityStore {
     public static final String DEFAULT_IDX_TABLE_NAME = "entity_index";
     public static final String DEFAULT_SHARD_TABLE_NAME = "entity_shard";
 
-    public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
-    public static final int DEFAULT_PARTITION_SIZE = 5;
-    public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(5);
+    public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
 
-    protected EntityShardBuilder shardBuilder = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
-    protected final EntityQfdHelper helper;
-    protected final TypeRegistry<String> typeRegistry = LEXI_TYPES;
+    private final EntityShardBuilder shardBuilder;
+    private final EntityQfdHelper helper;
 
     public AccumuloEntityStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG, LEXI_TYPES);
@@ -107,7 +104,7 @@ public class AccumuloEntityStore implements EntityStore {
             Collection<Range> ranges = new LinkedList<Range>();
             for (EntityIndex curIndex : typesAndIds) {
                 String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
-                ranges.add(exact(shardId, curIndex.getType() + INNER_DELIM + curIndex.getId()));
+                ranges.add(exact(shardId, curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
 
             scanner.setRanges(ranges);

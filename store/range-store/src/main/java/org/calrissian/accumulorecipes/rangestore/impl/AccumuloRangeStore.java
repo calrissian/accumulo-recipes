@@ -39,8 +39,9 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.rangestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.rangestore.support.Constants.DELIM;
 import static org.calrissian.mango.collect.Iterables2.emptyIterable;
 
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
@@ -113,14 +114,14 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 String low = helper.encode(range.getStart());
                 String high = helper.encode(range.getStop());
 
-                Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + DELIM + low + DELIM + high);
+                Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + NULL_BYTE + low + NULL_BYTE + high);
                 forwardRange.put(new Text(""), new Text(""), new Value("".getBytes()));
 
-                Mutation reverseRange = new Mutation(UPPER_BOUND_INDEX + DELIM + high + DELIM + low);
+                Mutation reverseRange = new Mutation(UPPER_BOUND_INDEX + NULL_BYTE + high + NULL_BYTE + low);
                 reverseRange.put(new Text(""), new Text(""), new Value("".getBytes()));
 
                 String distanceComplement = helper.encodeComplement(helper.distance(range));
-                Mutation distanceMut = new Mutation(DISTANCE_INDEX + DELIM + distanceComplement);
+                Mutation distanceMut = new Mutation(DISTANCE_INDEX + NULL_BYTE + distanceComplement);
                 distanceMut.put(new Text(low), new Text(high), new Value("".getBytes()));
 
                 writer.addMutation(forwardRange);
@@ -152,14 +153,14 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
                 String low = helper.encode(range.getStart());
                 String high = helper.encode(range.getStop());
 
-                Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + DELIM + low + DELIM + high);
+                Mutation forwardRange = new Mutation(LOWER_BOUND_INDEX + NULL_BYTE + low + NULL_BYTE + high);
                 forwardRange.putDelete(new Text(""), new Text(""));
 
-                Mutation reverseRange = new Mutation(UPPER_BOUND_INDEX + DELIM + high + DELIM + low);
+                Mutation reverseRange = new Mutation(UPPER_BOUND_INDEX + NULL_BYTE + high + NULL_BYTE + low);
                 reverseRange.putDelete(new Text(""), new Text(""));
 
                 String distanceComplement = helper.encodeComplement(helper.distance(range));
-                Mutation distanceMut = new Mutation(DISTANCE_INDEX + DELIM + distanceComplement);
+                Mutation distanceMut = new Mutation(DISTANCE_INDEX + NULL_BYTE + distanceComplement);
                 distanceMut.putDelete(new Text(low), new Text(high));
 
                 writer.addMutation(forwardRange);
@@ -187,7 +188,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         //Only need the top one, as it should be sorted by size.
         Entry<Key, Value> entry = iterator.next();
-        return helper.decodeComplement(entry.getKey().getRow().toString().split(DELIM)[1]);
+        return helper.decodeComplement(entry.getKey().getRow().toString().split(NULL_BYTE)[1]);
     }
 
     /**
@@ -197,8 +198,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
-                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
+                LOWER_BOUND_INDEX + NULL_BYTE + helper.encode(queryRange.getStart()) + NULL_BYTE,
+                LOWER_BOUND_INDEX + NULL_BYTE + helper.encode(queryRange.getStop()) + NULL_BYTE + END_BYTE
         ));
 
         return transform(scanner, new RangeTransform<T>(helper, true));
@@ -212,8 +213,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM,
-                UPPER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStop()) + DELIM + "\uffff"
+                UPPER_BOUND_INDEX + NULL_BYTE + helper.encode(queryRange.getStart()) + NULL_BYTE,
+                UPPER_BOUND_INDEX + NULL_BYTE + helper.encode(queryRange.getStop()) + NULL_BYTE + END_BYTE
         ));
 
         //Configure filter to remove any ranges that are fully contained in the criteria range, as they
@@ -246,8 +247,8 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
         //account for large intervals that are close but outside the range of the ranges already scanned.
         final Scanner scanner = connector.createScanner(tableName, auths);
         scanner.setRange(new org.apache.accumulo.core.data.Range(
-                LOWER_BOUND_INDEX + DELIM + helper.encode(helper.distance(new ValueRange<T>(maxDistance, queryRange.getStop()))) + DELIM, true,
-                LOWER_BOUND_INDEX + DELIM + helper.encode(queryRange.getStart()) + DELIM, false
+                LOWER_BOUND_INDEX + NULL_BYTE + helper.encode(helper.distance(new ValueRange<T>(maxDistance, queryRange.getStop()))) + NULL_BYTE, true,
+                LOWER_BOUND_INDEX + NULL_BYTE + helper.encode(queryRange.getStart()) + NULL_BYTE, false
         ));
 
         //Configure Filter to filter out any ranges that don't overlap the criteria range as they
@@ -298,7 +299,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         @Override
         public ValueRange<T> apply(Entry<Key, Value> entry) {
-            String vals[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), DELIM);
+            String vals[] = splitPreserveAllTokens(entry.getKey().getRow().toString(), NULL_BYTE);
             T lower = helper.decode(vals[lowIdx]);
             T upper = helper.decode(vals[highIdx]);
             return new ValueRange<T>(lower, upper);

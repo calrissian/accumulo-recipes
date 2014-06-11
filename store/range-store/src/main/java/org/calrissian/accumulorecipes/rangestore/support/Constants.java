@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.rangestore.support;
 
 public class Constants {
 
-    public static final int DEFAULT_ITERATOR_PRIORITY = 40;
-    public static final String DELIM = "\u0000";
+    private Constants() {/**private constructor*/}
 
+    public static final int DEFAULT_ITERATOR_PRIORITY = 40;
 }

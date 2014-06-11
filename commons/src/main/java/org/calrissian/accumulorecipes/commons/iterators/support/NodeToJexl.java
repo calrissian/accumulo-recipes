@@ -21,7 +21,8 @@ import org.calrissian.mango.types.TypeRegistry;
 import java.util.Collection;
 import java.util.Iterator;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.INNER_DELIM;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
 public class NodeToJexl {
 
@@ -76,63 +77,63 @@ public class NodeToJexl {
             builder.append("(");
             EqualsLeaf leaf = (EqualsLeaf) node;
             return builder.append(leaf.getKey()).append(" == '")
-                    .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getValue())).append("')")
                     .toString();
         } else if (node instanceof NotEqualsLeaf) {
             builder.append("(");
             NotEqualsLeaf leaf = (NotEqualsLeaf) node;
             return builder.append(leaf.getKey()).append(" != '")
-                    .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getValue())).append("')")
                     .toString();
         } else if (node instanceof RangeLeaf) {
             builder.append("(");
             RangeLeaf leaf = (RangeLeaf) node;
             return builder.append(leaf.getKey()).append(" >= '")
-                    .append(registry.getAlias(leaf.getStart())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getStart())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getStart())).append("')")
                     .append(" and (").append(leaf.getKey()).append(" <= '")
-                    .append(registry.getAlias(leaf.getEnd())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getEnd())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getEnd())).append("')")
                     .toString();
         } else if (node instanceof GreaterThanLeaf) {
             builder.append("(");
             GreaterThanLeaf leaf = (GreaterThanLeaf) node;
             return builder.append(leaf.getKey()).append(" > '")
-                    .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getValue())).append("')")
                     .toString();
         } else if (node instanceof GreaterThanEqualsLeaf) {
             builder.append("(");
             GreaterThanEqualsLeaf leaf = (GreaterThanEqualsLeaf) node;
             return builder.append(leaf.getKey()).append(" >= '")
-                    .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getValue())).append("')")
                     .toString();
         } else if (node instanceof LessThanLeaf) {
             builder.append("(");
             LessThanLeaf leaf = (LessThanLeaf) node;
             return builder.append(leaf.getKey()).append(" < '")
-                    .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getValue())).append("')")
                     .toString();
         } else if (node instanceof LessThanEqualsLeaf) {
             builder.append("(");
             LessThanEqualsLeaf leaf = (LessThanEqualsLeaf) node;
             return builder.append(leaf.getKey()).append(" <= '")
-                    .append(registry.getAlias(leaf.getValue())).append(INNER_DELIM)
+                    .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                     .append(registry.encode(leaf.getValue())).append("')")
                     .toString();
         } else if (node instanceof HasLeaf) {
             builder.append("(");
             HasLeaf leaf = (HasLeaf) node;
-            return builder.append(leaf.getKey()).append(" >= '\u0000')")
+            return builder.append(leaf.getKey()).append(" >= '").append(NULL_BYTE).append("')")
                     .toString();
         } else if (node instanceof HasNotLeaf) {
             builder.append("!(");
             HasNotLeaf leaf = (HasNotLeaf) node;
-            return builder.append(leaf.getKey()).append(" >= '\u0000')")
+            return builder.append(leaf.getKey()).append(" >= '").append(NULL_BYTE).append("')")
                     .toString();
         } else if (node instanceof InLeaf) {
             builder.append("(");
@@ -142,7 +143,7 @@ public class NodeToJexl {
             while(objectIterator.hasNext()) {
                 Object val = objectIterator.next();
                 builder.append(leaf.getKey()).append(" == '")
-                        .append(registry.getAlias(val)).append(INNER_DELIM)
+                        .append(registry.getAlias(val)).append(ONE_BYTE)
                         .append(registry.encode(val))
                         .toString();
 
@@ -160,7 +161,7 @@ public class NodeToJexl {
             while(objectIterator.hasNext()) {
                 Object val = objectIterator.next();
                 builder.append(leaf.getKey()).append(" != '")
-                        .append(registry.getAlias(val)).append(INNER_DELIM)
+                        .append(registry.getAlias(val)).append(ONE_BYTE)
                         .append(registry.encode(val))
                         .toString();
 

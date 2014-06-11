@@ -26,7 +26,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
-import org.calrissian.accumulorecipes.entitystore.model.EntityIndex;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.tinkerpop.model.EntityEdge;
@@ -35,11 +34,11 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -61,6 +60,10 @@ public class EntityVertexQueryTest {
     Entity edge2 = new EdgeEntity("edgeType2", "edgeId2", vertex1, "", vertex2, "", "label2");
     Entity vertex3 = new BaseEntity("vertexType2", "id3");
     Entity edge3 = new EdgeEntity("edgeType2", "edgeId3", vertex3, "", vertex1, "", "label1");
+
+    private static EntityIndex entityIndex(Entity entity) {
+        return new EntityIndex(entity.getType(), entity.getId());
+    }
 
     @Before
     public void start() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
@@ -117,52 +120,52 @@ public class EntityVertexQueryTest {
 
     @Test
     public void testCount_noQuery_defaultDirection() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         assertEquals(3, v1.query().count());
     }
 
 
     @Test
     public void testCount_noQuery_inDirection() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         assertEquals(1, v1.query().direction(IN).count());
     }
 
 
     @Test
     public void testCount_noQuery_outDirection() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         assertEquals(2, v1.query().direction(OUT).count());
     }
 
     @Test
     public void testCount_query_defaultDirection() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         assertEquals(1, v1.query().has("edgeProp1").count());
     }
 
     @Test
     public void testCount_query_inDirection() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex2));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex2));
         assertEquals(1, v1.query().direction(Direction.IN).has("edgeProp1").count());
     }
 
     @Test
     public void testCount_query_outDirection() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         assertEquals(1, v1.query().direction(Direction.OUT).has("edgeProp1").count());
     }
 
     @Test
     public void testVertexIds_noQuery_noLabels() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().vertexIds();
         System.out.println(vertexIds);
         assertEquals(3, size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
-        assertEquals(new EntityIndex(vertex3), Iterables.get(vertexIds, 0));
-        assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 1));
-        assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 2));
+        assertEquals(entityIndex(vertex3), Iterables.get(vertexIds, 0));
+        assertEquals(entityIndex(vertex2), Iterables.get(vertexIds, 1));
+        assertEquals(entityIndex(vertex2), Iterables.get(vertexIds, 2));
     }
 
     @Test
@@ -171,12 +174,12 @@ public class EntityVertexQueryTest {
         for (Map.Entry<Key, Value> entry : scanner) {
             System.out.println(entry);
         }
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().labels("label1").vertexIds();
         assertEquals(2, size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
-        assertEquals(new EntityIndex(vertex3), Iterables.get(vertexIds, 0));
-        assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 1));
+        assertEquals(entityIndex(vertex3), Iterables.get(vertexIds, 0));
+        assertEquals(entityIndex(vertex2), Iterables.get(vertexIds, 1));
     }
 
     @Test
@@ -186,17 +189,17 @@ public class EntityVertexQueryTest {
         for (Map.Entry<Key, Value> entry : scanner) {
             System.out.println(entry);
         }
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<EntityIndex> vertexIds =
                 (CloseableIterable<EntityIndex>) v1.query().has("edgeProp1").labels("label1").vertexIds();
         assertEquals(1, size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
-        assertEquals(new EntityIndex(vertex2), Iterables.get(vertexIds, 0));
+        assertEquals(entityIndex(vertex2), Iterables.get(vertexIds, 0));
     }
 
     @Test
     public void testVertices_noQuery_noLabels() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) v1.query().vertices();
         System.out.println(vertices);
         assertEquals(3, size(vertices));
@@ -209,7 +212,7 @@ public class EntityVertexQueryTest {
 
     @Test
     public void testVertices_noQuery_withLabels() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) v1.query().labels("label1").vertices();
         System.out.println(vertices);
         assertEquals(2, size(vertices));
@@ -220,7 +223,7 @@ public class EntityVertexQueryTest {
 
     @Test
     public void testVertices_query_withLabels() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<Vertex> vertices = (CloseableIterable<Vertex>) v1.query().has("edgeProp1", "edgeVal1").labels("label1").vertices();
         System.out.println(vertices);
         assertEquals(1, size(vertices));
@@ -230,7 +233,7 @@ public class EntityVertexQueryTest {
 
     @Test
     public void testEdges_noQuery_noLabels() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<Edge> edges = (CloseableIterable<Edge>) v1.query().edges();
         System.out.println(edges);
         assertEquals(3, size(edges));
@@ -243,7 +246,7 @@ public class EntityVertexQueryTest {
 
     @Test
     public void testEdges_noQuery_withLabels() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<Edge> edges = (CloseableIterable<Edge>) v1.query().labels("label1").edges();
         System.out.println(edges);
         assertEquals(2, size(edges));
@@ -254,7 +257,7 @@ public class EntityVertexQueryTest {
 
     @Test
     public void testEdges_query_withLabels() {
-        EntityVertex v1 = (EntityVertex) graph.getVertex(new EntityIndex(vertex1));
+        EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
         CloseableIterable<Edge> edges = (CloseableIterable<Edge>) v1.query().has("edgeProp1", "edgeVal1").labels("label1").edges();
         System.out.println(edges);
         assertEquals(1, size(edges));

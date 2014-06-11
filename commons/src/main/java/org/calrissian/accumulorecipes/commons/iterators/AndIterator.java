@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+
 public class AndIterator implements SortedKeyValueIterator<Key, Value> {
 
     public static final String columnFamiliesOptionName = "columnFamilies";
@@ -205,7 +207,7 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
         int idx = 0;
         String sKey = key.getColumnQualifier().toString();
 
-        idx = sKey.indexOf("\0");
+        idx = sKey.indexOf(NULL_BYTE);
         Text ret = new Text(sKey.substring(0, idx));
         return ret;
     }
@@ -220,7 +222,7 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
         int idx = 0;
         String sKey = key.getColumnQualifier().toString();
 
-        idx = sKey.indexOf("\0");
+        idx = sKey.indexOf(NULL_BYTE);
         return new Text(sKey.substring(idx + 1));
     }
 
@@ -234,7 +236,7 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
         int idx = 0;
         String sKey = key.getColumnQualifier().toString();
 
-        idx = sKey.indexOf("\0");
+        idx = sKey.indexOf(NULL_BYTE);
         return sKey.substring(idx + 1);
     }
 
@@ -366,7 +368,7 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
 
                     // seek to at least the currentRow
                     log.debug("ts.dataLocation = " + ts.dataLocation.getBytes());
-                    log.debug("Term = " + new Text(ts.term + "\0" + currentDocID).getBytes());
+                    log.debug("Term = " + new Text(ts.term + NULL_BYTE + currentDocID).getBytes());
                 }
 
                 Key seekKey = buildKey(currentRow, ts.dataLocation, nullText);// new Text(ts.term + "\0" + currentDocID));
@@ -474,7 +476,7 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
                 if (log.isDebugEnabled()) {
                     log.debug("Need to seek to the right term");
                 }
-                Key seekKey = buildKey(currentRow, ts.dataLocation, new Text(ts.term + "\0"));// new Text(ts.term + "\0" + currentDocID));
+                Key seekKey = buildKey(currentRow, ts.dataLocation, new Text(ts.term + NULL_BYTE));// new Text(ts.term + "\0" + currentDocID));
 
                 if (log.isDebugEnabled()) {
                     log.debug("Seeking to: " + seekKey);
@@ -546,7 +548,7 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
                 }
 
                 // seek forwards
-                Key seekKey = buildKey(currentRow, ts.dataLocation, new Text(ts.term + "\0" + currentDocID));
+                Key seekKey = buildKey(currentRow, ts.dataLocation, new Text(ts.term + NULL_BYTE + currentDocID));
 
                 if (log.isDebugEnabled()) {
                     log.debug("Seeking to: " + seekKey);
@@ -726,7 +728,7 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
                 // Build a key with the DocID if one is given
                 if (range.getStartKey().getColumnFamily() != null) {
                     sourceKey = buildKey(getPartition(range.getStartKey()), dataLocation,
-                            (sources[i].term == null) ? nullText : new Text(sources[i].term + "\0" + range.getStartKey().getColumnFamily()));
+                            (sources[i].term == null) ? nullText : new Text(sources[i].term + NULL_BYTE + range.getStartKey().getColumnFamily()));
                 } // Build a key with just the term.
                 else {
                     sourceKey = buildKey(getPartition(range.getStartKey()), dataLocation,
