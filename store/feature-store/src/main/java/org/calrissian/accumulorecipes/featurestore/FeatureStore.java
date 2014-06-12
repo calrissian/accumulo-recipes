@@ -46,6 +46,6 @@ public interface FeatureStore {
     /**
      * Queries features back from the store for a group and multiple types
      */
-    <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, Set<String> types,
-                                                   String name, TimeUnit timeUnit, Class<T> featureType, Auths auths);
+    <T extends Feature> CloseableIterable<T> queryTypes(Date start, Date end, String group, Set<String> types,
+                                                        String name, TimeUnit timeUnit, Class<T> featureType, Auths auths);
 }

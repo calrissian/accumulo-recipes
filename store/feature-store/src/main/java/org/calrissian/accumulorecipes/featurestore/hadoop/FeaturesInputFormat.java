@@ -50,7 +50,7 @@ import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 
 /**
- * A Hadoop {@link InputFormat} that allows any Feature to be streamed into a map/reduce job based on a given query.
+ * A Hadoop {@link InputFormat} that allows any Feature to be streamed into a map/reduce job based on a given queryTypes.
  */
 public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
@@ -64,7 +64,7 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
     /**
      * Query for a specific set of feature rollups for a specific time range and unit of time. At a minimum, a group
-     * needs to be specified. Type and name are optional. The requested feature type to query determines the vector
+     * needs to be specified. Type and name are optional. The requested feature type to queryTypes determines the vector
      * that will be streamed into the map/reduce job. A registry allows pluggable feature types to be propagated down
      * to a store where features have been ingested with matching feature configs.
      *
