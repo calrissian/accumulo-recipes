@@ -63,7 +63,7 @@ public class EventLoaderTest {
 
         MockRecordReader<String, EventWritable> mockRecordReader = new MockRecordReader<String, EventWritable>(mocks);
 
-        EventLoader loader = new EventLoader();
+        EventLoader loader = new EventLoader("q.eq('key','val')");
         loader.prepareToRead(mockRecordReader, new PigSplit());
 
         org.apache.pig.data.Tuple t;
@@ -111,8 +111,8 @@ public class EventLoaderTest {
         Job job = new Job();
         URI location = new URI("event://eventStore_index/eventStore_shard?user=root&pass=&inst=" +
                 inst + "&zk=" + zk  +
-                "&query=q.eq('key','val')&start=2014-01-01&end=2014-01-02&auths=");
-        EventLoader loader = new EventLoader();
+                "&start=2014-01-01&end=2014-01-02&auths=");
+        EventLoader loader = new EventLoader("q.eq('key','val')");
         loader.setLocation(location.toString(), job);
 
 

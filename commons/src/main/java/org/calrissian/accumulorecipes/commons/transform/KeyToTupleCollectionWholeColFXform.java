@@ -23,8 +23,11 @@ import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,6 +39,7 @@ import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visi
 
 public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
 
+    public static final Logger log = LoggerFactory.getLogger(KeyToTupleCollectionWholeColFXform.class);
 
     private Set<String> selectFields;
     private Kryo kryo;
@@ -71,7 +75,14 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], ONE_BYTE);
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
 
-                Map<String, Object> metadata = metadataSerDe.deserialize(curEntry.getValue().get());
+                Map<String, Object> metadata = new HashMap<String, Object>();
+                try {
+                    Map<String,Object> meta = metadataSerDe.deserialize(curEntry.getValue().get());
+                    if(meta != null)
+                        metadata.putAll(meta);
+                } catch(Exception e) {
+                    log.error("There was an error deserializing metadata for tuple.", e);
+                }
                 setVisibility(metadata, visibility);
                 Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
 

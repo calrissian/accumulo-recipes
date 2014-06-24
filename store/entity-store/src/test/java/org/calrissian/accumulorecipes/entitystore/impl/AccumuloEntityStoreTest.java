@@ -91,6 +91,34 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
+    public void testGreaterThan() throws Exception {
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1"));
+        entity.put(new Tuple("key2", 1));
+
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", "val1"));
+        entity2.put(new Tuple("key2", 9));
+
+        store.save(asList(entity, entity2));
+
+        Scanner scanner = connector.createScanner(DEFAULT_SHARD_TABLE_NAME, new Authorizations());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            System.out.println("ENTRY: " + entry);
+        }
+
+        CloseableIterable<Entity> actualEntity = store.query(singleton("type"), new QueryBuilder().greaterThan("key2", 8).build(), null, new Auths());
+
+        assertEquals(1, Iterables.size(actualEntity));
+        Entity actual = actualEntity.iterator().next();
+        assertEquals(new HashSet(actual.getTuples()), new HashSet(entity2.getTuples()));
+        assertEquals(actual.getId(), entity2.getId());
+        assertEquals(actual.getType(), entity2.getType());
+    }
+
+
+    @Test
     public void testGet_withSelection() throws Exception {
 
         Entity entity = new BaseEntity("type", "id");

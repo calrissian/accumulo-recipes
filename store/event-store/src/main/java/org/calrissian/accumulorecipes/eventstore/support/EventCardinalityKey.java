@@ -29,11 +29,10 @@ public class EventCardinalityKey extends BaseCardinalityKey {
         if (row.startsWith(INDEX_V)) {
 
             this.alias = row.substring(row.indexOf("_") + 1, row.indexOf("__"));
-            this.normalizedValue = row.substring(row.indexOf("__") + 2, row.length());
+            this.normalizedValue = row.substring(row.indexOf("__") +2, row.length());
             this.key = key.getColumnFamily().toString();
         } else if (row.startsWith(INDEX_K)) {
-
-            this.key = row.substring(row.indexOf("_"), row.length());
+            this.key = row.substring(row.indexOf("_")+1, row.length());
             this.alias = key.getColumnFamily().toString();
         }
     }

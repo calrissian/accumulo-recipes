@@ -98,6 +98,40 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
+    public void testGreaterThan() throws Exception {
+
+        long time = currentTimeMillis();
+        Event event = new BaseEvent(UUID.randomUUID().toString(), time);
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", 1));
+
+        Event event2 = new BaseEvent(UUID.randomUUID().toString(), time);
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", 10));
+
+        store.save(asList(event, event2));
+
+        Scanner scanner = connector.createScanner("eventStore_index", new Authorizations());
+        for (Map.Entry<Key, Value> entry : scanner) {
+            System.out.println(entry);
+        }
+
+        CloseableIterable<Event> actualEvent = store.query(new Date(time), new Date(time), new QueryBuilder().greaterThan("key2", 9).build(), null, new Auths());
+
+        assertEquals(1, size(actualEvent));
+        Event actual = actualEvent.iterator().next();
+        assertEquals(new HashSet(actual.getTuples()), new HashSet(event2.getTuples()));
+        assertEquals(actual.getId(), event2.getId());
+        assertEquals(actual.getTimestamp(), event2.getTimestamp());
+
+        actualEvent = store.query(new Date(time), new Date(time), new QueryBuilder().greaterThan("key2", 0).build(), null, new Auths());
+
+
+        assertEquals(2, size(actualEvent));
+
+    }
+
+    @Test
     public void test_TimeLimit() throws Exception {
 
         long currentTime = System.currentTimeMillis();

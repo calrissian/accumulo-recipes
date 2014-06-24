@@ -64,7 +64,8 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
         String id = dataInput.readUTF();
 
         entity = new BaseEntity(entityType, id);
-        for (int i = 0; i < dataInput.readInt(); i++) {
+        int tupleSize = dataInput.readInt();
+        for (int i = 0; i < tupleSize; i++) {
             tupleWritable.readFields(dataInput);
             entity.put(tupleWritable.get());
         }

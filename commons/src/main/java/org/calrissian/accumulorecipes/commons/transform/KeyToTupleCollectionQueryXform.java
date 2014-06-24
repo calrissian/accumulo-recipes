@@ -24,7 +24,10 @@ import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +37,8 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 
 public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
+
+    public static final Logger log = LoggerFactory.getLogger(KeyToTupleCollectionQueryXform.class);
 
     private Set<String> selectFields;
     private Kryo kryo;
@@ -70,12 +75,20 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                 Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
 
                 String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
-                Map<String,Object> metadata = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
+
+                Map<String,Object> metadata = new HashMap<String, Object>();
+                try {
+                    Map<String,Object> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
+                    if(meta != null)
+                        metadata.putAll(meta);
+                } catch(Exception e) {
+                    log.error("There was an error deserializing the metadata for a tuple", e);
+                }
+
                 setVisibility(metadata, vis);
                 Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
 
                 entry.put(tuple);
-
             }
         }
         return entry;

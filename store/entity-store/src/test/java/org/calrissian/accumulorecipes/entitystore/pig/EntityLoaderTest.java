@@ -69,7 +69,7 @@ public class EntityLoaderTest {
 
         MockRecordReader<String, EntityWritable> mockRecordReader = new MockRecordReader<String, EntityWritable>(mocks);
 
-        EntityLoader loader = new EntityLoader();
+        EntityLoader loader = new EntityLoader("q.eq('key','val')");
         loader.prepareToRead(mockRecordReader, new PigSplit());
 
         org.apache.pig.data.Tuple t;
@@ -117,8 +117,8 @@ public class EntityLoaderTest {
         Job job = new Job();
         URI location = new URI("entity://eventStore_index/eventStore_shard?user=root&pass=&inst=" +
                 inst + "&zk=" + zk  +
-                "&query=q.eq('key','val')&types=myType&auths=");
-        EntityLoader loader = new EntityLoader();
+                "&types=myType&auths=");
+        EntityLoader loader = new EntityLoader("q.eq('key','val')");
         loader.setLocation(location.toString(), job);
 
 

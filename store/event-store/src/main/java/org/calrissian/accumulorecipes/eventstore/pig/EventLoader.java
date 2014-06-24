@@ -19,6 +19,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.lang.StringUtils;
@@ -46,6 +47,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
@@ -53,74 +56,78 @@ import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class EventLoader extends LoadFunc {
 
-    public static final String USAGE = "Usage: event://indexTable/shardTable?user=&pass=&inst=&zk=&query=&start=&end=&auths=[&fields=]";
+    public static final String USAGE = "Usage: event://indexTable/shardTable?user=&pass=&inst=&zk=&start=&end=&auths=[&fields=]";
 
     protected TupleStoreIterator<Event> itr;
     protected TypeRegistry<String> registry = SIMPLE_TYPES;
+
+    protected QueryBuilder qb;
+
+    public EventLoader(String query) {
+        checkNotNull(query);
+        checkArgument(!query.equals(""));
+
+        try {
+            // call groovy expressions from Java code
+            Binding binding = new Binding();
+            binding.setVariable("q", new QueryBuilder());
+            GroovyShell shell = new GroovyShell(binding);
+            qb = (QueryBuilder) shell.evaluate(query);
+        } catch(Exception e) {
+            throw new RuntimeException("There was an error parsing the groovy query string. ");
+        }
+
+    }
 
     @Override
     public void setLocation(String uri, Job job) throws IOException {
 
         Configuration conf = job.getConfiguration();
+        if(!conf.getBoolean(AccumuloInputFormat.class.getSimpleName() + ".configured", false)) {
+            String path = uri.substring(uri.indexOf("://")+3, uri.indexOf("?"));
 
-        String path = uri.substring(uri.indexOf("://")+3, uri.indexOf("?"));
+            String[] indexAndShardTable = StringUtils.splitPreserveAllTokens(path, "/");
+            if(indexAndShardTable.length != 2)
+                throw new IOException("Path portion of URI must contain the index and shard tables. " + USAGE);
 
-        String[] indexAndShardTable = StringUtils.splitPreserveAllTokens(path, "/");
-        if(indexAndShardTable.length != 2)
-            throw new IOException("Path portion of URI must contain the index and shard tables. " + USAGE);
+            if(uri.startsWith("event")) {
+                String queryPortion = uri.substring(uri.indexOf("?")+1, uri.length());
+                Multimap<String, String> queryParams = UriUtils.splitQuery(queryPortion);
 
-        if(uri.startsWith("event")) {
-            String queryPortion = uri.substring(uri.indexOf("?")+1, uri.length());
-            Multimap<String, String> queryParams = UriUtils.splitQuery(queryPortion);
+                String accumuloUser = getProp(queryParams, "user");
+                String accumuloPass = getProp(queryParams, "pass");
+                String accumuloInst = getProp(queryParams, "inst");
+                String zookeepers = getProp(queryParams, "zk");
+                if(accumuloUser == null || accumuloPass == null || accumuloInst == null || zookeepers == null)
+                    throw new IOException("Some Accumulo connection information is missing. Must supply username, password, instance, and zookeepers. " + USAGE);
 
-            String accumuloUser = getProp(queryParams, "user");
-            String accumuloPass = getProp(queryParams, "pass");
-            String accumuloInst = getProp(queryParams, "inst");
-            String zookeepers = getProp(queryParams, "zk");
-            if(accumuloUser == null || accumuloPass == null || accumuloInst == null || zookeepers == null)
-                throw new IOException("Some Accumulo connection information is missing. Must supply username, password, instance, and zookeepers. " + USAGE);
+                String startTime = getProp(queryParams, "start");
+                String endTime = getProp(queryParams, "end");
+                if(startTime == null || endTime == null)
+                    throw new IOException("Start and end times are required. " + USAGE);
 
-            String query = getProp(queryParams, "query");
-            if(query == null)
-                throw new IOException("Query builder groovy string must be supplied in the form of: q.and().eq('key1', 'val1').end(). ");
+                String auths = getProp(queryParams, "auths");
+                if(auths == null)
+                    auths = "";     // default auths to empty
+                String selectFields = getProp(queryParams, "fields");
 
-            String startTime = getProp(queryParams, "start");
-            String endTime = getProp(queryParams, "end");
-            if(startTime == null || endTime == null)
-                throw new IOException("Start and end times are required. " + USAGE);
+                Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;
 
-            String auths = getProp(queryParams, "auths");
-            if(auths == null)
-                auths = "";     // default auths to empty
-            String selectFields = getProp(queryParams, "fields");
+                DateTime startDT = DateTime.parse(startTime);
+                DateTime endDT = DateTime.parse(endTime);
 
-            Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;
-
-            DateTime startDT = DateTime.parse(startTime);
-            DateTime endDT = DateTime.parse(endTime);
-
-            QueryBuilder qb;
-            try {
-                // call groovy expressions from Java code
-                Binding binding = new Binding();
-                binding.setVariable("q", new QueryBuilder());
-                GroovyShell shell = new GroovyShell(binding);
-                qb = (QueryBuilder) shell.evaluate(query);
-            } catch(Exception e) {
-                throw new IOException("There was an error parsing the groovy query string. " + USAGE);
+                EventInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
+                EventInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                try {
+                    EventInputFormat.setQueryInfo(conf, startDT.toDate(), endDT.toDate(), qb.build());
+                    if(fields != null)
+                        EventInputFormat.setSelectFields(conf, fields);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                throw new IOException("Location uri must begin with event://");
             }
-
-            EventInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
-            EventInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
-            try {
-                EventInputFormat.setQueryInfo(conf, startDT.toDate(), endDT.toDate(), qb.build());
-                if(fields != null)
-                    EventInputFormat.setSelectFields(conf, fields);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            throw new IOException("Location uri must begin with event://");
         }
     }
 
