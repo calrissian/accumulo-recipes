@@ -15,17 +15,22 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import com.google.common.base.Function;
+import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
+import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
+import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
@@ -33,21 +38,35 @@ import org.calrissian.mango.types.TypeRegistry;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 public class EventKeyValueIndex implements KeyValueIndex<Event> {
 
     private ShardBuilder<Event> shardBuilder;
     private TypeRegistry<String> typeRegistry;
 
+    private String indexTable;
+    private Connector connector;
+
     private BatchWriter writer;
+
+    private StoreConfig config;
 
     public EventKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Event> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException {
         this.shardBuilder = shardBuilder;
         this.typeRegistry = typeRegistry;
+
+        this.indexTable = indexTable;
+        this.connector = connector;
+
+        this.config = config;
 
         writer = connector.createBatchWriter(indexTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
@@ -102,6 +121,33 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
             } catch (MutationsRejectedException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, Auths auths) {
+
+        checkNotNull(prefix);
+        checkNotNull(auths);
+
+        try {
+            BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+            IteratorSetting setting = new IteratorSetting(15, FirstEntryInColumnIterator.class);
+            scanner.addScanIterator(setting);
+
+            scanner.setRanges(singletonList(
+                new Range(INDEX_K + "_" + prefix + Constants.NULL_BYTE,
+                          INDEX_K + "_" + prefix + Constants.END_BYTE))
+            );
+
+            return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
+                @Override
+                public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
+                    EventCardinalityKey key = new EventCardinalityKey(keyValueEntry.getKey());
+                    return new Pair<String, String>(key.getKey(), key.getAlias());
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
