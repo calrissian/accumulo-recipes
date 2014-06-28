@@ -42,6 +42,7 @@ import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.uri.support.UriUtils;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -53,7 +54,7 @@ import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
-public class EntityLoader extends LoadFunc {
+public class EntityLoader extends LoadFunc implements Serializable {
 
     public static final String USAGE = "Usage: entity://indexTable/shardTable?user=&pass=&inst=&zk=&types=&auths=[&fields=]";
 
