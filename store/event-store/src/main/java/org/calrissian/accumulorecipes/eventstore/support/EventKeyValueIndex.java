@@ -49,15 +49,12 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
 
 public class EventKeyValueIndex implements KeyValueIndex<Event> {
 
-    private ShardBuilder<Event> shardBuilder;
-    private TypeRegistry<String> typeRegistry;
-
-    private String indexTable;
-    private Connector connector;
-
-    private BatchWriter writer;
-
-    private StoreConfig config;
+    private final ShardBuilder<Event> shardBuilder;
+    private final TypeRegistry<String> typeRegistry;
+    private final String indexTable;
+    private final Connector connector;
+    private final BatchWriter writer;
+    private final StoreConfig config;
 
     public EventKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Event> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException {
         this.shardBuilder = shardBuilder;

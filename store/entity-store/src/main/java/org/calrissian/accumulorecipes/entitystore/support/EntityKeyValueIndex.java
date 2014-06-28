@@ -40,10 +40,10 @@ import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visi
 
 public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
 
-    private ShardBuilder<Entity> shardBuilder;
-    private TypeRegistry<String> typeRegistry;
+    private final ShardBuilder<Entity> shardBuilder;
+    private final TypeRegistry<String> typeRegistry;
 
-    private BatchWriter writer;
+    private final BatchWriter writer;
 
     public EntityKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Entity> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException {
         this.shardBuilder = shardBuilder;
