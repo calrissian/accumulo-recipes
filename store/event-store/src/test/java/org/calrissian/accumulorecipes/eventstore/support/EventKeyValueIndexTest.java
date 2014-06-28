@@ -4,6 +4,8 @@ import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.eventstore.EventStore;
+import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
@@ -22,8 +24,10 @@ public class EventKeyValueIndexTest {
 
         Instance instance = new MockInstance();
         Connector connector = instance.getConnector("root", "".getBytes());
+        EventStore eventStore = new AccumuloEventStore(connector);
 
-        EventKeyValueIndex eventKeyValueIndex = new EventKeyValueIndex(
+
+         EventKeyValueIndex eventKeyValueIndex = new EventKeyValueIndex(
             connector, "eventStore_index", DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG,
                 LEXI_TYPES
         );
@@ -38,11 +42,11 @@ public class EventKeyValueIndexTest {
         event2.put(new Tuple("key3", true));
         event2.put(new Tuple("aKey", 1));
 
-        eventKeyValueIndex.indexKeyValues(Arrays.asList(new Event[] {event, event2}));
+        eventStore.save(Arrays.asList(new Event[] {event, event2}));
 
         dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
-        assertEquals(4, Iterables.size(eventKeyValueIndex.uniqueKeys("", new Auths())));
+        assertEquals(5, Iterables.size(eventKeyValueIndex.uniqueKeys("", new Auths())));
 
 
     }
