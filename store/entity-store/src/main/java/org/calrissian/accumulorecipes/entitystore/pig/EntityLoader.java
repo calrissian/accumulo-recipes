@@ -76,6 +76,9 @@ public class EntityLoader extends LoadFunc {
 
     }
 
+    public EntityLoader() { // this will load all entities by type
+    }
+
     @Override
     public void setLocation(String uri, Job job) throws IOException {
 
@@ -116,7 +119,11 @@ public class EntityLoader extends LoadFunc {
                 EntityInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
                 EntityInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
                 try {
-                    EntityInputFormat.setQueryInfo(conf, entitytypes, qb.build());
+                    if(qb != null)
+                        EntityInputFormat.setQueryInfo(conf, entitytypes, qb.build());
+                    else
+                        EntityInputFormat.setQueryInfo(conf, entitytypes);
+
                     if(fields != null)
                         EntityInputFormat.setSelectFields(conf, fields);
                 } catch (Exception e) {
