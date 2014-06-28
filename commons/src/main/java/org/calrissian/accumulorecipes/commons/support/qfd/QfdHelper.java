@@ -210,8 +210,12 @@ public abstract class QfdHelper<T extends TupleStore> {
         Set<String> shards = optimizer.getShards();
 
         Collection<Range> ranges = new HashSet<Range>();
-        for (String shard : shards)
-            ranges.add(new Range(shard));
+        if(jexl.equals("()") || jexl.equals("")) {
+            ranges.add(new Range(END_BYTE));
+        } else {
+            for (String shard : shards)
+                ranges.add(new Range(shard));
+        }
 
         scanner.setRanges(ranges);
 

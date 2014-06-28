@@ -46,6 +46,7 @@ import java.util.Map;
 
 import static org.apache.accumulo.core.util.format.DefaultFormatter.formatEntry;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 
 public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settable> extends InputFormatBase<Key, W> {
 
@@ -54,15 +55,20 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
         QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor, typeRegistry);
         NodeToJexl nodeToJexl = new NodeToJexl(typeRegistry);
         String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+        String originalJexl = nodeToJexl.transform(query);
 
         Collection<Range> ranges = new ArrayList<Range>();
-        for (String shard : optimizer.getShards())
-            ranges.add(new Range(shard));
+        if(jexl.equals("()") || jexl.equals("")) {
+            ranges.add(new Range(END_BYTE));
+        } else {
+            for (String shard : optimizer.getShards())
+                ranges.add(new Range(shard));
+        }
 
         setRanges(config, ranges);
 
         IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-        setting.addOption(BooleanLogicIterator.QUERY_OPTION, jexl);
+        setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
         setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
         addIterator(config, setting);
