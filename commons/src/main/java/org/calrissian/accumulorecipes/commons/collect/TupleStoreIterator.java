@@ -37,13 +37,13 @@ public class TupleStoreIterator<T extends TupleStore> extends AbstractIterator<T
     @Override
     protected Tuple computeNext() {
 
-        if((tuples == null || !tuples.hasNext()) &&
+        while((tuples == null || !tuples.hasNext()) &&
                 tupleCollections.hasNext()) {
             curTupleCollection = tupleCollections.next();
             tuples = curTupleCollection.getTuples().iterator();
         }
 
-        if(tuples.hasNext())
+        if(tuples != null && tuples.hasNext())
             return tuples.next();
 
         return endOfData();
