@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.graphstore.tinkerpop.model;
 
+import com.google.common.base.Preconditions;
 import com.tinkerpop.blueprints.Element;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
@@ -50,6 +51,13 @@ public class EntityElement implements Element {
 
     @Override
     public <T> T getProperty(String s) {
+        checkNotNull(s);
+        if(s.equals("type"))
+            return (T) entity.getType();
+
+        if(entity.get(s) == null)
+            return null;
+
         return entity.<T>get(s).getValue();
     }
 
@@ -60,11 +68,14 @@ public class EntityElement implements Element {
 
     @Override
     public void setProperty(String s, Object o) {
+        checkNotNull(s);
+        checkNotNull(o);
         entity.put(new Tuple(s, o));
     }
 
     @Override
     public <T> T removeProperty(String s) {
+        Preconditions.checkNotNull(s);
         return (T) entity.remove(s).getValue();
     }
 
