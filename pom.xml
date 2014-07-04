@@ -18,7 +18,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.calrissian.accumulorecipes</groupId>
   <artifactId>accumulorecipes-parent</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Accumulo Recipes - Parent</name>
   <description>The Accumulo Recipes project aims to provide reusable services for architectures utilizing Apache
