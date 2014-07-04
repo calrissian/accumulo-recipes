@@ -15,11 +15,11 @@
  */
 package org.calrissian.accumulorecipes.commons.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.Job;
 import org.junit.Test;
+
+import java.io.IOException;
 
 import static org.junit.Assert.assertTrue;
 
@@ -30,7 +30,7 @@ public class GroupedKeyRangePartitionerTest {
             new Text("b\u0000\uffff")};
 
     @Test
-    public void testNoSubBins() {
+    public void testNoSubBins() throws IOException {
         for (int i = -2; i < 2; ++i) {
             checkExpectedBins("a", i, new String[]{"A", "B", "C"}, new int[]{1, 2, 3});
             checkExpectedBins("b", i, new String[]{"C", "A", "B"}, new int[]{5, 5, 5});
@@ -39,7 +39,7 @@ public class GroupedKeyRangePartitionerTest {
     }
 
     @Test
-    public void testSubBins() {
+    public void testSubBins() throws IOException {
         checkExpectedRangeBins("a", 2, new String[]{"A", "B", "C"}, new int[]{3, 5, 7});
         checkExpectedRangeBins("a", 2, new String[]{"C", "A", "B"}, new int[]{7, 3, 5});
         checkExpectedRangeBins("a", 2, new String[]{"", "AA", "BB", "CC"}, new int[]{1, 5, 6, 7});
@@ -54,15 +54,15 @@ public class GroupedKeyRangePartitionerTest {
 
     }
 
-    private GroupedKeyRangePartitioner prepPartitioner(int numSubBins) {
-        JobContext job = new JobContext(new Configuration(), new JobID());
+    private GroupedKeyRangePartitioner prepPartitioner(int numSubBins) throws IOException {
+        Job job = new Job();
         GroupedKeyRangePartitioner.setNumSubBins(job, numSubBins);
         GroupedKeyRangePartitioner rp = new GroupedKeyRangePartitioner();
         rp.setConf(job.getConfiguration());
         return rp;
     }
 
-    private void checkExpectedRangeBins(String group, int numSubBins, String[] strings, int[] rangeEnds) {
+    private void checkExpectedRangeBins(String group, int numSubBins, String[] strings, int[] rangeEnds) throws IOException {
         assertTrue(strings.length == rangeEnds.length);
         for (int i = 0; i < strings.length; i++) {
             int endRange = rangeEnds[i];
@@ -73,7 +73,7 @@ public class GroupedKeyRangePartitionerTest {
         }
     }
 
-    private void checkExpectedBins(String group, int numSubBins, String[] strings, int[] bins) {
+    private void checkExpectedBins(String group, int numSubBins, String[] strings, int[] bins) throws IOException {
         assertTrue(strings.length == bins.length);
         for (int i = 0; i < strings.length; i++) {
             int bin = bins[i], part = prepPartitioner(numSubBins).findPartition(group, new Text(strings[i]), cutArray, numSubBins);

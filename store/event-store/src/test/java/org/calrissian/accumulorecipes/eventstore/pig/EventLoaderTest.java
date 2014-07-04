@@ -18,9 +18,9 @@ package org.calrissian.accumulorecipes.eventstore.pig;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
@@ -44,14 +44,14 @@ import java.util.*;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 
-public class EventLoaderTest {
+public class EventLoaderTest extends AccumuloInputFormat {
 
     Event event;
-    Configuration conf;
+    Job job;
 
     @Before
     public void setup() throws IOException {
-        conf = new Configuration();
+        job = new Job();
     }
 
     @Test
@@ -119,14 +119,12 @@ public class EventLoaderTest {
         cluster.stop();
         folder.delete();
 
-        String CONFIG_PREFIX = AccumuloInputFormat.class.getSimpleName() + ".";
-        assertEquals(true, job.getConfiguration().getBoolean(CONFIG_PREFIX + "instanceConfigured", false));
-        assertEquals(true, job.getConfiguration().getBoolean(CONFIG_PREFIX + "configured", false));
-        assertEquals("root", job.getConfiguration().get(CONFIG_PREFIX + "username"));
-        assertEquals("", job.getConfiguration().get(CONFIG_PREFIX + "password"));
-        assertEquals(zk, job.getConfiguration().get(CONFIG_PREFIX + "zooKeepers"));
-        assertEquals(inst, job.getConfiguration().get(CONFIG_PREFIX + "instanceName"));
-        assertEquals("eventStore_shard", job.getConfiguration().get(CONFIG_PREFIX + "tablename"));
+        assertEquals(true, isConnectorInfoSet(job));
+        assertEquals("root", getPrincipal(job));
+        assertEquals(new PasswordToken(""), getAuthenticationToken(job));
+        assertEquals(zk, getInstance(job).getZooKeepers());
+        assertEquals(inst, getInstance(job).getInstanceName());
+        assertEquals("eventStore_shard", getInputTableName(job));
 
     }
 
@@ -139,9 +137,9 @@ public class EventLoaderTest {
         event.put(new Tuple("key2", false));
         store.save(singleton(event));
 
-        EventInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());
-        EventInputFormat.setMockInstance(conf, "instName");
-        EventInputFormat.setQueryInfo(conf, new Date(System.currentTimeMillis() - 50000), new Date(),
+        EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        EventInputFormat.setMockInstance(job, "instName");
+        EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(),
                 new QueryBuilder().eq("key1", "val1").build());
 
     }

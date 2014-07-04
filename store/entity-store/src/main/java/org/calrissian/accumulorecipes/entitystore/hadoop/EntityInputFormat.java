@@ -18,12 +18,14 @@ package org.calrissian.accumulorecipes.entitystore.hadoop;
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
@@ -54,41 +56,43 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
     private static final String QUERY = "query";
     private static final String TYPE_REGISTRY = "typeRegistry";
 
-    public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
-        setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
+    public static void setInputInfo(Job job, String username, byte[] password, Authorizations auths) throws AccumuloSecurityException {
+        setConnectorInfo(job, username, new PasswordToken(password));
+        setInputTableName(job, DEFAULT_SHARD_TABLE_NAME);
+        setScanAuthorizations(job, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-        setQueryInfo(config, entityTypes, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+    public static void setQueryInfo(Job job, Set<String> entityTypes, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(job, entityTypes, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes, Node query, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+    public static void setQueryInfo(Job job, Set<String> entityTypes, Node query, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
-        validateOptions(config);
+        validateOptions(job);
 
-        Instance instance = getInstance(config);
-        Connector connector = instance.getConnector(getUsername(config), getPassword(config));
-        BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
+        Instance instance = getInstance(job);
+        Connector connector = instance.getConnector(getPrincipal(job), getAuthenticationToken(job));
+        BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getScanAuthorizations(job), 5);
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(scanner, shardBuilder, entityTypes);
 
-        configureScanner(config, query, globalIndexVisitor, typeRegistry);
+        configureScanner(job, query, globalIndexVisitor, typeRegistry);
 
-        config.setBoolean(QUERY, true);
-        config.set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
+        job.getConfiguration().setBoolean(QUERY, true);
+        job.getConfiguration().set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
     }
 
     public static void setMetadataSerDe(Configuration configuration, MetadataSerDe metadataSerDe) throws IOException {
         configuration.set("metadataSerDe", new String(toBase64(metadataSerDe)));
     }
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-        setQueryInfo(config, entityTypes, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+    public static void setQueryInfo(Job job, Set<String> entityTypes) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(job, entityTypes, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
 
 
-    public static void setQueryInfo(Configuration config, Set<String> entityTypes, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+    public static void setQueryInfo(Job job, Set<String> entityTypes, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
-        validateOptions(config);
+        validateOptions(job);
 
         Collection<Range> ranges = new LinkedList<Range>();
         for (String type : entityTypes) {
@@ -97,13 +101,13 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
                 ranges.add(prefix(shard.toString(), type));
         }
 
-        setRanges(config, ranges);
+        setRanges(job, ranges);
 
         IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-        addIterator(config, iteratorSetting);
+        addIterator(job, iteratorSetting);
 
-        config.setBoolean(QUERY, false);
-        config.set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
+        job.getConfiguration().setBoolean(QUERY, false);
+        job.getConfiguration().set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
     }
 
     /**

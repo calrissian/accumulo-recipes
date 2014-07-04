@@ -18,9 +18,9 @@ package org.calrissian.accumulorecipes.entitystore.pig;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.entitystore.hadoop.EntityInputFormat;
@@ -50,14 +50,16 @@ import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStor
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
-public class EntityLoaderTest {
+public class EntityLoaderTest extends AccumuloInputFormat {
 
     Entity entity;
-    Configuration conf;
+    Job job;
+
+
 
     @Before
     public void setup() throws IOException {
-        conf = new Configuration();
+        job = new Job();
     }
 
     @Test
@@ -125,14 +127,12 @@ public class EntityLoaderTest {
         cluster.stop();
         folder.delete();
 
-        String CONFIG_PREFIX = AccumuloInputFormat.class.getSimpleName() + ".";
-        assertEquals(true, job.getConfiguration().getBoolean(CONFIG_PREFIX + "instanceConfigured", false));
-        assertEquals(true, job.getConfiguration().getBoolean(CONFIG_PREFIX + "configured", false));
-        assertEquals("root", job.getConfiguration().get(CONFIG_PREFIX + "username"));
-        assertEquals("", job.getConfiguration().get(CONFIG_PREFIX + "password"));
-        assertEquals(zk, job.getConfiguration().get(CONFIG_PREFIX + "zooKeepers"));
-        assertEquals(inst, job.getConfiguration().get(CONFIG_PREFIX + "instanceName"));
-        assertEquals(DEFAULT_SHARD_TABLE_NAME, job.getConfiguration().get(CONFIG_PREFIX + "tablename"));
+        assertEquals(true, isConnectorInfoSet(job));
+        assertEquals("root", getPrincipal(job));
+        assertEquals(new PasswordToken(""), getAuthenticationToken(job));
+        assertEquals(inst, getInstance(job).getInstanceName());
+        assertEquals(zk, getInstance(job).getZooKeepers());
+        assertEquals(DEFAULT_SHARD_TABLE_NAME, getInputTableName(job));
 
     }
 
@@ -145,9 +145,9 @@ public class EntityLoaderTest {
         entity.put(new Tuple("key2", false));
         store.save(singleton(entity));
 
-        EntityInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());
-        EntityInputFormat.setMockInstance(conf, "instName");
-        EntityInputFormat.setQueryInfo(conf, Collections.singleton("myType"),
+        EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        EntityInputFormat.setMockInstance(job, "instName");
+        EntityInputFormat.setQueryInfo(job, Collections.singleton("myType"),
                 new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
 
     }

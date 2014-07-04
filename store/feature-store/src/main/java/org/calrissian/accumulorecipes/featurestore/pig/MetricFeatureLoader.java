@@ -16,10 +16,10 @@
 package org.calrissian.accumulorecipes.featurestore.pig;
 
 import com.google.common.collect.Multimap;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -31,27 +31,21 @@ import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
-import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.uri.support.UriUtils;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.util.Collection;
 
-import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
-
 public class MetricFeatureLoader extends LoadFunc {
 
     public static final String USAGE = "Usage: metrics://tablePrefix?user=&pass=&inst=&zk=&timeUnit=&start=&end=&auths=&group=[&type=&name=]";
 
-    protected TypeRegistry<String> registry = SIMPLE_TYPES;
     protected RecordReader<Key, ? extends Feature> reader;
     protected TimeUnit timeUnit;
 
     @Override
     public void setLocation(String uri, Job job) throws IOException {
-
-        Configuration conf = job.getConfiguration();
 
         String path = uri.substring(uri.indexOf("://") + 3, uri.indexOf("?"));
 
@@ -92,10 +86,14 @@ public class MetricFeatureLoader extends LoadFunc {
             DateTime startDT = DateTime.parse(startTime);
             DateTime endDT = DateTime.parse(endTime);
 
-            FeaturesInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
-            FeaturesInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+            FeaturesInputFormat.setZooKeeperInstance(job, accumuloInst, zookeepers);
             try {
-                FeaturesInputFormat.setQueryInfo(conf, startDT.toDate(), endDT.toDate(), timeUnit, group, type, name, MetricFeature.class);
+                FeaturesInputFormat.setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+            } catch (AccumuloSecurityException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                FeaturesInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), timeUnit, group, type, name, MetricFeature.class);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

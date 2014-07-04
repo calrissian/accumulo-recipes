@@ -19,6 +19,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
@@ -117,10 +118,14 @@ public class EventLoader extends LoadFunc implements Serializable {
                 DateTime startDT = new DateTime(startTime);
                 DateTime endDT = new DateTime(endTime);
 
-                EventInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
-                EventInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                EventInputFormat.setZooKeeperInstance(job, accumuloInst, zookeepers);
                 try {
-                    EventInputFormat.setQueryInfo(conf, startDT.toDate(), endDT.toDate(), qb.build());
+                    EventInputFormat.setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                } catch (AccumuloSecurityException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    EventInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), qb.build());
                     if(fields != null)
                         EventInputFormat.setSelectFields(conf, fields);
                 } catch (Exception e) {

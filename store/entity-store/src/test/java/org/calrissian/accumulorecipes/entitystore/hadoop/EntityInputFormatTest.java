@@ -72,9 +72,9 @@ public class EntityInputFormatTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EntityInputFormat.class);
-        EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
-        EntityInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
-        EntityInputFormat.setQueryInfo(job.getConfiguration(), Collections.singleton("type"),
+        EntityInputFormat.setMockInstance(job, "instName");
+        EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        EntityInputFormat.setQueryInfo(job, Collections.singleton("type"),
                 new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
         job.setOutputFormatClass(NullOutputFormat.class);
 
@@ -117,9 +117,9 @@ public class EntityInputFormatTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EntityInputFormat.class);
-        EntityInputFormat.setMockInstance(job.getConfiguration(), "instName");
-        EntityInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
-        EntityInputFormat.setQueryInfo(job.getConfiguration(), Collections.singleton("type"));
+        EntityInputFormat.setMockInstance(job, "instName");
+        EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        EntityInputFormat.setQueryInfo(job, Collections.singleton("type"));
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();

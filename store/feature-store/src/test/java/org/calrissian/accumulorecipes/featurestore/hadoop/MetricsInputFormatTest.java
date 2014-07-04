@@ -57,9 +57,9 @@ public class MetricsInputFormatTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(FeaturesInputFormat.class);
-        FeaturesInputFormat.setInputInfo(job.getConfiguration(), "root", "".getBytes(), new Authorizations());
-        FeaturesInputFormat.setQueryInfo(job.getConfiguration(), new Date(0), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
-        FeaturesInputFormat.setMockInstance(job.getConfiguration(), "instName");
+        FeaturesInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        FeaturesInputFormat.setQueryInfo(job, new Date(0), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
+        FeaturesInputFormat.setMockInstance(job, "instName");
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();

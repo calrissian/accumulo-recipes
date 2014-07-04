@@ -15,8 +15,10 @@
  */
 package org.calrissian.accumulorecipes.featurestore.hadoop;
 
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -24,12 +26,8 @@ import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.util.Pair;
 import org.apache.accumulo.core.util.format.DefaultFormatter;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.*;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
@@ -54,12 +52,14 @@ import static org.calrissian.mango.io.Serializables.toBase64;
  */
 public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
-    public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
-        setInputInfo(config, username, password, DEFAULT_TABLE_NAME, auths);
+    public static void setInputInfo(Job job, String username, byte[] password, Authorizations auths) throws AccumuloSecurityException {
+        setConnectorInfo(job, username, new PasswordToken(password));
+        setInputTableName(job,DEFAULT_TABLE_NAME);
+        setScanAuthorizations(job, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, TimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType) throws IOException {
-        setQueryInfo(config, start, end, timeUnit, group, type, name, featureType, BASE_FEATURES);
+    public static void setQueryInfo(Job job, Date start, Date end, TimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType) throws IOException {
+        setQueryInfo(job, start, end, timeUnit, group, type, name, featureType, BASE_FEATURES);
     }
 
     /**
@@ -70,14 +70,14 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
      *
      * NOTE: It can be dangerous to apply a registry to a feature
      */
-    public static void setQueryInfo(Configuration config, Date start, Date end, TimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType, FeatureRegistry registry) throws IOException {
+    public static void setQueryInfo(Job job, Date start, Date end, TimeUnit timeUnit, String group, String type, String name, Class<? extends Feature> featureType, FeatureRegistry registry) throws IOException {
 
         AccumuloFeatureConfig featureConfig = registry.transformForClass(featureType);
 
-        config.set("featureConfig", new String(toBase64(featureConfig)));
-        config.set("timeUnit", timeUnit.toString());
+        job.getConfiguration().set("featureConfig", new String(toBase64(featureConfig)));
+        job.getConfiguration().set("timeUnit", timeUnit.toString());
 
-        setRanges(config,
+        setRanges(job,
                 singleton(new Range(
                         combine(group, generateTimestamp(end.getTime(), timeUnit)),
                         combine(group, generateTimestamp(start.getTime(), timeUnit))
@@ -86,17 +86,17 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
         if (name != null) {
             Pair<Text, Text> column = new Pair<Text, Text>(new Text(combine(featureConfig.featureName(), timeUnit.toString())), new Text(combine(type, name)));
-            fetchColumns(config, singleton(column));
+            fetchColumns(job, singleton(column));
         } else {
             Pair<Text, Text> column = new Pair<Text, Text>(new Text(combine(featureConfig.featureName(), timeUnit.toString())), null);
-            fetchColumns(config, singleton(column));
+            fetchColumns(job, singleton(column));
 
             if(type != null) {
                 String cqRegex = null;
                 cqRegex = combine(type, "(.*)");
                 IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
                 RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
-                addIterator(config, regexIterator);
+                addIterator(job, regexIterator);
             }
         }
     }

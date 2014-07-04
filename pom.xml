@@ -18,7 +18,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.calrissian.accumulorecipes</groupId>
   <artifactId>accumulorecipes-parent</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Accumulo Recipes - Parent</name>
   <description>The Accumulo Recipes project aims to provide reusable services for architectures utilizing Apache
@@ -80,7 +80,7 @@ limitations under the License.
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-core</artifactId>
+        <artifactId>hadoop-client</artifactId>
         <version>${hadoop.version}</version>
       </dependency>
       <dependency>

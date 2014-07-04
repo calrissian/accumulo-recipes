@@ -19,6 +19,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
@@ -118,13 +119,17 @@ public class EntityLoader extends LoadFunc implements Serializable {
                 Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;
                 Set<String> entitytypes = newHashSet(asList(splitPreserveAllTokens(types, ",")));
 
-                EntityInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
-                EntityInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                EntityInputFormat.setZooKeeperInstance(job, accumuloInst, zookeepers);
+                try {
+                    EntityInputFormat.setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                } catch (AccumuloSecurityException e) {
+                    throw new RuntimeException(e);
+                }
                 try {
                     if(qb != null)
-                        EntityInputFormat.setQueryInfo(conf, entitytypes, qb.build());
+                        EntityInputFormat.setQueryInfo(job, entitytypes, qb.build());
                     else
-                        EntityInputFormat.setQueryInfo(conf, entitytypes);
+                        EntityInputFormat.setQueryInfo(job, entitytypes);
 
                     if(fields != null)
                         EntityInputFormat.setSelectFields(conf, fields);

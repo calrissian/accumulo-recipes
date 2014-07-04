@@ -58,7 +58,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
     private final BatchWriter writer;
     private final StoreConfig config;
 
-    public EventKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Event> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException {
+    public EventKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Event> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         this.shardBuilder = shardBuilder;
         this.typeRegistry = typeRegistry;
 
@@ -66,6 +66,9 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
         this.connector = connector;
 
         this.config = config;
+
+        if(!connector.tableOperations().exists(indexTable))
+            connector.tableOperations().create(indexTable);
 
         writer = connector.createBatchWriter(indexTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
