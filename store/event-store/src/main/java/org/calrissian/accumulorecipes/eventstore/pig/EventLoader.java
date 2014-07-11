@@ -114,8 +114,8 @@ public class EventLoader extends LoadFunc implements Serializable {
 
                 Set<String> fields = selectFields != null ? newHashSet(asList(splitPreserveAllTokens(selectFields, ","))) : null;
 
-                DateTime startDT = DateTime.parse(startTime);
-                DateTime endDT = DateTime.parse(endTime);
+                DateTime startDT = new DateTime(startTime);
+                DateTime endDT = new DateTime(endTime);
 
                 EventInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
                 EventInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
