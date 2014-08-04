@@ -27,6 +27,7 @@ import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -108,6 +109,55 @@ public class AccumuloFeatureStoreTest {
 
         checkMetrics(actual, 60, 1);
     }
+
+
+    @Test
+    public void testStoreAndQuery_noType() throws Exception {
+        AccumuloFeatureStore metricStore = new AccumuloFeatureStore(getConnector());
+        metricStore.initialize();
+
+        Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
+
+        metricStore.save(testData);
+
+        CloseableIterable<MetricFeature> actual = metricStore.queryTypes(new Date(0), new Date(), "group", Collections.<String>emptySet(), "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
+
+        checkMetrics(actual, 60, 1);
+    }
+
+
+    @Test
+    public void testStoreAndQuery_noGroup() throws Exception {
+        AccumuloFeatureStore metricStore = new AccumuloFeatureStore(getConnector());
+        metricStore.initialize();
+
+        Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
+
+        metricStore.save(testData);
+
+        CloseableIterable<MetricFeature> actual = metricStore.queryTypes(new Date(0), new Date(), null, Collections.singleton("type"), "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
+
+        checkMetrics(actual, 60, 1);
+    }
+
+    @Test
+    public void testStoreAndQuery_noGroupAndTypeThrowsException() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+        AccumuloFeatureStore metricStore = new AccumuloFeatureStore(getConnector());
+        metricStore.initialize();
+
+        Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
+
+        metricStore.save(testData);
+
+        try {
+
+            CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), null, null, "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
+            fail("An exception should have been thrown");
+        } catch(Exception e) {
+
+        }
+    }
+
 
 
     @Test

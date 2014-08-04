@@ -38,6 +38,7 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
@@ -119,47 +120,50 @@ public class AccumuloFeatureStore implements FeatureStore {
         }
     }
 
-    protected ScannerBase metricScanner(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
-        checkNotNull(type);
-        return metricScanner(start, end, group, Collections.singleton(type), name, timeUnit, featureConfig, auths);
-    }
 
     protected ScannerBase metricScanner(Date start, Date end, String group, Set<String> types, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
-        checkNotNull(group);
         checkNotNull(types);
-        checkArgument(types.size() > 0);
         checkNotNull(start);
+        checkArgument(group != null || types.size() > 0);
         checkNotNull(end);
         checkNotNull(auths);
 
         try {
             //fix null values
-            group = defaultString(group);
             timeUnit = (timeUnit == null ? TimeUnit.MINUTES : timeUnit);
 
             //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
             //timestamp.  Which is used to provide the latest results first.
-            BatchScanner scanner = connector.createBatchScanner(tableName + REVERSE_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
+
+            String table = types.size() > 0 ? tableName + REVERSE_SUFFIX : tableName;
+            BatchScanner scanner = connector.createBatchScanner(table, auths.getAuths(), config.getMaxQueryThreads());
 
             Set<Range> ranges = new HashSet<Range>();
-            for (String type : types) {
-                ranges.add(new Range(
-                        combine(type, generateTimestamp(end.getTime(), timeUnit)),
-                        combine(type, generateTimestamp(start.getTime(), timeUnit))
-                ));
-            }
+
+            if(types.size() > 0) {
+                for (String type : types)
+                    ranges.add(generateRange(type, start, end, timeUnit));
+            } else
+                ranges.add(generateRange(group, start, end, timeUnit));
+
             scanner.setRanges(ranges);
 
             //If both type and name are here then simply fetch the column
             //else fetch the timeunit column family and apply a regex filter for the CQ containing the type and name.
-            if (name != null) {
+            if (group != null && name != null && types.size() > 0) {
                 scanner.fetchColumn(new Text(combine(featureConfig.featureName(), timeUnit.toString())), new Text(combine(group, name)));
             } else {
                 scanner.fetchColumnFamily(new Text(combine(featureConfig.featureName(), timeUnit.toString())));
 
                 //generates the correct regex
                 String cqRegex = null;
-                cqRegex = combine(group, "(.*)");
+                cqRegex = null;
+
+                if(group != null && types.size() > 0)
+                    cqRegex = combine(group, "(.*)");
+                else if(name != null)
+                    cqRegex = combine("(.*)", name);
+
                 IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
                 RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
                 scanner.addScanIterator(regexIterator);
@@ -172,6 +176,13 @@ public class AccumuloFeatureStore implements FeatureStore {
         }
     }
 
+    private Range generateRange(String index, Date start, Date end, TimeUnit timeUnit) {
+        return new Range(
+                combine(index, generateTimestamp(end.getTime(), timeUnit)),
+                combine(index, generateTimestamp(start.getTime(), timeUnit))
+        );
+    }
+
 
     /**
      * Will close all underlying resources
@@ -180,6 +191,7 @@ public class AccumuloFeatureStore implements FeatureStore {
      */
     public void shutdown() throws MutationsRejectedException {
         groupWriter.close();
+        typeWriter.close();
     }
 
 
@@ -264,11 +276,15 @@ public class AccumuloFeatureStore implements FeatureStore {
      */
     @Override
     public <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Class<T> featureType, Auths auths) {
-        return query(start, end, group, Collections.singleton(type), name, timeUnit, featureType, auths);
+
+        if(type == null)
+            return queryTypes(start, end, group, Collections.<String>emptySet(), name, timeUnit, featureType, auths);
+        else
+            return queryTypes(start, end, group, singleton(type), name, timeUnit, featureType, auths);
     }
 
     @Override
-    public <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, Set<String> types, String name, TimeUnit timeUnit, Class<T> featureType, Auths auths) {
+    public <T extends Feature> CloseableIterable<T> queryTypes(Date start, Date end, String group, final Set<String> types, String name, TimeUnit timeUnit, Class<T> featureType, Auths auths) {
 
         if (!isInitialized)
             throw new RuntimeException("Please call initialize() on the store first.");
@@ -280,7 +296,11 @@ public class AccumuloFeatureStore implements FeatureStore {
                 new FeatureTransform<T>(timeUnit) {
                     @Override
                     protected T transform(long timestamp, String group, String type, String name, String visibility, Value value) {
-                        return featureConfig.buildFeatureFromValue(timestamp, group, type, name, visibility, value);
+                        if(types.size() > 0)
+                            return featureConfig.buildFeatureFromValue(timestamp, group, type, name, visibility, value);
+                        else
+                            return featureConfig.buildFeatureFromValue(timestamp, type, group,  name, visibility, value);
+
                     }
                 }
         );
