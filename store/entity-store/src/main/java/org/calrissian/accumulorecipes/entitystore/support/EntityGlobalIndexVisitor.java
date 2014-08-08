@@ -21,12 +21,12 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.*;
 
-import static java.lang.Long.parseLong;
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
@@ -100,7 +100,7 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
             Long cardinality = cardinalities.get(key);
             if (cardinality == null)
                 cardinality = 0l;
-            long newCardinality = parseLong(new String(entry.getValue().get()));
+            long newCardinality = new GlobalIndexValue(entry.getValue()).getCardinatlity();
             cardinalities.put(key, cardinality + newCardinality);
             shards.add(entry.getKey().getColumnQualifier().toString());
         }

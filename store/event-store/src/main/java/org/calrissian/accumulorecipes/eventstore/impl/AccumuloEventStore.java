@@ -16,10 +16,7 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
-import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
@@ -40,12 +37,13 @@ import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -141,40 +139,12 @@ public class AccumuloEventStore implements EventStore {
         checkNotNull(auths);
         try {
 
-            BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
-
-            Collection<Range> ranges = new LinkedList<Range>();
-            for (EventIndex uuid : uuids) {
-                if (uuid.getTimestamp() == null)
-                    ranges.add(new Range(INDEX_V + "_string__" + uuid.getId()));
-            }
-
             BatchScanner eventScanner = helper.buildShardScanner(auths.getAuths());
             Collection<Range> eventRanges = new LinkedList<Range>();
-            if(ranges.size() > 0) {
-                scanner.setRanges(ranges);
-                scanner.fetchColumnFamily(new Text("@id"));
-
-                Iterator<Map.Entry<Key, Value>> itr = scanner.iterator();
-
-                /**
-                 * Should just be one index for the shard containing the uuid
-                 */
-                while (itr.hasNext()) {
-                    Map.Entry<Key, Value> entry = itr.next();
-                    String shardId = entry.getKey().getColumnQualifier().toString();
-                    String[] rowParts = splitByWholeSeparatorPreserveAllTokens(entry.getKey().getRow().toString(), "__");
-                    eventRanges.add(Range.prefix(shardId, rowParts[1]));
-                }
-
-                scanner.close();
-            }
 
             for (EventIndex curIndex : uuids) {
-                if (curIndex.getTimestamp() != null) {
-                    String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getId(), curIndex.getTimestamp()));
-                    eventRanges.add(Range.prefix(shardId, curIndex.getId()));
-                }
+                String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getId(), curIndex.getTimestamp()));
+                eventRanges.add(Range.prefix(shardId, curIndex.getId()));
             }
 
             eventScanner.setRanges(eventRanges);

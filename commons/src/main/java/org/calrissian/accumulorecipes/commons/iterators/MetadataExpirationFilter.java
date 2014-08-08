@@ -18,7 +18,6 @@ package org.calrissian.accumulorecipes.commons.iterators;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.Filter;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
@@ -26,7 +25,6 @@ import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import java.io.IOException;
 import java.util.Map;
 
-import static java.lang.System.currentTimeMillis;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Expiration.getExpiration;
 import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
@@ -34,34 +32,10 @@ import static org.calrissian.mango.io.Serializables.toBase64;
 /**
  * Allows Accumulo to expire keys/values based on an expiration threshold encoded in a metadata map in the value.
  */
-public class MetadataExpirationFilter extends Filter {
+public class MetadataExpirationFilter extends ExpirationFilter {
 
     public static final String METADATA_SERDE = "metadataSerDe";
     private MetadataSerDe metadataSerDe;
-
-    /**
-     * Accepts entries whose timestamps are less than currentTime - threshold.
-     */
-    @Override
-    public boolean accept(Key k, Value v) {
-
-        if (v.get().length > 0) {
-            Map<String, Object> metadata = metadataSerDe.deserialize(v.get());
-            if (metadata != null) {
-
-                long threshold = getExpiration(metadata, -1);
-
-                if (threshold > -1) {
-                    long currentTime = currentTimeMillis();
-                    if (k.getTimestamp() > currentTime || currentTime - k.getTimestamp() > threshold)
-                        return false;
-                }
-                return true;
-            }
-        }
-
-        return true;
-    }
 
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
@@ -110,6 +84,13 @@ public class MetadataExpirationFilter extends Filter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected long parseExpiration(Value v) {
+        Map<String, Object> metadata = metadataSerDe.deserialize(v.get());
+        if(metadata != null)
+            return getExpiration(metadata, -1);
+        return -1;
     }
 
 }

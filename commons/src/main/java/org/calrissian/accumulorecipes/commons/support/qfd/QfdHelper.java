@@ -22,16 +22,12 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.LongCombiner;
-import org.apache.accumulo.core.iterators.user.SummingCombiner;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
-import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
-import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.*;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
@@ -106,10 +102,11 @@ public abstract class QfdHelper<T extends TupleStore> {
         }
 
         if (connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
-            IteratorSetting setting = new IteratorSetting(10, "cardinalities", SummingCombiner.class);
-            SummingCombiner.setCombineAllColumns(setting, true);
-            SummingCombiner.setEncodingType(setting, LongCombiner.StringEncoder.class);
+            IteratorSetting setting = new IteratorSetting(10, "cardinalities", GlobalIndexCombiner.class);
+            GlobalIndexCombiner.setCombineAllColumns(setting, true);
             connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorScope.class));
+            IteratorSetting expirationFilter = new IteratorSetting(12, "expiration", GlobalIndexExpirationFilter.class);
+            connector.tableOperations().attachIterator(this.indexTable, expirationFilter, allOf(IteratorScope.class));
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
