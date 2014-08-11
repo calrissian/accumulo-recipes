@@ -24,8 +24,10 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
+import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
@@ -56,6 +58,7 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
     public void indexKeyValues(Iterable<? extends Entity> items) {
 
         Map<String, Long> indexCache = new HashMap<String, Long>();
+        Map<String, Long> expirationCache = new HashMap<String, Long>();
 
         for (Entity entity : items) {
             String shardId = shardBuilder.buildShard(entity);
@@ -73,8 +76,20 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
                 Long count = indexCache.get(cacheKey);
                 if (count == null)
                     count = 0l;
-                indexCache.put(cacheKey, ++count);
 
+                Long expiration = expirationCache.get(cacheKey);
+                if(expiration == null)
+                    expiration = 0l;
+
+                Long curExpiration = Metadata.Expiration.getExpiration(tuple.getMetadata(), -1);
+                if(curExpiration == -1)
+                    expiration = -1l;
+                else
+                    expiration = Math.max(expiration, curExpiration);
+
+
+                indexCache.put(cacheKey, ++count);
+                expirationCache.put(cacheKey, expiration);
             }
         }
 
@@ -92,7 +107,8 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
             Mutation keyMutation = new Mutation(entityType + "_" + INDEX_K + "_" + key);
             Mutation valueMutation = new Mutation(entityType + "_" + INDEX_V + "_" + alias + "__" + normalizedVal);
 
-            Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
+            GlobalIndexValue indexValue = new GlobalIndexValue(indexCacheKey.getValue(), expirationCache.get(indexCacheKey.getKey()));
+            Value value = indexValue.toValue();
             keyMutation.put(new Text(alias), new Text(shard), new ColumnVisibility(vis), value);
             valueMutation.put(new Text(key), new Text(shard), new ColumnVisibility(vis), value);
             try {

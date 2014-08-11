@@ -27,8 +27,10 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
 import org.calrissian.accumulorecipes.commons.support.Constants;
+import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
+import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
@@ -72,6 +74,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
     public void indexKeyValues(Iterable<? extends Event> items) {
 
         Map<String, Long> indexCache = new HashMap<String, Long>();
+        Map<String, Long> expirationCache = new HashMap<String, Long>();
 
         for (Event item : items) {
             String shardId = shardBuilder.buildShard(item);
@@ -88,19 +91,20 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
                 Long count = indexCache.get(cacheKey);
                 if (count == null)
                     count = 0l;
+
+                Long expiration = expirationCache.get(cacheKey);
+                if(expiration == null)
+                    expiration = 0l;
+
+                Long curExpiration = Metadata.Expiration.getExpiration(tuple.getMetadata(), -1);
+                if(curExpiration == -1)
+                    expiration = -1l;
+                else
+                    expiration = Math.max(expiration, curExpiration);
+
                 indexCache.put(cacheKey, ++count);
+                expirationCache.put(cacheKey, expiration);
             }
-
-            String[] idIndex = new String[]{
-                    shardBuilder.buildShard(item),
-                    "@id",
-                    "string",
-                    item.getId(),
-                    ""
-            };
-
-            indexCache.put(join(idIndex, ONE_BYTE), 1l);
-
         }
 
         for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
@@ -109,7 +113,8 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
             Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
             Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
 
-            Value value = new Value(Long.toString(indexCacheKey.getValue()).getBytes());
+            Long expiration = expirationCache.get(indexCacheKey.getKey());
+            Value value = new GlobalIndexValue(indexCacheKey.getValue(), expiration).toValue();
             keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
             valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
             try {

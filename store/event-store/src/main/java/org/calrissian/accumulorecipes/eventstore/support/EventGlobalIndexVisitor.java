@@ -21,13 +21,13 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.*;
 
-import static java.lang.Long.parseLong;
 import static org.calrissian.accumulorecipes.commons.support.Constants.*;
 import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -103,7 +103,8 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
             Long cardinality = cardinalities.get(key);
             if (cardinality == null)
                 cardinality = 0l;
-            cardinalities.put(key, cardinality + parseLong(new String(entry.getValue().get())));
+            GlobalIndexValue value = new GlobalIndexValue(entry.getValue());
+            cardinalities.put(key, cardinality + value.getCardinatlity());
             shards.add(entry.getKey().getColumnQualifier().toString());
         }
 

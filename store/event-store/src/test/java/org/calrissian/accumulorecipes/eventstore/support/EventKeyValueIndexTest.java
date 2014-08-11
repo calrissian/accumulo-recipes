@@ -46,7 +46,7 @@ public class EventKeyValueIndexTest {
 
         dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
-        assertEquals(5, Iterables.size(eventKeyValueIndex.uniqueKeys("", new Auths())));
+        assertEquals(4, Iterables.size(eventKeyValueIndex.uniqueKeys("", new Auths())));
 
 
     }
