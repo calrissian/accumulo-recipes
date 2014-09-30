@@ -122,6 +122,7 @@ public class EntityLoaderTest extends AccumuloInputFormat {
                 "&types=myType&auths=");
         EntityLoader loader = new EntityLoader("q.eq('key','val')");
         loader.setLocation(location.toString(), job);
+        loader.setLocation(location.toString(), job);   // make sure we don't fail if setLocation() called more than once
 
 
         cluster.stop();

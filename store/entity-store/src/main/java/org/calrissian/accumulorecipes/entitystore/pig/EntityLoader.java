@@ -52,6 +52,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
+import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
@@ -87,7 +88,7 @@ public class EntityLoader extends LoadFunc implements Serializable {
 
         Configuration conf = job.getConfiguration();
 
-        if(!conf.getBoolean(AccumuloInputFormat.class.getSimpleName() + ".configured", false)) {
+        if(!isConnectorInfoSet(AccumuloInputFormat.class, job.getConfiguration())) {
 
             String path = uri.substring(uri.indexOf("://")+3, uri.indexOf("?"));
 

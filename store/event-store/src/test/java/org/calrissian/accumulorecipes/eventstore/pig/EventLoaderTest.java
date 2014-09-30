@@ -114,6 +114,7 @@ public class EventLoaderTest extends AccumuloInputFormat {
                 "&start=2014-01-01&end=2014-01-02&auths=");
         EventLoader loader = new EventLoader("q.eq('key','val')");
         loader.setLocation(location.toString(), job);
+        loader.setLocation(location.toString(), job);   // make sure two calls to set location don't fail
 
 
         cluster.stop();

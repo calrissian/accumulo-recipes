@@ -30,10 +30,10 @@ limitations under the License.
     <module>test</module>
   </modules>
   <properties>
-    <accumulo.version>1.4.4</accumulo.version>
+    <accumulo.version>1.6.1</accumulo.version>
     <commons.math.version>3.2</commons.math.version>
     <groovy.version>2.3.0</groovy.version>
-    <hadoop.version>0.20.2</hadoop.version>
+    <hadoop.version>2.3.0</hadoop.version>
     <jackson.version>2.2.2</jackson.version>
     <joda.time.version>2.2</joda.time.version>
     <junit.version>4.11</junit.version>

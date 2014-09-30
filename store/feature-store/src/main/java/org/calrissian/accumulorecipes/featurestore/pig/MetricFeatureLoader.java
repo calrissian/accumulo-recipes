@@ -17,6 +17,7 @@ package org.calrissian.accumulorecipes.featurestore.pig;
 
 import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.lang.StringUtils;
@@ -37,6 +38,8 @@ import org.joda.time.DateTime;
 import java.io.IOException;
 import java.util.Collection;
 
+import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
+
 public class MetricFeatureLoader extends LoadFunc {
 
     public static final String USAGE = "Usage: metrics://tablePrefix?user=&pass=&inst=&zk=&timeUnit=&start=&end=&auths=&group=[&type=&name=]";
@@ -49,56 +52,59 @@ public class MetricFeatureLoader extends LoadFunc {
 
         String path = uri.substring(uri.indexOf("://") + 3, uri.indexOf("?"));
 
-        String[] indexAndShardTable = StringUtils.splitPreserveAllTokens(path, "/");
-        if (indexAndShardTable.length != 1)
-            throw new IOException("Path portion of URI must contain the metric table prefix " + USAGE);
+        if(!isConnectorInfoSet(AccumuloInputFormat.class, job.getConfiguration())){
 
-        if (uri.startsWith("metrics")) {
-            String queryPortion = uri.substring(uri.indexOf("?") + 1, uri.length());
-            Multimap<String, String> queryParams = UriUtils.splitQuery(queryPortion);
+            String[] indexAndShardTable = StringUtils.splitPreserveAllTokens(path, "/");
+            if (indexAndShardTable.length != 1)
+                throw new IOException("Path portion of URI must contain the metric table prefix " + USAGE);
 
-            String accumuloUser = getProp(queryParams, "user");
-            String accumuloPass = getProp(queryParams, "pass");
-            String accumuloInst = getProp(queryParams, "inst");
-            String zookeepers = getProp(queryParams, "zk");
-            if (accumuloUser == null || accumuloPass == null || accumuloInst == null || zookeepers == null)
-                throw new IOException("Some Accumulo connection information is missing. Must supply username, password, instance, and zookeepers. " + USAGE);
+            if (uri.startsWith("metrics")) {
+                String queryPortion = uri.substring(uri.indexOf("?") + 1, uri.length());
+                Multimap<String, String> queryParams = UriUtils.splitQuery(queryPortion);
 
-            String timeUnitStr = getProp(queryParams, "timeUnit");
-            if(timeUnitStr != null)
-                timeUnit = TimeUnit.valueOf(timeUnitStr.toUpperCase());
-            else
-                throw new IOException("A valid TimeUnit must be supplied. " + USAGE);
+                String accumuloUser = getProp(queryParams, "user");
+                String accumuloPass = getProp(queryParams, "pass");
+                String accumuloInst = getProp(queryParams, "inst");
+                String zookeepers = getProp(queryParams, "zk");
+                if (accumuloUser == null || accumuloPass == null || accumuloInst == null || zookeepers == null)
+                    throw new IOException("Some Accumulo connection information is missing. Must supply username, password, instance, and zookeepers. " + USAGE);
 
-            String group = getProp(queryParams, "group");
-            String type = getProp(queryParams, "type");
-            String name = getProp(queryParams, "name");
+                String timeUnitStr = getProp(queryParams, "timeUnit");
+                if(timeUnitStr != null)
+                    timeUnit = TimeUnit.valueOf(timeUnitStr.toUpperCase());
+                else
+                    throw new IOException("A valid TimeUnit must be supplied. " + USAGE);
 
-            String startTime = getProp(queryParams, "start");
-            String endTime = getProp(queryParams, "end");
-            if (startTime == null || endTime == null)
-                throw new IOException("Start and end times are required. " + USAGE);
+                String group = getProp(queryParams, "group");
+                String type = getProp(queryParams, "type");
+                String name = getProp(queryParams, "name");
 
-            String auths = getProp(queryParams, "auths");
-            if(auths == null)
-                auths = ""; // default to empty auths
+                String startTime = getProp(queryParams, "start");
+                String endTime = getProp(queryParams, "end");
+                if (startTime == null || endTime == null)
+                    throw new IOException("Start and end times are required. " + USAGE);
 
-            DateTime startDT = DateTime.parse(startTime);
-            DateTime endDT = DateTime.parse(endTime);
+                String auths = getProp(queryParams, "auths");
+                if(auths == null)
+                    auths = ""; // default to empty auths
 
-            FeaturesInputFormat.setZooKeeperInstance(job, accumuloInst, zookeepers);
-            try {
-                FeaturesInputFormat.setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
-            } catch (AccumuloSecurityException e) {
-                throw new RuntimeException(e);
+                DateTime startDT = DateTime.parse(startTime);
+                DateTime endDT = DateTime.parse(endTime);
+
+                FeaturesInputFormat.setZooKeeperInstance(job, accumuloInst, zookeepers);
+                try {
+                    FeaturesInputFormat.setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                } catch (AccumuloSecurityException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    FeaturesInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), timeUnit, group, type, name, MetricFeature.class);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                throw new IOException("Location uri must begin with metrics://");
             }
-            try {
-                FeaturesInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), timeUnit, group, type, name, MetricFeature.class);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            throw new IOException("Location uri must begin with metrics://");
         }
     }
 
