@@ -36,7 +36,7 @@ public class StoreConfig {
      * @param maxQueryThreads the number of concurrent threads to spawn for querying
      */
     public StoreConfig(int maxQueryThreads) {
-        this(maxQueryThreads, 10000, 10000, 1);
+        this(maxQueryThreads, 1024 * 1024 * 1000, 120 * 1000 * 60, 1);
     }
 
     /**
