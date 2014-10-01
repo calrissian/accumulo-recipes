@@ -117,6 +117,48 @@ public class AccumuloEntityStoreTest {
         assertEquals(actual.getType(), entity2.getType());
     }
 
+    @Test
+    public void testQueryKeyNotInIndex() {
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1"));
+        entity.put(new Tuple("key2", "val2"));
+
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", "val1"));
+        entity2.put(new Tuple("key2", "val2"));
+
+        store.save(asList(entity, entity2));
+
+        Node query = new QueryBuilder().and().eq("key5", "val5").end().build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), query, null, new Auths());
+
+        assertEquals(0, Iterables.size(itr));
+    }
+
+
+    @Test
+    public void testQueryRangeNotInIndex() {
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("key1", "val1"));
+        entity.put(new Tuple("key2", "val2"));
+
+        Entity entity2 = new BaseEntity("type", "id2");
+        entity2.put(new Tuple("key1", "val1"));
+        entity2.put(new Tuple("key2", "val2"));
+
+        store.save(asList(entity, entity2));
+
+        Node query = new QueryBuilder().and().range("key5", 0, 5).end().build();
+
+        Iterable<Entity> itr = store.query(singleton("type"), query, null, new Auths());
+
+        assertEquals(0, Iterables.size(itr));
+    }
+
+
 
     @Test
     public void testGet_withSelection() throws Exception {

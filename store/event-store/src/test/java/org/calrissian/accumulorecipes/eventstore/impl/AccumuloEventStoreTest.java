@@ -98,6 +98,51 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
+    public void testQueryKeyNotInIndex() {
+
+        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
+
+        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", "val2"));
+
+        store.save(asList(event, event2));
+
+        Node query = new QueryBuilder().and().eq("key4", "val5").end().build();
+
+        Iterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
+                new Date(), query, null, new Auths());
+
+        assertEquals(0, Iterables.size(itr));
+    }
+
+
+    @Test
+    public void testQueryRangeNotInIndex() {
+
+        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        event.put(new Tuple("key1", "val1"));
+        event.put(new Tuple("key2", "val2"));
+
+        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        event2.put(new Tuple("key1", "val1"));
+        event2.put(new Tuple("key2", "val2"));
+
+        store.save(asList(event, event2));
+
+        Node query = new QueryBuilder().and().range("key4", 0, 5).end().build();
+
+        Iterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
+                new Date(), query, null, new Auths());
+
+        assertEquals(0, Iterables.size(itr));
+    }
+
+
+
+    @Test
     public void testGreaterThan() throws Exception {
 
         long time = currentTimeMillis();
