@@ -18,10 +18,12 @@ package org.calrissian.accumulorecipes.eventstore.hadoop;
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
@@ -49,26 +51,28 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
-    public static void setInputInfo(Configuration config, String username, byte[] password, Authorizations auths) {
-        setInputInfo(config, username, password, DEFAULT_SHARD_TABLE_NAME, auths);
+    public static void setInputInfo(Job job, String username, byte[] password, Authorizations auths) throws AccumuloSecurityException {
+        setConnectorInfo(job, username, new PasswordToken(password));
+        setInputTableName(job, DEFAULT_SHARD_TABLE_NAME);
+        setScanAuthorizations(job, auths);
     }
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-        setQueryInfo(config, start, end, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+    public static void setQueryInfo(Job job, Date start, Date end, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(job, start, end, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
 
-    public static void setQueryInfo(Configuration config, Date start, Date end, Node query, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+    public static void setQueryInfo(Job job, Date start, Date end, Node query, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
-        validateOptions(config);
+        validateOptions(job);
 
-        Instance instance = getInstance(config);
-        Connector connector = instance.getConnector(getUsername(config), getPassword(config));
-        BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getAuthorizations(config), 5);
+        Instance instance = getInstance(job);
+        Connector connector = instance.getConnector(getPrincipal(job), getAuthenticationToken(job));
+        BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getScanAuthorizations(job), 5);
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
 
-        config.set("typeRegistry", new String(toBase64(typeRegistry)));
+        job.getConfiguration().set("typeRegistry", new String(toBase64(typeRegistry)));
 
-        configureScanner(config, query, globalIndexVisitor, typeRegistry);
+        configureScanner(job, query, globalIndexVisitor, typeRegistry);
     }
 
     public static void setMetadataSerDe(Configuration configuration, MetadataSerDe metadataSerDe) throws IOException {

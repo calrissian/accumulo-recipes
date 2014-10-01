@@ -19,6 +19,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
@@ -52,6 +53,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
+import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
@@ -84,7 +86,7 @@ public class EventLoader extends LoadFunc implements Serializable {
     public void setLocation(String uri, Job job) throws IOException {
 
         Configuration conf = job.getConfiguration();
-        if(!conf.getBoolean(AccumuloInputFormat.class.getSimpleName() + ".configured", false)) {
+        if(!isConnectorInfoSet(AccumuloInputFormat.class, job.getConfiguration())) {
             String path = uri.substring(uri.indexOf("://")+3, uri.indexOf("?"));
 
             String[] indexAndShardTable = StringUtils.splitPreserveAllTokens(path, "/");
@@ -117,10 +119,14 @@ public class EventLoader extends LoadFunc implements Serializable {
                 DateTime startDT = new DateTime(startTime);
                 DateTime endDT = new DateTime(endTime);
 
-                EventInputFormat.setZooKeeperInstance(conf, accumuloInst, zookeepers);
-                EventInputFormat.setInputInfo(conf, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                EventInputFormat.setZooKeeperInstance(job, accumuloInst, zookeepers);
                 try {
-                    EventInputFormat.setQueryInfo(conf, startDT.toDate(), endDT.toDate(), qb.build());
+                    EventInputFormat.setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                } catch (AccumuloSecurityException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    EventInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), qb.build());
                     if(fields != null)
                         EventInputFormat.setSelectFields(conf, fields);
                 } catch (Exception e) {

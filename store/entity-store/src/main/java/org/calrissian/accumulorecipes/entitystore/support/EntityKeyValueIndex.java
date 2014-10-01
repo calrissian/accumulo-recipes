@@ -15,10 +15,7 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -47,10 +44,12 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
 
     private final BatchWriter writer;
 
-    public EntityKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Entity> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException {
+    public EntityKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Entity> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         this.shardBuilder = shardBuilder;
         this.typeRegistry = typeRegistry;
 
+        if(!connector.tableOperations().exists(indexTable))
+            connector.tableOperations().create(indexTable);
         writer = connector.createBatchWriter(indexTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 

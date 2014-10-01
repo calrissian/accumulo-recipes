@@ -27,6 +27,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
@@ -50,7 +51,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 
 public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settable> extends InputFormatBase<Key, W> {
 
-    protected static void configureScanner(Configuration config, Node query, GlobalIndexVisitor globalInexVisitor, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    protected static void configureScanner(Job job, Node query, GlobalIndexVisitor globalInexVisitor, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor, typeRegistry);
         NodeToJexl nodeToJexl = new NodeToJexl(typeRegistry);
@@ -65,13 +66,13 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
                 ranges.add(new Range(shard));
         }
 
-        setRanges(config, ranges);
+        setRanges(job, ranges);
 
         IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
         setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
         setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
-        addIterator(config, setting);
+        addIterator(job, setting);
     }
 
     protected abstract Function<Map.Entry<Key, Value>, T> getTransform(Configuration configuration);

@@ -18,9 +18,9 @@ package org.calrissian.accumulorecipes.featurestore.pig;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
@@ -45,14 +45,14 @@ import java.util.List;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 
-public class MetricsLoaderTest {
+public class MetricsLoaderTest extends AccumuloInputFormat {
 
     MetricFeature metric;
-    Configuration conf;
+    Job job;
 
     @Before
     public void setup() throws IOException {
-        conf = new Configuration();
+        job = new Job();
     }
 
     @Test
@@ -105,14 +105,12 @@ public class MetricsLoaderTest {
         cluster.stop();
         folder.delete();
 
-        String CONFIG_PREFIX = AccumuloInputFormat.class.getSimpleName() + ".";
-        assertEquals(true, job.getConfiguration().getBoolean(CONFIG_PREFIX + "instanceConfigured", false));
-        assertEquals(true, job.getConfiguration().getBoolean(CONFIG_PREFIX + "configured", false));
-        assertEquals("root", job.getConfiguration().get(CONFIG_PREFIX + "username"));
-        assertEquals("", job.getConfiguration().get(CONFIG_PREFIX + "password"));
-        assertEquals(zk, job.getConfiguration().get(CONFIG_PREFIX + "zooKeepers"));
-        assertEquals(inst, job.getConfiguration().get(CONFIG_PREFIX + "instanceName"));
-        assertEquals("features", job.getConfiguration().get(CONFIG_PREFIX + "tablename"));
+        assertEquals(true, isConnectorInfoSet(job));
+        assertEquals("root", getPrincipal(job));
+        assertEquals(new PasswordToken(""), getAuthenticationToken(job));
+        assertEquals(zk, getInstance(job).getZooKeepers());
+        assertEquals(inst, getInstance(job).getInstanceName());
+        assertEquals("features", getInputTableName(job));
 
     }
 
@@ -124,9 +122,9 @@ public class MetricsLoaderTest {
         metric = new MetricFeature(System.currentTimeMillis(), "group", "type", "name", "", new Metric(1));
         store.save(singleton(metric));
 
-        FeaturesInputFormat.setInputInfo(conf, "root", "".getBytes(), new Authorizations());
-        FeaturesInputFormat.setMockInstance(conf, "instName");
-        FeaturesInputFormat.setQueryInfo(conf, new Date(System.currentTimeMillis() - 50000), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
+        FeaturesInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        FeaturesInputFormat.setMockInstance(job, "instName");
+        FeaturesInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
 
     }
 
