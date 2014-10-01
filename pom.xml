@@ -120,6 +120,17 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
           <version>2.4.2</version>
+          <configuration>
+            <arguments>-Pfull</arguments>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <goals>clean deploy</goals>
+            <preparationGoals>clean verify</preparationGoals>
+            <tagNameFormat>@{project.version}</tagNameFormat>
+            <releaseProfiles>seal-jars</releaseProfiles>
+            <useReleaseProfile>false</useReleaseProfile>
+            <pushChanges>true</pushChanges>
+            <localCheckout>true</localCheckout>
+          </configuration>
           <dependencies>
             <dependency>
               <groupId>org.apache.maven.scm</groupId>
