@@ -121,7 +121,7 @@ limitations under the License.
           <artifactId>maven-release-plugin</artifactId>
           <version>2.4.2</version>
           <configuration>
-            <arguments>-Pfull</arguments>
+            <arguments>-Pfull -DrepositoryId=sonatype-nexus-staging</arguments>
             <autoVersionSubmodules>true</autoVersionSubmodules>
             <goals>clean deploy</goals>
             <preparationGoals>clean verify</preparationGoals>
