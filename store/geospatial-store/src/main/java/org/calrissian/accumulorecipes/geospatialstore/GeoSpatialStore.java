@@ -34,6 +34,8 @@ public interface GeoSpatialStore {
      */
     void put(Iterable<Event> entry, Point2D.Double location);
 
+    void flush() throws Exception;
+
     /**
      * Return all {@link Event} objects that lie within the given bounding box
      */

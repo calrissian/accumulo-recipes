@@ -36,6 +36,8 @@ public interface TemporalLastNStore {
      */
     void put(String group, Event entry);
 
+    void flush() throws Exception;
+
     /**
      * Gets the last-n events from the store in a holistic view of the specified groups
      * for the specified time range.

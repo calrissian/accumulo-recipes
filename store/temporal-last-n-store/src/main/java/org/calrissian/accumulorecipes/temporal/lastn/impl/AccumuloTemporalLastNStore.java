@@ -125,11 +125,14 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 writer.addMutation(m);
             }
 
-            writer.flush();
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void flush() throws Exception {
+        writer.flush();
     }
 
     private String buildEventValue(String id, long timestamp, Tuple tuple) {

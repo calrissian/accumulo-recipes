@@ -298,12 +298,12 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                 }
             }
         }
+    }
 
-        try {
-            writer.flush();
-        } catch (MutationsRejectedException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public void flush() throws Exception {
+        writer.flush();
+        super.flush();
     }
 
     @Override

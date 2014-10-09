@@ -38,6 +38,8 @@ public interface EventStore {
      */
     void save(Iterable<? extends Event> events);
 
+    void flush() throws Exception;
+
     /**
      * Query the store using criteria specified
      *

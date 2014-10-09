@@ -30,6 +30,8 @@ public interface RangeStore<T extends Comparable<T>> {
      */
     void save(Iterable<ValueRange<T>> ranges);
 
+    void flush() throws Exception;
+
     /**
      * Deletes ranges from the store.
      *

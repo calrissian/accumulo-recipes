@@ -205,6 +205,11 @@ public class AccumuloEntityStore implements EntityStore {
         throw new NotImplementedException();
     }
 
+    @Override
+    public void flush() throws Exception {
+        helper.flush();
+    }
+
     protected EntityQfdHelper getHelper() {
         return helper;
     }

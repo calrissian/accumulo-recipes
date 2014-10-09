@@ -40,5 +40,7 @@ public interface EntityStore {
 
     void delete(Iterable<EntityIndex> typesAndIds, Auths auths);
 
+    void flush() throws Exception;
+
     void shutdown() throws Exception;
 }
