@@ -33,12 +33,6 @@ import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.rever
  */
 public abstract class FeatureTransform<T extends Feature> implements Function<Entry<Key, Value>, T> {
 
-    TimeUnit timeUnit;
-
-    public FeatureTransform(TimeUnit timeUnit) {
-        this.timeUnit = timeUnit;
-    }
-
     protected abstract T transform(long timestamp, String group, String type, String name, String visibility, Value value);
 
     @Override
@@ -48,7 +42,7 @@ public abstract class FeatureTransform<T extends Feature> implements Function<En
         String colQ[] = splitPreserveAllTokens(entry.getKey().getColumnQualifier().toString(), NULL_BYTE);
 
         return transform(
-                revertTimestamp(row[1], timeUnit),
+                revertTimestamp(row[1]),
                 colQ[0],
                 row[0],
                 colQ[1],

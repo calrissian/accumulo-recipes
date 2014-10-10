@@ -103,12 +103,9 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
     @Override
     public RecordReader<Key, Feature> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {
-
-        TimeUnit timeUnit = TimeUnit.valueOf(context.getConfiguration().get("timeUnit"));
-
         try {
             final AccumuloFeatureConfig<? extends Feature> config = fromBase64(context.getConfiguration().get("featureConfig").getBytes());
-            final FeatureTransform<? extends Feature> entryTransform = new FeatureTransform<Feature>(timeUnit) {
+            final FeatureTransform<? extends Feature> entryTransform = new FeatureTransform<Feature>() {
                 @Override
                 protected Feature transform(long timestamp, String group, String type, String name, String visibility, Value value) {
                     return config.buildFeatureFromValue(timestamp, type, group, name, visibility, value);
