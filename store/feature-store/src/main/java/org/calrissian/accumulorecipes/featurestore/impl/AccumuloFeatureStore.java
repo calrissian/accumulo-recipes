@@ -251,12 +251,15 @@ public class AccumuloFeatureStore implements FeatureStore {
                 }
             }
 
-            groupWriter.flush();
-            typeWriter.flush();
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void flush() throws Exception {
+        groupWriter.flush();
+        typeWriter.flush();
     }
 
     /**

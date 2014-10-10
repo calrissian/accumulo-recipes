@@ -148,22 +148,25 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                             entry.getTimestamp(),
                             new Value("".getBytes()));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
             }
 
             try {
 
-                if (m.size() > 0) {
+                if (m.size() > 0)
                     writer.addMutation(m);
-                    writer.flush();
-                }
             } catch (MutationsRejectedException e) {
                 throw new RuntimeException(e);
             }
 
 
         }
+    }
+
+    @Override
+    public void flush() throws Exception {
+        writer.flush();
     }
 
     @Override

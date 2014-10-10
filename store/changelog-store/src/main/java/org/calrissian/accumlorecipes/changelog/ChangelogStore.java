@@ -36,6 +36,8 @@ public interface ChangelogStore {
      */
     void put(Iterable<Event> changes);
 
+    void flush() throws Exception;
+
     /**
      * Get a Merkle tree containing hashes of each of the buckets
      *

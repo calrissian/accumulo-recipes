@@ -99,6 +99,11 @@ public class AccumuloEventStore implements EventStore {
         helper.save(events);
     }
 
+    @Override
+    public void flush() throws Exception {
+        helper.flush();
+    }
+
     /**
      * Shard ids for which to scan are generated from the given start and end time. The given query specifies
      * which events to return. It is propagated all the way down to the iterators so that the query is run in parallel

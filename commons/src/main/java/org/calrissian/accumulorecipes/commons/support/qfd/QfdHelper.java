@@ -136,6 +136,11 @@ public abstract class QfdHelper<T extends TupleStore> {
         return kryo;
     }
 
+    public void flush() throws Exception {
+        shardWriter.flush();
+        keyValueIndex.commit();
+    }
+
     /**
      * Items get saved into a sharded table to parallelize queries & ingest.
      */
@@ -180,10 +185,7 @@ public abstract class QfdHelper<T extends TupleStore> {
                 }
             }
 
-            shardWriter.flush();
-
             keyValueIndex.indexKeyValues(items);
-            keyValueIndex.commit();
 
         } catch (RuntimeException re) {
             throw re;

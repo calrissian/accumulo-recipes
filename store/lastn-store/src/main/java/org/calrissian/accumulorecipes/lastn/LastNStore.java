@@ -34,6 +34,8 @@ public interface LastNStore {
      */
     void put(String group, Event entry);
 
+    void flush() throws Exception;
+
     /**
      * Returns the last N store entries under the specified group- starting with the most recent.
      *

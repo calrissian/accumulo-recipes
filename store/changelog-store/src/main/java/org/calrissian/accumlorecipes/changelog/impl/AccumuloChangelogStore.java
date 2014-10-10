@@ -147,13 +147,17 @@ public class AccumuloChangelogStore implements ChangelogStore {
                     throw new RuntimeException(e);
                 }
             }
-            writer.flush();
 
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void flush() throws Exception {
+        writer.flush();
     }
 
     @Override

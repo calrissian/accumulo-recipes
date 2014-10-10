@@ -174,10 +174,14 @@ public class AccumuloLastNStore implements LastNStore {
 
         try {
             writer.addMutation(indexMutation);
-            writer.flush();
         } catch (MutationsRejectedException ex) {
             throw new RuntimeException("There was an error writing the mutation for [index=" + group + ",entryId=" + entry.getId() + "]", ex);
         }
+    }
+
+    @Override
+    public void flush() throws Exception {
+        writer.flush();
     }
 
     /**

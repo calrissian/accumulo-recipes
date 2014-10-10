@@ -36,6 +36,8 @@ public interface FeatureStore {
      */
     void save(Iterable<? extends Feature> features, Iterable<TimeUnit> timeUnits);
 
+    void flush() throws Exception;
+
     /**
      * Query features back from the store.
      */
