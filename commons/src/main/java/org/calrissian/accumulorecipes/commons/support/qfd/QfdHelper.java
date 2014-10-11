@@ -138,7 +138,7 @@ public abstract class QfdHelper<T extends TupleStore> {
 
     public void flush() throws Exception {
         shardWriter.flush();
-        keyValueIndex.commit();
+        keyValueIndex.flush();
     }
 
     /**

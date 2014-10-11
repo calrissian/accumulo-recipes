@@ -16,7 +16,9 @@
 package org.calrissian.accumulorecipes.featurestore.impl;
 
 
+import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -28,6 +30,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.FeatureStore;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
+import org.calrissian.accumulorecipes.featurestore.support.Constants;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
@@ -35,7 +38,6 @@ import org.calrissian.mango.collect.CloseableIterable;
 
 import java.util.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.defaultString;
@@ -119,59 +121,69 @@ public class AccumuloFeatureStore implements FeatureStore {
         }
     }
 
-    protected ScannerBase metricScanner(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
-        checkNotNull(type);
-        return metricScanner(start, end, group, Collections.singleton(type), name, timeUnit, featureConfig, auths);
-    }
 
-    protected ScannerBase metricScanner(Date start, Date end, String group, Set<String> types, String name, TimeUnit timeUnit, AccumuloFeatureConfig featureConfig, Auths auths) {
-        checkNotNull(group);
-        checkNotNull(types);
-        checkArgument(types.size() > 0);
-        checkNotNull(start);
-        checkNotNull(end);
-        checkNotNull(auths);
+    protected ScannerBase metricScanner(AccumuloFeatureConfig xform, Date start, Date end, String group, Iterable<String> types, String name, TimeUnit timeUnit, Auths auths) {
+        Preconditions.checkNotNull(xform);
 
         try {
-            //fix null values
             group = defaultString(group);
             timeUnit = (timeUnit == null ? TimeUnit.MINUTES : timeUnit);
 
-            //Start scanner over the known range group_end to group_start.  The order is reversed due to the use of a reverse
-            //timestamp.  Which is used to provide the latest results first.
             BatchScanner scanner = connector.createBatchScanner(tableName + REVERSE_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
 
-            Set<Range> ranges = new HashSet<Range>();
-            for (String type : types) {
-                ranges.add(new Range(
-                        combine(type, generateTimestamp(end.getTime(), timeUnit)),
-                        combine(type, generateTimestamp(start.getTime(), timeUnit))
-                ));
-            }
-            scanner.setRanges(ranges);
+            Collection<Range> typeRanges = new ArrayList();
+            for (String type : types)
+                typeRanges.add(buildRange(type, start, end, timeUnit));
 
-            //If both type and name are here then simply fetch the column
-            //else fetch the timeunit column family and apply a regex filter for the CQ containing the type and name.
-            if (name != null) {
-                scanner.fetchColumn(new Text(combine(featureConfig.featureName(), timeUnit.toString())), new Text(combine(group, name)));
-            } else {
-                scanner.fetchColumnFamily(new Text(combine(featureConfig.featureName(), timeUnit.toString())));
-
-                //generates the correct regex
-                String cqRegex = null;
-                cqRegex = combine(group, "(.*)");
-                IteratorSetting regexIterator = new IteratorSetting(DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
-                RegExFilter.setRegexs(regexIterator, null, null, cqRegex, null, false);
-                scanner.addScanIterator(regexIterator);
-            }
+            scanner.setRanges(typeRanges);
+            scanner.fetchColumn(new Text(combine(timeUnit.toString(), xform.featureName())), new Text(combine(group, name)));
 
             return scanner;
 
-        } catch (Exception e) {
+        } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
+    protected ScannerBase metricScanner(AccumuloFeatureConfig xform, Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Auths auths) {
+        Preconditions.checkNotNull(xform);
+
+        try {
+
+            group = defaultString(group);
+            timeUnit = (timeUnit == null ? TimeUnit.MINUTES : timeUnit);
+
+            Scanner scanner = connector.createScanner(tableName + REVERSE_SUFFIX, auths.getAuths());
+            scanner.setRange(buildRange(type, start, end, timeUnit));
+
+            if (group != null && name != null) {
+                scanner.fetchColumn(new Text(combine(timeUnit.toString(), xform.featureName())), new Text(combine(group, name)));
+            } else {
+                scanner.fetchColumnFamily(new Text(combine(timeUnit.toString(), xform.featureName())));
+
+                String cqRegex = null;
+                if (group != null) {
+                    cqRegex = combine(group, "(.*)");
+                } else if (name != null)
+                    cqRegex = combine("(.*)", name);
+                if (cqRegex != null) {
+                    IteratorSetting regexIterator = new IteratorSetting(Constants.DEFAULT_ITERATOR_PRIORITY - 1, "regex", RegExFilter.class);
+                    scanner.addScanIterator(regexIterator);
+                }
+            }
+
+            return scanner;
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected Range buildRange(String type, Date start, Date end, TimeUnit timeUnit) {
+        return new Range(
+                combine(type, generateTimestamp(end.getTime(), timeUnit)),
+                combine(type, generateTimestamp(start.getTime(), timeUnit))
+        );
+    }
 
     /**
      * Will close all underlying resources
@@ -180,6 +192,7 @@ public class AccumuloFeatureStore implements FeatureStore {
      */
     public void shutdown() throws MutationsRejectedException {
         groupWriter.close();
+        typeWriter.close();
     }
 
 
@@ -229,7 +242,7 @@ public class AccumuloFeatureStore implements FeatureStore {
                     //CF: Timeunit
                     //CQ: type\u0000name
                     group_mutation.put(
-                            combine(featureConfig.featureName(), timeUnit.toString()),
+                            combine(timeUnit.toString(), featureConfig.featureName()),
                             combine(type, name),
                             visibility,
                             feature.getTimestamp(),
@@ -239,7 +252,7 @@ public class AccumuloFeatureStore implements FeatureStore {
                     //CF: Timeunit
                     //CQ: group\u0000name
                     type_mutation.put(
-                            combine(featureConfig.featureName(), timeUnit.toString()),
+                            combine(timeUnit.toString(), featureConfig.featureName()),
                             combine(group, name),
                             visibility,
                             feature.getTimestamp(),
@@ -267,7 +280,16 @@ public class AccumuloFeatureStore implements FeatureStore {
      */
     @Override
     public <T extends Feature> CloseableIterable<T> query(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Class<T> featureType, Auths auths) {
-        return query(start, end, group, Collections.singleton(type), name, timeUnit, featureType, auths);
+
+        if (!isInitialized)
+            throw new RuntimeException("Please call initialize() on the store first.");
+
+        final AccumuloFeatureConfig<T> featureConfig = registry.transformForClass(featureType);
+
+        return (CloseableIterable<T>) transform(
+                closeableIterable(metricScanner(featureConfig, start, end, group, type, name, timeUnit, auths)),
+                buildFeatureTransform(featureConfig, timeUnit)
+        );
     }
 
     @Override
@@ -278,14 +300,18 @@ public class AccumuloFeatureStore implements FeatureStore {
 
         final AccumuloFeatureConfig<T> featureConfig = registry.transformForClass(featureType);
 
-        return transform(
-                closeableIterable(metricScanner(start, end, group, types, name, timeUnit, featureConfig, auths)),
-                new FeatureTransform<T>(timeUnit) {
-                    @Override
-                    protected T transform(long timestamp, String group, String type, String name, String visibility, Value value) {
-                        return featureConfig.buildFeatureFromValue(timestamp, group, type, name, visibility, value);
-                    }
-                }
+        return (CloseableIterable<T>) transform(
+            closeableIterable(metricScanner(featureConfig, start, end, group, types, name, timeUnit, auths)),
+            buildFeatureTransform(featureConfig, timeUnit)
         );
+    }
+
+    protected <T extends Feature>FeatureTransform<T> buildFeatureTransform(final AccumuloFeatureConfig xform, TimeUnit timeUnit) {
+        return new FeatureTransform<T>(timeUnit) {
+            @Override
+            protected T transform(long timestamp, String group, String type, String name, String visibility, Value value) {
+                return (T) xform.buildFeatureFromValue(timestamp, group, type, name, visibility, value);
+            }
+        };
     }
 }

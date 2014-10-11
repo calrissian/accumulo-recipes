@@ -24,6 +24,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Metric;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.junit.Test;
 
@@ -143,6 +144,8 @@ public class AccumuloFeatureStoreTest {
         metricStore.save(testData);
         metricStore.save(testData);
         metricStore.save(testData);
+        AccumuloTestUtils.dumpTable(connector, "features_reverse");
+
 
         CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
 
