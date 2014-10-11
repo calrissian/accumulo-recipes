@@ -288,7 +288,7 @@ public class AccumuloFeatureStore implements FeatureStore {
 
         return (CloseableIterable<T>) transform(
                 closeableIterable(metricScanner(featureConfig, start, end, group, type, name, timeUnit, auths)),
-                buildFeatureTransform(featureConfig, timeUnit)
+                buildFeatureTransform(featureConfig)
         );
     }
 
@@ -302,12 +302,12 @@ public class AccumuloFeatureStore implements FeatureStore {
 
         return (CloseableIterable<T>) transform(
             closeableIterable(metricScanner(featureConfig, start, end, group, types, name, timeUnit, auths)),
-            buildFeatureTransform(featureConfig, timeUnit)
+            buildFeatureTransform(featureConfig)
         );
     }
 
-    protected <T extends Feature>FeatureTransform<T> buildFeatureTransform(final AccumuloFeatureConfig xform, TimeUnit timeUnit) {
-        return new FeatureTransform<T>(timeUnit) {
+    protected <T extends Feature>FeatureTransform<T> buildFeatureTransform(final AccumuloFeatureConfig xform) {
+        return new FeatureTransform<T>() {
             @Override
             protected T transform(long timestamp, String group, String type, String name, String visibility, Value value) {
                 return (T) xform.buildFeatureFromValue(timestamp, group, type, name, visibility, value);
