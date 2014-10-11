@@ -44,7 +44,7 @@ public class MetricsInputFormatTest {
     @Test
     public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Instance instance = new MockInstance("instName");
+        Instance instance = new MockInstance("metricsInst");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloFeatureStore store = new AccumuloFeatureStore(connector);
         store.initialize();
@@ -59,7 +59,7 @@ public class MetricsInputFormatTest {
         job.setInputFormatClass(FeaturesInputFormat.class);
         FeaturesInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         FeaturesInputFormat.setQueryInfo(job, new Date(0), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
-        FeaturesInputFormat.setMockInstance(job, "instName");
+        FeaturesInputFormat.setMockInstance(job, "metricsInst");
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();

@@ -48,7 +48,7 @@ public class EventInputFormatTest {
     @Test
     public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Instance instance = new MockInstance("instName");
+        Instance instance = new MockInstance("eventInst");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEventStore store = new AccumuloEventStore(connector);
         event = new BaseEvent(UUID.randomUUID().toString());
@@ -64,7 +64,7 @@ public class EventInputFormatTest {
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EventInputFormat.class);
         EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
-        EventInputFormat.setMockInstance(job, "instName");
+        EventInputFormat.setMockInstance(job, "eventInst");
         EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(),
                 new QueryBuilder().eq("key1", "val1").build());
         job.setOutputFormatClass(NullOutputFormat.class);

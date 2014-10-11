@@ -57,7 +57,7 @@ public class EntityInputFormatTest {
     @Test
     public void testQuery() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Instance instance = new MockInstance("instName");
+        Instance instance = new MockInstance("entityInst");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("type", "id");
@@ -72,7 +72,7 @@ public class EntityInputFormatTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EntityInputFormat.class);
-        EntityInputFormat.setMockInstance(job, "instName");
+        EntityInputFormat.setMockInstance(job, "entityInst");
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setQueryInfo(job, Collections.singleton("type"),
                 new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
@@ -92,7 +92,7 @@ public class EntityInputFormatTest {
     public void testGetAllByType() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
 
-        Instance instance = new MockInstance("instName");
+        Instance instance = new MockInstance("entityInst1");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("type", "id");
@@ -117,7 +117,7 @@ public class EntityInputFormatTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EntityInputFormat.class);
-        EntityInputFormat.setMockInstance(job, "instName");
+        EntityInputFormat.setMockInstance(job, "entityInst1");
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setQueryInfo(job, Collections.singleton("type"));
         job.setOutputFormatClass(NullOutputFormat.class);
