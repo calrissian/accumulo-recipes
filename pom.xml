@@ -128,7 +128,7 @@ limitations under the License.
             <tagNameFormat>@{project.version}</tagNameFormat>
             <releaseProfiles>seal-jars</releaseProfiles>
             <useReleaseProfile>false</useReleaseProfile>
-            <pushChanges>true</pushChanges>
+            <pushChanges>false</pushChanges>
             <localCheckout>true</localCheckout>
           </configuration>
           <dependencies>
