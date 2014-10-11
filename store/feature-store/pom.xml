@@ -42,6 +42,13 @@ limitations under the License.
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>test</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>

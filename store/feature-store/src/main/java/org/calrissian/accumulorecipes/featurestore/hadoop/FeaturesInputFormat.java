@@ -79,16 +79,16 @@ public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 
         setRanges(job,
                 singleton(new Range(
-                        combine(group, generateTimestamp(end.getTime(), timeUnit)),
-                        combine(group, generateTimestamp(start.getTime(), timeUnit))
+                    combine(group, generateTimestamp(end.getTime(), timeUnit)),
+                    combine(group, generateTimestamp(start.getTime(), timeUnit))
                 ))
         );
 
         if (name != null) {
-            Pair<Text, Text> column = new Pair<Text, Text>(new Text(combine(featureConfig.featureName(), timeUnit.toString())), new Text(combine(type, name)));
+            Pair<Text, Text> column = new Pair<Text, Text>(new Text(combine(timeUnit.toString(), featureConfig.featureName())), new Text(combine(type, name)));
             fetchColumns(job, singleton(column));
         } else {
-            Pair<Text, Text> column = new Pair<Text, Text>(new Text(combine(featureConfig.featureName(), timeUnit.toString())), null);
+            Pair<Text, Text> column = new Pair<Text, Text>(new Text(combine(timeUnit.toString(), featureConfig.featureName())), null);
             fetchColumns(job, singleton(column));
 
             if(type != null) {

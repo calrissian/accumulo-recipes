@@ -120,7 +120,7 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
     }
 
     @Override
-    public void commit() throws Exception {
+    public void flush() throws Exception {
         writer.flush();
     }
 

@@ -157,7 +157,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
     }
 
     @Override
-    public void commit() throws Exception {
+    public void flush() throws Exception {
         writer.flush();
     }
 

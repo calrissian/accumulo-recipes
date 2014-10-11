@@ -19,6 +19,7 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
+import org.calrissian.accumulorecipes.featurestore.model.Feature;
 
 import static java.util.Map.Entry;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
@@ -30,7 +31,7 @@ import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.rever
  *
  * @param <T>
  */
-public abstract class FeatureTransform<T> implements Function<Entry<Key, Value>, T> {
+public abstract class FeatureTransform<T extends Feature> implements Function<Entry<Key, Value>, T> {
 
     TimeUnit timeUnit;
 
