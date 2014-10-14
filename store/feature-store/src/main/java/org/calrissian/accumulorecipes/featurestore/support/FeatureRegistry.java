@@ -38,7 +38,17 @@ public class FeatureRegistry {
     }
 
     public AccumuloFeatureConfig transformForClass(Class<? extends Feature> clazz) {
-        return classToTransform.get(clazz);
+
+        AccumuloFeatureConfig featureConfig = classToTransform.get(clazz);
+        if(featureConfig == null) {
+            for(Map.Entry<Class, AccumuloFeatureConfig> clazzes : classToTransform.entrySet()) {
+                if(clazzes.getKey().isAssignableFrom(clazz)) {
+                    featureConfig = clazzes.getValue();
+                    classToTransform.put(clazz, featureConfig);
+                }
+            }
+        }
+        return featureConfig;
     }
 
     public Iterable<AccumuloFeatureConfig> getConfigs() {
