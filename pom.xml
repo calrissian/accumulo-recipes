@@ -16,6 +16,13 @@ limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>15</version>
+  </parent>
+
   <groupId>org.calrissian.accumulorecipes</groupId>
   <artifactId>accumulorecipes-parent</artifactId>
   <version>2.0.1-SNAPSHOT</version>
@@ -108,7 +115,6 @@ limitations under the License.
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
           <configuration>
             <source>1.6</source>
             <target>1.6</target>
@@ -119,7 +125,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.4.2</version>
           <configuration>
             <arguments>-Pfull -DrepositoryId=sonatype-nexus-staging</arguments>
             <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -135,14 +140,12 @@ limitations under the License.
             <dependency>
               <groupId>org.apache.maven.scm</groupId>
               <artifactId>maven-scm-provider-gitexe</artifactId>
-              <version>1.9</version>
             </dependency>
           </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.9</version>
           <configuration>
             <quiet>true</quiet>
             <links>
@@ -155,12 +158,10 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>2.2.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.9</version>
           <configuration>
             <excludes>
               <exclude>**\README.md</exclude>
@@ -170,7 +171,6 @@ limitations under the License.
         <plugin>
           <groupId>com.google.code.sortpom</groupId>
           <artifactId>maven-sortpom-plugin</artifactId>
-          <version>2.1.0</version>
           <configuration>
             <predefinedSortOrder>custom_1</predefinedSortOrder>
             <lineSeparator>\n</lineSeparator>
@@ -186,7 +186,6 @@ limitations under the License.
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3</version>
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
@@ -290,7 +289,6 @@ limitations under the License.
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
