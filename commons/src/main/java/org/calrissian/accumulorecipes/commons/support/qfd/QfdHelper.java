@@ -15,9 +15,23 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -27,7 +41,11 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.*;
+import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
+import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
+import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
+import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
+import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
@@ -40,15 +58,16 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.*;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
-import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_FI;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.VISIBILITY;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
@@ -112,9 +131,12 @@ public abstract class QfdHelper<T extends TupleStore> {
         if (!connector.tableOperations().exists(this.shardTable)) {
             connector.tableOperations().create(this.shardTable);
             configureShardTable(connector, this.shardTable);
-            IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
-            MetadataExpirationFilter.setMetadataSerde(expirationFilter, metadataSerDe);
-            connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
+        }
+
+        if(connector.tableOperations().getIteratorSetting(this.shardTable, "expiration", majc) == null) {
+          IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
+          MetadataExpirationFilter.setMetadataSerde(expirationFilter, metadataSerDe);
+          connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
         }
 
         initializeKryo(kryo);
