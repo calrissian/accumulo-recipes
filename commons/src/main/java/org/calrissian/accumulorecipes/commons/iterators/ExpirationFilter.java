@@ -15,9 +15,14 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Filter;
+import org.apache.accumulo.core.iterators.IteratorEnvironment;
+import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 import static java.lang.System.currentTimeMillis;
 
@@ -26,7 +31,15 @@ import static java.lang.System.currentTimeMillis;
  */
 public abstract class ExpirationFilter extends Filter {
 
-    /**
+
+    protected boolean negate;
+
+    @Override
+    public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
+      super.init(source, options, env);
+    }
+
+  /**
      * Accepts entries whose timestamps are less than currentTime - threshold.
      */
     @Override
@@ -34,17 +47,21 @@ public abstract class ExpirationFilter extends Filter {
 
         if (v.get().length > 0) {
 
-            long threshold = parseExpiration(v);
-
-            if (threshold > -1) {
-                long currentTime = currentTimeMillis();
-                if (k.getTimestamp() > currentTime || currentTime - k.getTimestamp() > threshold)
-                    return false;
-            }
+            long threshold = parseExpiration(k.getTimestamp(), v);
+            return !shouldExpire(threshold, k.getTimestamp());
         }
 
         return true;
     }
 
-    protected abstract long parseExpiration(Value v);
+    protected boolean shouldExpire(long threshold, long timestamp) {
+      if (threshold > -1) {
+        long currentTime = currentTimeMillis();
+        if (timestamp > currentTime || currentTime - timestamp > threshold)
+          return true;
+      }
+      return false;
+    }
+
+    protected abstract long parseExpiration(long timestamp, Value v);
 }

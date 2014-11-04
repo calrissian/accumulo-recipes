@@ -70,7 +70,7 @@ for(Event entry : events)
 events.close();
 ```
 
-What's intrigueing about the loose and schemaless model of the StoreEntry object is that many heterogenous models can live together in the same store and be queried/returned together, each object returned can have a completely different set of tuples. You could, in theory, have several different types of "status update" events from several types of systems that are located in Maryland and you could query all of them from the same location for a given time period.
+What's intrigueing about the loose and schemaless model of the Event object is that many heterogenous models can live together in the same store and be queried/returned together, each object returned can have a completely different set of tuples. You could, in theory, have several different types of "status update" events from several types of systems that are located in Maryland and you could query all of them from the same location for a given time period.
 
 Better yet, if you want separation of keys so that they don't collide with other events in the store, you have the freedom to namespace them as you wish (i.e. status.location instead of just location).
 
@@ -83,3 +83,8 @@ Node query = new QueryBuilder().and().eq("eventType", "status").eq("healthOK", f
 // find all the event object from Maryland or Virginia
 Node query = new QueryBuilder().or().eq("location", "Maryland").eq("location", "Virginia").endStatement().build());
 ```
+
+## Persisting and querying JSON
+
+Mango provides a utility for flattening json into a collection of tuples that can be used to hydrate event objects. The same utility can also be used to re-expand the flattened tuples back into json. This allows users to quickly get their data into the event store without spending too much time worrying about object parsing and translation.
+

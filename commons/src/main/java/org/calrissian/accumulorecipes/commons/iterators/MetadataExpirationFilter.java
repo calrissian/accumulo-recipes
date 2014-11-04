@@ -15,36 +15,49 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
+import org.calrissian.accumulorecipes.commons.iterators.support.MetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 
-import java.io.IOException;
-import java.util.Map;
-
+import static java.lang.Math.max;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Expiration.getExpiration;
 import static org.calrissian.mango.io.Serializables.fromBase64;
-import static org.calrissian.mango.io.Serializables.toBase64;
 
 /**
  * Allows Accumulo to expire keys/values based on an expiration threshold encoded in a metadata map in the value.
  */
 public class MetadataExpirationFilter extends ExpirationFilter {
 
+    private static final String METADATA_SERDE_FACTORY_KEY = "metaSerdeFactory";
     public static final String METADATA_SERDE = "metadataSerDe";
     private MetadataSerDe metadataSerDe;
+    private Value nextVal = new Value();
 
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         super.init(source, options, env);
-        try {
-            metadataSerDe = fromBase64(options.get(METADATA_SERDE).getBytes());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
+        MetadataSerdeFactory metadataSerdeFactory = getFactory(options);
+        if(metadataSerdeFactory == null)
+          throw new RuntimeException("Metadata SerDe Factory failed to be initialized");
+        else
+          metadataSerDe = metadataSerdeFactory.create();
+
+        if(options.containsKey(NEGATE))
+          negate = Boolean.parseBoolean(options.get(NEGATE));
+
+
     }
 
     @Override
@@ -53,6 +66,7 @@ public class MetadataExpirationFilter extends ExpirationFilter {
         copy.metadataSerDe = metadataSerDe;
         return copy;
     }
+
 
     @Override
     public IteratorOptions describeOptions() {
@@ -74,23 +88,60 @@ public class MetadataExpirationFilter extends ExpirationFilter {
         return true;
     }
 
+    @Override
+    public Value getTopValue() {
+      if (super.getSource() == null)
+        throw new IllegalStateException("no source set");
+      if (seenSeek == false)
+        throw new IllegalStateException("never been seeked");
 
-    /**
-     * Conigurator method to configure the metadata serializer/deserializer on an iterator setting.
-     */
-    public static void setMetadataSerde(IteratorSetting setting, MetadataSerDe metadataSerDe) {
-        try {
-            setting.addOption(METADATA_SERDE, new String(toBase64(metadataSerDe)));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+      return nextVal;
     }
 
-    protected long parseExpiration(Value v) {
-        Map<String, Object> metadata = metadataSerDe.deserialize(v.get());
-        if(metadata != null)
-            return getExpiration(metadata, -1);
-        return -1;
+    boolean seenSeek = false;
+
+    @Override
+    public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
+      super.seek(range, columnFamilies, inclusive);
+      seenSeek = true;
+    }
+  /**
+     * Conigurator method to configure the metadata serializer/deserializer on an iterator setting.
+     */
+    public static final void setMetadataSerdeFactory(IteratorSetting setting, Class<? extends MetadataSerdeFactory> factoryClazz) {
+      setting.addOption(METADATA_SERDE_FACTORY_KEY, factoryClazz.getName());
+    }
+
+    protected long parseExpiration(long timestamp, Value v) {
+      List<Map<String, Object>> metadata = metadataSerDe.deserialize(v.get());
+
+      List<Map<String, Object>> newMeta = metadataSerDe.deserialize(v.get());
+      long max = -1;
+      if(metadata != null) {
+        for(Map<String,Object> entry : metadata) {
+
+          long expiration = getExpiration(entry, -1);
+          max = max(getExpiration(entry, -1), max);
+
+          if(!shouldExpire(expiration, timestamp))
+            newMeta.add(entry);
+        }
+
+        if(!shouldExpire(max, timestamp))
+          nextVal.set(metadataSerDe.serialize(newMeta));
+      }
+
+      return max;
+    }
+
+    private MetadataSerdeFactory getFactory(Map<String,String> options) {
+      String factoryClazz = options.get(METADATA_SERDE_FACTORY_KEY);
+      try {
+        Class clazz = Class.forName(factoryClazz);
+        return (MetadataSerdeFactory) clazz.newInstance();
+      } catch (Exception e) {}
+
+      return null;
     }
 
 }

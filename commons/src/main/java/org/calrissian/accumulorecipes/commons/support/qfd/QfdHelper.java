@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -44,13 +45,15 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
+import org.calrissian.accumulorecipes.commons.iterators.MetadataCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.support.MetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
+import org.calrissian.accumulorecipes.commons.iterators.support.SimpleLexiMetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
-import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -59,6 +62,7 @@ import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
@@ -91,7 +95,7 @@ public abstract class QfdHelper<T extends TupleStore> {
 
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
                      ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
-                     MetadataSerDe metadataSerDe)
+                     MetadataSerdeFactory metadaSerdeFactory)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         checkNotNull(connector);
@@ -101,7 +105,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         checkNotNull(shardBuilder);
         checkNotNull(typeRegistry);
         checkNotNull(keyValueIndex);
-        checkNotNull(metadataSerDe);
+        checkNotNull(metadaSerdeFactory);
 
         this.connector = connector;
         this.indexTable = indexTable;
@@ -113,7 +117,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.keyValueIndex = keyValueIndex;
         this.nodeToJexl = new NodeToJexl(typeRegistry);
 
-        this.metadataSerDe = metadataSerDe;
+        this.metadataSerDe = metadaSerdeFactory.create();
 
         if (!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -135,11 +139,18 @@ public abstract class QfdHelper<T extends TupleStore> {
 
         if(connector.tableOperations().getIteratorSetting(this.shardTable, "expiration", majc) == null) {
           IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
-          MetadataExpirationFilter.setMetadataSerde(expirationFilter, metadataSerDe);
+          MetadataExpirationFilter.setMetadataSerdeFactory(expirationFilter, metadaSerdeFactory.getClass());
           connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
         }
 
-        initializeKryo(kryo);
+      if(connector.tableOperations().getIteratorSetting(this.shardTable, "metacombiner", majc) == null) {
+        IteratorSetting metadataCombiner = new IteratorSetting(9, "metacombiner", MetadataCombiner.class);
+        MetadataCombiner.setCombineAllColumns(metadataCombiner, true);
+        MetadataCombiner.setMetadataSerdeFactory(metadataCombiner, metadaSerdeFactory.getClass());
+        connector.tableOperations().attachIterator(this.shardTable, metadataCombiner, allOf(IteratorScope.class));
+      }
+
+      initializeKryo(kryo);
         this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
@@ -147,7 +158,7 @@ public abstract class QfdHelper<T extends TupleStore> {
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
                      ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
             throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerDe(typeRegistry));
+        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleLexiMetadataSerdeFactory());
     }
 
     public MetadataSerDe getMetadataSerDe() {
@@ -193,14 +204,14 @@ public abstract class QfdHelper<T extends TupleStore> {
                                 new Text(tuple.getKey() + NULL_BYTE + aliasValue),
                                 columnVisibility,
                                 buildTimestamp(item),
-                                new Value(metadataSerDe.serialize(metadata)));
+                                new Value(metadataSerDe.serialize(newArrayList(metadata))));
 
                         // reverse mutation
                         shardMutation.put(new Text(PREFIX_FI + NULL_BYTE + tuple.getKey()),
                                 new Text(aliasValue + NULL_BYTE + buildId(item)),
                                 columnVisibility,
                                 buildTimestamp(item),
-                                new Value(metadataSerDe.serialize(metadata)));  // forward mutation
+                                new Value(metadataSerDe.serialize(Lists.newArrayList(metadata))));  // forward mutation
                     }
 
                     shardWriter.addMutation(shardMutation);

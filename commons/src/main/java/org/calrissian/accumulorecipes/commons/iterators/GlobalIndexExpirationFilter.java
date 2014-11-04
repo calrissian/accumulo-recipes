@@ -23,7 +23,7 @@ import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
  */
 public class GlobalIndexExpirationFilter extends ExpirationFilter {
 
-    protected long parseExpiration(Value v) {
+    protected long parseExpiration(long timestamp, Value v) {
         GlobalIndexValue val = new GlobalIndexValue(v);
         return val.getExpiration();
     }
