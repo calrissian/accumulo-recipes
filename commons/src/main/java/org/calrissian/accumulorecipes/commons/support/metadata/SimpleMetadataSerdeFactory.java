@@ -1,7 +1,4 @@
-package org.calrissian.accumulorecipes.commons.iterators.support;
-
-import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
-import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
+package org.calrissian.accumulorecipes.commons.support.metadata;
 
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 

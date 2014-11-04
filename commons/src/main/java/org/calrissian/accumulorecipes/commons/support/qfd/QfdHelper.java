@@ -48,12 +48,12 @@ import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFil
 import org.calrissian.accumulorecipes.commons.iterators.MetadataCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
-import org.calrissian.accumulorecipes.commons.iterators.support.MetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.iterators.support.SimpleLexiMetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.metadata.SimpleLexiMetadataSerdeFactory;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -133,7 +133,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
-            connector.tableOperations().create(this.shardTable);
+            connector.tableOperations().create(this.shardTable, false);
             configureShardTable(connector, this.shardTable);
         }
 
@@ -143,12 +143,12 @@ public abstract class QfdHelper<T extends TupleStore> {
           connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
         }
 
-      if(connector.tableOperations().getIteratorSetting(this.shardTable, "metacombiner", majc) == null) {
-        IteratorSetting metadataCombiner = new IteratorSetting(9, "metacombiner", MetadataCombiner.class);
-        MetadataCombiner.setCombineAllColumns(metadataCombiner, true);
-        MetadataCombiner.setMetadataSerdeFactory(metadataCombiner, metadaSerdeFactory.getClass());
-        connector.tableOperations().attachIterator(this.shardTable, metadataCombiner, allOf(IteratorScope.class));
-      }
+        if(connector.tableOperations().getIteratorSetting(this.shardTable, "metacombiner", majc) == null) {
+          IteratorSetting metadataCombiner = new IteratorSetting(9, "metacombiner", MetadataCombiner.class);
+          MetadataCombiner.setCombineAllColumns(metadataCombiner, true);
+          MetadataCombiner.setMetadataSerdeFactory(metadataCombiner, metadaSerdeFactory.getClass());
+          connector.tableOperations().attachIterator(this.shardTable, metadataCombiner, allOf(IteratorScope.class));
+        }
 
       initializeKryo(kryo);
         this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
@@ -190,7 +190,8 @@ public abstract class QfdHelper<T extends TupleStore> {
 
                     Mutation shardMutation = new Mutation(shardId);
 
-                    for (Tuple tuple : item.getTuples()) {
+                  int count = 0;
+                  for (Tuple tuple : item.getTuples()) {
 
                         String aliasValue = typeRegistry.getAlias(tuple.getValue()) + ONE_BYTE +
                                 typeRegistry.encode(tuple.getValue());
@@ -203,15 +204,17 @@ public abstract class QfdHelper<T extends TupleStore> {
                         shardMutation.put(new Text(buildId(item)),
                                 new Text(tuple.getKey() + NULL_BYTE + aliasValue),
                                 columnVisibility,
-                                buildTimestamp(item),
+                                buildTimestamp(item)+count,
                                 new Value(metadataSerDe.serialize(newArrayList(metadata))));
 
                         // reverse mutation
                         shardMutation.put(new Text(PREFIX_FI + NULL_BYTE + tuple.getKey()),
                                 new Text(aliasValue + NULL_BYTE + buildId(item)),
                                 columnVisibility,
-                                buildTimestamp(item),
+                                buildTimestamp(item)+count,
                                 new Value(metadataSerDe.serialize(Lists.newArrayList(metadata))));  // forward mutation
+
+                        count++;
                     }
 
                     shardWriter.addMutation(shardMutation);

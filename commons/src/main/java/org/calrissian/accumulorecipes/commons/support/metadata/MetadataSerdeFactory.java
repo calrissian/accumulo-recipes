@@ -1,4 +1,4 @@
-package org.calrissian.accumulorecipes.commons.iterators.support;
+package org.calrissian.accumulorecipes.commons.support.metadata;
 
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 

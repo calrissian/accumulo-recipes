@@ -31,9 +31,6 @@ import static java.lang.System.currentTimeMillis;
  */
 public abstract class ExpirationFilter extends Filter {
 
-
-    protected boolean negate;
-
     @Override
     public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
       super.init(source, options, env);

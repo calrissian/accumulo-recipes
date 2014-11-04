@@ -19,8 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.calrissian.accumulorecipes.commons.iterators.support.MetadataSerdeFactory;
-import org.calrissian.accumulorecipes.commons.iterators.support.SimpleMetadataSerdeFactory;
 import org.junit.Test;
 
 import static com.google.common.collect.Lists.newArrayList;
