@@ -15,6 +15,12 @@
  */
 package org.calrissian.accumulorecipes.commons.transform;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
@@ -25,11 +31,6 @@ import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator.decodeRow;
@@ -69,25 +70,34 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
             V entry = null;
 
             for (Map.Entry<Key, Value> curEntry : keyValues.entrySet()) {
+
                 if (entry == null)
                     entry = buildEntryFromKey(curEntry.getKey());
                 String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
                 String[] aliasValue = splitPreserveAllTokens(colQParts[1], ONE_BYTE);
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
 
-                Map<String, Object> metadata = new HashMap<String, Object>();
                 try {
-                    Map<String,Object> meta = metadataSerDe.deserialize(curEntry.getValue().get());
-                    if(meta != null)
-                        metadata.putAll(meta);
+                  List<Map<String,Object>> meta = metadataSerDe.deserialize(curEntry.getValue().get());
+                  if(meta != null) {
+                    for(Map<String,Object> curMeta : meta) {
+                      Map<String,Object> metadata = new HashMap<>();
+                      if(curMeta != null)
+                        metadata.putAll(curMeta);
+
+                      setVisibility(metadata, visibility);
+                      Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
+                      entry.put(tuple);
+                    }
+                  } else {
+                    Map<String,Object> metadata = new HashMap<>();
+                    setVisibility(metadata, visibility);
+                    Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
+                    entry.put(tuple);
+                  }
                 } catch(Exception e) {
-                    log.error("There was an error deserializing metadata for tuple.", e);
+                  log.error("There was an error deserializing the metadata for a tuple", e);
                 }
-                setVisibility(metadata, visibility);
-                Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
-
-                entry.put(tuple);
-
             }
 
             return entry;
