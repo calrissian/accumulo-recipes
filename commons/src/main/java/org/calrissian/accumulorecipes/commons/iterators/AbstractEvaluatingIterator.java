@@ -16,8 +16,22 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
-import org.apache.accumulo.core.data.*;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
@@ -25,10 +39,6 @@ import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.log4j.Logger;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.commons.iterators.support.QueryEvaluator;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.*;
 
 /**
  * This iterator aggregates rows together using the specified key comparator. Subclasses will provide their own implementation of fillMap which will fill the
@@ -176,7 +186,8 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
                         // Wrap in ByteBuffer to work with Kryo
                         ByteBuffer buf = ByteBuffer.wrap(serializedMap);
                         // Serialize the EventFields object
-                        event.writeObjectData(kryo, buf);
+                        ByteBufferOutput output = new ByteBufferOutput(buf);
+                        event.write(kryo, new ByteBufferOutput(buf), event);
                         // Truncate array to the used size.
                         returnValue = new Value(Arrays.copyOfRange(serializedMap, 0, buf.position()));
                     } else {

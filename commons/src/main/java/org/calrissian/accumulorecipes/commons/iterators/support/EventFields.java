@@ -16,11 +16,17 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
-import com.esotericsoftware.kryo.CustomSerialization;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.serialize.ArraySerializer;
-import com.esotericsoftware.kryo.serialize.IntSerializer;
-import com.esotericsoftware.kryo.serialize.StringSerializer;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.DefaultArraySerializers;
+import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
@@ -28,19 +34,15 @@ import com.google.common.collect.SetMultimap;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
 
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 /**
  * Object used to hold the fields in an event. This is a multimap because fields can be repeated.
  */
-public class EventFields implements SetMultimap<String, FieldValue>, CustomSerialization {
+public class EventFields extends Serializer<EventFields> implements SetMultimap<String, FieldValue> {
 
     private static boolean kryoInitialized = false;
-    private static ArraySerializer valueSerializer = null;
+    private static DefaultArraySerializers.ByteArraySerializer valueSerializer = new DefaultArraySerializers.ByteArraySerializer();
+    private static DefaultSerializers.IntSerializer intSerializer = new DefaultSerializers.IntSerializer();
+    private static DefaultSerializers.StringSerializer stringSerializer = new DefaultSerializers.StringSerializer();
 
     private Multimap<String, FieldValue> map = null;
 
@@ -48,15 +50,53 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
         map = HashMultimap.create();
     }
 
-    public static synchronized void initializeKryo(Kryo kryo) {
+    public EventFields(Kryo kryo, Input input) {
+
+      this();
+      if(!kryoInitialized)
+        EventFields.initializeKryo(kryo);
+    }
+
+  @Override public void write(Kryo kryo, Output output, EventFields eventFields) {
+    // Write out the number of entries;
+    intSerializer.write(kryo, output, map.size());
+    for (Entry<String, FieldValue> entry : map.entries()) {
+      // Write the key
+      stringSerializer.write(kryo, output, entry.getKey());
+      // Write the fields in the value
+
+      valueSerializer.write(kryo, output, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : entry.getValue().getVisibility().getExpression());
+      valueSerializer.write(kryo, output, entry.getValue().getValue());
+      valueSerializer.write(kryo, output, entry.getValue().getMetadata());
+    }
+
+    output.flush();
+
+  }
+
+  @Override public EventFields read(Kryo kryo, Input input, Class<EventFields> eventFieldsClass) {
+
+    // Read in the number of map entries
+    int entries = intSerializer.read(kryo, input, Integer.class);
+    for (int i = 0; i < entries; i++) {
+      // Read in the key
+      String key = stringSerializer.read(kryo, input, String.class);
+      // Read in the fields in the value
+      ColumnVisibility vis = new ColumnVisibility(valueSerializer.read(kryo, input, byte[].class));
+      byte[] value = valueSerializer.read(kryo, input, byte[].class);
+      byte[] metadata = valueSerializer.read(kryo, input, byte[].class);
+      map.put(key, new FieldValue(vis, value, metadata));
+    }
+
+    return this;
+  }
+
+  public static synchronized void initializeKryo(Kryo kryo) {
         if (kryoInitialized)
             return;
-        valueSerializer = new ArraySerializer(kryo);
-        valueSerializer.setDimensionCount(1);
-        valueSerializer.setElementsAreSameType(true);
-        valueSerializer.setCanBeNull(false);
-        valueSerializer.setElementsCanBeNull(false);
+        valueSerializer = new DefaultArraySerializers.ByteArraySerializer();
         kryo.register(byte[].class, valueSerializer);
+
         kryoInitialized = true;
     }
 
@@ -149,38 +189,7 @@ public class EventFields implements SetMultimap<String, FieldValue>, CustomSeria
         return buf.toString();
     }
 
-    public void readObjectData(Kryo kryo, ByteBuffer buf) {
-        if (!kryoInitialized)
-            EventFields.initializeKryo(kryo);
-        // Read in the number of map entries
-        int entries = IntSerializer.get(buf, true);
-        for (int i = 0; i < entries; i++) {
-            // Read in the key
-            String key = StringSerializer.get(buf);
-            // Read in the fields in the value
-            ColumnVisibility vis = new ColumnVisibility(valueSerializer.readObjectData(buf, byte[].class));
-            byte[] value = valueSerializer.readObjectData(buf, byte[].class);
-            byte[] metadata = valueSerializer.readObjectData(buf, byte[].class);
-            map.put(key, new FieldValue(vis, value, metadata));
-        }
 
-    }
-
-    public void writeObjectData(Kryo kryo, ByteBuffer buf) {
-        if (!kryoInitialized)
-            EventFields.initializeKryo(kryo);
-        // Write out the number of entries;
-        IntSerializer.put(buf, map.size(), true);
-        for (Entry<String, FieldValue> entry : map.entries()) {
-            // Write the key
-            StringSerializer.put(buf, entry.getKey());
-            // Write the fields in the value
-
-            valueSerializer.writeObjectData(buf, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : entry.getValue().getVisibility().getExpression());
-            valueSerializer.writeObjectData(buf, entry.getValue().getValue());
-            valueSerializer.writeObjectData(buf, entry.getValue().getMetadata());
-        }
-    }
 
     public static class FieldValue {
         ColumnVisibility visibility;

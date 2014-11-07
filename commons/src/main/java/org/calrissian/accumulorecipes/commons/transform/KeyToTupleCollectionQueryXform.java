@@ -16,6 +16,7 @@
 package org.calrissian.accumulorecipes.commons.transform;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -67,7 +68,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
     @Override
     public V apply(Map.Entry<Key, Value> keyValueEntry) {
         EventFields eventFields = new EventFields();
-        eventFields.readObjectData(kryo, wrap(keyValueEntry.getValue().get()));
+        eventFields.read(kryo, new Input(keyValueEntry.getValue().get()), EventFields.class);
         V entry = buildTupleCollectionFromKey(keyValueEntry.getKey());
         for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
             if (selectFields == null || selectFields.contains(fieldValue.getKey())) {
