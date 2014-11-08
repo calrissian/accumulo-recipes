@@ -15,7 +15,19 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
-import org.apache.accumulo.core.client.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.Set;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Range;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
@@ -37,13 +49,11 @@ import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.Set;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
@@ -149,7 +159,7 @@ public class AccumuloEventStore implements EventStore {
 
             for (EventIndex curIndex : uuids) {
                 String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getId(), curIndex.getTimestamp()));
-                eventRanges.add(Range.prefix(shardId, curIndex.getId()));
+                eventRanges.add(prefix(shardId, PREFIX_E + ONE_BYTE + curIndex.getId()));
             }
 
             eventScanner.setRanges(eventRanges);
@@ -170,4 +180,6 @@ public class AccumuloEventStore implements EventStore {
             throw new RuntimeException(e);
         }
     }
+
+
 }

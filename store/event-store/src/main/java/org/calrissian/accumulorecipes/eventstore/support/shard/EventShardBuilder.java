@@ -15,10 +15,16 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support.shard;
 
+import java.util.Date;
+import java.util.SortedSet;
+
+import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.mango.domain.event.Event;
 
 public interface EventShardBuilder extends ShardBuilder<Event> {
 
     String buildShard(long timestamp, int partition);
+
+    SortedSet<Text> buildShardsInRange(Date start, Date stop);
 }

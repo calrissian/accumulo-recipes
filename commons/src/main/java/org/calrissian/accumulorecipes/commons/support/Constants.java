@@ -22,12 +22,14 @@ public class Constants {
 
     public static final int DEFAULT_PARTITION_SIZE = 7;
 
-    public static final String PREFIX_FI = "fi";         // field index index
+    public static final String PREFIX_E = "e";          // event prefix
+    public static final String PREFIX_FI = "fi";        // field index index
     public static final String INDEX_V = "v";           // key index
     public static final String INDEX_K = "k";           // value index prefix
 
     public static final String NULL_BYTE = "\u0000";
     public static final String ONE_BYTE = "\u0001";
+    public static final String TWO_BYTE = "\u0002";
     public static final String END_BYTE = "\uffff";
 
     public static final Value EMPTY_VALUE = new Value("".getBytes());

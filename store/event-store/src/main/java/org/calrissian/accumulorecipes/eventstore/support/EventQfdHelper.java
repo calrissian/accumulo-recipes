@@ -15,8 +15,14 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
@@ -30,10 +36,9 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.Set;
-
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
-
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 
 public class EventQfdHelper extends QfdHelper<Event> {
 
@@ -45,7 +50,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
     @Override
     protected String buildId(Event item) {
-        return item.getId();
+        return PREFIX_E + ONE_BYTE + item.getId();
     }
 
     @Override
@@ -63,7 +68,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
 
     public WholeColFXForm buildWholeColFXform() {
-        return new WholeColFXForm(getKryo(), getTypeRegistry(), getMetadataSerDe());
+        return new WholeColFXForm(getKryo(), getTypeRegistry(), null, getMetadataSerDe());
     }
 
 
@@ -83,18 +88,24 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
         @Override
         protected Event buildTupleCollectionFromKey(Key k) {
-            return new BaseEvent(k.getColumnFamily().toString(), k.getTimestamp());
+            return new BaseEvent(parseIdFromKey(k), k.getTimestamp());
         }
     }
 
     public static class WholeColFXForm extends KeyToTupleCollectionWholeColFXform<Event> {
-        public WholeColFXForm(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
-            super(kryo, typeRegistry, null, metadataSerDe);
+        public WholeColFXForm(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
+            super(kryo, typeRegistry, selectFields, metadataSerDe);
         }
 
         @Override
         protected Event buildEntryFromKey(Key k) {
-            return new BaseEvent(k.getColumnFamily().toString(), k.getTimestamp());
+            return new BaseEvent(parseIdFromKey(k), k.getTimestamp());
         }
+    }
+
+    private static final String parseIdFromKey(Key key) {
+      String cf = key.getColumnFamily().toString();
+      int uuidIdx = cf.indexOf(ONE_BYTE);
+      return cf.substring(uuidIdx+1);
     }
 }

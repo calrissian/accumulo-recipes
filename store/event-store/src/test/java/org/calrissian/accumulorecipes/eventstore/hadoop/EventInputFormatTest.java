@@ -15,7 +15,17 @@
  */
 package org.calrissian.accumulorecipes.eventstore.hadoop;
 
-import org.apache.accumulo.core.client.*;
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.UUID;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
@@ -30,12 +40,8 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.UUID;
 
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
@@ -44,6 +50,12 @@ import static org.junit.Assert.assertNotNull;
 public class EventInputFormatTest {
 
     public static Event event;
+
+    @Before
+    public void setup() {
+      event = null;
+      TestMapper.entry = null;
+    }
 
     @Test
     public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
@@ -78,6 +90,41 @@ public class EventInputFormatTest {
         assertEquals(new HashSet<Tuple>(TestMapper.entry.getTuples()), new HashSet<Tuple>(event.getTuples()));
 
     }
+
+  @Test
+  public void testNoQuery() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+    Instance instance = new MockInstance("eventInst2");
+    Connector connector = instance.getConnector("root", "".getBytes());
+    AccumuloEventStore store = new AccumuloEventStore(connector);
+    event = new BaseEvent(UUID.randomUUID().toString());
+    event.put(new Tuple("key1", "val1"));
+    event.put(new Tuple("key2", false));
+    store.save(singleton(event));
+
+    Job job = new Job(new Configuration());
+    job.setJarByClass(getClass());
+    job.setMapperClass(TestMapper.class);
+    job.setNumReduceTasks(0);
+    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputValueClass(Text.class);
+    job.setInputFormatClass(EventInputFormat.class);
+    EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+    EventInputFormat.setMockInstance(job, "eventInst2");
+    EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date());
+    job.setOutputFormatClass(NullOutputFormat.class);
+
+    job.submit();
+    job.waitForCompletion(true);
+
+    System.out.println(TestMapper.entry);
+
+    assertNotNull(TestMapper.entry);
+    assertEquals(TestMapper.entry.getId(), event.getId());
+    assertEquals(TestMapper.entry.getTimestamp(), event.getTimestamp());
+    assertEquals(new HashSet<Tuple>(TestMapper.entry.getTuples()), new HashSet<Tuple>(event.getTuples()));
+
+  }
 
     public static class TestMapper extends Mapper<Key, EventWritable, Text, Text> {
 

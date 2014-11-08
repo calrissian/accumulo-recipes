@@ -16,14 +16,14 @@
 package org.calrissian.accumulorecipes.eventstore.support.shard;
 
 
-import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.mango.domain.event.Event;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
+import org.calrissian.mango.domain.event.Event;
 
 public class HourlyShardBuilder implements ShardBuilder<Event>, EventShardBuilder {
 
@@ -48,6 +48,7 @@ public class HourlyShardBuilder implements ShardBuilder<Event>, EventShardBuilde
                 delimiter, partition);
     }
 
+    @Override
     public SortedSet<Text> buildShardsInRange(Date start, Date stop) {
 
         SortedSet<Text> shards = new TreeSet<Text>();

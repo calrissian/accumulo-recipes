@@ -15,9 +15,20 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
+
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -36,13 +47,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
-
 import static com.google.common.collect.Iterables.size;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class AccumuloEventStoreTest {
 
@@ -333,6 +344,9 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key3", "val3"));
 
         store.save(asList(event, event2));
+        store.flush();
+
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
 
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
