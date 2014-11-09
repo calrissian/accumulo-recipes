@@ -50,7 +50,6 @@ public class JsonEventStoreTest {
     // Create event from json
     Event event = new BaseEvent();
     event.putAll(JsonTupleStore.fromJson(json, objectMapper));
-    System.out.println(event);
 
     // Persist event
     store.save(singleton(event));

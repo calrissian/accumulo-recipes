@@ -15,8 +15,19 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.common.base.Function;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -25,26 +36,26 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
 import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
+import org.calrissian.accumulorecipes.eventstore.iterator.EventGlobalIndexUniqueKVIterator;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
@@ -57,6 +68,8 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
     private final Connector connector;
     private final BatchWriter writer;
     private final StoreConfig config;
+
+    private static final Text EMPTY_TEXT = new Text();
 
     public EventKeyValueIndex(Connector connector, String indexTable, ShardBuilder<Event> shardBuilder, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         this.shardBuilder = shardBuilder;
@@ -113,13 +126,19 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
         for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
 
             String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), ONE_BYTE);
-            Mutation keyMutation = new Mutation(INDEX_K + "_" + indexParts[1]);
-            Mutation valueMutation = new Mutation(INDEX_V + "_" + indexParts[2] + "__" + indexParts[3]);
+            String alias = indexParts[2];
+            String key = indexParts[1];
+            String shard = indexParts[0];
+            String vis = indexParts[4];
+            String val = indexParts[3];
+
+            Mutation keyMutation = new Mutation(INDEX_K + "_" + key + "__" + alias + NULL_BYTE + shard);
+            Mutation valueMutation = new Mutation(INDEX_V + "_" + alias + "__" + key + NULL_BYTE + val + NULL_BYTE + shard);
 
             Long expiration = expirationCache.get(indexCacheKey.getKey());
             Value value = new GlobalIndexValue(indexCacheKey.getValue(), expiration).toValue();
-            keyMutation.put(new Text(indexParts[2]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
-            valueMutation.put(new Text(indexParts[1]), new Text(indexParts[0]), new ColumnVisibility(indexParts[4]), value);
+            keyMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
+            valueMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
             try {
                 writer.addMutation(keyMutation);
                 writer.addMutation(valueMutation);
@@ -136,7 +155,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
 
         try {
             BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
-            IteratorSetting setting = new IteratorSetting(15, FirstEntryInColumnIterator.class);
+            IteratorSetting setting = new IteratorSetting(15, EventGlobalIndexUniqueKVIterator.class);
             scanner.addScanIterator(setting);
 
             scanner.setRanges(singletonList(
@@ -148,7 +167,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
                 @Override
                 public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
                     EventCardinalityKey key = new EventCardinalityKey(keyValueEntry.getKey());
-                    return new Pair<String, String>(key.getKey(), key.getAlias());
+                    return new Pair(key.getKey(), key.getAlias());
                 }
             });
         } catch (Exception e) {
