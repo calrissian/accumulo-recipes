@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.support.metadata;
+package org.calrissian.accumulorecipes.eventstore.iterator;
 
-import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
+import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInPrefixedRowIterator;
 
-public class SimpleMetadataSerdeFactory implements MetadataSerdeFactory {
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
-  @Override
-  public MetadataSerDe create() {
-    return new SimpleMetadataSerDe(SIMPLE_TYPES);
+/**
+ * Created by cjnolet on 11/9/14.
+ */
+public class EventGlobalIndexUniqueKVIterator extends FirstEntryInPrefixedRowIterator {
+
+  @Override protected String getPrefix(String rowStr) {
+
+    int idx = rowStr.lastIndexOf(NULL_BYTE);
+    String substr = rowStr.substring(0, idx);
+    return substr;
   }
 }

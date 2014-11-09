@@ -57,7 +57,7 @@ public class MetadataCombiner extends Combiner {
   @Override
   public Value reduce(Key key, Iterator<Value> iter) {
 
-    List<Map<String,Object>> activeList = new ArrayList<>();
+    List<Map<String,Object>> activeList = new ArrayList<Map<String,Object>>();
     while(iter.hasNext()) {
       Value value = iter.next();
       List<Map<String,Object>> metaList = metadataSerDe.deserialize(value.get());

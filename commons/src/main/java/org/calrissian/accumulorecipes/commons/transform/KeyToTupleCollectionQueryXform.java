@@ -81,7 +81,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                   List<Map<String,Object>> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
                   if(meta != null) {
                     for(Map<String,Object> curMeta : meta) {
-                      Map<String,Object> metadata = new HashMap<>();
+                      Map<String,Object> metadata = new HashMap<String,Object>();
                       if(curMeta != null)
                         metadata.putAll(curMeta);
 
@@ -90,7 +90,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                       entry.put(tuple);
                     }
                   } else {
-                    Map<String,Object> metadata = new HashMap<>();
+                    Map<String,Object> metadata = new HashMap<String,Object>();
                     setVisibility(metadata, vis);
                     Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
                     entry.put(tuple);

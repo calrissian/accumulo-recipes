@@ -81,7 +81,7 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                   List<Map<String,Object>> meta = metadataSerDe.deserialize(curEntry.getValue().get());
                   if(meta != null) {
                     for(Map<String,Object> curMeta : meta) {
-                      Map<String,Object> metadata = new HashMap<>();
+                      Map<String,Object> metadata = new HashMap<String,Object>();
                       if(curMeta != null)
                         metadata.putAll(curMeta);
 
@@ -90,7 +90,7 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                       entry.put(tuple);
                     }
                   } else {
-                    Map<String,Object> metadata = new HashMap<>();
+                    Map<String,Object> metadata = new HashMap<String,Object>();
                     setVisibility(metadata, visibility);
                     Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
                     entry.put(tuple);

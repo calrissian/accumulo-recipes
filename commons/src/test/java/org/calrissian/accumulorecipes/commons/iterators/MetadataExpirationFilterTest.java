@@ -65,7 +65,7 @@ public class MetadataExpirationFilterTest {
 
         connector.tableOperations().attachIterator("test", setting2);
 
-        Map<String, Object> metadataMap = new HashMap<>();
+        Map<String, Object> metadataMap = new HashMap<String,Object>();
         Metadata.Expiration.setExpiration(metadataMap, 1);
 
         BatchWriter writer = connector.createBatchWriter("test", 1000, 1000l, 10);

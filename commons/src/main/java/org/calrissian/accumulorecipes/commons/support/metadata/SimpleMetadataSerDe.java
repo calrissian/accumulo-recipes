@@ -42,10 +42,8 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     @Override
     public byte[] serialize(List<Map<String, Object>> metadata) {
 
-
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutput dataOutput = new DataOutputStream(baos);
-
 
         try {
 
@@ -88,14 +86,14 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
       DataInputStream dis = new DataInputStream(bais);
 
 
-      List<Map<String, Object>> metadata = new ArrayList<>();
+      List<Map<String, Object>> metadata = new ArrayList<Map<String,Object>>();
 
 
       try {
         int listCount = dis.readInt();
 
         for(int i = 0; i < listCount; i++) {
-          Map<String, Object> map = new HashMap<>();
+          Map<String, Object> map = new HashMap<String,Object>();
           int count = dis.readInt();
 
           for(int j = 0; j < count; j++) {
