@@ -18,7 +18,10 @@ package org.calrissian.accumulorecipes.eventstore.impl;
 import java.util.Date;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -28,6 +31,8 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
+import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -39,6 +44,10 @@ import org.junit.Test;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_STORE_CONFIG;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
 public class JsonEventStoreTest {
@@ -54,7 +63,7 @@ public class JsonEventStoreTest {
   @Before
   public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
     connector = getConnector();
-    store = new AccumuloEventStore(connector);
+    store = new AccumuloEventStore(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, LEXI_TYPES, new HourlyShardBuilder(50));
   }
 
   @Test
@@ -475,89 +484,204 @@ public class JsonEventStoreTest {
         + "  }\n"
         + "}";
 
-    String json2 = "{\n"
-        + "  \"coordinates\": null,\n"
-        + "  \"created_at\": \"Thu Oct 21 16:02:46 +0000 2010\",\n"
-        + "  \"favorited\": false,\n"
-        + "  \"truncated\": false,\n"
-        + "  \"id_str\": \"28039652140\",\n"
-        + "  \"entities\": {\n"
-        + "    \"urls\": [\n"
-        + "      {\n"
-        + "        \"expanded_url\": null,\n"
-        + "        \"url\": \"http://gnip.com/success_stories\",\n"
-        + "        \"indices\": [\n"
-        + "          69,\n"
-        + "          100\n"
-        + "        ]\n"
-        + "      }\n"
-        + "    ],\n"
-        + "    \"hashtags\": [\n"
+    String json2 = "[\n"
+        + "  {\n"
+        + "    \"coordinates\": null,\n"
+        + "    \"favorited\": false,\n"
+        + "    \"truncated\": false,\n"
+        + "    \"created_at\": \"Wed Aug 29 17:12:58 +0000 2012\",\n"
+        + "    \"id_str\": \"240859602684612608\",\n"
+        + "    \"entities\": {\n"
+        + "      \"urls\": [\n"
+        + "        {\n"
+        + "          \"expanded_url\": \"https://dev.twitter.com/blog/twitter-certified-products\",\n"
+        + "          \"url\": \"https://t.co/MjJ8xAnT\",\n"
+        + "          \"indices\": [\n"
+        + "            52,\n"
+        + "            73\n"
+        + "          ],\n"
+        + "          \"display_url\": \"dev.twitter.com/blog/twitter-c\\u2026\"\n"
+        + "        }\n"
+        + "      ],\n"
+        + "      \"hashtags\": [\n"
         + " \n"
-        + "    ],\n"
-        + "    \"user_mentions\": [\n"
-        + "      {\n"
-        + "        \"name\": \"Gnip, Inc.\",\n"
-        + "        \"id_str\": \"16958875\",\n"
-        + "        \"id\": 16958875,\n"
-        + "        \"indices\": [\n"
-        + "          25,\n"
-        + "          30\n"
-        + "        ],\n"
-        + "        \"screen_name\": \"gnip\"\n"
-        + "      }\n"
-        + "    ]\n"
+        + "      ],\n"
+        + "      \"user_mentions\": [\n"
+        + " \n"
+        + "      ]\n"
+        + "    },\n"
+        + "    \"in_reply_to_user_id_str\": null,\n"
+        + "    \"contributors\": null,\n"
+        + "    \"text\": \"Introducing the Twitter Certified Products Program: https://t.co/MjJ8xAnT\",\n"
+        + "    \"retweet_count\": 121,\n"
+        + "    \"in_reply_to_status_id_str\": null,\n"
+        + "    \"id\": 240859602684612608,\n"
+        + "    \"geo\": null,\n"
+        + "    \"retweeted\": false,\n"
+        + "    \"possibly_sensitive\": false,\n"
+        + "    \"in_reply_to_user_id\": null,\n"
+        + "    \"place\": null,\n"
+        + "    \"user\": {\n"
+        + "      \"profile_sidebar_fill_color\": \"DDEEF6\",\n"
+        + "      \"profile_sidebar_border_color\": \"C0DEED\",\n"
+        + "      \"profile_background_tile\": false,\n"
+        + "      \"name\": \"Twitter API\",\n"
+        + "      \"profile_image_url\": \"http://a0.twimg.com/profile_images/2284174872/7df3h38zabcvjylnyfe3_normal.png\",\n"
+        + "      \"created_at\": \"Wed May 23 06:01:13 +0000 2007\",\n"
+        + "      \"location\": \"San Francisco, CA\",\n"
+        + "      \"follow_request_sent\": false,\n"
+        + "      \"profile_link_color\": \"0084B4\",\n"
+        + "      \"is_translator\": false,\n"
+        + "      \"id_str\": \"6253282\",\n"
+        + "      \"entities\": {\n"
+        + "        \"url\": {\n"
+        + "          \"urls\": [\n"
+        + "            {\n"
+        + "              \"expanded_url\": null,\n"
+        + "              \"url\": \"http://dev.twitter.com\",\n"
+        + "              \"indices\": [\n"
+        + "                0,\n"
+        + "                22\n"
+        + "              ]\n"
+        + "            }\n"
+        + "          ]\n"
+        + "        },\n"
+        + "        \"description\": {\n"
+        + "          \"urls\": [\n"
+        + " \n"
+        + "          ]\n"
+        + "        }\n"
+        + "      },\n"
+        + "      \"default_profile\": true,\n"
+        + "      \"contributors_enabled\": true,\n"
+        + "      \"favourites_count\": 24,\n"
+        + "      \"url\": \"http://dev.twitter.com\",\n"
+        + "      \"profile_image_url_https\": \"https://si0.twimg.com/profile_images/2284174872/7df3h38zabcvjylnyfe3_normal.png\",\n"
+        + "      \"utc_offset\": -28800,\n"
+        + "      \"id\": 6253282,\n"
+        + "      \"profile_use_background_image\": true,\n"
+        + "      \"listed_count\": 10775,\n"
+        + "      \"profile_text_color\": \"333333\",\n"
+        + "      \"lang\": \"en\",\n"
+        + "      \"followers_count\": 1212864,\n"
+        + "      \"protected\": false,\n"
+        + "      \"notifications\": null,\n"
+        + "      \"profile_background_image_url_https\": \"https://si0.twimg.com/images/themes/theme1/bg.png\",\n"
+        + "      \"profile_background_color\": \"C0DEED\",\n"
+        + "      \"verified\": true,\n"
+        + "      \"geo_enabled\": true,\n"
+        + "      \"time_zone\": \"Pacific Time (US & Canada)\",\n"
+        + "      \"description\": \"The Real Twitter API. I tweet about API changes, service issues and happily answer questions about Twitter and our API. Don't get an answer? It's on my website.\",\n"
+        + "      \"default_profile_image\": false,\n"
+        + "      \"profile_background_image_url\": \"http://a0.twimg.com/images/themes/theme1/bg.png\",\n"
+        + "      \"statuses_count\": 3333,\n"
+        + "      \"friends_count\": 31,\n"
+        + "      \"following\": null,\n"
+        + "      \"show_all_inline_media\": false,\n"
+        + "      \"screen_name\": \"twitterapi\"\n"
+        + "    },\n"
+        + "    \"in_reply_to_screen_name\": null,\n"
+        + "    \"in_reply_to_status_id\": null\n"
         + "  },\n"
-        + "  \"in_reply_to_user_id_str\": null,\n"
-        + "  \"text\": \"what we've been up to at @gnip -- delivering data to happy customers http://gnip.com/success_stories\",\n"
-        + "  \"contributors\": null,\n"
-        + "  \"id\": 28039652140,\n"
-        + "  \"retweet_count\": null,\n"
-        + "  \"in_reply_to_status_id_str\": null,\n"
-        + "  \"geo\": null,\n"
-        + "  \"retweeted\": false,\n"
-        + "  \"in_reply_to_user_id\": null,\n"
-        + "  \"user\": {\n"
-        + "    \"profile_sidebar_border_color\": \"C0DEED\",\n"
-        + "    \"name\": \"Gnip, Inc.\",\n"
-        + "    \"profile_sidebar_fill_color\": \"DDEEF6\",\n"
-        + "    \"profile_background_tile\": false,\n"
-        + "    \"profile_image_url\": \"http://a3.twimg.com/profile_images/62803643/icon_normal.png\",\n"
-        + "    \"location\": \"Boulder, CO\",\n"
-        + "    \"created_at\": \"Fri Oct 24 23:22:09 +0000 2008\",\n"
-        + "    \"id_str\": \"16958875\",\n"
-        + "    \"follow_request_sent\": false,\n"
-        + "    \"profile_link_color\": \"0084B4\",\n"
-        + "    \"favourites_count\": 1,\n"
-        + "    \"url\": \"http://blog.gnip.com\",\n"
-        + "    \"contributors_enabled\": false,\n"
-        + "    \"utc_offset\": -25200,\n"
-        + "    \"id\": 16958875,\n"
-        + "    \"profile_use_background_image\": true,\n"
-        + "    \"listed_count\": 23,\n"
-        + "    \"protected\": false,\n"
-        + "    \"lang\": \"en\",\n"
-        + "    \"profile_text_color\": \"333333\",\n"
-        + "    \"followers_count\": 260,\n"
-        + "    \"time_zone\": \"Mountain Time (US & Canada)\",\n"
-        + "    \"verified\": false,\n"
-        + "    \"geo_enabled\": true,\n"
-        + "    \"profile_background_color\": \"C0DEED\",\n"
-        + "    \"notifications\": false,\n"
-        + "    \"description\": \"Gnip makes it really easy for you to collect social data for your business.\",\n"
-        + "    \"friends_count\": 71,\n"
-        + "    \"profile_background_image_url\": \"http://s.twimg.com/a/1287010001/images/themes/theme1/bg.png\",\n"
-        + "    \"statuses_count\": 302,\n"
-        + "    \"screen_name\": \"gnip\",\n"
-        + "    \"following\": false,\n"
-        + "    \"show_all_inline_media\": false\n"
-        + "  },\n"
-        + "  \"in_reply_to_screen_name\": null,\n"
-        + "  \"source\": \"web\",\n"
-        + "  \"place\": null,\n"
-        + "  \"in_reply_to_status_id\": null\n"
-        + "}";
-
+        + "  {\n"
+        + "    \"coordinates\": null,\n"
+        + "    \"favorited\": false,\n"
+        + "    \"truncated\": false,\n"
+        + "    \"created_at\": \"Sat Aug 25 17:26:51 +0000 2012\",\n"
+        + "    \"id_str\": \"239413543487819778\",\n"
+        + "    \"entities\": {\n"
+        + "      \"urls\": [\n"
+        + "        {\n"
+        + "          \"expanded_url\": \"https://dev.twitter.com/issues/485\",\n"
+        + "          \"url\": \"https://t.co/p5bOzH0k\",\n"
+        + "          \"indices\": [\n"
+        + "            97,\n"
+        + "            118\n"
+        + "          ],\n"
+        + "          \"display_url\": \"dev.twitter.com/issues/485\"\n"
+        + "        }\n"
+        + "      ],\n"
+        + "      \"hashtags\": [\n"
+        + " \n"
+        + "      ],\n"
+        + "      \"user_mentions\": [\n"
+        + " \n"
+        + "      ]\n"
+        + "    },\n"
+        + "    \"in_reply_to_user_id_str\": null,\n"
+        + "    \"contributors\": null,\n"
+        + "    \"text\": \"We are working to resolve issues with application management & logging in to the dev portal: https://t.co/p5bOzH0k ^TS\",\n"
+        + "    \"retweet_count\": 105,\n"
+        + "    \"in_reply_to_status_id_str\": null,\n"
+        + "    \"id\": 239413543487819778,\n"
+        + "    \"geo\": null,\n"
+        + "    \"retweeted\": false,\n"
+        + "    \"possibly_sensitive\": false,\n"
+        + "    \"in_reply_to_user_id\": null,\n"
+        + "    \"place\": null,\n"
+        + "    \"user\": {\n"
+        + "      \"profile_sidebar_fill_color\": \"DDEEF6\",\n"
+        + "      \"profile_sidebar_border_color\": \"C0DEED\",\n"
+        + "      \"profile_background_tile\": false,\n"
+        + "      \"name\": \"Twitter API\",\n"
+        + "      \"profile_image_url\": \"http://a0.twimg.com/profile_images/2284174872/7df3h38zabcvjylnyfe3_normal.png\",\n"
+        + "      \"created_at\": \"Wed May 23 06:01:13 +0000 2007\",\n"
+        + "      \"location\": \"San Francisco, CA\",\n"
+        + "      \"follow_request_sent\": false,\n"
+        + "      \"profile_link_color\": \"0084B4\",\n"
+        + "      \"is_translator\": false,\n"
+        + "      \"id_str\": \"6253282\",\n"
+        + "      \"entities\": {\n"
+        + "        \"url\": {\n"
+        + "          \"urls\": [\n"
+        + "            {\n"
+        + "              \"expanded_url\": null,\n"
+        + "              \"url\": \"http://dev.twitter.com\",\n"
+        + "              \"indices\": [\n"
+        + "                0,\n"
+        + "                22\n"
+        + "              ]\n"
+        + "            }\n"
+        + "          ]\n"
+        + "        },\n"
+        + "        \"description\": {\n"
+        + "          \"urls\": [\n"
+        + " \n"
+        + "          ]\n"
+        + "        }\n"
+        + "      },\n"
+        + "      \"default_profile\": true,\n"
+        + "      \"contributors_enabled\": true,\n"
+        + "      \"favourites_count\": 24,\n"
+        + "      \"url\": \"http://dev.twitter.com\",\n"
+        + "      \"profile_image_url_https\": \"https://si0.twimg.com/profile_images/2284174872/7df3h38zabcvjylnyfe3_normal.png\",\n"
+        + "      \"utc_offset\": -28800,\n"
+        + "      \"id\": 6253282,\n"
+        + "      \"profile_use_background_image\": true,\n"
+        + "      \"listed_count\": 10775,\n"
+        + "      \"profile_text_color\": \"333333\",\n"
+        + "      \"lang\": \"en\",\n"
+        + "      \"followers_count\": 1212864,\n"
+        + "      \"protected\": false,\n"
+        + "      \"notifications\": null,\n"
+        + "      \"profile_background_image_url_https\": \"https://si0.twimg.com/images/themes/theme1/bg.png\",\n"
+        + "      \"profile_background_color\": \"C0DEED\",\n"
+        + "      \"verified\": true,\n"
+        + "      \"geo_enabled\": true,\n"
+        + "      \"time_zone\": \"Pacific Time (US & Canada)\",\n"
+        + "      \"description\": \"The Real Twitter API. I tweet about API changes, service issues and happily answer questions about Twitter and our API. Don't get an answer? It's on my website.\",\n"
+        + "      \"default_profile_image\": false,\n"
+        + "      \"profile_background_image_url\": \"http://a0.twimg.com/images/themes/theme1/bg.png\",\n"
+        + "      \"statuses_count\": 3333,\n"
+        + "      \"friends_count\": 31,\n"
+        + "      \"following\": null,\n"
+        + "      \"show_all_inline_media\": false,\n"
+        + "      \"screen_name\": \"twitterapi\"\n"
+        + "    },\n"
+        + "    \"in_reply_to_screen_name\": null,\n"
+        + "    \"in_reply_to_status_id\": null\n"
+        + "  }\n"
+        + "]";
 
     objectMapper.getFactory().enable(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER);
     objectMapper.getFactory().enable(JsonParser.Feature.ALLOW_COMMENTS);
@@ -579,22 +703,28 @@ public class JsonEventStoreTest {
     }
 
     for(int i = 0; i < numToPersist; i++) {
-      // Create event from json
-      Event event = new BaseEvent();
-      event.putAll(JsonTupleStore.fromJson(json2, objectMapper));
 
-      // Persist event
-      store.save(singleton(event));
+      ArrayNode node = (ArrayNode) objectMapper.readTree(json2);
+      for(JsonNode node1 : node) {
+
+        // Create event from json
+        Event event = new BaseEvent();
+        event.putAll(JsonTupleStore.fromJson((ObjectNode) node1));
+
+        // Persist event
+        store.save(singleton(event));
+      }
     }
-
-
-
 
     store.flush();
 
+    AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
+
+
+
     Node query = new QueryBuilder()
         .and()
-          .eq("user$screen_name", "gnip")
+          .eq("entities$urls$indices", 52)
         .end()
         .build();
 

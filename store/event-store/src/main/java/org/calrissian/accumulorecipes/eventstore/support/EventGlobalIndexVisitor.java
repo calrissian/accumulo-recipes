@@ -38,7 +38,6 @@ import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
@@ -87,7 +86,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
             String alias = registry.getAlias(kvLeaf.getValue());
             String startShard = shardBuilder.buildShard(start.getTime(), 0);
-            String stopShard = shardBuilder.buildShard(end.getTime(), DEFAULT_PARTITION_SIZE - 1) + END_BYTE;
+            String stopShard = shardBuilder.buildShard(end.getTime(), shardBuilder.numPartitions() - 1) + END_BYTE;
 
             if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
                 ranges.add(
