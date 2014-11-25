@@ -32,7 +32,6 @@ import org.apache.accumulo.core.data.Range;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
-import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -40,6 +39,7 @@ import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
+import org.calrissian.accumulorecipes.eventstore.support.iterators.EventTimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -134,9 +134,9 @@ public class AccumuloEventStore implements EventStore {
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
 
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
-        IteratorSetting timeFilter = new IteratorSetting(7, TimeLimitingFilter.class);
-        TimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
-        TimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
+        IteratorSetting timeFilter = new IteratorSetting(7, EventTimeLimitingFilter.class);
+        EventTimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
+        EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
         CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, query,

@@ -34,22 +34,24 @@ import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFact
 import static java.lang.Math.max;
 import static java.util.Collections.EMPTY_LIST;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Expiration.getExpiration;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Timestamp.getTimestamp;
 
 /**
  * Allows Accumulo to expire keys/values based on an expiration threshold encoded in a metadata map in the value.
- * To help with
+ * This is an abstract class that allows the actual fetching of the timestamp from the key/value to be supplied
+ * by subclasses.
  */
 public class MetadataExpirationFilter extends ExpirationFilter {
 
   private static final String METADATA_SERDE_FACTORY_KEY = "metaSerdeFactory";
-  private MetadataSerDe metadataSerDe;
+  protected MetadataSerDe metadataSerDe;
 
   private boolean seenSeek = false;
   private boolean negate = false;
 
   private static final Value EMPTY_VALUE = new Value("".getBytes());
 
-  private List<Map<String,Object>> curMeta;
+  private Collection<Map<String,Object>> curMeta;
 
   @Override
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
@@ -104,7 +106,7 @@ public class MetadataExpirationFilter extends ExpirationFilter {
    * @param v
    * @return
    */
-  protected long parseExpiration(long timestamp, Value v) {
+  protected long parseExpiration(long timestamp, Key k, Value v) {
     curMeta = metadataSerDe.deserialize(v.get());
     if(curMeta == null)
       curMeta = EMPTY_LIST;
@@ -114,6 +116,10 @@ public class MetadataExpirationFilter extends ExpirationFilter {
       max = max(getExpiration(entry, -1), max);
 
     return max;
+  }
+
+  @Override protected long parseTimestamp(Key k, Value v) {
+    return 0;
   }
 
   private Value nextTop;
@@ -130,18 +136,20 @@ public class MetadataExpirationFilter extends ExpirationFilter {
 
       increment();
 
-      if (curMeta == null || curMeta.size() == 0)
-        nextTop = getSource().getTopValue();
+      if (curMeta == null || curMeta.size() == 0) {
+        if(getSource().hasTop())
+          nextTop = getSource().getTopValue();
+      }
       else {
         List<Map<String,Object>> newMeta = Lists.newArrayList();
         for (Map<String,Object> entry : curMeta) {
 
           long expiration = getExpiration(entry, -1);
+          long timestamp = getTimestamp(entry, 0);
 
-          if (!shouldExpire(expiration, getTopKey().getTimestamp()))
+          if (!shouldExpire(expiration, timestamp))
             newMeta.add(entry);
         }
-
         if (newMeta.size() > 0)
           nextTop = new Value(metadataSerDe.serialize(newMeta));
         else
@@ -152,10 +160,38 @@ public class MetadataExpirationFilter extends ExpirationFilter {
   }
 
   /**
+   * Accepts entries whose timestamps are less than currentTime - threshold.
+   */
+  @Override
+  public boolean accept(Key k, Value v) {
+
+    if(v.getSize() > 0) {
+      curMeta = metadataSerDe.deserialize(v.get());
+      int keep = 0;
+
+      // no metadata and empty metadata will not expire
+      if(curMeta.size() == 0)
+        return true;
+
+      for (Map<String,Object> entry : curMeta) {
+        long expiration = getExpiration(entry, -1);
+        long timestamp = getTimestamp(entry, 0);
+
+        if (!shouldExpire(expiration, timestamp))
+          keep++;
+      }
+
+      return keep > 0;
+    }
+    return true;
+  }
+
+  /**
    * Skip over keys that need to be expired
    */
   protected void increment() {
-    while (getSource().hasTop() && !getSource().getTopKey().isDeleted() && (negate == accept(getSource().getTopKey(), getSource().getTopValue()))) {
+    while (getSource().hasTop() && !getSource().getTopKey().isDeleted() &&
+        (negate == accept(getSource().getTopKey(), getSource().getTopValue()))) {
       try {
         getSource().next();
       } catch (IOException e) {

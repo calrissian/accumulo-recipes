@@ -122,7 +122,6 @@ public class EventInputFormatTest {
 
     assertNotNull(TestMapper.entry);
     assertEquals(TestMapper.entry.getId(), event.getId());
-    assertEquals(TestMapper.entry.getTimestamp(), event.getTimestamp());
     assertEquals(new HashSet<Tuple>(TestMapper.entry.getTuples()), new HashSet<Tuple>(event.getTuples()));
 
   }

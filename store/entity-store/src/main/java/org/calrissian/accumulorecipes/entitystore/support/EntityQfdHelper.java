@@ -15,10 +15,15 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
 import org.apache.commons.lang.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
@@ -31,10 +36,6 @@ import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.Set;
-
-import static java.lang.System.currentTimeMillis;
-import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
 
@@ -49,16 +50,6 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
     @Override
     protected String buildId(Entity item) {
         return item.getType() + ONE_BYTE + item.getId();
-    }
-
-    @Override
-    protected Value buildValue(Entity item) {
-        return EMPTY_VALUE; // placeholder for things like dynamic age-off
-    }
-
-    @Override
-    protected long buildTimestamp(Entity item) {
-        return currentTimeMillis();
     }
 
     public QueryXform buildQueryXform(Set<String> selectFields) {

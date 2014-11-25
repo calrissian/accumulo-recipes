@@ -24,7 +24,6 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -36,7 +35,6 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 
@@ -50,17 +48,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
     @Override
     protected String buildId(Event item) {
-        return PREFIX_E + ONE_BYTE + item.getId();
-    }
-
-    @Override
-    protected Value buildValue(Event item) {
-        return EMPTY_VALUE; // placeholder for things like dynamic age-off
-    }
-
-    @Override
-    protected long buildTimestamp(Event item) {
-        return item.getTimestamp();
+        return PREFIX_E + ONE_BYTE + item.getId() + ONE_BYTE + item.getTimestamp();
     }
 
     public QueryXform buildQueryXform(Set<String> selectFields) {
@@ -76,6 +64,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
     protected void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     }
 
+
     @Override
     protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     }
@@ -88,7 +77,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
         @Override
         protected Event buildTupleCollectionFromKey(Key k) {
-            return new BaseEvent(parseIdFromKey(k), k.getTimestamp());
+            return createEventFromkey(k);
         }
     }
 
@@ -99,13 +88,30 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
         @Override
         protected Event buildEntryFromKey(Key k) {
-            return new BaseEvent(parseIdFromKey(k), k.getTimestamp());
+            return createEventFromkey(k);
         }
     }
 
-    private static final String parseIdFromKey(Key key) {
+    private static final Event createEventFromkey(Key key) {
       String cf = key.getColumnFamily().toString();
       int uuidIdx = cf.indexOf(ONE_BYTE);
-      return cf.substring(uuidIdx+1);
+      int tsIdx = cf.lastIndexOf(ONE_BYTE);
+      String uuid =  cf.substring(uuidIdx+1, tsIdx);
+      long ts = Long.parseLong(cf.substring(tsIdx+1, cf.length()));
+      return new BaseEvent(uuid, ts);
     }
+
+    public static final Long parseTimestampFromKey(Key k) {
+
+      String cf = k.getColumnFamily().toString();
+      String cq = k.getColumnQualifier().toString();
+
+      String toParse = cq;
+      if(cf.startsWith(PREFIX_E))
+        toParse = cf;
+
+      int idx = toParse.lastIndexOf(ONE_BYTE);
+      return Long.parseLong(toParse.substring(idx+1, toParse.length()));
+    }
+
 }

@@ -44,12 +44,15 @@ public abstract class ExpirationFilter extends Filter {
 
         if (v.get().length > 0) {
 
-            long threshold = parseExpiration(k.getTimestamp(), v);
-            return !shouldExpire(threshold, k.getTimestamp());
+            long timestamp = parseTimestamp(k, v);
+            long threshold = parseExpiration(timestamp, k, v);
+            return !shouldExpire(threshold, timestamp);
         }
 
         return true;
     }
+
+
 
     protected boolean shouldExpire(long threshold, long timestamp) {
       if (threshold > -1) {
@@ -60,5 +63,7 @@ public abstract class ExpirationFilter extends Filter {
       return false;
     }
 
-    protected abstract long parseExpiration(long timestamp, Value v);
+    protected abstract long parseExpiration(long timestamp, Key k, Value v);
+
+    protected abstract long parseTimestamp(Key k, Value v);
 }

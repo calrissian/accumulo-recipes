@@ -15,8 +15,8 @@
  */
 package org.calrissian.accumulorecipes.commons.transform;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,7 +33,6 @@ import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.nio.ByteBuffer.wrap;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
@@ -79,7 +78,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                 String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
 
                 try {
-                  List<Map<String,Object>> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
+                  Collection<Map<String,Object>> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
                   if(meta != null) {
                     for(Map<String,Object> curMeta : meta) {
                       Map<String,Object> metadata = new HashMap<String,Object>();

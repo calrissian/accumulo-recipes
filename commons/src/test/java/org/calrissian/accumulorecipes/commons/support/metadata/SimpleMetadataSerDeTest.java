@@ -15,8 +15,8 @@
 */
 package org.calrissian.accumulorecipes.commons.support.metadata;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -40,8 +40,8 @@ public class SimpleMetadataSerDeTest {
 
         byte[] bytes = metadataSerDe.create().serialize(newArrayList(map));
 
-        List<Map<String,Object>> actualMap = metadataSerDe.create().deserialize(bytes);
+        Collection<Map<String,Object>> actualMap = metadataSerDe.create().deserialize(bytes);
         assertEquals(1, actualMap.size());
-        assertEquals(map, actualMap.get(0));
+        assertEquals(map, actualMap.iterator().next());
     }
 }

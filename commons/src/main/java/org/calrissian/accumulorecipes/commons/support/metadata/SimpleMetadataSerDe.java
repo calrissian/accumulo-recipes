@@ -22,6 +22,7 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     }
 
     @Override
-    public byte[] serialize(List<Map<String, Object>> metadata) {
+    public byte[] serialize(Collection<Map<String, Object>> metadata) {
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutput dataOutput = new DataOutputStream(baos);
@@ -80,7 +81,7 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     }
 
     @Override
-    public List<Map<String, Object>> deserialize(byte[] bytes) {
+    public Collection<Map<String, Object>> deserialize(byte[] bytes) {
 
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
       DataInputStream dis = new DataInputStream(bais);

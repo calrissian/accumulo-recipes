@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.commons.iterators;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +27,10 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Combiner;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
+
+import static com.google.common.collect.Lists.newArrayList;
 
 public class MetadataCombiner extends Combiner {
 
@@ -57,10 +59,11 @@ public class MetadataCombiner extends Combiner {
   @Override
   public Value reduce(Key key, Iterator<Value> iter) {
 
-    List<Map<String,Object>> activeList = new ArrayList<Map<String,Object>>();
+
+    List<Map<String,Object>> activeList = newArrayList();
     while(iter.hasNext()) {
       Value value = iter.next();
-      List<Map<String,Object>> metaList = metadataSerDe.deserialize(value.get());
+      Collection<Map<String,Object>> metaList = metadataSerDe.deserialize(value.get());
       activeList.addAll(metaList);
     }
 

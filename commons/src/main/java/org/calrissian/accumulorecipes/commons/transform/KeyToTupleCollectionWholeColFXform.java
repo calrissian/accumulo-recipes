@@ -16,8 +16,8 @@
 package org.calrissian.accumulorecipes.commons.transform;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -78,7 +78,7 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
 
                 try {
-                  List<Map<String,Object>> meta = metadataSerDe.deserialize(curEntry.getValue().get());
+                  Collection<Map<String,Object>> meta = metadataSerDe.deserialize(curEntry.getValue().get());
                   if(meta != null) {
                     for(Map<String,Object> curMeta : meta) {
                       Map<String,Object> metadata = new HashMap<String,Object>();

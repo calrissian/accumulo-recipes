@@ -15,15 +15,15 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Filter;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * A small modification of the age off filter that ships with Accumulo which ages off key/value pairs based on the
@@ -72,9 +72,14 @@ public class TimeLimitingFilter extends Filter {
      */
     @Override
     public boolean accept(Key k, Value v) {
-        if (k.getTimestamp() > currentTime || currentTime - k.getTimestamp() > threshold)
+        long timestamp = parseTimestamp(k, v);
+        if (timestamp > currentTime || currentTime - timestamp > threshold)
             return false;
         return true;
+    }
+
+    protected long parseTimestamp(Key k, Value v) {
+      return k.getTimestamp();
     }
 
     @Override
