@@ -15,6 +15,11 @@
  */
 package org.calrissian.accumulorecipes.commons.transform;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.google.common.base.Function;
@@ -27,10 +32,6 @@ import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import static java.nio.ByteBuffer.wrap;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
@@ -77,23 +78,34 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
 
                 String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
 
-                Map<String,Object> metadata = new HashMap<String, Object>();
                 try {
-                    Map<String,Object> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
-                    if(meta != null)
-                        metadata.putAll(meta);
+                  List<Map<String,Object>> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
+                  if(meta != null) {
+                    for(Map<String,Object> curMeta : meta) {
+                      Map<String,Object> metadata = new HashMap<String,Object>();
+                      if(curMeta != null)
+                        metadata.putAll(curMeta);
+
+                      setVisibility(metadata, vis);
+                      Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
+                      entry.put(tuple);
+                    }
+                  } else {
+                    Map<String,Object> metadata = new HashMap<String,Object>();
+                    setVisibility(metadata, vis);
+                    Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
+                    entry.put(tuple);
+                  }
                 } catch(Exception e) {
                     log.error("There was an error deserializing the metadata for a tuple", e);
                 }
 
-                setVisibility(metadata, vis);
-                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
 
-                entry.put(tuple);
             }
         }
         return entry;
     }
+
 
     protected abstract V buildTupleCollectionFromKey(Key k);
 }

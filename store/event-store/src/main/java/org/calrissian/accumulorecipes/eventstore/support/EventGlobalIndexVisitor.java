@@ -15,6 +15,14 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -23,12 +31,17 @@ import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
-import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
+import org.calrissian.mango.criteria.domain.HasLeaf;
+import org.calrissian.mango.criteria.domain.HasNotLeaf;
+import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.*;
-
-import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
@@ -73,13 +86,13 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
             String alias = registry.getAlias(kvLeaf.getValue());
             String startShard = shardBuilder.buildShard(start.getTime(), 0);
-            String stopShard = shardBuilder.buildShard(end.getTime(), DEFAULT_PARTITION_SIZE - 1) + END_BYTE;
+            String stopShard = shardBuilder.buildShard(end.getTime(), shardBuilder.numPartitions() - 1) + END_BYTE;
 
             if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
                 ranges.add(
                         new Range(
-                                new Key(INDEX_K + "_" + kvLeaf.getKey(), alias, startShard),
-                                new Key(INDEX_K + "_" + kvLeaf.getKey(), alias, stopShard)
+                                new Key(INDEX_K + "_" + kvLeaf.getKey() + "__" + alias + NULL_BYTE + startShard),
+                                new Key(INDEX_K + "_" + kvLeaf.getKey() + "__" + alias + NULL_BYTE + stopShard)
                         )
                 );
             } else {
@@ -87,8 +100,8 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
                 String normVal = registry.encode(kvLeaf.getValue());
                 ranges.add(
                         new Range(
-                                new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), startShard),
-                                new Key(INDEX_V + "_" + alias + "__" + normVal, kvLeaf.getKey(), stopShard)
+                                new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + startShard),
+                                new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + stopShard)
                         )
                 );
 
@@ -105,7 +118,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
                 cardinality = 0l;
             GlobalIndexValue value = new GlobalIndexValue(entry.getValue());
             cardinalities.put(key, cardinality + value.getCardinatlity());
-            shards.add(entry.getKey().getColumnQualifier().toString());
+            shards.add(key.getShard());
         }
 
         indexScanner.close();

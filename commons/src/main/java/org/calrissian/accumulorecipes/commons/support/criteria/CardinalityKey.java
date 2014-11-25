@@ -24,4 +24,6 @@ public interface CardinalityKey {
 
     String getAlias();
 
+    String getShard();
+
 }

@@ -15,9 +15,20 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
+
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -36,13 +47,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
-
 import static com.google.common.collect.Iterables.size;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class AccumuloEventStoreTest {
 
@@ -85,7 +96,6 @@ public class AccumuloEventStoreTest {
         Event actual = actualEvent.iterator().next();
         assertEquals(new HashSet(actual.getTuples()), new HashSet(event.getTuples()));
         assertEquals(actual.getId(), event.getId());
-        assertEquals(actual.getTimestamp(), event.getTimestamp());
 
         actualEvent = store.get(singletonList(new EventIndex(event.getId(), time)), null, new Auths());
 
@@ -93,7 +103,6 @@ public class AccumuloEventStoreTest {
         actual = actualEvent.iterator().next();
         assertEquals(new HashSet(actual.getTuples()), new HashSet(event.getTuples()));
         assertEquals(actual.getId(), event.getId());
-        assertEquals(actual.getTimestamp(), event.getTimestamp());
 
     }
 
@@ -155,19 +164,19 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key2", 10));
 
         store.save(asList(event, event2));
+        store.flush();
 
         Scanner scanner = connector.createScanner("eventStore_index", new Authorizations());
         for (Map.Entry<Key, Value> entry : scanner) {
             System.out.println(entry);
         }
 
-        CloseableIterable<Event> actualEvent = store.query(new Date(time), new Date(time), new QueryBuilder().greaterThan("key2", 9).build(), null, new Auths());
+        CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), new QueryBuilder().greaterThan("key2", 9).build(), null, new Auths());
 
         assertEquals(1, size(actualEvent));
         Event actual = actualEvent.iterator().next();
-        assertEquals(new HashSet(actual.getTuples()), new HashSet(event2.getTuples()));
+        assertEquals(new HashSet(event2.getTuples()), new HashSet(actual.getTuples()));
         assertEquals(actual.getId(), event2.getId());
-        assertEquals(actual.getTimestamp(), event2.getTimestamp());
 
         actualEvent = store.query(new Date(time), new Date(time), new QueryBuilder().greaterThan("key2", 0).build(), null, new Auths());
 
@@ -193,10 +202,10 @@ public class AccumuloEventStoreTest {
 
         Node node = new QueryBuilder().eq("key1", "val1").build();
 
-        CloseableIterable<Event> actualEvent = store.query(new Date(currentTime - 5001), new Date(), node, null, new Auths());
+        CloseableIterable<Event> actualEvent = store.query(new Date(currentTime - 5001), new Date(currentTime + 500), node, null, new Auths());
         assertEquals(2, size(actualEvent));
 
-        actualEvent = store.query(new Date(currentTime - 4999), new Date(), node, null, new Auths());
+        actualEvent = store.query(new Date(currentTime - 3000), new Date(currentTime+50), node, null, new Auths());
         assertEquals(1, size(actualEvent));
     }
 

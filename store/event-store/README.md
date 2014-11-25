@@ -33,6 +33,7 @@ Next you will need to create an EventStore instance and save your event
 ```java
 AccumuloEventStore store = new AccumuloEventStore(connector);
 store.save(event);
+store.flush();
 ```
 
 Almost seemed too easy. What's really happening underneath is that a discrete shard has been created for the RowID of the underlying Accumulo table. The shard is created to guarantee even distribution of the event over the nodes in the Accumulo cluster. Aside from the shard, the key and value have been normalized so that they can be searched using the built-in query mechanism.
@@ -70,7 +71,7 @@ for(Event entry : events)
 events.close();
 ```
 
-What's intrigueing about the loose and schemaless model of the StoreEntry object is that many heterogenous models can live together in the same store and be queried/returned together, each object returned can have a completely different set of tuples. You could, in theory, have several different types of "status update" events from several types of systems that are located in Maryland and you could query all of them from the same location for a given time period.
+What's intrigueing about the loose and schemaless model of the Event object is that many heterogenous models can live together in the same store and be queried/returned together, each object returned can have a completely different set of tuples. You could, in theory, have several different types of "status update" events from several types of systems that are located in Maryland and you could query all of them from the same location for a given time period.
 
 Better yet, if you want separation of keys so that they don't collide with other events in the store, you have the freedom to namespace them as you wish (i.e. status.location instead of just location).
 
@@ -78,8 +79,32 @@ A query wouldn't be extremely useful, however, if all you could ever query are s
 
 ```java
 // find all the status update events that have healthOK equal to false
-Node query = new QueryBuilder().and().eq("eventType", "status").eq("healthOK", false).endStatement().build();
+Node query = new QueryBuilder().and().eq("eventType", "status").eq("healthOK", false).end().build();
 
 // find all the event object from Maryland or Virginia
-Node query = new QueryBuilder().or().eq("location", "Maryland").eq("location", "Virginia").endStatement().build());
+Node query = new QueryBuilder().or().eq("location", "Maryland").eq("location", "Virginia").end().build());
 ```
+
+## Persisting and querying JSON
+
+Mango provides a utility for flattening json into a collection of tuples that can be used to hydrate event objects. The same utility can also be used to re-expand the flattened tuples back into json. This allows users to quickly get their data into the event store without spending too much time worrying about object parsing and translation.
+
+First thing you'll want to do is probably to turn your json into an event. You'll need a Jackson ```ObjectMapper```:
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
+Event event = new BaseEvent();
+event.putAll(JsonTupleStore.fromJson(json, objectMapper));
+```
+
+Now you can persist the event, as it's just a bunch of key/value tuples.
+```java
+store.save(Collections.singleton(event));
+store.flush();
+```
+
+When you've performed a query from the store and gotten results back, you can re-expand them into JSON:
+```java
+String resultJson = JsonTupleStore.toJsonString(event.getTuples(), objectMapper);
+```
+

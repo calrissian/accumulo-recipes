@@ -16,6 +16,7 @@
 package org.calrissian.accumulorecipes.commons.support.metadata;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 
@@ -24,7 +25,7 @@ import java.util.Map;
  */
 public interface MetadataSerDe extends Serializable {
 
-    byte[] serialize(Map<String, Object> metadata);
+    byte[] serialize(List<Map<String, Object>> metadata);
 
-    Map<String, Object> deserialize(byte[] bytes);
+    List<Map<String, Object>> deserialize(byte[] bytes);
 }

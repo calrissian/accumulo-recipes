@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Calrissian Authors
+ * Copyright (C) 2014 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.support.qfd;
+package org.calrissian.accumulorecipes.commons.support.metadata;
 
-import org.calrissian.mango.domain.TupleStore;
+/**
+ * It's important that this class work with a default constructor as it will be getting newed up
+ * through reflection.
+ */
+public interface MetadataSerdeFactory {
 
-public interface ShardBuilder<T extends TupleStore> {
-
-  int numPartitions();
-
-  String buildShard(T item);
+  MetadataSerDe create();
 }

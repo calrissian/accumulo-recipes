@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Calrissian Authors
+ * Copyright (C) 2014 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.iterators;
+package org.calrissian.accumulorecipes.eventstore.iterator;
 
-import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
+import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInPrefixedRowIterator;
+
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 /**
- * Allows Accumulo to expire keys/values based on an expiration threshold in the value of the global index table.
+ * Created by cjnolet on 11/9/14.
  */
-public class GlobalIndexExpirationFilter extends ExpirationFilter {
+public class EventGlobalIndexUniqueKVIterator extends FirstEntryInPrefixedRowIterator {
 
-    protected long parseExpiration(long timestamp, Value v) {
-        GlobalIndexValue val = new GlobalIndexValue(v);
-        return val.getExpiration();
-    }
+  @Override protected String getPrefix(String rowStr) {
+
+    int idx = rowStr.lastIndexOf(NULL_BYTE);
+    String substr = rowStr.substring(0, idx);
+    return substr;
+  }
 }

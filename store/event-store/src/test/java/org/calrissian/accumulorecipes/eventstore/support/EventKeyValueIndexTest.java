@@ -15,8 +15,15 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import java.util.Arrays;
+
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
@@ -26,9 +33,9 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Test;
 
-import java.util.Arrays;
-
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.*;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_BUILDER;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_STORE_CONFIG;
 import static org.calrissian.accumulorecipes.test.AccumuloTestUtils.dumpTable;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
@@ -62,6 +69,11 @@ public class EventKeyValueIndexTest {
         dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
         assertEquals(4, Iterables.size(eventKeyValueIndex.uniqueKeys("", new Auths())));
+
+        assertEquals("aKey", Iterables.get(eventKeyValueIndex.uniqueKeys("", new Auths()), 0).getOne());
+        assertEquals("key1", Iterables.get(eventKeyValueIndex.uniqueKeys("", new Auths()), 1).getOne());
+        assertEquals("key2", Iterables.get(eventKeyValueIndex.uniqueKeys("", new Auths()), 2).getOne());
+        assertEquals("key3", Iterables.get(eventKeyValueIndex.uniqueKeys("", new Auths()), 3).getOne());
 
 
     }

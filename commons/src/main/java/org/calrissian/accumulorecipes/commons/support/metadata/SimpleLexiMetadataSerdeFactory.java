@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Calrissian Authors
+ * Copyright (C) 2014 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.support.qfd;
+package org.calrissian.accumulorecipes.commons.support.metadata;
 
-import org.calrissian.mango.domain.TupleStore;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
-public interface ShardBuilder<T extends TupleStore> {
+public class SimpleLexiMetadataSerdeFactory implements MetadataSerdeFactory {
 
-  int numPartitions();
-
-  String buildShard(T item);
+  @Override
+  public MetadataSerDe create() {
+    return new SimpleMetadataSerDe(LEXI_TYPES);
+  }
 }
