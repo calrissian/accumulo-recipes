@@ -52,6 +52,7 @@ public class HourlyShardBuilder implements ShardBuilder<Event>, EventShardBuilde
                 delimiter, partition);
     }
 
+    @Override
     public SortedSet<Text> buildShardsInRange(Date start, Date stop) {
 
         SortedSet<Text> shards = new TreeSet<Text>();

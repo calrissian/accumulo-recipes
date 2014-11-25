@@ -342,6 +342,9 @@ public class AccumuloEventStoreTest {
         event2.put(new Tuple("key3", "val3"));
 
         store.save(asList(event, event2));
+        store.flush();
+
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
 
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
