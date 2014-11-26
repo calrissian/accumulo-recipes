@@ -44,7 +44,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
-import org.calrissian.accumulorecipes.temporal.lastn.iterators.EventGroupingIterator;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
@@ -53,7 +53,6 @@ import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.encoders.lexi.LongReverseEncoder;
 
 import static com.google.common.collect.Iterables.transform;
-import static java.lang.Long.parseLong;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
 import static org.apache.commons.lang.StringUtils.join;
@@ -89,9 +88,9 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         String cq = tupleCol.getKey().getColumnQualifier().toString();
         int idx = cq.lastIndexOf(ONE_BYTE);
         if (toReturn == null)
-          toReturn = new BaseEvent(cq.substring(idx+1,cq.length()), parseLong(splits[0]));
-        String vis = splits[4];
-        toReturn.put(new Tuple(splits[1], typeRegistry.decode(splits[2], splits[3]), setVisibility(new HashMap<String, Object>(1), vis)));
+          toReturn = new BaseEvent(cq.substring(idx+1,cq.length()), encoder.decode(cq.substring(0, idx)));
+        String vis = splits[3];
+        toReturn.put(new Tuple(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String, Object>(1), vis)));
       }
 
       return toReturn;
@@ -103,7 +102,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         @Override
         public List<Map.Entry<Key, Value>> apply(Map.Entry<Key, Value> keyValueEntry) {
           try {
-            return EventGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+            return WholeColumnQualifierIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
           } catch (IOException e) {
             throw new RuntimeException(e);
           }
@@ -155,7 +154,6 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
   private String buildEventValue(long timestamp, Tuple tuple) {
 
     String[] fields = new String[]{
-        Long.toString(timestamp),
         tuple.getKey(),
         typeRegistry.getAlias(tuple.getValue()),
         typeRegistry.encode(tuple.getValue()),
@@ -187,7 +185,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), 1);
         scanner.setRanges(singletonList(new Range(startKey, stopKey)));
 
-        IteratorSetting setting = new IteratorSetting(7, EventGroupingIterator.class);
+        IteratorSetting setting = new IteratorSetting(7, WholeColumnQualifierIterator.class);
         scanner.addScanIterator(setting);
 
         IteratorSetting setting2 = new IteratorSetting(15, FirstNEntriesInRowIterator.class);
