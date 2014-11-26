@@ -165,6 +165,7 @@ limitations under the License.
           <configuration>
             <excludes>
               <exclude>**\README.md</exclude>
+              <exclude>**\.travis.yml</exclude>
             </excludes>
           </configuration>
         </plugin>
