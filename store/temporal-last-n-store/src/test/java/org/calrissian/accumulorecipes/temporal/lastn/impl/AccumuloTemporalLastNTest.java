@@ -15,20 +15,26 @@
  */
 package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
-import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.mock.MockInstance;
-import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.mango.domain.event.BaseEvent;
-import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.Tuple;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.UUID;
+
+import com.google.common.collect.Iterables;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.mock.MockInstance;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
+import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.event.BaseEvent;
+import org.calrissian.mango.domain.event.Event;
+import org.junit.Before;
+import org.junit.Test;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.singleton;
@@ -59,6 +65,8 @@ public class AccumuloTemporalLastNTest {
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
+
+      AccumuloTestUtils.dumpTable(connector, "temporalLastN");
 
         Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
                 singleton("group"), 2, new Auths());
