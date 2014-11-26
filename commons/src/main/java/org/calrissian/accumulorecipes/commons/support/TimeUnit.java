@@ -22,9 +22,7 @@ public enum TimeUnit {
     MINUTES,
     HOURS,
     DAYS,
-    MONTHS,
-    SECONDS,
-    MILLIS;
+    MONTHS;
 
     public long normalize(long timestamp) {
         MutableDateTime ts = new MutableDateTime(timestamp, DateTimeZone.UTC);
@@ -36,8 +34,6 @@ public enum TimeUnit {
          * portions of the time before finally breaking at the end.
          */
         switch (this) {
-            case MILLIS:
-                break;
             case MONTHS:
                 ts.setDayOfMonth(1);
             case DAYS:
@@ -46,7 +42,6 @@ public enum TimeUnit {
                 ts.setMinuteOfHour(0);
             case MINUTES:
                 ts.setSecondOfMinute(0);
-            case SECONDS:
                 ts.setMillisOfSecond(0);
                 break;
             default:
@@ -55,4 +50,6 @@ public enum TimeUnit {
 
         return ts.getMillis();
     }
+
+
 }

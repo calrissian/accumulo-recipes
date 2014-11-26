@@ -16,15 +16,27 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.data.*;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-
-import java.io.*;
-import java.util.*;
 
 import static com.google.common.collect.Maps.immutableEntry;
 
@@ -49,6 +61,7 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
 
     private Key topKey;
     private Value topValue;
+    private boolean hasSeeked = false;
 
     private List<Key> keys = new ArrayList<Key>();
     private List<Value> values = new ArrayList<Value>();
@@ -168,6 +181,7 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
     }
 
     private void prepKeys() throws IOException {
+
         if (lastRowFound == null) {
             topKey = null;
             topValue = null;
@@ -177,10 +191,15 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
         keys.clear();
         values.clear();
 
-        while (getSource().hasTop() && keys.size() < n && getSource().getTopKey().getRow().equals(lastRowFound)) {
+
+        while (getSource().hasTop() && keys.size() <= n) {
+          boolean stillOnSameRow = getSource().getTopKey().getRow().equals(lastRowFound);
+          if(stillOnSameRow) {
             keys.add(new Key(getSource().getTopKey()));
             values.add(new Value(getSource().getTopValue()));
             getSource().next();
+          }
+
         }
 
         topKey = new Key(lastRowFound, keys.get(0).getColumnFamily());
@@ -210,8 +229,10 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
 
     // this is only ever called immediately after getting "next" entry
     protected void skipRow() throws IOException {
+
         if (finished == true || lastRowFound == null)
-            return;
+          return;
+
         int count = 0;
         while (getSource().hasTop() && lastRowFound.equals(getSource().getTopKey().getRow())) {
 
@@ -238,6 +259,7 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
 
     @Override
     public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
+
         // save parameters for future internal seeks
         latestRange = range;
         latestColumnFamilies = columnFamilies;
@@ -251,11 +273,13 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
 
         if (getSource().hasTop()) {
             lastRowFound = getSource().getTopKey().getRow();
-            if (range.beforeStartKey(getSource().getTopKey()))
-                skipRow();
+            if (hasSeeked && range.beforeStartKey(getSource().getTopKey())) {
+              skipRow();
+            }
         }
-
+        hasSeeked = true;
         prepKeys();
+
     }
 
     @Override

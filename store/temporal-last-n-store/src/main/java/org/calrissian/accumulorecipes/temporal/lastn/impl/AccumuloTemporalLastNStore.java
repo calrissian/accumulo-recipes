@@ -53,6 +53,7 @@ import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.encoders.lexi.LongReverseEncoder;
 
 import static com.google.common.collect.Iterables.transform;
+import static java.lang.Long.parseLong;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
 import static org.apache.commons.lang.StringUtils.join;
@@ -65,7 +66,7 @@ import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.gener
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
@@ -85,10 +86,12 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
       for (Map.Entry<Key, Value> tupleCol : entries) {
         String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), NULL_BYTE);
+        String cq = tupleCol.getKey().getColumnQualifier().toString();
+        int idx = cq.lastIndexOf(ONE_BYTE);
         if (toReturn == null)
-          toReturn = new BaseEvent(splits[1], Long.parseLong(splits[0]));
-        String vis = splits[5];
-        toReturn.put(new Tuple(splits[2], typeRegistry.decode(splits[3], splits[4]), setVisibility(new HashMap<String, Object>(1), vis)));
+          toReturn = new BaseEvent(cq.substring(idx+1,cq.length()), parseLong(splits[0]));
+        String vis = splits[4];
+        toReturn.put(new Tuple(splits[1], typeRegistry.decode(splits[2], splits[3]), setVisibility(new HashMap<String, Object>(1), vis)));
       }
 
       return toReturn;
@@ -116,14 +119,13 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
       throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
     this.connector = connector;
     this.tableName = tableName;
-    this.typeRegistry = LEXI_TYPES; //TODO allow caller to pass in types.
+    this.typeRegistry = SIMPLE_TYPES; //TODO allow caller to pass in types.
 
     if (!connector.tableOperations().exists(this.tableName))
       connector.tableOperations().create(this.tableName, false, LOGICAL);
 
     this.writer = this.connector.createBatchWriter(
-        this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads()
-    );
+        this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
   }
 
   @Override
@@ -135,7 +137,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             new Text(generateTimestamp(entry.getTimestamp(), TimeUnit.MINUTES)),
             new Text(encoder.encode(entry.getTimestamp()) + ONE_BYTE + entry.getId()),
             new ColumnVisibility(getVisibility(tuple, "")),
-            new Value(buildEventValue(entry.getId(), entry.getTimestamp(), tuple).getBytes())
+            new Value(buildEventValue(entry.getTimestamp(), tuple).getBytes())
         );
         writer.addMutation(m);
       }
@@ -150,11 +152,10 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     writer.flush();
   }
 
-  private String buildEventValue(String id, long timestamp, Tuple tuple) {
+  private String buildEventValue(long timestamp, Tuple tuple) {
 
     String[] fields = new String[]{
         Long.toString(timestamp),
-        id,
         tuple.getKey(),
         typeRegistry.getAlias(tuple.getValue()),
         typeRegistry.encode(tuple.getValue()),
@@ -179,8 +180,8 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
     for (String group : groups) {
 
-      Key startKey = new Key(group + GROUP_DELIM + startDay, startMinute, startMillis);
-      Key stopKey = new Key(group + GROUP_DELIM + stopDay, stopMinute, stopMillis + END_BYTE);
+      Key startKey = new Key(group + GROUP_DELIM + startDay, startMinute, startMillis + ONE_BYTE);
+      Key stopKey = new Key(group + GROUP_DELIM + stopDay, stopMinute, stopMillis + ONE_BYTE + END_BYTE);
 
       try {
         BatchScanner scanner = connector.createBatchScanner(tableName, auths.getAuths(), 1);
@@ -194,6 +195,8 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         scanner.addScanIterator(setting2);
 
         for (Map.Entry<Key, Value> entry : scanner) {
+
+          System.out.println(entry);
           List<Map.Entry<Key, Value>> topEntries = decodeRow(entry.getKey(), entry.getValue());
           Iterable<List<Map.Entry<Key, Value>>> entries = transform(topEntries, rowDecodeXform);
           cursors.add(transform(entries, entryXform));
