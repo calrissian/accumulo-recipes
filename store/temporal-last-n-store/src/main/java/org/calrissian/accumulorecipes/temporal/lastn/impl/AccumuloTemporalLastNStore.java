@@ -107,11 +107,13 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         }
       };
 
-  public AccumuloTemporalLastNStore(Connector connector) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
+  public AccumuloTemporalLastNStore(Connector connector)
+      throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
     this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG);
   }
 
-  public AccumuloTemporalLastNStore(Connector connector, String tableName, StoreConfig config) throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
+  public AccumuloTemporalLastNStore(Connector connector, String tableName, StoreConfig config)
+      throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
     this.connector = connector;
     this.tableName = tableName;
     this.typeRegistry = LEXI_TYPES; //TODO allow caller to pass in types.
@@ -119,7 +121,9 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     if (!connector.tableOperations().exists(this.tableName))
       connector.tableOperations().create(this.tableName, false, LOGICAL);
 
-    this.writer = this.connector.createBatchWriter(this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+    this.writer = this.connector.createBatchWriter(
+        this.tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads()
+    );
   }
 
   @Override
