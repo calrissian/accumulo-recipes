@@ -166,6 +166,8 @@ limitations under the License.
             <excludes>
               <exclude>**\README.md</exclude>
               <exclude>**\.travis.yml</exclude>
+              <exclude>**\twitter_timeline.json</exclude>
+              <exclude>**\twitter_tweets.json</exclude>
             </excludes>
           </configuration>
         </plugin>
