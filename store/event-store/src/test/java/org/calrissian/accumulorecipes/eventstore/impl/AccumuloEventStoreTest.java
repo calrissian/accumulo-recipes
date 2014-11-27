@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -134,6 +135,48 @@ public class AccumuloEventStoreTest {
         assertEquals(1, Iterables.get(actualEvent1, 0).size());
         assertEquals(1, Iterables.get(actualEvent1, 1).size());
     }
+
+    @Test
+    public void testExpirationOfTuples_get() {
+
+        Map<String, Object> shouldntSee = new MetadataBuilder().setExpiration(1).build();
+
+        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        event.put(new Tuple("key1", "val1", meta));
+        event.put(new Tuple("key2", "val2", shouldntSee));
+
+
+        store.save(asList(event));
+
+        List<EventIndex> eventIndexes = Arrays.asList(new EventIndex(event.getId(), event.getTimestamp()));
+
+        Iterable<Event> events = store.get(eventIndexes, null, DEFAULT_AUTHS);
+
+        assertEquals(1, Iterables.size(events));
+        assertEquals(1, Iterables.get(events, 0).size());
+    }
+
+    @Test
+    public void testExpirationOfTuples_query() {
+
+        Map<String, Object> shouldntSee = new MetadataBuilder().setExpiration(1).build();
+
+        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        event.put(new Tuple("key1", "val1", meta));
+        event.put(new Tuple("key2", "val2", shouldntSee));
+
+
+        store.save(asList(event));
+
+        Node node = new QueryBuilder().eq("key1", "val1").build();
+
+        Iterable<Event> events = store.query(
+            new Date(currentTimeMillis()-5000), new Date(currentTimeMillis()), node, null, DEFAULT_AUTHS);
+
+        assertEquals(1, Iterables.size(events));
+        assertEquals(1, Iterables.get(events, 0).size());
+    }
+
 
 
 
