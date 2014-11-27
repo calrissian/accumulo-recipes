@@ -164,7 +164,7 @@ public class AccumuloEntityStoreTest {
     public void testQueryKeyNotInIndex() {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new zTuple("key1", "val1", meta));
+        entity.put(new Tuple("key1", "val1", meta));
         entity.put(new Tuple("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");

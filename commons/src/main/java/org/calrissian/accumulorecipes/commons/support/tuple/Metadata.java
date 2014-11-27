@@ -75,26 +75,4 @@ public class Metadata {
       }
 
     }
-
-    public static class Timestamp {
-
-      public static final String TIMESTAMP = "timestamp";
-
-      private Timestamp(){}
-
-      public static Map<String, Object> setTimestamp(Map<String, Object> metadata, long timestamp) {
-        metadata.put(TIMESTAMP, timestamp);
-
-        return metadata;
-      }
-
-      public static long getTimestamp(Map<String,Object> metadata, long defaultTimestamp) {
-        if(!metadata.containsKey(TIMESTAMP))
-          return defaultTimestamp;
-        else
-          return (Long)metadata.get(TIMESTAMP);
-      }
-
-    }
-
 }
