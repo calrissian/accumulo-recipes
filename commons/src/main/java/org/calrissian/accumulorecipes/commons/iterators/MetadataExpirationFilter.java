@@ -52,6 +52,7 @@ public class MetadataExpirationFilter extends Filter {
     private static final Value EMPTY_VALUE = new Value("".getBytes());
 
     private Collection<Map<String,Object>> curMeta;
+    private Key curKey;
 
     @Override
     public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
@@ -123,7 +124,7 @@ public class MetadataExpirationFilter extends Filter {
                 for (Map<String,Object> entry : curMeta) {
 
                     long expiration = getExpiration(entry, -1);
-                    long timestamp = parseTimestamp(getTopKey(), entry);
+                    long timestamp = parseTimestamp(curKey, entry);
 
                     if (!shouldExpire(expiration, timestamp))
                         newMeta.add(entry);
@@ -149,6 +150,7 @@ public class MetadataExpirationFilter extends Filter {
 
         if(v.getSize() > 0) {
             curMeta = metadataSerDe.deserialize(v.get());
+            curKey = k;
             // no metadata and empty metadata will not expire
             if(curMeta.size() == 0)
                 return true;

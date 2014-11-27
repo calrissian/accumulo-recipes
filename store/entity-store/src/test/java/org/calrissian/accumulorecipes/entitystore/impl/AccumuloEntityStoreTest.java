@@ -15,7 +15,6 @@
  */
 package org.calrissian.accumulorecipes.entitystore.impl;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -48,7 +47,9 @@ import org.calrissian.mango.domain.entity.EntityIndex;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Iterables.size;
+import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -127,8 +128,8 @@ public class AccumuloEntityStoreTest {
         Iterable<Entity> actualEntities = store.get(indexes, null, new Auths("A"));
 
         assertEquals(2, Iterables.size(actualEntities));
-        assertEquals(1, Iterables.get(actualEntities, 0).size());
-        assertEquals(1, Iterables.get(actualEntities, 1).size());
+        assertEquals(1, get(actualEntities, 0).size());
+        assertEquals(1, get(actualEntities, 1).size());
     }
 
 
@@ -352,7 +353,7 @@ public class AccumuloEntityStoreTest {
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
-        assertEquals(entity, Iterables.get(itr, 0));
+        assertEquals(entity, get(itr, 0));
     }
 
     @Test
@@ -548,8 +549,30 @@ public class AccumuloEntityStoreTest {
         CloseableIterable<Pair<String, String>> keys = store.keys("type", DEFAULT_AUTHS);
 
         assertEquals(2, Iterables.size(keys));
-        assertEquals(new Pair<String, String>("hasIp", "string"), Iterables.get(keys, 0));
-        assertEquals(new Pair<String, String>("ip", "string"), Iterables.get(keys, 1));
+        assertEquals(new Pair<String, String>("hasIp", "string"), get(keys, 0));
+        assertEquals(new Pair<String, String>("ip", "string"), get(keys, 1));
+    }
+
+    @Test
+    public void testExpirationOfTuples() throws Exception {
+
+        Map<String,Object> expireMeta = new MetadataBuilder()
+            .setExpiration(1)
+            .setTimestamp(currentTimeMillis())
+            .build();
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("hasIp", "true", meta));
+        entity.put(new Tuple("ip", "1.1.1.1", expireMeta));
+
+        store.save(singleton(entity));
+
+        List<EntityIndex> indexes = asList(new EntityIndex[] {new EntityIndex(entity.getType(), entity.getId())});
+        Iterable<Entity> entities = store.get(indexes, null, DEFAULT_AUTHS);
+
+        assertEquals(1, size(entities));
+        assertEquals(1, get(entities, 0).size());
+
     }
 
     @Test
@@ -594,7 +617,7 @@ public class AccumuloEntityStoreTest {
     public void testQuery_emptyNodeReturnsNoResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
         Node query = new QueryBuilder().and().end().build();
 
-        CloseableIterable<Entity> itr = store.query(Collections.singleton("type"), query, null, DEFAULT_AUTHS);
+        CloseableIterable<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS);
 
         assertEquals(0, size(itr));
     }
