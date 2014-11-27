@@ -39,7 +39,6 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
@@ -49,7 +48,6 @@ import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataCombiner;
-import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
@@ -98,6 +96,7 @@ public abstract class QfdHelper<T extends TupleStore> {
     private ShardBuilder<T> shardBuilder;
     private TypeRegistry<String> typeRegistry;
     private MetadataSerDe metadataSerDe;
+    private MetadataSerdeFactory metadataSerdeFactory;
 
     private KeyValueIndex<T> keyValueIndex;
 
@@ -126,6 +125,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.nodeToJexl = new NodeToJexl(typeRegistry);
 
         this.metadataSerDe = metadaSerdeFactory.create();
+        this.metadataSerdeFactory = metadaSerdeFactory;
 
         if (!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -144,13 +144,6 @@ public abstract class QfdHelper<T extends TupleStore> {
             connector.tableOperations().create(this.shardTable, false, LOGICAL);
             configureShardTable(connector, this.shardTable);
         }
-
-        if(connector.tableOperations().getIteratorSetting(this.shardTable, "expiration", majc) == null) {
-            IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
-            MetadataExpirationFilter.setMetadataSerdeFactory(expirationFilter, metadaSerdeFactory.getClass());
-            connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorUtil.IteratorScope.class));
-        }
-
 
         if(connector.tableOperations().getIteratorSetting(this.shardTable, "metacombiner", majc) == null) {
             IteratorSetting metadataCombiner = new IteratorSetting(9, "metacombiner", MetadataCombiner.class);
@@ -173,6 +166,10 @@ public abstract class QfdHelper<T extends TupleStore> {
 
     public MetadataSerDe getMetadataSerDe() {
         return metadataSerDe;
+    }
+
+    public MetadataSerdeFactory getMetadataSerdeFactory() {
+        return metadataSerdeFactory;
     }
 
     public static Kryo getKryo() {

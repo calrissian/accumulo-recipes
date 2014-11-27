@@ -41,8 +41,10 @@ import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSer
 import org.junit.Test;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.System.currentTimeMillis;
 import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Expiration;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Timestamp;
 import static org.junit.Assert.assertEquals;
 
 public class MetadataExpirationFilterTest {
@@ -67,12 +69,14 @@ public class MetadataExpirationFilterTest {
 
         Map<String, Object> metadataMap = new HashMap<String,Object>();
         Expiration.setExpiration(metadataMap, 1);
+        Timestamp.setTimestamp(metadataMap, currentTimeMillis());
 
         BatchWriter writer = connector.createBatchWriter("test", 1000, 1000l, 10);
         Mutation m = new Mutation("a");
         m.put(new Text("b"), new Text(), new Value(metadataSerDe.create().serialize(newArrayList(metadataMap))));
 
         Expiration.setExpiration(metadataMap, 1500);
+        Timestamp.setTimestamp(metadataMap, currentTimeMillis());
 
         m.put(new Text("c"), new Text(), new Value("".getBytes()));
 

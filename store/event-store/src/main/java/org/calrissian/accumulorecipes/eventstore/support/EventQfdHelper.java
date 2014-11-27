@@ -21,9 +21,11 @@ import com.esotericsoftware.kryo.Kryo;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -31,10 +33,13 @@ import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionQueryXform;
 import org.calrissian.accumulorecipes.commons.transform.KeyToTupleCollectionWholeColFXform;
+import org.calrissian.accumulorecipes.eventstore.support.iterators.EventMetadataExpirationFilter;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
+import static java.util.EnumSet.allOf;
+import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 
@@ -67,6 +72,11 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
     @Override
     protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        if(connector.tableOperations().getIteratorSetting(tableName, "expiration", majc) == null) {
+            IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", EventMetadataExpirationFilter.class);
+            EventMetadataExpirationFilter.setMetadataSerdeFactory(expirationFilter, getMetadataSerdeFactory().getClass());
+            connector.tableOperations().attachIterator(tableName, expirationFilter, allOf(IteratorUtil.IteratorScope.class));
+        }
     }
 
     public static class QueryXform extends KeyToTupleCollectionQueryXform<Event> {

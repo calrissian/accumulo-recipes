@@ -123,7 +123,7 @@ public class MetadataExpirationFilter extends Filter {
                 for (Map<String,Object> entry : curMeta) {
 
                     long expiration = getExpiration(entry, -1);
-                    long timestamp = getTimestamp(entry, 0);
+                    long timestamp = parseTimestamp(getTopKey(), entry);
 
                     if (!shouldExpire(expiration, timestamp))
                         newMeta.add(entry);
@@ -135,6 +135,10 @@ public class MetadataExpirationFilter extends Filter {
             }
 
         }
+    }
+
+    protected long parseTimestamp(Key k, Map<String,Object> meta) {
+        return getTimestamp(meta, -1);
     }
 
     /**
@@ -151,7 +155,7 @@ public class MetadataExpirationFilter extends Filter {
 
             for (Map<String,Object> entry : curMeta) {
                 long expiration = getExpiration(entry, -1);
-                long timestamp = getTimestamp(entry, 0);
+                long timestamp = parseTimestamp(k, entry);
 
                 if (!shouldExpire(expiration, timestamp))
                     return true;

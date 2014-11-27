@@ -46,6 +46,11 @@ public class MetadataBuilder {
         return this;
     }
 
+    public MetadataBuilder setTimestamp(long timestamp) {
+        Metadata.Timestamp.setTimestamp(metadata, timestamp);
+        return this;
+    }
+
     public MetadataBuilder setCustom(String key, Object value) {
         Preconditions.checkNotNull(key);
         Preconditions.checkArgument(key.length() > 0, "Not allowed to use an empty Metadata key");

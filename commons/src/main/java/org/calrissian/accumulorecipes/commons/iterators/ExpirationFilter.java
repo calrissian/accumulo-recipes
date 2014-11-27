@@ -43,7 +43,7 @@ public abstract class ExpirationFilter extends Filter {
 
 
     public static boolean shouldExpire(long threshold, long timestamp) {
-        if (threshold > -1) {
+        if (threshold > -1 && timestamp > -1) {
             long currentTime = currentTimeMillis();
             if (currentTime - timestamp > threshold)
                 return true;
