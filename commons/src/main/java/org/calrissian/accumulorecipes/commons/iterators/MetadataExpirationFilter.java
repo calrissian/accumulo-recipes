@@ -145,7 +145,6 @@ public class MetadataExpirationFilter extends Filter {
 
     if(v.getSize() > 0) {
       curMeta = metadataSerDe.deserialize(v.get());
-
       // no metadata and empty metadata will not expire
       if(curMeta.size() == 0)
         return true;

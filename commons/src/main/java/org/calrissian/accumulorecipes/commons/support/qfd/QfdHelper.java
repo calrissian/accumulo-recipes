@@ -56,7 +56,7 @@ import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
-import org.calrissian.accumulorecipes.commons.support.metadata.SimpleLexiMetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerdeFactory;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -65,6 +65,7 @@ import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
@@ -159,14 +160,15 @@ public abstract class QfdHelper<T extends TupleStore> {
     }
 
     initializeKryo(kryo);
-    this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+    this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(),
+        config.getMaxWriteThreads());
   }
 
 
   public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
       ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
       throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleLexiMetadataSerdeFactory());
+    this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerdeFactory());
   }
 
   public MetadataSerDe getMetadataSerDe() {
@@ -211,8 +213,10 @@ public abstract class QfdHelper<T extends TupleStore> {
             tupleByObjectCache = ArrayListMultimap.create();
             for (Tuple tuple : item.getAll(key))
               tupleByObjectCache.put(
-                  new ObjectVisCacheKey(getVisibility(tuple.getMetadata(), ""), tuple.getValue()),
-                  tuple.getMetadata()
+                  new ObjectVisCacheKey(getVisibility(tuple.getMetadata(), ""),
+                      tuple.getValue()),
+                      newHashMap(tuple.getMetadata()
+                  )
               );
 
             for(ObjectVisCacheKey visCache : tupleByObjectCache.keys()) {
@@ -227,7 +231,7 @@ public abstract class QfdHelper<T extends TupleStore> {
               }
 
               Collection<Map<String, Object>> metas = tupleByObjectCache.get(visCache);
-              Collections2.transform(metas, removeVisFunction);
+              metas = Collections2.transform(metas, removeVisFunction);
 
               value.set(metas.size() > 0 ? metadataSerDe.serialize(metas) : EMPTY_VALUE.get());
 
