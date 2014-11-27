@@ -41,7 +41,7 @@ import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
-import org.calrissian.accumulorecipes.eventstore.iterator.EventGlobalIndexUniqueKVIterator;
+import org.calrissian.accumulorecipes.eventstore.support.iterators.EventGlobalIndexUniqueKVIterator;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;

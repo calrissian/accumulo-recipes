@@ -28,8 +28,4 @@ public class GlobalIndexExpirationFilter extends ExpirationFilter {
         GlobalIndexValue val = new GlobalIndexValue(v);
         return val.getExpiration();
     }
-
-  @Override protected long parseTimestamp(Key k, Value v) {
-    return k.getTimestamp();
-  }
 }

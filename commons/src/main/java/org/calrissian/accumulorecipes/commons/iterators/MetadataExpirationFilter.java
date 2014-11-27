@@ -26,13 +26,13 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.Filter;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
 
-import static java.lang.Math.max;
-import static java.util.Collections.EMPTY_LIST;
+import static org.calrissian.accumulorecipes.commons.iterators.ExpirationFilter.shouldExpire;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Expiration.getExpiration;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Timestamp.getTimestamp;
 
@@ -41,7 +41,7 @@ import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Time
  * This is an abstract class that allows the actual fetching of the timestamp from the key/value to be supplied
  * by subclasses.
  */
-public class MetadataExpirationFilter extends ExpirationFilter {
+public class MetadataExpirationFilter extends Filter {
 
   private static final String METADATA_SERDE_FACTORY_KEY = "metaSerdeFactory";
   protected MetadataSerDe metadataSerDe;
@@ -99,28 +99,6 @@ public class MetadataExpirationFilter extends ExpirationFilter {
     setting.addOption(METADATA_SERDE_FACTORY_KEY, factoryClazz.getName());
   }
 
-  /**
-   * Grabs the max expiration out of the list of metadata. This will rule out quickly whether or not
-   * we even need to keep this key.
-   * @param timestamp
-   * @param v
-   * @return
-   */
-  protected long parseExpiration(long timestamp, Key k, Value v) {
-    curMeta = metadataSerDe.deserialize(v.get());
-    if(curMeta == null)
-      curMeta = EMPTY_LIST;
-
-    long max = -1;
-    for (Map<String,Object> entry : curMeta)
-      max = max(getExpiration(entry, -1), max);
-
-    return max;
-  }
-
-  @Override protected long parseTimestamp(Key k, Value v) {
-    return 0;
-  }
 
   private Value nextTop;
 
@@ -167,7 +145,6 @@ public class MetadataExpirationFilter extends ExpirationFilter {
 
     if(v.getSize() > 0) {
       curMeta = metadataSerDe.deserialize(v.get());
-      int keep = 0;
 
       // no metadata and empty metadata will not expire
       if(curMeta.size() == 0)
@@ -178,10 +155,10 @@ public class MetadataExpirationFilter extends ExpirationFilter {
         long timestamp = getTimestamp(entry, 0);
 
         if (!shouldExpire(expiration, timestamp))
-          keep++;
+          return true;
       }
 
-      return keep > 0;
+      return false;
     }
     return true;
   }

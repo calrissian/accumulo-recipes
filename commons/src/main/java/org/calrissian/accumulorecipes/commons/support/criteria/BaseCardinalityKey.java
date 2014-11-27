@@ -59,7 +59,9 @@ public class BaseCardinalityKey implements CardinalityKey {
 
       if (this == o) {
         return true;
-      }
+      } else if(o == null)
+        return false;
+
       BaseCardinalityKey that = (BaseCardinalityKey) o;
 
       if (alias != null ? !alias.equals(that.alias) : that.alias != null) {
@@ -82,4 +84,14 @@ public class BaseCardinalityKey implements CardinalityKey {
       result = 31 * result + (alias != null ? alias.hashCode() : 0);
       return result;
     }
+
+
+    @Override public String toString() {
+    return "BaseCardinalityKey{" +
+        "key='" + key + '\'' +
+        ", normalizedValue='" + normalizedValue + '\'' +
+        ", alias='" + alias + '\'' +
+        ", shard='" + shard + '\'' +
+        '}';
+  }
 }

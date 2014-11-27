@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.iterator;
+package org.calrissian.accumulorecipes.eventstore.support.iterators;
 
 import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInPrefixedRowIterator;
 
@@ -24,7 +24,8 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE
  */
 public class EventGlobalIndexUniqueKVIterator extends FirstEntryInPrefixedRowIterator {
 
-  @Override protected String getPrefix(String rowStr) {
+  @Override
+  protected String getPrefix(String rowStr) {
 
     int idx = rowStr.lastIndexOf(NULL_BYTE);
     String substr = rowStr.substring(0, idx);

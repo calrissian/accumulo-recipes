@@ -86,51 +86,6 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
 public abstract class QfdHelper<T extends TupleStore> {
 
-  private static class ObjectVisCache {
-    private final String vis;
-    private final Object obj;
-
-    private ObjectVisCache(String vis, Object obj) {
-      this.vis = vis;
-      this.obj = obj;
-    }
-
-    public String getVis() {
-      return vis;
-    }
-
-    public Object getObj() {
-      return obj;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-
-      ObjectVisCache that = (ObjectVisCache) o;
-
-      if (obj != null ? !obj.equals(that.obj) : that.obj != null)
-        return false;
-
-      if (vis != null ? !vis.equals(that.vis) : that.vis != null)
-        return false;
-
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = vis != null ? vis.hashCode() : 0;
-      result = 31 * result + (obj != null ? obj.hashCode() : 0);
-      return result;
-    }
-  }
 
   private static final Kryo kryo = new Kryo();
   private final Connector connector;
@@ -242,7 +197,7 @@ public abstract class QfdHelper<T extends TupleStore> {
 
     try {
 
-      Multimap<ObjectVisCache,Map<String,Object>> tupleByObjectCache = ArrayListMultimap.create();
+      Multimap<ObjectVisCacheKey,Map<String,Object>> tupleByObjectCache = ArrayListMultimap.create();
 
       for (T item : items) {
 
@@ -253,13 +208,14 @@ public abstract class QfdHelper<T extends TupleStore> {
 
           Mutation shardMutation = new Mutation(shardId);
           for(String key : item.keys()) {
-            tupleByObjectCache.clear();
+            tupleByObjectCache = ArrayListMultimap.create();
             for (Tuple tuple : item.getAll(key))
               tupleByObjectCache.put(
-                  new ObjectVisCache(getVisibility(tuple.getMetadata(), ""), tuple.getValue()),
-                  tuple.getMetadata());
+                  new ObjectVisCacheKey(getVisibility(tuple.getMetadata(), ""), tuple.getValue()),
+                  tuple.getMetadata()
+              );
 
-            for(ObjectVisCache visCache : tupleByObjectCache.keys()) {
+            for(ObjectVisCacheKey visCache : tupleByObjectCache.keys()) {
 
               String aliasValue = typeRegistry.getAlias(visCache.getObj()) + ONE_BYTE +
                   typeRegistry.encode(visCache.getObj());
@@ -422,4 +378,49 @@ public abstract class QfdHelper<T extends TupleStore> {
       return stringObjectMap;
     }
   };
+
+  private static class ObjectVisCacheKey {
+    private final String vis;
+    private final Object obj;
+
+    private ObjectVisCacheKey(String vis, Object obj) {
+      this.vis = vis;
+      this.obj = obj;
+    }
+
+    public String getVis() {
+      return vis;
+    }
+
+    public Object getObj() {
+      return obj;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+
+      ObjectVisCacheKey that = (ObjectVisCacheKey) o;
+
+      if (obj != null ? !obj.equals(that.obj) : that.obj != null)
+        return false;
+
+      if (vis != null ? !vis.equals(that.vis) : that.vis != null)
+        return false;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = vis != null ? vis.hashCode() : 0;
+      result = 31 * result + (obj != null ? obj.hashCode() : 0);
+      return result;
+    }
+  }
+
 }
