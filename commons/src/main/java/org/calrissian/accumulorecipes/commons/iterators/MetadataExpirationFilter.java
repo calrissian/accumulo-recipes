@@ -43,170 +43,170 @@ import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Time
  */
 public class MetadataExpirationFilter extends Filter {
 
-  private static final String METADATA_SERDE_FACTORY_KEY = "metaSerdeFactory";
-  protected MetadataSerDe metadataSerDe;
+    private static final String METADATA_SERDE_FACTORY_KEY = "metaSerdeFactory";
+    protected MetadataSerDe metadataSerDe;
 
-  private boolean seenSeek = false;
-  private boolean negate = false;
+    private boolean seenSeek = false;
+    private boolean negate = false;
 
-  private static final Value EMPTY_VALUE = new Value("".getBytes());
+    private static final Value EMPTY_VALUE = new Value("".getBytes());
 
-  private Collection<Map<String,Object>> curMeta;
+    private Collection<Map<String,Object>> curMeta;
 
-  @Override
-  public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
-    super.init(source, options, env);
+    @Override
+    public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
+        super.init(source, options, env);
 
-    MetadataSerdeFactory metadataSerdeFactory = getFactory(options);
-    if (metadataSerdeFactory == null)
-      throw new RuntimeException("Metadata SerDe Factory failed to be initialized");
-    else
-      metadataSerDe = metadataSerdeFactory.create();
-  }
-
-  @Override
-  public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
-    MetadataExpirationFilter copy = (MetadataExpirationFilter) super.deepCopy(env);
-    copy.metadataSerDe = metadataSerDe;
-    return copy;
-  }
-
-  @Override
-  public IteratorOptions describeOptions() {
-    IteratorOptions io = super.describeOptions();
-    io.setName("metadataExpirationFilter");
-    io.addNamedOption(METADATA_SERDE_FACTORY_KEY, "The metadata serializer/deserializer to use. This must match the SerDe that was use to encode the metadata");
-    io.setDescription(
-        "MetadataExpirationFilter removes entries with timestamps more than <ttl> milliseconds old & timestamps newer than currentTime. ttl is determined by an expiration field in metadata encoded in the value");
-    return io;
-  }
-
-  @Override
-  public boolean validateOptions(Map<String,String> options) {
-    super.validateOptions(options);
-    try {
-      options.containsKey(METADATA_SERDE_FACTORY_KEY);
-    } catch (Exception e) {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Conigurator method to configure the metadata serializer/deserializer on an iterator setting.
-   */
-  public static final void setMetadataSerdeFactory(IteratorSetting setting, Class<? extends MetadataSerdeFactory> factoryClazz) {
-    setting.addOption(METADATA_SERDE_FACTORY_KEY, factoryClazz.getName());
-  }
-
-
-  private Value nextTop;
-
-  /**
-   * Iterates over the source until an acceptable key/value pair is found. The accept() method deserializes metadata
-   * from bytes once and sets the deserialized list of metadata on the current instance so that we don't need to
-   */
-  protected void findTop() {
-    nextTop = null;
-    curMeta = null;
-
-    while (nextTop == null && getSource().hasTop()) {
-
-      increment();
-
-      if (curMeta == null || curMeta.size() == 0) {
-        if(getSource().hasTop())
-          nextTop = getSource().getTopValue();
-      }
-      else {
-        List<Map<String,Object>> newMeta = Lists.newArrayList();
-        for (Map<String,Object> entry : curMeta) {
-
-          long expiration = getExpiration(entry, -1);
-          long timestamp = getTimestamp(entry, 0);
-
-          if (!shouldExpire(expiration, timestamp))
-            newMeta.add(entry);
-        }
-        if (newMeta.size() > 0)
-          nextTop = new Value(metadataSerDe.serialize(newMeta));
+        MetadataSerdeFactory metadataSerdeFactory = getFactory(options);
+        if (metadataSerdeFactory == null)
+            throw new RuntimeException("Metadata SerDe Factory failed to be initialized");
         else
-          nextTop = EMPTY_VALUE;
-      }
-
+            metadataSerDe = metadataSerdeFactory.create();
     }
-  }
 
-  /**
-   * Accepts entries whose timestamps are less than currentTime - threshold.
-   */
-  @Override
-  public boolean accept(Key k, Value v) {
+    @Override
+    public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
+        MetadataExpirationFilter copy = (MetadataExpirationFilter) super.deepCopy(env);
+        copy.metadataSerDe = metadataSerDe;
+        return copy;
+    }
 
-    if(v.getSize() > 0) {
-      curMeta = metadataSerDe.deserialize(v.get());
-      // no metadata and empty metadata will not expire
-      if(curMeta.size() == 0)
+    @Override
+    public IteratorOptions describeOptions() {
+        IteratorOptions io = super.describeOptions();
+        io.setName("metadataExpirationFilter");
+        io.addNamedOption(METADATA_SERDE_FACTORY_KEY, "The metadata serializer/deserializer to use. This must match the SerDe that was use to encode the metadata");
+        io.setDescription(
+            "MetadataExpirationFilter removes entries with timestamps more than <ttl> milliseconds old & timestamps newer than currentTime. ttl is determined by an expiration field in metadata encoded in the value");
+        return io;
+    }
+
+    @Override
+    public boolean validateOptions(Map<String,String> options) {
+        super.validateOptions(options);
+        try {
+            options.containsKey(METADATA_SERDE_FACTORY_KEY);
+        } catch (Exception e) {
+            return false;
+        }
         return true;
-
-      for (Map<String,Object> entry : curMeta) {
-        long expiration = getExpiration(entry, -1);
-        long timestamp = getTimestamp(entry, 0);
-
-        if (!shouldExpire(expiration, timestamp))
-          return true;
-      }
-
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Skip over keys that need to be expired
-   */
-  protected void increment() {
-    while (getSource().hasTop() && !getSource().getTopKey().isDeleted() &&
-        (negate == accept(getSource().getTopKey(), getSource().getTopValue()))) {
-      try {
-        getSource().next();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
     }
 
-  }
+    /**
+     * Conigurator method to configure the metadata serializer/deserializer on an iterator setting.
+     */
+    public static final void setMetadataSerdeFactory(IteratorSetting setting, Class<? extends MetadataSerdeFactory> factoryClazz) {
+        setting.addOption(METADATA_SERDE_FACTORY_KEY, factoryClazz.getName());
+    }
 
-  /**
-   * Overriding seek here just so we can set our own seenSeek property
-   * @param range
-   * @param columnFamilies
-   * @param inclusive
-   * @throws IOException
-   */
-  @Override
-  public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
-    super.seek(range, columnFamilies, inclusive);
-    seenSeek = true;
-  }
 
-  @Override
-  public Value getTopValue() {
-    if (getSource() == null)
-      throw new IllegalStateException("no source set");
-    if (seenSeek == false)
-      throw new IllegalStateException("never been seeked");
-    return nextTop;
-  }
+    private Value nextTop;
 
-  private MetadataSerdeFactory getFactory(Map<String,String> options) {
-    String factoryClazz = options.get(METADATA_SERDE_FACTORY_KEY);
-    try {
-      Class clazz = Class.forName(factoryClazz);
-      return (MetadataSerdeFactory) clazz.newInstance();
-    } catch (Exception e) {}
+    /**
+     * Iterates over the source until an acceptable key/value pair is found. The accept() method deserializes metadata
+     * from bytes once and sets the deserialized list of metadata on the current instance so that we don't need to
+     */
+    protected void findTop() {
+        nextTop = null;
+        curMeta = null;
 
-    return null;
-  }
+        while (nextTop == null && getSource().hasTop()) {
+
+            increment();
+
+            if (curMeta == null || curMeta.size() == 0) {
+                if(getSource().hasTop())
+                    nextTop = getSource().getTopValue();
+            }
+            else {
+                List<Map<String,Object>> newMeta = Lists.newArrayList();
+                for (Map<String,Object> entry : curMeta) {
+
+                    long expiration = getExpiration(entry, -1);
+                    long timestamp = getTimestamp(entry, 0);
+
+                    if (!shouldExpire(expiration, timestamp))
+                        newMeta.add(entry);
+                }
+                if (newMeta.size() > 0)
+                    nextTop = new Value(metadataSerDe.serialize(newMeta));
+                else
+                    nextTop = EMPTY_VALUE;
+            }
+
+        }
+    }
+
+    /**
+     * Accepts entries whose timestamps are less than currentTime - threshold.
+     */
+    @Override
+    public boolean accept(Key k, Value v) {
+
+        if(v.getSize() > 0) {
+            curMeta = metadataSerDe.deserialize(v.get());
+            // no metadata and empty metadata will not expire
+            if(curMeta.size() == 0)
+                return true;
+
+            for (Map<String,Object> entry : curMeta) {
+                long expiration = getExpiration(entry, -1);
+                long timestamp = getTimestamp(entry, 0);
+
+                if (!shouldExpire(expiration, timestamp))
+                    return true;
+            }
+
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Skip over keys that need to be expired
+     */
+    protected void increment() {
+        while (getSource().hasTop() && !getSource().getTopKey().isDeleted() &&
+            (negate == accept(getSource().getTopKey(), getSource().getTopValue()))) {
+            try {
+                getSource().next();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    /**
+     * Overriding seek here just so we can set our own seenSeek property
+     * @param range
+     * @param columnFamilies
+     * @param inclusive
+     * @throws IOException
+     */
+    @Override
+    public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
+        super.seek(range, columnFamilies, inclusive);
+        seenSeek = true;
+    }
+
+    @Override
+    public Value getTopValue() {
+        if (getSource() == null)
+            throw new IllegalStateException("no source set");
+        if (seenSeek == false)
+            throw new IllegalStateException("never been seeked");
+        return nextTop;
+    }
+
+    private MetadataSerdeFactory getFactory(Map<String,String> options) {
+        String factoryClazz = options.get(METADATA_SERDE_FACTORY_KEY);
+        try {
+            Class clazz = Class.forName(factoryClazz);
+            return (MetadataSerdeFactory) clazz.newInstance();
+        } catch (Exception e) {}
+
+        return null;
+    }
 
 }

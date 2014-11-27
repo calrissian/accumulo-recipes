@@ -16,13 +16,26 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import org.apache.accumulo.core.data.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-
-import java.io.*;
-import java.util.*;
 
 public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key, Value> {
 
@@ -134,7 +147,7 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key, Va
             keys.clear();
             values.clear();
             while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
-                    sourceIter.getTopKey().getColumnFamily().equals(currentCF)) {
+                sourceIter.getTopKey().getColumnFamily().equals(currentCF)) {
                 keys.add(new Key(sourceIter.getTopKey()));
                 values.add(new Value(sourceIter.getTopValue()));
                 sourceIter.next();
@@ -198,7 +211,7 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key, Va
         Key sk = range.getStartKey();
 
         if (sk != null && sk.getColumnFamilyData().length() == 0 && sk.getColumnQualifierData().length() == 0 && sk.getColumnVisibilityData().length() == 0
-                && sk.getTimestamp() == Long.MAX_VALUE && !range.isStartKeyInclusive()) {
+            && sk.getTimestamp() == Long.MAX_VALUE && !range.isStartKeyInclusive()) {
             // assuming that we are seeking using a key previously returned by this iterator
             // therefore go to the next row
             Key followingRowKey = sk.followingKey(PartialKey.ROW);

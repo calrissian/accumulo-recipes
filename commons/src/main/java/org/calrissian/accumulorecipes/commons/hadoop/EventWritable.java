@@ -15,16 +15,16 @@
  */
 package org.calrissian.accumulorecipes.commons.hadoop;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import org.apache.hadoop.io.Writable;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 
 
 public class EventWritable implements Writable, Settable<Event>, Gettable<Event> {

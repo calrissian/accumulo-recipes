@@ -16,18 +16,23 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import org.apache.accumulo.core.data.*;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.util.TextUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
@@ -728,11 +733,11 @@ public class AndIterator implements SortedKeyValueIterator<Key, Value> {
                 // Build a key with the DocID if one is given
                 if (range.getStartKey().getColumnFamily() != null) {
                     sourceKey = buildKey(getPartition(range.getStartKey()), dataLocation,
-                            (sources[i].term == null) ? nullText : new Text(sources[i].term + NULL_BYTE + range.getStartKey().getColumnFamily()));
+                        (sources[i].term == null) ? nullText : new Text(sources[i].term + NULL_BYTE + range.getStartKey().getColumnFamily()));
                 } // Build a key with just the term.
                 else {
                     sourceKey = buildKey(getPartition(range.getStartKey()), dataLocation,
-                            (sources[i].term == null) ? nullText : sources[i].term);
+                        (sources[i].term == null) ? nullText : sources[i].term);
                 }
                 if (!range.isStartKeyInclusive())
                     sourceKey = sourceKey.followingKey(PartialKey.ROW_COLFAM_COLQUAL);

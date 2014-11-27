@@ -80,7 +80,7 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
             return;
         int count = 0;
         while (getSource().hasTop() && lastRowFound.equals(getSource().getTopKey().getRow()) &&
-                lastColFFound.equals(getSource().getTopKey().getColumnFamily())) {
+            lastColFFound.equals(getSource().getTopKey().getColumnFamily())) {
 
             // try to efficiently jump to the next matching key
             if (count < numscans) {

@@ -88,343 +88,343 @@ import static org.calrissian.mango.collect.CloseableIterables.wrap;
 public abstract class QfdHelper<T extends TupleStore> {
 
 
-  private static final Kryo kryo = new Kryo();
-  private final Connector connector;
-  private final String indexTable;
-  private final String shardTable;
-  private final StoreConfig config;
-  private final BatchWriter shardWriter;
-  private final NodeToJexl nodeToJexl;
-  private ShardBuilder<T> shardBuilder;
-  private TypeRegistry<String> typeRegistry;
-  private MetadataSerDe metadataSerDe;
+    private static final Kryo kryo = new Kryo();
+    private final Connector connector;
+    private final String indexTable;
+    private final String shardTable;
+    private final StoreConfig config;
+    private final BatchWriter shardWriter;
+    private final NodeToJexl nodeToJexl;
+    private ShardBuilder<T> shardBuilder;
+    private TypeRegistry<String> typeRegistry;
+    private MetadataSerDe metadataSerDe;
 
-  private KeyValueIndex<T> keyValueIndex;
+    private KeyValueIndex<T> keyValueIndex;
 
-  public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-      ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
-      MetadataSerdeFactory metadaSerdeFactory)
-      throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
+        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
+        MetadataSerdeFactory metadaSerdeFactory)
+        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-    checkNotNull(connector);
-    checkNotNull(indexTable);
-    checkNotNull(shardTable);
-    checkNotNull(config);
-    checkNotNull(shardBuilder);
-    checkNotNull(typeRegistry);
-    checkNotNull(keyValueIndex);
-    checkNotNull(metadaSerdeFactory);
+        checkNotNull(connector);
+        checkNotNull(indexTable);
+        checkNotNull(shardTable);
+        checkNotNull(config);
+        checkNotNull(shardBuilder);
+        checkNotNull(typeRegistry);
+        checkNotNull(keyValueIndex);
+        checkNotNull(metadaSerdeFactory);
 
-    this.connector = connector;
-    this.indexTable = indexTable;
-    this.shardTable = shardTable;
-    this.typeRegistry = typeRegistry;
-    this.config = config;
-    this.shardBuilder = shardBuilder;
-    this.typeRegistry = typeRegistry;
-    this.keyValueIndex = keyValueIndex;
-    this.nodeToJexl = new NodeToJexl(typeRegistry);
+        this.connector = connector;
+        this.indexTable = indexTable;
+        this.shardTable = shardTable;
+        this.typeRegistry = typeRegistry;
+        this.config = config;
+        this.shardBuilder = shardBuilder;
+        this.typeRegistry = typeRegistry;
+        this.keyValueIndex = keyValueIndex;
+        this.nodeToJexl = new NodeToJexl(typeRegistry);
 
-    this.metadataSerDe = metadaSerdeFactory.create();
+        this.metadataSerDe = metadaSerdeFactory.create();
 
-    if (!connector.tableOperations().exists(this.indexTable)) {
-      connector.tableOperations().create(this.indexTable);
-      configureIndexTable(connector, this.indexTable);
-    }
-
-    if (connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
-      IteratorSetting setting = new IteratorSetting(10, "cardinalities", GlobalIndexCombiner.class);
-      GlobalIndexCombiner.setCombineAllColumns(setting, true);
-      connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorScope.class));
-      IteratorSetting expirationFilter = new IteratorSetting(12, "expiration", GlobalIndexExpirationFilter.class);
-      connector.tableOperations().attachIterator(this.indexTable, expirationFilter, allOf(IteratorScope.class));
-    }
-
-    if (!connector.tableOperations().exists(this.shardTable)) {
-      connector.tableOperations().create(this.shardTable, false, LOGICAL);
-      configureShardTable(connector, this.shardTable);
-    }
-
-    if(connector.tableOperations().getIteratorSetting(this.shardTable, "expiration", majc) == null) {
-      IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
-      MetadataExpirationFilter.setMetadataSerdeFactory(expirationFilter, metadaSerdeFactory.getClass());
-      connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorUtil.IteratorScope.class));
-    }
-
-
-    if(connector.tableOperations().getIteratorSetting(this.shardTable, "metacombiner", majc) == null) {
-      IteratorSetting metadataCombiner = new IteratorSetting(9, "metacombiner", MetadataCombiner.class);
-      MetadataCombiner.setCombineAllColumns(metadataCombiner, true);
-      MetadataCombiner.setMetadataSerdeFactory(metadataCombiner, metadaSerdeFactory.getClass());
-      connector.tableOperations().attachIterator(this.shardTable, metadataCombiner, allOf(IteratorScope.class));
-    }
-
-    initializeKryo(kryo);
-    this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(),
-        config.getMaxWriteThreads());
-  }
-
-
-  public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-      ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
-      throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-    this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerdeFactory());
-  }
-
-  public MetadataSerDe getMetadataSerDe() {
-    return metadataSerDe;
-  }
-
-  public static Kryo getKryo() {
-    return kryo;
-  }
-
-  public void flush() throws Exception {
-    shardWriter.flush();
-    keyValueIndex.flush();
-  }
-
-  /**
-   * Items get saved into a sharded table to parallelize queries & ingest.
-   */
-  public void save(Iterable<? extends T> items) {
-    checkNotNull(items);
-
-    Map<String, ColumnVisibility> colVisCache = new HashMap<String,ColumnVisibility>();
-    Value value = new Value();
-    Text forwardCF = new Text();
-    Text forwardCQ = new Text();
-    Text invertedCF = new Text();
-    Text invertedCQ = new Text();
-
-    try {
-
-      Multimap<ObjectVisCacheKey,Map<String,Object>> tupleByObjectCache = ArrayListMultimap.create();
-
-      for (T item : items) {
-
-        //If there are no getTuples then don't write anything to the data store.
-        if (item.size() > 0) {
-
-          String shardId = shardBuilder.buildShard(item);
-
-          Mutation shardMutation = new Mutation(shardId);
-          for(String key : item.keys()) {
-            tupleByObjectCache = ArrayListMultimap.create();
-            for (Tuple tuple : item.getAll(key))
-              tupleByObjectCache.put(
-                  new ObjectVisCacheKey(getVisibility(tuple.getMetadata(), ""),
-                      tuple.getValue()),
-                      newHashMap(tuple.getMetadata()
-                  )
-              );
-
-            for(ObjectVisCacheKey visCache : tupleByObjectCache.keys()) {
-
-              String aliasValue = typeRegistry.getAlias(visCache.getObj()) + ONE_BYTE +
-                  typeRegistry.encode(visCache.getObj());
-
-              ColumnVisibility columnVisibility = colVisCache.get(visCache.getVis());
-              if(columnVisibility == null) {
-                columnVisibility = new ColumnVisibility(visCache.getVis());
-                colVisCache.put(visCache.getVis(), columnVisibility);
-              }
-
-              Collection<Map<String, Object>> metas = tupleByObjectCache.get(visCache);
-              metas = Collections2.transform(metas, removeVisFunction);
-
-              value.set(metas.size() > 0 ? metadataSerDe.serialize(metas) : EMPTY_VALUE.get());
-
-              String id = buildId(item);
-              forwardCF.set(id);
-              forwardCQ.set(key + NULL_BYTE + aliasValue);
-              invertedCF.set(PREFIX_FI + NULL_BYTE + key);
-              invertedCQ.set(aliasValue + NULL_BYTE + id);
-
-              // forward mutation
-              shardMutation.put(forwardCF,
-                  forwardCQ,
-                  columnVisibility,
-                  value);
-
-              // reverse mutation
-              shardMutation.put(invertedCF,
-                  invertedCQ,
-                  columnVisibility,
-                  value);  // forward mutation
-            }
-          }
-          shardWriter.addMutation(shardMutation);
+        if (!connector.tableOperations().exists(this.indexTable)) {
+            connector.tableOperations().create(this.indexTable);
+            configureIndexTable(connector, this.indexTable);
         }
-      }
-      keyValueIndex.indexKeyValues(items);
 
-    } catch (RuntimeException re) {
-      throw re;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
+        if (connector.tableOperations().getIteratorSetting(this.indexTable, "cardinalities", majc) == null) {
+            IteratorSetting setting = new IteratorSetting(10, "cardinalities", GlobalIndexCombiner.class);
+            GlobalIndexCombiner.setCombineAllColumns(setting, true);
+            connector.tableOperations().attachIterator(this.indexTable, setting, allOf(IteratorScope.class));
+            IteratorSetting expirationFilter = new IteratorSetting(12, "expiration", GlobalIndexExpirationFilter.class);
+            connector.tableOperations().attachIterator(this.indexTable, expirationFilter, allOf(IteratorScope.class));
+        }
 
-  public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Node query,
-      Function<Map.Entry<Key, Value>, T> transform, Auths auths) {
-    checkNotNull(query);
-    checkNotNull(auths);
+        if (!connector.tableOperations().exists(this.shardTable)) {
+            connector.tableOperations().create(this.shardTable, false, LOGICAL);
+            configureShardTable(connector, this.shardTable);
+        }
 
-    QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor, typeRegistry);
-
-    if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
-      return wrap(EMPTY_LIST);
-
-    String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-    String originalJexl = nodeToJexl.transform(query);
-    Set<String> shards = optimizer.getShards();
-
-    Collection<Range> ranges = new HashSet<Range>();
-    if(jexl.equals("()") || jexl.equals(""))
-      ranges.add(new Range(END_BYTE));
-    else
-      for (String shard : shards)
-        ranges.add(new Range(shard));
+        if(connector.tableOperations().getIteratorSetting(this.shardTable, "expiration", majc) == null) {
+            IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
+            MetadataExpirationFilter.setMetadataSerdeFactory(expirationFilter, metadaSerdeFactory.getClass());
+            connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorUtil.IteratorScope.class));
+        }
 
 
-    scanner.setRanges(ranges);
+        if(connector.tableOperations().getIteratorSetting(this.shardTable, "metacombiner", majc) == null) {
+            IteratorSetting metadataCombiner = new IteratorSetting(9, "metacombiner", MetadataCombiner.class);
+            MetadataCombiner.setCombineAllColumns(metadataCombiner, true);
+            MetadataCombiner.setMetadataSerdeFactory(metadataCombiner, metadaSerdeFactory.getClass());
+            connector.tableOperations().attachIterator(this.shardTable, metadataCombiner, allOf(IteratorScope.class));
+        }
 
-    IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
-    setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
-    setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
-
-    scanner.addScanIterator(setting);
-
-    return transform(closeableIterable(scanner), transform);
-  }
-
-  public void shutdown() {
-    try {
-      getWriter().close();
-    } catch (MutationsRejectedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Utility method to update the correct iterators to the index table.
-   *
-   * @param connector
-   * @throws AccumuloSecurityException
-   * @throws AccumuloException
-   * @throws TableNotFoundException
-   */
-  protected abstract void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
-
-  /**
-   * Utility method to update the correct iterators to the shardBuilder table.
-   *
-   * @param connector
-   * @throws AccumuloSecurityException
-   * @throws AccumuloException
-   * @throws TableNotFoundException
-   */
-  protected abstract void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
-
-  protected abstract String buildId(T item);
-
-  public BatchScanner buildIndexScanner(Authorizations auths) {
-    return buildScanner(indexTable, auths);
-  }
-
-  public BatchScanner buildShardScanner(Authorizations auths) {
-    return buildScanner(shardTable, auths);
-  }
-
-  private BatchScanner buildScanner(String table, Authorizations authorizations) {
-    try {
-      return connector.createBatchScanner(table, authorizations, config.getMaxQueryThreads());
-    } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
+        initializeKryo(kryo);
+        this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(),
+            config.getMaxWriteThreads());
     }
 
-  }
 
-  public ShardBuilder getShardBuilder() {
-    return shardBuilder;
-  }
-
-  public Connector getConnector() {
-    return connector;
-  }
-
-  public String getIndexTable() {
-    return indexTable;
-  }
-
-  public String getShardTable() {
-    return shardTable;
-  }
-
-  public StoreConfig getConfig() {
-    return config;
-  }
-
-  public BatchWriter getWriter() {
-    return shardWriter;
-  }
-
-  public TypeRegistry<String> getTypeRegistry() {
-    return typeRegistry;
-  }
-
-  private static Function<Map<String,Object>, Map<String,Object>> removeVisFunction =
-      new Function<Map<String,Object>,Map<String,Object>>() {
-    @Override
-    public Map<String,Object> apply(Map<String,Object> stringObjectMap) {
-      stringObjectMap.remove(VISIBILITY);
-      return stringObjectMap;
-    }
-  };
-
-  private static class ObjectVisCacheKey {
-    private final String vis;
-    private final Object obj;
-
-    private ObjectVisCacheKey(String vis, Object obj) {
-      this.vis = vis;
-      this.obj = obj;
+    public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
+        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
+        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerdeFactory());
     }
 
-    public String getVis() {
-      return vis;
+    public MetadataSerDe getMetadataSerDe() {
+        return metadataSerDe;
     }
 
-    public Object getObj() {
-      return obj;
+    public static Kryo getKryo() {
+        return kryo;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-
-      ObjectVisCacheKey that = (ObjectVisCacheKey) o;
-
-      if (obj != null ? !obj.equals(that.obj) : that.obj != null)
-        return false;
-
-      if (vis != null ? !vis.equals(that.vis) : that.vis != null)
-        return false;
-      return true;
+    public void flush() throws Exception {
+        shardWriter.flush();
+        keyValueIndex.flush();
     }
 
-    @Override
-    public int hashCode() {
-      int result = vis != null ? vis.hashCode() : 0;
-      result = 31 * result + (obj != null ? obj.hashCode() : 0);
-      return result;
+    /**
+     * Items get saved into a sharded table to parallelize queries & ingest.
+     */
+    public void save(Iterable<? extends T> items) {
+        checkNotNull(items);
+
+        Map<String, ColumnVisibility> colVisCache = new HashMap<String,ColumnVisibility>();
+        Value value = new Value();
+        Text forwardCF = new Text();
+        Text forwardCQ = new Text();
+        Text invertedCF = new Text();
+        Text invertedCQ = new Text();
+
+        try {
+
+            Multimap<ObjectVisCacheKey,Map<String,Object>> tupleByObjectCache = ArrayListMultimap.create();
+
+            for (T item : items) {
+
+                //If there are no getTuples then don't write anything to the data store.
+                if (item.size() > 0) {
+
+                    String shardId = shardBuilder.buildShard(item);
+
+                    Mutation shardMutation = new Mutation(shardId);
+                    for(String key : item.keys()) {
+                        tupleByObjectCache = ArrayListMultimap.create();
+                        for (Tuple tuple : item.getAll(key))
+                            tupleByObjectCache.put(
+                                new ObjectVisCacheKey(getVisibility(tuple.getMetadata(), ""),
+                                    tuple.getValue()),
+                                newHashMap(tuple.getMetadata()
+                                )
+                            );
+
+                        for(ObjectVisCacheKey visCache : tupleByObjectCache.keys()) {
+
+                            String aliasValue = typeRegistry.getAlias(visCache.getObj()) + ONE_BYTE +
+                                typeRegistry.encode(visCache.getObj());
+
+                            ColumnVisibility columnVisibility = colVisCache.get(visCache.getVis());
+                            if(columnVisibility == null) {
+                                columnVisibility = new ColumnVisibility(visCache.getVis());
+                                colVisCache.put(visCache.getVis(), columnVisibility);
+                            }
+
+                            Collection<Map<String, Object>> metas = tupleByObjectCache.get(visCache);
+                            metas = Collections2.transform(metas, removeVisFunction);
+
+                            value.set(metas.size() > 0 ? metadataSerDe.serialize(metas) : EMPTY_VALUE.get());
+
+                            String id = buildId(item);
+                            forwardCF.set(id);
+                            forwardCQ.set(key + NULL_BYTE + aliasValue);
+                            invertedCF.set(PREFIX_FI + NULL_BYTE + key);
+                            invertedCQ.set(aliasValue + NULL_BYTE + id);
+
+                            // forward mutation
+                            shardMutation.put(forwardCF,
+                                forwardCQ,
+                                columnVisibility,
+                                value);
+
+                            // reverse mutation
+                            shardMutation.put(invertedCF,
+                                invertedCQ,
+                                columnVisibility,
+                                value);  // forward mutation
+                        }
+                    }
+                    shardWriter.addMutation(shardMutation);
+                }
+            }
+            keyValueIndex.indexKeyValues(items);
+
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
-  }
+
+    public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Node query,
+        Function<Map.Entry<Key, Value>, T> transform, Auths auths) {
+        checkNotNull(query);
+        checkNotNull(auths);
+
+        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor, typeRegistry);
+
+        if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
+            return wrap(EMPTY_LIST);
+
+        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
+        String originalJexl = nodeToJexl.transform(query);
+        Set<String> shards = optimizer.getShards();
+
+        Collection<Range> ranges = new HashSet<Range>();
+        if(jexl.equals("()") || jexl.equals(""))
+            ranges.add(new Range(END_BYTE));
+        else
+            for (String shard : shards)
+                ranges.add(new Range(shard));
+
+
+        scanner.setRanges(ranges);
+
+        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+        setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
+        setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+
+        scanner.addScanIterator(setting);
+
+        return transform(closeableIterable(scanner), transform);
+    }
+
+    public void shutdown() {
+        try {
+            getWriter().close();
+        } catch (MutationsRejectedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Utility method to update the correct iterators to the index table.
+     *
+     * @param connector
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
+    protected abstract void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
+
+    /**
+     * Utility method to update the correct iterators to the shardBuilder table.
+     *
+     * @param connector
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
+    protected abstract void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
+
+    protected abstract String buildId(T item);
+
+    public BatchScanner buildIndexScanner(Authorizations auths) {
+        return buildScanner(indexTable, auths);
+    }
+
+    public BatchScanner buildShardScanner(Authorizations auths) {
+        return buildScanner(shardTable, auths);
+    }
+
+    private BatchScanner buildScanner(String table, Authorizations authorizations) {
+        try {
+            return connector.createBatchScanner(table, authorizations, config.getMaxQueryThreads());
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public ShardBuilder getShardBuilder() {
+        return shardBuilder;
+    }
+
+    public Connector getConnector() {
+        return connector;
+    }
+
+    public String getIndexTable() {
+        return indexTable;
+    }
+
+    public String getShardTable() {
+        return shardTable;
+    }
+
+    public StoreConfig getConfig() {
+        return config;
+    }
+
+    public BatchWriter getWriter() {
+        return shardWriter;
+    }
+
+    public TypeRegistry<String> getTypeRegistry() {
+        return typeRegistry;
+    }
+
+    private static Function<Map<String,Object>, Map<String,Object>> removeVisFunction =
+        new Function<Map<String,Object>,Map<String,Object>>() {
+            @Override
+            public Map<String,Object> apply(Map<String,Object> stringObjectMap) {
+                stringObjectMap.remove(VISIBILITY);
+                return stringObjectMap;
+            }
+        };
+
+    private static class ObjectVisCacheKey {
+        private final String vis;
+        private final Object obj;
+
+        private ObjectVisCacheKey(String vis, Object obj) {
+            this.vis = vis;
+            this.obj = obj;
+        }
+
+        public String getVis() {
+            return vis;
+        }
+
+        public Object getObj() {
+            return obj;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+
+            ObjectVisCacheKey that = (ObjectVisCacheKey) o;
+
+            if (obj != null ? !obj.equals(that.obj) : that.obj != null)
+                return false;
+
+            if (vis != null ? !vis.equals(that.vis) : that.vis != null)
+                return false;
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = vis != null ? vis.hashCode() : 0;
+            result = 31 * result + (obj != null ? obj.hashCode() : 0);
+            return result;
+        }
+    }
 
 }

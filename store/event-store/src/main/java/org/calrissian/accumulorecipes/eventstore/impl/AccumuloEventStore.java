@@ -140,7 +140,7 @@ public class AccumuloEventStore implements EventStore {
         scanner.addScanIterator(timeFilter);
 
         CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, query,
-                helper.buildQueryXform(selectFields), auths);
+            helper.buildQueryXform(selectFields), auths);
         indexScanner.close();
 
         return events;

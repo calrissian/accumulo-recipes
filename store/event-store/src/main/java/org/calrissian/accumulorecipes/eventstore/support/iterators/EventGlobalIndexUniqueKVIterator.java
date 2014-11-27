@@ -24,11 +24,11 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE
  */
 public class EventGlobalIndexUniqueKVIterator extends FirstEntryInPrefixedRowIterator {
 
-  @Override
-  protected String getPrefix(String rowStr) {
+    @Override
+    protected String getPrefix(String rowStr) {
 
-    int idx = rowStr.lastIndexOf(NULL_BYTE);
-    String substr = rowStr.substring(0, idx);
-    return substr;
-  }
+        int idx = rowStr.lastIndexOf(NULL_BYTE);
+        String substr = rowStr.substring(0, idx);
+        return substr;
+    }
 }

@@ -78,25 +78,25 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
                 String visibility = curEntry.getKey().getColumnVisibility().toString();
 
                 try {
-                  Collection<Map<String,Object>> meta = metadataSerDe.deserialize(curEntry.getValue().get());
-                  if(meta != null) {
-                    for(Map<String,Object> curMeta : meta) {
-                      Map<String,Object> metadata = new HashMap<String,Object>();
-                      if(curMeta != null)
-                        metadata.putAll(curMeta);
+                    Collection<Map<String,Object>> meta = metadataSerDe.deserialize(curEntry.getValue().get());
+                    if(meta != null) {
+                        for(Map<String,Object> curMeta : meta) {
+                            Map<String,Object> metadata = new HashMap<String,Object>();
+                            if(curMeta != null)
+                                metadata.putAll(curMeta);
 
-                      setVisibility(metadata, visibility);
-                      Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
-                      entry.put(tuple);
+                            setVisibility(metadata, visibility);
+                            Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
+                            entry.put(tuple);
+                        }
+                    } else {
+                        Map<String,Object> metadata = new HashMap<String,Object>();
+                        setVisibility(metadata, visibility);
+                        Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
+                        entry.put(tuple);
                     }
-                  } else {
-                    Map<String,Object> metadata = new HashMap<String,Object>();
-                    setVisibility(metadata, visibility);
-                    Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
-                    entry.put(tuple);
-                  }
                 } catch(Exception e) {
-                  log.error("There was an error deserializing the metadata for a tuple", e);
+                    log.error("There was an error deserializing the metadata for a tuple", e);
                 }
             }
 

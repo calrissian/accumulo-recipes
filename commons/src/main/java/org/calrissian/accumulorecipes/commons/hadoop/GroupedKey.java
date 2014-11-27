@@ -15,18 +15,18 @@
  */
 package org.calrissian.accumulorecipes.commons.hadoop;
 
-import org.apache.accumulo.core.data.Key;
-import org.apache.hadoop.io.WritableComparable;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+
+import org.apache.accumulo.core.data.Key;
+import org.apache.hadoop.io.WritableComparable;
 
 public class GroupedKey implements WritableComparable<GroupedKey> {
 
     private String group;
     private Key key;
-    
+
     public GroupedKey(String group, Key key) {
         this.group = group;
         this.key = key;

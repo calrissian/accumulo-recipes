@@ -21,5 +21,5 @@ package org.calrissian.accumulorecipes.commons.support.metadata;
  */
 public interface MetadataSerdeFactory {
 
-  MetadataSerDe create();
+    MetadataSerDe create();
 }

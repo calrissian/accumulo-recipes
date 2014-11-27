@@ -42,13 +42,13 @@ public class MetadataBuilder {
     }
 
     public MetadataBuilder setExpiration(long expiration) {
-      Metadata.Expiration.setExpiration(metadata, expiration);
-      return this;
+        Metadata.Expiration.setExpiration(metadata, expiration);
+        return this;
     }
 
     public MetadataBuilder setTimestamp(long timestamp) {
-      Metadata.Timestamp.setTimestamp(metadata, timestamp);
-      return this;
+        Metadata.Timestamp.setTimestamp(metadata, timestamp);
+        return this;
     }
 
     public MetadataBuilder setCustom(String key, Object value) {

@@ -271,7 +271,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
             throw new IllegalArgumentException("Failed to parse criteria", ex);
         } catch (Exception ex) {
             initfailed = true;
-//      throw new IllegalArgumentException("probably had no indexed terms", ex);
+            //      throw new IllegalArgumentException("probably had no indexed terms", ex);
         }
 
     }
@@ -389,7 +389,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
         }
 
         FieldIndexIterator iter = new FieldIndexIterator(node.getType(), rowId, node.getFieldName(), node.getFieldValue(), node.isNegated(),
-                node.getFieldOperator());
+            node.getFieldOperator());
 
         Map<String, String> options = new HashMap<String, String>();
         iter.init(sourceIterator.deepCopy(env), options, env);
@@ -435,9 +435,9 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
                     node.addToSet(node.getTopKey());
 
                 } else if (node.getType() == ParserTreeConstants.JJTANDNODE || node.getType() == ParserTreeConstants.JJTEQNODE
-                        || node.getType() == ParserTreeConstants.JJTERNODE || node.getType() == ParserTreeConstants.JJTLENODE
-                        || node.getType() == ParserTreeConstants.JJTLTNODE || node.getType() == ParserTreeConstants.JJTGENODE
-                        || node.getType() == ParserTreeConstants.JJTGTNODE) {
+                    || node.getType() == ParserTreeConstants.JJTERNODE || node.getType() == ParserTreeConstants.JJTLENODE
+                    || node.getType() == ParserTreeConstants.JJTLTNODE || node.getType() == ParserTreeConstants.JJTGENODE
+                    || node.getType() == ParserTreeConstants.JJTGTNODE) {
                     // sub iterator guarantees it is in its internal range,
                     // otherwise, no top.
                     node.setValid(node.hasTop());
@@ -463,8 +463,8 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
                 node.setValid(child.isValid());
                 node.setTopKey(child.getTopKey());
             } else if (child.getType() == ParserTreeConstants.JJTEQNODE || child.getType() == ParserTreeConstants.JJTERNODE
-                    || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTGENODE
-                    || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTLENODE) {// BooleanLogicTreeNode.NodeType.SEL) {
+                || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTGENODE
+                || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTLENODE) {// BooleanLogicTreeNode.NodeType.SEL) {
                 node.setValid(true);
                 node.setTopKey(child.getTopKey());
                 if (child.getTopKey() == null) {
@@ -492,9 +492,9 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
             BooleanLogicTreeNode child = (BooleanLogicTreeNode) children.nextElement();
 
             if (child.getType() == ParserTreeConstants.JJTEQNODE || child.getType() == ParserTreeConstants.JJTANDNODE
-                    || child.getType() == ParserTreeConstants.JJTERNODE || child.getType() == ParserTreeConstants.JJTNENODE
-                    || child.getType() == ParserTreeConstants.JJTGENODE || child.getType() == ParserTreeConstants.JJTLENODE
-                    || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTLTNODE) {
+                || child.getType() == ParserTreeConstants.JJTERNODE || child.getType() == ParserTreeConstants.JJTNENODE
+                || child.getType() == ParserTreeConstants.JJTGENODE || child.getType() == ParserTreeConstants.JJTLENODE
+                || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTLTNODE) {
 
                 if (child.isNegated()) {
                     if (child.hasTop()) {
@@ -677,10 +677,10 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
             // and negation
             BooleanLogicTreeNode child = (BooleanLogicTreeNode) children.nextElement();
             if (child.getType() == ParserTreeConstants.JJTEQNODE || child.getType() == ParserTreeConstants.JJTNENODE
-                    || child.getType() == ParserTreeConstants.JJTANDNODE || child.getType() == ParserTreeConstants.JJTERNODE
-                    || child.getType() == ParserTreeConstants.JJTNRNODE || child.getType() == ParserTreeConstants.JJTLENODE
-                    || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTGENODE
-                    || child.getType() == ParserTreeConstants.JJTGTNODE) {
+                || child.getType() == ParserTreeConstants.JJTANDNODE || child.getType() == ParserTreeConstants.JJTERNODE
+                || child.getType() == ParserTreeConstants.JJTNRNODE || child.getType() == ParserTreeConstants.JJTLENODE
+                || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTGENODE
+                || child.getType() == ParserTreeConstants.JJTGTNODE) {
 
                 if (child.hasTop()) {
                     if (child.isNegated()) {
@@ -804,7 +804,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
         }
 
         if (node.getType().equals(ASTLTNode.class) || node.getType().equals(ASTLENode.class) || node.getType().equals(ASTGTNode.class)
-                || node.getType().equals(ASTGENode.class)) {
+            || node.getType().equals(ASTGENode.class)) {
             Multimap<String, QueryTerm> terms = node.getTerms();
             for (String fName : terms.keySet()) {
                 Collection<QueryTerm> values = terms.get(fName);
@@ -1072,7 +1072,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
                             for (int j = temp.size() - 1; j >= 0; j--) {
                                 BooleanLogicTreeNode c = temp.get(j);
                                 if (c.getType() == JexlOperatorConstants.JJTLENODE || c.getType() == JexlOperatorConstants.JJTLTNODE
-                                        || c.getType() == JexlOperatorConstants.JJTGENODE || c.getType() == JexlOperatorConstants.JJTGTNODE) {
+                                    || c.getType() == JexlOperatorConstants.JJTGENODE || c.getType() == JexlOperatorConstants.JJTGTNODE) {
                                     c.removeFromParent();
                                 }
                             }
@@ -1870,7 +1870,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
 
     public IteratorOptions describeOptions() {
         return new IteratorOptions(getClass().getSimpleName(), "evaluates event objects against an expression", Collections.singletonMap(QUERY_OPTION,
-                "criteria expression"), null);
+            "criteria expression"), null);
     }
 
     public boolean validateOptions(Map<String, String> options) {

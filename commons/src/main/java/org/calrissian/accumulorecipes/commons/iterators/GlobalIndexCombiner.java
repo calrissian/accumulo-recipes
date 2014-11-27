@@ -16,12 +16,12 @@
 package org.calrissian.accumulorecipes.commons.iterators;
 
 
+import java.util.Iterator;
+
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Combiner;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
-
-import java.util.Iterator;
 
 public class GlobalIndexCombiner extends Combiner {
 

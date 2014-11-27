@@ -15,11 +15,11 @@
  */
 package org.calrissian.accumulorecipes.commons.collect;
 
+import java.util.Iterator;
+
 import com.google.common.collect.AbstractIterator;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
-
-import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -38,7 +38,7 @@ public class TupleStoreIterator<T extends TupleStore> extends AbstractIterator<T
     protected Tuple computeNext() {
 
         while((tuples == null || !tuples.hasNext()) &&
-                tupleCollections.hasNext()) {
+            tupleCollections.hasNext()) {
             curTupleCollection = tupleCollections.next();
             tuples = curTupleCollection.getTuples().iterator();
         }

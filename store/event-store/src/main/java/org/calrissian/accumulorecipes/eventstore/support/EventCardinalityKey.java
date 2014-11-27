@@ -38,9 +38,9 @@ public class EventCardinalityKey extends BaseCardinalityKey {
             this.normalizedValue = row.substring(firstNBIdx + 1, lastNBIdx);
             this.shard = row.substring(lastNBIdx+1, row.length());
         } else if (row.startsWith(INDEX_K)) {
-          this.key = row.substring(part0Idx+1, part1Idx);
-          this.alias = row.substring(part1Idx+2, firstNBIdx);
-          this.shard = row.substring(firstNBIdx + 1, row.length());
+            this.key = row.substring(part0Idx+1, part1Idx);
+            this.alias = row.substring(part1Idx+2, firstNBIdx);
+            this.shard = row.substring(firstNBIdx + 1, row.length());
         }
     }
 }

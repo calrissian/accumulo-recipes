@@ -30,8 +30,8 @@ import static org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper.p
  * This filter requires a "ttl" option, in milliseconds, to determine the age off threshold.
  */
 public class EventTimeLimitingFilter extends TimeLimitingFilter {
-  @Override
-  protected long parseTimestamp(Key k, Value v) {
-    return parseTimestampFromKey(k);
-  }
+    @Override
+    protected long parseTimestamp(Key k, Value v) {
+        return parseTimestampFromKey(k);
+    }
 }

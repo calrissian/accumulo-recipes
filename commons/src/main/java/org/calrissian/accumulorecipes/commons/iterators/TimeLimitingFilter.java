@@ -79,7 +79,7 @@ public class TimeLimitingFilter extends Filter {
     }
 
     protected long parseTimestamp(Key k, Value v) {
-      return k.getTimestamp();
+        return k.getTimestamp();
     }
 
     @Override

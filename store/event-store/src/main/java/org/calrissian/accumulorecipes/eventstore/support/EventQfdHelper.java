@@ -41,8 +41,8 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 public class EventQfdHelper extends QfdHelper<Event> {
 
     public EventQfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-                          ShardBuilder<Event> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<Event> keyValueIndex)
-            throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        ShardBuilder<Event> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<Event> keyValueIndex)
+        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         super(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
     }
 
@@ -93,25 +93,25 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
 
     private static final Event createEventFromkey(Key key) {
-      String cf = key.getColumnFamily().toString();
-      int uuidIdx = cf.indexOf(ONE_BYTE);
-      int tsIdx = cf.lastIndexOf(ONE_BYTE);
-      String uuid =  cf.substring(uuidIdx+1, tsIdx);
-      long ts = Long.parseLong(cf.substring(tsIdx+1, cf.length()));
-      return new BaseEvent(uuid, ts);
+        String cf = key.getColumnFamily().toString();
+        int uuidIdx = cf.indexOf(ONE_BYTE);
+        int tsIdx = cf.lastIndexOf(ONE_BYTE);
+        String uuid =  cf.substring(uuidIdx+1, tsIdx);
+        long ts = Long.parseLong(cf.substring(tsIdx+1, cf.length()));
+        return new BaseEvent(uuid, ts);
     }
 
     public static final Long parseTimestampFromKey(Key k) {
 
-      String cf = k.getColumnFamily().toString();
-      String cq = k.getColumnQualifier().toString();
+        String cf = k.getColumnFamily().toString();
+        String cq = k.getColumnQualifier().toString();
 
-      String toParse = cq;
-      if(cf.startsWith(PREFIX_E))
-        toParse = cf;
+        String toParse = cq;
+        if(cf.startsWith(PREFIX_E))
+            toParse = cf;
 
-      int idx = toParse.lastIndexOf(ONE_BYTE);
-      return Long.parseLong(toParse.substring(idx+1, toParse.length()));
+        int idx = toParse.lastIndexOf(ONE_BYTE);
+        return Long.parseLong(toParse.substring(idx+1, toParse.length()));
     }
 
 }

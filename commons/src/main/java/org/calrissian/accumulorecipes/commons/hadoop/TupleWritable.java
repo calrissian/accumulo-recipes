@@ -16,18 +16,18 @@
 package org.calrissian.accumulorecipes.commons.hadoop;
 
 
-import org.apache.hadoop.io.Writable;
-import org.calrissian.accumulorecipes.commons.domain.Gettable;
-import org.calrissian.accumulorecipes.commons.domain.Settable;
-import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.types.TypeRegistry;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.hadoop.io.Writable;
+import org.calrissian.accumulorecipes.commons.domain.Gettable;
+import org.calrissian.accumulorecipes.commons.domain.Settable;
+import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.types.TypeRegistry;
 
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 

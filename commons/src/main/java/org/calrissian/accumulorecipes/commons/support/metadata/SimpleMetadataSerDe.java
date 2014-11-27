@@ -43,79 +43,79 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     @Override
     public byte[] serialize(Collection<Map<String, Object>> metadata) {
 
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      DataOutput dataOutput = new DataOutputStream(baos);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutput dataOutput = new DataOutputStream(baos);
 
         try {
 
-          dataOutput.writeInt(metadata.size());
+            dataOutput.writeInt(metadata.size());
 
-          for(Map<String,Object> map : metadata) {
-            int count = 0;
-            for(Map.Entry<String, Object> entry : map.entrySet()) {
-              if(entry.getValue() != null)
-                count++;
+            for(Map<String,Object> map : metadata) {
+                int count = 0;
+                for(Map.Entry<String, Object> entry : map.entrySet()) {
+                    if(entry.getValue() != null)
+                        count++;
+                }
+
+                dataOutput.writeInt(count);
+
+                for(Map.Entry<String, Object> entry : map.entrySet()) {
+                    dataOutput.writeUTF(entry.getKey());
+                    dataOutput.writeUTF(typeRegistry.getAlias(entry.getValue()));
+                    dataOutput.writeUTF(typeRegistry.encode(entry.getValue()));
+                }
             }
-
-            dataOutput.writeInt(count);
-
-            for(Map.Entry<String, Object> entry : map.entrySet()) {
-              dataOutput.writeUTF(entry.getKey());
-              dataOutput.writeUTF(typeRegistry.getAlias(entry.getValue()));
-              dataOutput.writeUTF(typeRegistry.encode(entry.getValue()));
-            }
-          }
 
 
         } catch(Exception e) {
         } finally {
-          try {
-            baos.close();
-            baos.flush();
-          } catch (IOException e) {
-          }
+            try {
+                baos.close();
+                baos.flush();
+            } catch (IOException e) {
+            }
         }
 
-      byte[] bytes =  baos.toByteArray();
-      return bytes;
+        byte[] bytes =  baos.toByteArray();
+        return bytes;
     }
 
     @Override
     public Collection<Map<String, Object>> deserialize(byte[] bytes) {
 
-      ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-      DataInputStream dis = new DataInputStream(bais);
+        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+        DataInputStream dis = new DataInputStream(bais);
 
 
-      List<Map<String, Object>> metadata = new ArrayList<Map<String,Object>>();
+        List<Map<String, Object>> metadata = new ArrayList<Map<String,Object>>();
 
 
-      try {
-        int listCount = dis.readInt();
-
-        for(int i = 0; i < listCount; i++) {
-          Map<String, Object> map = new HashMap<String,Object>();
-          int count = dis.readInt();
-
-          for(int j = 0; j < count; j++) {
-            String key = dis.readUTF();
-            String alias = dis.readUTF();
-            String encodedVal = dis.readUTF();
-
-            map.put(key, typeRegistry.decode(alias, encodedVal));
-          }
-
-          metadata.add(map);
-        }
-
-      } catch(Exception e) {
-      } finally {
         try {
-          bais.close();
-          dis.close();
-        } catch (IOException e) {
+            int listCount = dis.readInt();
+
+            for(int i = 0; i < listCount; i++) {
+                Map<String, Object> map = new HashMap<String,Object>();
+                int count = dis.readInt();
+
+                for(int j = 0; j < count; j++) {
+                    String key = dis.readUTF();
+                    String alias = dis.readUTF();
+                    String encodedVal = dis.readUTF();
+
+                    map.put(key, typeRegistry.decode(alias, encodedVal));
+                }
+
+                metadata.add(map);
+            }
+
+        } catch(Exception e) {
+        } finally {
+            try {
+                bais.close();
+                dis.close();
+            } catch (IOException e) {
+            }
         }
-      }
-      return metadata;
+        return metadata;
     }
 }
