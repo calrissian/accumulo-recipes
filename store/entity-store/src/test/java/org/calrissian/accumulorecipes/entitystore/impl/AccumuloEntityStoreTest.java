@@ -49,6 +49,7 @@ import org.junit.Test;
 
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Iterables.size;
+import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -554,7 +555,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testExpirationOfTuples() throws Exception {
+    public void testExpirationOfTuples_get() throws Exception {
 
         Map<String,Object> expireMeta = new MetadataBuilder()
             .setExpiration(1)
@@ -569,6 +570,28 @@ public class AccumuloEntityStoreTest {
 
         List<EntityIndex> indexes = asList(new EntityIndex[] {new EntityIndex(entity.getType(), entity.getId())});
         Iterable<Entity> entities = store.get(indexes, null, DEFAULT_AUTHS);
+
+        assertEquals(1, size(entities));
+        assertEquals(1, get(entities, 0).size());
+
+    }
+
+    @Test
+    public void testExpirationOfTuples_query() throws Exception {
+
+        Map<String,Object> expireMeta = new MetadataBuilder()
+            .setExpiration(1)
+            .setTimestamp(currentTimeMillis())
+            .build();
+
+        Entity entity = new BaseEntity("type", "id");
+        entity.put(new Tuple("hasIp", "true", meta));
+        entity.put(new Tuple("ip", "1.1.1.1", expireMeta));
+
+        store.save(singleton(entity));
+
+        Node query = new QueryBuilder().and().eq("hasIp", "true").end().build();
+        Iterable<Entity> entities = store.query(newHashSet(new String[] {"type"}), query, null, DEFAULT_AUTHS);
 
         assertEquals(1, size(entities));
         assertEquals(1, get(entities, 0).size());
