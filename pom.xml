@@ -165,6 +165,7 @@ limitations under the License.
           <configuration>
             <excludes>
               <exclude>**\README.md</exclude>
+              <exclude>**\.travis.yml</exclude>
             </excludes>
           </configuration>
         </plugin>
@@ -286,6 +287,13 @@ limitations under the License.
               </execution>
             </executions>
           </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>sign</id>
+      <build>
+        <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>

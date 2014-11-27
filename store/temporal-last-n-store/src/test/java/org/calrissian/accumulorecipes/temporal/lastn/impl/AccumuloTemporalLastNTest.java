@@ -15,23 +15,29 @@
  */
 package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
+import java.util.Date;
+import java.util.HashSet;
+
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
+import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.UUID;
-
 import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 
 public class AccumuloTemporalLastNTest {
@@ -49,18 +55,20 @@ public class AccumuloTemporalLastNTest {
     @Test
     public void testMultipleEntries_sameGroup() throws TableNotFoundException {
 
-        Event testEntry = new BaseEvent(UUID.randomUUID().toString());
+        Event testEntry = new BaseEvent(randomUUID().toString());
         testEntry.put(new Tuple("key1", "val1"));
         testEntry.put(new Tuple("key2", "val2"));
 
-        Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
+        Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
         testEntry2.put(new Tuple("key1", "val1"));
         testEntry2.put(new Tuple("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
 
-        Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
+        AccumuloTestUtils.dumpTable(connector, "temporalLastN");
+
+        Iterable<Event> results = store.get(new Date(currentTimeMillis() - 500000), new Date(currentTimeMillis() + 500000),
                 singleton("group"), 2, new Auths());
 
         Event actualEntry = Iterables.get(results, 0);
@@ -78,12 +86,12 @@ public class AccumuloTemporalLastNTest {
     @Test
     public void testTimeLimit_downToMillis() throws TableNotFoundException {
 
-        long curTime = System.currentTimeMillis();
-        Event testEntry = new BaseEvent(UUID.randomUUID().toString());
+        long curTime = currentTimeMillis();
+        Event testEntry = new BaseEvent(randomUUID().toString());
         testEntry.put(new Tuple("key1", "val1"));
         testEntry.put(new Tuple("key2", "val2"));
 
-        Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), curTime - 5000);
+        Event testEntry2 = new BaseEvent(randomUUID().toString(), curTime - 5000);
         testEntry2.put(new Tuple("key1", "val1"));
         testEntry2.put(new Tuple("key2", "val2"));
 
@@ -110,19 +118,23 @@ public class AccumuloTemporalLastNTest {
     @Test
     public void testMultipleEntries_differentGroups() throws TableNotFoundException {
 
-        Event testEntry = new BaseEvent(UUID.randomUUID().toString());
+        Event testEntry = new BaseEvent(randomUUID().toString());
         testEntry.put(new Tuple("key1", "val1"));
         testEntry.put(new Tuple("key2", "val2"));
 
-        Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
+        Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
         testEntry2.put(new Tuple("key1", "val1"));
         testEntry2.put(new Tuple("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group1", testEntry2);
 
+        AccumuloTestUtils.dumpTable(connector, "temporalLastN");
+
+
+
         Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
-                Arrays.asList(new String[]{"group", "group1"}), 2, new Auths());
+                asList(new String[] {"group", "group1"}), 2, new Auths());
 
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
@@ -137,17 +149,17 @@ public class AccumuloTemporalLastNTest {
     }
 
     @Test
-    public void testMultipleEntries_differentGroupsSomeInSameGroup() throws TableNotFoundException {
+    public void testMultipleEntries_differentGroupsSomeInSameGroup() throws Exception {
 
-        Event testEntry = new BaseEvent(UUID.randomUUID().toString());
+        Event testEntry = new BaseEvent(randomUUID().toString());
         testEntry.put(new Tuple("key1", "val1"));
         testEntry.put(new Tuple("key2", "val2"));
 
-        Event testEntry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 5000);
+        Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
         testEntry2.put(new Tuple("key1", "val1"));
         testEntry2.put(new Tuple("key2", "val2"));
 
-        Event testEntry3 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis() - 500);
+        Event testEntry3 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 500);
         testEntry3.put(new Tuple("key1", "val1"));
         testEntry3.put(new Tuple("key2", "val2"));
 
@@ -156,9 +168,13 @@ public class AccumuloTemporalLastNTest {
         store.put("group1", testEntry2);
         store.put("group1", testEntry3);
 
+        store.flush();
 
-        Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
-                Arrays.asList(new String[]{"group", "group1"}), 3, new Auths());
+        AccumuloTestUtils.dumpTable(connector, "temporalLastN");
+
+
+      Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
+                asList(new String[] {"group", "group1"}), 3, new Auths());
 
 
         Event actualEntry = Iterables.get(results, 0);

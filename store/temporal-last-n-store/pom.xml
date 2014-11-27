@@ -57,5 +57,10 @@ limitations under the License.
       <artifactId>joda-time</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>

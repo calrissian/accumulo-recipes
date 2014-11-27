@@ -16,10 +16,6 @@
 package org.calrissian.accumulorecipes.commons.support;
 
 import org.calrissian.mango.types.encoders.lexi.LongReverseEncoder;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
-import static java.lang.Long.parseLong;
 
 /**
  * Utility class to help with managing timestamps for data being input into accumulo
@@ -30,7 +26,6 @@ public class TimestampUtil {
 
     private TimestampUtil() {
     }
-
 
     /**
      * Will generate a reverse timestamp with the precision of the provided timeunit.

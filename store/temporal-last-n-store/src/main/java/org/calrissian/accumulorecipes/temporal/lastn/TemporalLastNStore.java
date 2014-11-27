@@ -15,17 +15,17 @@
  */
 package org.calrissian.accumulorecipes.temporal.lastn;
 
+import java.util.Collection;
+import java.util.Date;
+
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.event.Event;
 
-import java.util.Collection;
-import java.util.Date;
-
 /**
  * The temporal last n store will return the last n events in some series of groups
  * for some range of time. It's especially useful for logs and news feeds as it gives
- * the ability to zero-in on a window of those events and, the case where multiple groups
+ * the ability to zero-in on a window of those events and, in the case where multiple groups
  * are provided to the get method, provides a holistic view of the events in the those
  * groups.
  */

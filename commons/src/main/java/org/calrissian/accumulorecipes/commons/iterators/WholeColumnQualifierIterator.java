@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.temporal.lastn.iterators;
+package org.calrissian.accumulorecipes.commons.iterators;
 
-import org.apache.accumulo.core.data.*;
-import org.apache.accumulo.core.iterators.IteratorEnvironment;
-import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.apache.hadoop.io.Text;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.IteratorEnvironment;
+import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
+import org.apache.hadoop.io.Text;
+
 import static com.google.common.collect.Maps.immutableEntry;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
-
-public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value> {
+public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key, Value> {
 
     List<Key> keys = new ArrayList<Key>();
     List<Value> values = new ArrayList<Value>();
@@ -38,11 +45,11 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value>
     private Key topKey = null;
     private Value topValue = null;
 
-    public EventGroupingIterator() {
+    public WholeColumnQualifierIterator() {
 
     }
 
-    EventGroupingIterator(SortedKeyValueIterator<Key, Value> source) {
+    WholeColumnQualifierIterator(SortedKeyValueIterator<Key,Value> source) {
         this.sourceIter = source;
     }
 
@@ -131,18 +138,19 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value>
             return;
         Text currentRow;
         Text currentColF;
-        String uuid;
+        Text currentColQ;
         if (sourceIter.hasTop() == false)
             return;
 
         currentRow = new Text(sourceIter.getTopKey().getRow());
         currentColF = new Text(sourceIter.getTopKey().getColumnFamily());
-        uuid = getUUIDFromValue(sourceIter.getTopValue());
+        currentColQ = new Text(sourceIter.getTopKey().getColumnQualifier());
 
         keys.clear();
         values.clear();
         while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
-                sourceIter.getTopKey().getColumnFamily().equals(currentColF) && getUUIDFromValue(sourceIter.getTopValue()).equals(uuid)) {
+                sourceIter.getTopKey().getColumnFamily().equals(currentColF) &&
+                sourceIter.getTopKey().getColumnQualifier().equals(currentColQ)) {
             keys.add(new Key(sourceIter.getTopKey()));
             values.add(new Value(sourceIter.getTopValue()));
             sourceIter.next();
@@ -155,8 +163,8 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value>
     @Override
     public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         if (sourceIter != null)
-            return new EventGroupingIterator(sourceIter.deepCopy(env));
-        return new EventGroupingIterator();
+            return new WholeColumnQualifierIterator(sourceIter.deepCopy(env));
+        return new WholeColumnQualifierIterator();
     }
 
     @Override
@@ -179,10 +187,12 @@ public class EventGroupingIterator implements SortedKeyValueIterator<Key, Value>
         sourceIter = source;
     }
 
-    private String getUUIDFromValue(Value value) {
-        String valString = new String(sourceIter.getTopValue().get());
-        String currentUUID = valString.substring(0, valString.indexOf(NULL_BYTE));
-        return currentUUID;
+    private String getUuid(Key k) {
+
+        String cq = k.getColumnQualifier().toString();
+        int idx = cq.lastIndexOf(ONE_BYTE);
+
+        return cq.substring(idx+1, cq.length());
     }
 
 

@@ -1,0 +1,10 @@
+language: java
+
+install: mvn install -DskipTests=true -P full -B
+
+notifications:
+  email:
+    recipients:
+      - cjnolet@gmail.com
+      - ceraw79@gmail.com
+      - smonaghan000@gmail.com
