@@ -141,7 +141,7 @@ public class AccumuloEventStoreTest {
 
         Map<String, Object> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis()-500);
         event.put(new Tuple("key1", "val1", meta));
         event.put(new Tuple("key2", "val2", shouldntSee));
 
@@ -161,10 +161,9 @@ public class AccumuloEventStoreTest {
 
         Map<String, Object> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis()-500);
         event.put(new Tuple("key1", "val1", meta));
         event.put(new Tuple("key2", "val2", shouldntSee));
-
 
         store.save(asList(event));
 

@@ -62,7 +62,6 @@ limitations under the License.
     <dependency>
       <groupId>com.tinkerpop.blueprints</groupId>
       <artifactId>blueprints-core</artifactId>
-      <version>${tinkerpop.version}</version>
     </dependency>
 
     <!-- JUNIT -->
@@ -79,14 +78,10 @@ limitations under the License.
     <dependency>
       <groupId>com.tinkerpop.blueprints</groupId>
       <artifactId>blueprints-test</artifactId>
-      <version>${tinkerpop.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-      <version>${accumulo.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

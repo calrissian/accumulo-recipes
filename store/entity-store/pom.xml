@@ -51,14 +51,8 @@ limitations under the License.
       <artifactId>zookeeper</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.netflix.curator</groupId>
-      <artifactId>curator-recipes</artifactId>
-      <version>1.0.2</version>
-    </dependency>
-    <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>${groovy.version}</version>
     </dependency>
 
     <!-- JUNIT -->
@@ -75,13 +69,10 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-      <version>${accumulo.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>

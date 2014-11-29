@@ -559,7 +559,7 @@ public class AccumuloEntityStoreTest {
 
         Map<String,Object> expireMeta = new MetadataBuilder()
             .setExpiration(1)
-            .setTimestamp(currentTimeMillis())
+            .setTimestamp(currentTimeMillis()-500)
             .build();
 
         Entity entity = new BaseEntity("type", "id");
@@ -581,7 +581,7 @@ public class AccumuloEntityStoreTest {
 
         Map<String,Object> expireMeta = new MetadataBuilder()
             .setExpiration(1)
-            .setTimestamp(currentTimeMillis())
+            .setTimestamp(currentTimeMillis()-500)
             .build();
 
         Entity entity = new BaseEntity("type", "id");
