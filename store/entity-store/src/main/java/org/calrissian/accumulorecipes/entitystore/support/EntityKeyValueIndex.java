@@ -15,7 +15,16 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
-import org.apache.accumulo.core.client.*;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -29,12 +38,11 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 
 public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
@@ -63,12 +71,12 @@ public class EntityKeyValueIndex implements KeyValueIndex<Entity> {
             String shardId = shardBuilder.buildShard(entity);
             for (Tuple tuple : entity.getTuples()) {
                 String[] strings = new String[]{
-                        entity.getType(),
-                        shardId,
-                        tuple.getKey(),
-                        typeRegistry.getAlias(tuple.getValue()),
-                        typeRegistry.encode(tuple.getValue()),
-                        getVisibility(tuple, ""),
+                    entity.getType(),
+                    shardId,
+                    tuple.getKey(),
+                    typeRegistry.getAlias(tuple.getValue()),
+                    typeRegistry.encode(tuple.getValue()),
+                    getVisibility(tuple, ""),
                 };
 
                 String cacheKey = join(strings, ONE_BYTE);

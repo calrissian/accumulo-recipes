@@ -239,6 +239,8 @@ public class AccumuloEventStoreTest {
         store.save(asList(event, event2));
         store.flush();
 
+        AccumuloTestUtils.dumpTable(connector, "eventStore_index", DEFAULT_AUTHS.getAuths());
+
         CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), new QueryBuilder().greaterThan("key2", 9).build(), null, DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));
@@ -488,7 +490,6 @@ public class AccumuloEventStoreTest {
         assertEquals(1, x);
     }
 
-    @Ignore
     @Test
     public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 

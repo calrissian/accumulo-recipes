@@ -36,6 +36,7 @@ import org.calrissian.mango.criteria.domain.HasLeaf;
 import org.calrissian.mango.criteria.domain.HasNotLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
+import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
@@ -89,20 +90,29 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
             String stopShard = shardBuilder.buildShard(end.getTime(), shardBuilder.numPartitions() - 1) + END_BYTE;
 
             if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
-                ranges.add(
-                        new Range(
-                                new Key(INDEX_K + "_" + kvLeaf.getKey() + "__" + alias + NULL_BYTE + startShard),
-                                new Key(INDEX_K + "_" + kvLeaf.getKey() + "__" + alias + NULL_BYTE + stopShard)
-                        )
-                );
+
+                if(leaf instanceof HasLeaf) {
+                    String hasLeafAlias = registry.getAlias(((HasLeaf)leaf).getClazz());
+                    if(hasLeafAlias == null)
+                        buildRangeForAllAliases(ranges, kvLeaf.getKey(), startShard, stopShard);
+                    else
+                        buildRangeForSingleAlias(ranges, kvLeaf.getKey(), hasLeafAlias, startShard, stopShard);
+                } else if(leaf instanceof HasNotLeaf) {
+                    String hasNotLeafAlias = registry.getAlias(((HasNotLeaf)leaf).getClazz());
+                    if(hasNotLeafAlias == null)
+                        buildRangeForAllAliases(ranges, kvLeaf.getKey(), startShard, stopShard);
+                    else
+                        buildRangeForSingleAlias(ranges, kvLeaf.getKey(), alias, startShard, stopShard);
+                } else
+                    buildRangeForSingleAlias(ranges, kvLeaf.getKey(), alias, startShard, stopShard);
             } else {
 
                 String normVal = registry.encode(kvLeaf.getValue());
                 ranges.add(
-                        new Range(
-                                new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + startShard),
-                                new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + stopShard)
-                        )
+                    new Range(
+                        new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + startShard),
+                        new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + stopShard)
+                    )
                 );
 
             }
@@ -122,6 +132,18 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
         }
 
         indexScanner.close();
+    }
+
+    private void buildRangeForSingleAlias(Collection<Range> ranges, String key, String alias, String startShard, String stopShard) {
+        ranges.add(new Range(
+            new Key(INDEX_K + "_" + key + "__" + alias + NULL_BYTE + startShard),
+            new Key(INDEX_K + "_" + key + "__" + alias + NULL_BYTE + stopShard)
+        ));
+    }
+
+    private void buildRangeForAllAliases(Collection<Range> ranges, String key, String startShard, String stopShard) {
+        for(TypeEncoder encoder : registry.getAllEncoders())
+            buildRangeForSingleAlias(ranges, key, encoder.getAlias(), startShard, stopShard);
     }
 
     @Override

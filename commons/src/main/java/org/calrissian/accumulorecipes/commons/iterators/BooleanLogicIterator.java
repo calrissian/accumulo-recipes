@@ -16,6 +16,21 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+
 import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -24,17 +39,30 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.apache.commons.jexl2.parser.*;
+import org.apache.commons.jexl2.parser.ASTAndNode;
+import org.apache.commons.jexl2.parser.ASTEQNode;
+import org.apache.commons.jexl2.parser.ASTERNode;
+import org.apache.commons.jexl2.parser.ASTGENode;
+import org.apache.commons.jexl2.parser.ASTGTNode;
+import org.apache.commons.jexl2.parser.ASTJexlScript;
+import org.apache.commons.jexl2.parser.ASTLENode;
+import org.apache.commons.jexl2.parser.ASTLTNode;
+import org.apache.commons.jexl2.parser.ASTNENode;
+import org.apache.commons.jexl2.parser.ASTNRNode;
+import org.apache.commons.jexl2.parser.ASTNotNode;
+import org.apache.commons.jexl2.parser.ASTOrNode;
+import org.apache.commons.jexl2.parser.ParseException;
+import org.apache.commons.jexl2.parser.ParserTreeConstants;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.calrissian.accumulorecipes.commons.iterators.support.*;
+import org.calrissian.accumulorecipes.commons.iterators.support.BooleanLogicTreeNode;
+import org.calrissian.accumulorecipes.commons.iterators.support.FieldIndexKeyParser;
+import org.calrissian.accumulorecipes.commons.iterators.support.JexlOperatorConstants;
+import org.calrissian.accumulorecipes.commons.iterators.support.QueryParser;
 import org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.QueryTerm;
 import org.calrissian.accumulorecipes.commons.iterators.support.RangeCalculator.RangeBounds;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
+import org.calrissian.accumulorecipes.commons.iterators.support.TreeNode;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
@@ -1179,7 +1207,6 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
 
     private String getEventKeyUid(Key k) {
         try {
-            int idx = 0;
             String sKey = k.getColumnFamily().toString();
             return sKey;
         } catch (Exception e) {
@@ -1189,7 +1216,6 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
 
     private String getIndexKeyUid(Key k) {
         try {
-            int idx = 0;
             String sKey = k.getColumnQualifier().toString();
             return sKey;
         } catch (Exception e) {
