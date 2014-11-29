@@ -102,7 +102,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             @Override
             public List<Map.Entry<Key, Value>> apply(Map.Entry<Key, Value> keyValueEntry) {
                 try {
-                    return WholeColumnQualifierIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+                    return decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -118,7 +118,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         throws TableNotFoundException, TableExistsException, AccumuloSecurityException, AccumuloException {
         this.connector = connector;
         this.tableName = tableName;
-        this.typeRegistry = SIMPLE_TYPES; //TODO allow caller to pass in types.
+        this.typeRegistry = SIMPLE_TYPES;
 
         if (!connector.tableOperations().exists(this.tableName))
             connector.tableOperations().create(this.tableName, false, LOGICAL);
@@ -136,7 +136,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                     new Text(generateTimestamp(entry.getTimestamp(), TimeUnit.MINUTES)),
                     new Text(encoder.encode(entry.getTimestamp()) + ONE_BYTE + entry.getId()),
                     new ColumnVisibility(getVisibility(tuple, "")),
-                    new Value(buildEventValue(entry.getTimestamp(), tuple).getBytes())
+                    new Value(buildEventValue(tuple).getBytes())
                 );
                 writer.addMutation(m);
             }
@@ -151,7 +151,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         writer.flush();
     }
 
-    private String buildEventValue(long timestamp, Tuple tuple) {
+    private String buildEventValue(Tuple tuple) {
 
         String[] fields = new String[]{
             tuple.getKey(),
@@ -193,8 +193,6 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 scanner.addScanIterator(setting2);
 
                 for (Map.Entry<Key, Value> entry : scanner) {
-
-                    System.out.println(entry);
                     List<Map.Entry<Key, Value>> topEntries = decodeRow(entry.getKey(), entry.getValue());
                     Iterable<List<Map.Entry<Key, Value>>> entries = transform(topEntries, rowDecodeXform);
                     cursors.add(transform(entries, entryXform));
@@ -205,9 +203,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-
         }
         return wrap(new EventMergeJoinIterable(cursors));
     }
-
 }
