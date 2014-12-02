@@ -32,7 +32,6 @@ import org.apache.accumulo.core.data.Range;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
-import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -40,6 +39,7 @@ import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
+import org.calrissian.accumulorecipes.eventstore.support.iterators.EventTimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -69,19 +69,23 @@ public class AccumuloEventStore implements EventStore {
 
     public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
     public static final EventShardBuilder DEFAULT_SHARD_BUILDER = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
-    private final EventShardBuilder shardBuilder = DEFAULT_SHARD_BUILDER;
+    private final EventShardBuilder shardBuilder;
     private final EventQfdHelper helper;
 
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, LEXI_TYPES);
+        this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, LEXI_TYPES, DEFAULT_SHARD_BUILDER);
     }
 
-    public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config, TypeRegistry<String> typeRegistry) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    public AccumuloEventStore(Connector connector, String indexTable, String shardTable, StoreConfig config, TypeRegistry<String> typeRegistry,
+        EventShardBuilder shardBuilder)
+        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         checkNotNull(connector);
         checkNotNull(indexTable);
         checkNotNull(shardTable);
         checkNotNull(config);
         checkNotNull(typeRegistry);
+
+        this.shardBuilder = shardBuilder;
 
         KeyValueIndex<Event> keyValueIndex = new EventKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
 
@@ -130,13 +134,13 @@ public class AccumuloEventStore implements EventStore {
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
 
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
-        IteratorSetting timeFilter = new IteratorSetting(7, TimeLimitingFilter.class);
-        TimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
-        TimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
+        IteratorSetting timeFilter = new IteratorSetting(7, EventTimeLimitingFilter.class);
+        EventTimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
+        EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
         CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, query,
-                helper.buildQueryXform(selectFields), auths);
+            helper.buildQueryXform(selectFields), auths);
         indexScanner.close();
 
         return events;

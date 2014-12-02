@@ -26,25 +26,34 @@ import static java.lang.System.currentTimeMillis;
  */
 public abstract class ExpirationFilter extends Filter {
 
+
     /**
      * Accepts entries whose timestamps are less than currentTime - threshold.
      */
     @Override
     public boolean accept(Key k, Value v) {
-
         if (v.get().length > 0) {
-
-            long threshold = parseExpiration(v);
-
-            if (threshold > -1) {
-                long currentTime = currentTimeMillis();
-                if (k.getTimestamp() > currentTime || currentTime - k.getTimestamp() > threshold)
-                    return false;
-            }
+            long timestamp = parseTimestamp(k, v);
+            long threshold = parseExpiration(timestamp, k, v);
+            return !shouldExpire(threshold, timestamp);
         }
-
         return true;
     }
 
-    protected abstract long parseExpiration(Value v);
+
+
+    public static boolean shouldExpire(long threshold, long timestamp) {
+        if (threshold > -1 && timestamp > -1) {
+            long currentTime = currentTimeMillis();
+            if (currentTime - timestamp > threshold)
+                return true;
+        }
+        return false;
+    }
+
+    protected abstract long parseExpiration(long timestamp, Key k, Value v);
+
+    protected long parseTimestamp(Key k, Value v) {
+        return k.getTimestamp();
+    }
 }

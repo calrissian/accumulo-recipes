@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright (C) 2014 The Calrissian Authors
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,20 +15,28 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.data.*;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SkippingIterator;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-public class FirstEntryInColumnIterator extends SkippingIterator implements OptionDescriber {
+/**
+ * Returns only the first row where a row id is prefixed by some fairly consistent string. This is useful for
+ * efficiently skipping through what could be an extremely large number of possible rows based on a specific
+ * prefix of the rows.
+ */
+public abstract class FirstEntryInPrefixedRowIterator extends SkippingIterator implements OptionDescriber {
 
     // options
     static final String NUM_SCANS_STRING_NAME = "scansBeforeSeek";
@@ -41,7 +48,6 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
 
     // private fields
     private Text lastRowFound;
-    private Text lastColFFound;
     private int numscans;
 
     /**
@@ -52,18 +58,13 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
     }
 
     // this must be public for OptionsDescriber
-    public FirstEntryInColumnIterator() {
+    public FirstEntryInPrefixedRowIterator() {
         super();
     }
 
-    public FirstEntryInColumnIterator(FirstEntryInColumnIterator other, IteratorEnvironment env) {
+    public FirstEntryInPrefixedRowIterator(FirstEntryInPrefixedRowIterator other, IteratorEnvironment env) {
         super();
         setSource(other.getSource().deepCopy(env));
-    }
-
-    @Override
-    public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
-        return new FirstEntryInColumnIterator(this, env);
     }
 
     @Override
@@ -73,25 +74,36 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
         numscans = o == null ? 10 : Integer.parseInt(o);
     }
 
+    protected abstract String getPrefix(String rowStr);
+
     // this is only ever called immediately after getting "next" entry
     @Override
     protected void consume() throws IOException {
         if (finished == true || lastRowFound == null)
             return;
         int count = 0;
-        while (getSource().hasTop() && lastRowFound.equals(getSource().getTopKey().getRow()) &&
-            lastColFFound.equals(getSource().getTopKey().getColumnFamily())) {
 
+        String curPrefix = null;
+        String lastPrefix = getPrefix(lastRowFound.toString());
+
+        if(getSource().hasTop())
+            curPrefix = getPrefix(getSource().getTopKey().getRow().toString());
+
+        while (getSource().hasTop() && curPrefix.equals(lastPrefix)) {
             // try to efficiently jump to the next matching key
             if (count < numscans) {
                 ++count;
                 getSource().next(); // scan
+                if(getSource().hasTop())
+                    curPrefix = getPrefix(getSource().getTopKey().getRow().toString());
             } else {
                 // too many scans, just seek
                 count = 0;
 
                 // determine where to seek to, but don't go beyond the user-specified range
-                Key nextKey = getSource().getTopKey().followingKey(PartialKey.ROW_COLFAM);
+
+                Key nextKey = new Key(curPrefix + "\uffff");
+
                 if (!latestRange.afterEndKey(nextKey))
                     getSource().seek(new Range(nextKey, true, latestRange.getEndKey(), latestRange.isEndKeyInclusive()), latestColumnFamilies, latestInclusive);
                 else {
@@ -101,7 +113,6 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
             }
         }
         lastRowFound = getSource().hasTop() ? getSource().getTopKey().getRow(lastRowFound) : null;
-        lastColFFound = getSource().hasTop() ? getSource().getTopKey().getColumnFamily(lastColFFound) : null;
     }
 
     private boolean finished = true;
@@ -118,7 +129,6 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
         latestColumnFamilies = columnFamilies;
         latestInclusive = inclusive;
         lastRowFound = null;
-        lastColFFound = null;
 
         Key startKey = range.getStartKey();
         Range seekRange = new Range(startKey == null ? null : new Key(startKey.getRow(), startKey.getColumnFamily()), true, range.getEndKey(), range.isEndKeyInclusive());
@@ -127,7 +137,6 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
 
         if (getSource().hasTop()) {
             lastRowFound = getSource().getTopKey().getRow();
-            lastColFFound = getSource().getTopKey().getColumnFamily();
             if (range.beforeStartKey(getSource().getTopKey()))
                 consume();
         }
@@ -136,7 +145,7 @@ public class FirstEntryInColumnIterator extends SkippingIterator implements Opti
     @Override
     public IteratorOptions describeOptions() {
         String name = "firstEntryInColumn";
-        String desc = "Only allows iteration over the first entry per column family";
+        String desc = "Only allows iteration over the first entry per some prefixed portion of the row";
         HashMap<String,String> namedOptions = new HashMap<String,String>();
         namedOptions.put(NUM_SCANS_STRING_NAME, "Number of scans to try before seeking [10]");
         return new IteratorOptions(name, desc, namedOptions, null);

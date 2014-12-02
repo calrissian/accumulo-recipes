@@ -16,10 +16,10 @@
 package org.calrissian.accumulorecipes.commons.support.tuple;
 
 
-import com.google.common.base.Preconditions;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.base.Preconditions;
 
 import static java.util.Collections.unmodifiableMap;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity;
@@ -38,6 +38,16 @@ public class MetadataBuilder {
 
     public MetadataBuilder setVisibility(String visibility) {
         Visiblity.setVisibility(metadata, visibility);
+        return this;
+    }
+
+    public MetadataBuilder setExpiration(long expiration) {
+        Metadata.Expiration.setExpiration(metadata, expiration);
+        return this;
+    }
+
+    public MetadataBuilder setTimestamp(long timestamp) {
+        Metadata.Timestamp.setTimestamp(metadata, timestamp);
         return this;
     }
 

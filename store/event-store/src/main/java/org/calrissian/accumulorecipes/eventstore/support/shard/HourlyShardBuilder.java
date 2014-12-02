@@ -37,7 +37,11 @@ public class HourlyShardBuilder implements ShardBuilder<Event>, EventShardBuilde
         this.numPartitions = numPartitions;
     }
 
-    public String buildShard(Event event) {
+  @Override public int numPartitions() {
+    return numPartitions;
+  }
+
+  public String buildShard(Event event) {
         return buildShard(event.getTimestamp(), (Math.abs(event.getId().hashCode()) % numPartitions));
     }
 

@@ -15,13 +15,13 @@
 */
 package org.calrissian.accumulorecipes.commons.mock;
 
+import java.io.IOException;
+import java.util.Iterator;
+
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.mango.domain.Pair;
-
-import java.io.IOException;
-import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

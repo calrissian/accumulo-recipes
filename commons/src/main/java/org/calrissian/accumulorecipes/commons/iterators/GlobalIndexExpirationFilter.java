@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 
@@ -23,7 +24,7 @@ import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
  */
 public class GlobalIndexExpirationFilter extends ExpirationFilter {
 
-    protected long parseExpiration(Value v) {
+    protected long parseExpiration(long timestamp, Key k,  Value v) {
         GlobalIndexValue val = new GlobalIndexValue(v);
         return val.getExpiration();
     }

@@ -15,14 +15,27 @@
  */
 package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
-import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
+import org.calrissian.mango.criteria.domain.AndNode;
+import org.calrissian.mango.criteria.domain.HasLeaf;
+import org.calrissian.mango.criteria.domain.HasNotLeaf;
+import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.NegationLeaf;
+import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.domain.OrNode;
+import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.util.*;
 
 import static java.util.Collections.sort;
 

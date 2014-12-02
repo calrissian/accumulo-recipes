@@ -40,12 +40,12 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
-import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
+import org.calrissian.accumulorecipes.eventstore.support.iterators.EventTimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.event.Event;
@@ -114,9 +114,9 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
           BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getScanAuthorizations(job), 5);
           GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
 
-          IteratorSetting timeSetting = new IteratorSetting(14, TimeLimitingFilter.class);
-          TimeLimitingFilter.setCurrentTime(timeSetting, end.getTime());
-          TimeLimitingFilter.setTTL(timeSetting, end.getTime() - start.getTime());
+          IteratorSetting timeSetting = new IteratorSetting(14, EventTimeLimitingFilter.class);
+          EventTimeLimitingFilter.setCurrentTime(timeSetting, end.getTime());
+          EventTimeLimitingFilter.setTTL(timeSetting, end.getTime() - start.getTime());
           addIterator(job, timeSetting);
 
           job.getConfiguration().set(XFORM_KEY, QUERY_XFORM);

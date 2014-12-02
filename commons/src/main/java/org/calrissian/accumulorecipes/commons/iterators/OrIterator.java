@@ -194,7 +194,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
         // See if currentTerm is still valid, remove if not
         if (log.isDebugEnabled()) {
             log.debug("OI.next Checks (correct = 0,0,0): " + ((currentTerm.topKey != null) ? "0," : "1,") + ((currentTerm.dataLocation != null) ? "0," : "1,")
-                    + ((currentTerm.term != null && currentTerm.fieldTerm != null) ? (currentTerm.term.compareTo(currentTerm.fieldTerm)) : "0"));
+                + ((currentTerm.term != null && currentTerm.fieldTerm != null) ? (currentTerm.term.compareTo(currentTerm.fieldTerm)) : "0"));
         }
 
         if (currentTerm.topKey == null || ((currentTerm.dataLocation != null) && (currentTerm.term.compareTo(currentTerm.fieldTerm) != 0))) {
@@ -301,7 +301,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
 
                 if (startKey.getColumnQualifier() != null) {
                     sourceKey = new Key(startKey.getRow(), (TS.dataLocation == null) ? nullText : TS.dataLocation, new Text(((TS.term == null) ? "" : TS.term + NULL_BYTE)
-                            + range.getStartKey().getColumnQualifier()));
+                        + range.getStartKey().getColumnQualifier()));
                 } else {
                     sourceKey = new Key(startKey.getRow(), (TS.dataLocation == null) ? nullText : TS.dataLocation, (TS.term == null) ? nullText : TS.term);
                 }
@@ -332,7 +332,7 @@ public class OrIterator implements SortedKeyValueIterator<Key, Value> {
                 log.debug("OI.seek TS.fieldTerm == " + TS.fieldTerm);
 
                 log.debug("OI.seek Checks (correct = 0,0,0 / 0,1,1): " + ((TS.topKey != null) ? "0," : "1,") + ((TS.dataLocation != null) ? "0," : "1,")
-                        + (((TS.term != null && TS.fieldTerm != null) && (TS.term.compareTo(TS.fieldTerm) != 0)) ? "0" : "1"));
+                    + (((TS.term != null && TS.fieldTerm != null) && (TS.term.compareTo(TS.fieldTerm) != 0)) ? "0" : "1"));
             }
 
             if ((TS.topKey == null) || ((TS.dataLocation != null) && (TS.term.compareTo(TS.fieldTerm) != 0))) {

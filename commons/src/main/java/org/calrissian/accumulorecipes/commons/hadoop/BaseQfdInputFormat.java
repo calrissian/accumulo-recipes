@@ -15,6 +15,11 @@
  */
 package org.calrissian.accumulorecipes.commons.hadoop;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.AccumuloException;
@@ -39,11 +44,6 @@ import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIn
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
 
 import static org.apache.accumulo.core.util.format.DefaultFormatter.formatEntry;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;

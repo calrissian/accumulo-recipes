@@ -25,6 +25,7 @@ entity.put(new Tuple("brother", new EntityRelationship("Person", "2"));
 Saving an entity to the store is pretty simple:
 ```java
 entityStore.save(Collections.singleton(entity));
+entityStore.flush();
 ```
 
 ###Fetching and querying
@@ -46,6 +47,30 @@ CloseableIterable<Entity> entities = entityStore.getAllByType(Collections.single
 ```java
 Node query = new QueryBuilder().and().eq("age", 36).eq("name", "John Smith").end().build();
 CloseableIterable<Entity> entities = entityStore.query(Collections.singleton("Person"), query, null, new Auths());
+```
+
+
+## Persisting and querying JSON
+
+Mango provides a utility for flattening json into a collection of tuples that can be used to hydrate entity objects. The same utility can also be used to re-expand the flattened tuples back into json. This allows users to quickly get their data into the entity store without spending too much time worrying about object parsing and translation.
+
+First thing you'll want to do is probably to turn your json into an entity. You'll need a Jackson ```ObjectMapper```:
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
+Entity entity = new BaseEntity("Person", "1");
+entity.putAll(JsonTupleStore.fromJson(json, objectMapper));
+```
+
+Now you can persist the entity, as it's just a bunch of key/value tuples.
+```java
+entityStore.save(Collections.singleton(entity));
+entityStore.flush();
+```
+
+When you've performed a query from the store and gotten results back, you can re-expand them into JSON:
+```java
+String resultJson = JsonTupleStore.toJsonString(event.getTuples(), objectMapper);
 ```
 
 ## Concepts

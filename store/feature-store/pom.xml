@@ -53,10 +53,6 @@ limitations under the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.pig</groupId>
-      <artifactId>pig</artifactId>
-    </dependency>
 
     <!-- JUNIT -->
     <dependency>
@@ -64,16 +60,16 @@ limitations under the License.
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
-      <version>${zookeeper.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-      <version>${accumulo.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

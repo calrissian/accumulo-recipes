@@ -16,7 +16,15 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import org.apache.accumulo.core.data.*;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -24,10 +32,6 @@ import org.apache.commons.collections.map.LRUMap;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
@@ -58,7 +62,7 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         // If we were using column visibility, then we would get the merged visibility here and use it in the key.
         // Remove the COLQ from the key and use the combined visibility
         Key r = new Key(k.getRowData().getBackingArray(), k.getColumnFamilyData().getBackingArray(), EMPTY_BYTE, k.getColumnVisibility().getBytes(),
-                k.getTimestamp(), k.isDeleted(), false);
+            k.getTimestamp(), k.isDeleted(), false);
         return r;
     }
 
@@ -67,12 +71,12 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         // If we were using column visibility, we would have to merge them here.
 
         // Pull the datatype from the colf in case we need to do anything datatype specific.
-//    String colf = key.getColumnFamily().toString();
-//
-//    if(colf.indexOf(NULL_BYTE) > -1) {
-//
-//    }
-//
+        //    String colf = key.getColumnFamily().toString();
+        //
+        //    if(colf.indexOf(NULL_BYTE) > -1) {
+        //
+        //    }
+        //
         // For the partitioned table, the field name and field value are stored in the column qualifier
         // separated by a \0.
         String colq = key.getColumnQualifier().toString();

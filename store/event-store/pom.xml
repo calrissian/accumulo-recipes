@@ -49,11 +49,6 @@ limitations under the License.
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>${groovy.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.pig</groupId>
-      <artifactId>pig</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
@@ -72,10 +67,12 @@ limitations under the License.
       <artifactId>joda-time</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-      <version>${accumulo.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>

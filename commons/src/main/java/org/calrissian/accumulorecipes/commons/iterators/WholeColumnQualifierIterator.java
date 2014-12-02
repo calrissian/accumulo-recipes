@@ -149,8 +149,8 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
         keys.clear();
         values.clear();
         while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
-                sourceIter.getTopKey().getColumnFamily().equals(currentColF) &&
-                sourceIter.getTopKey().getColumnQualifier().equals(currentColQ)) {
+            sourceIter.getTopKey().getColumnFamily().equals(currentColF) &&
+            sourceIter.getTopKey().getColumnQualifier().equals(currentColQ)) {
             keys.add(new Key(sourceIter.getTopKey()));
             values.add(new Value(sourceIter.getTopValue()));
             sourceIter.next();
@@ -211,7 +211,7 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
         Key sk = range.getStartKey();
 
         if (sk != null && sk.getColumnFamilyData().length() == 0 && sk.getColumnQualifierData().length() == 0 && sk.getColumnVisibilityData().length() == 0
-                && sk.getTimestamp() == Long.MAX_VALUE && !range.isStartKeyInclusive()) {
+            && sk.getTimestamp() == Long.MAX_VALUE && !range.isStartKeyInclusive()) {
             // assuming that we are seeking using a key previously returned by this iterator
             // therefore go to the next row
             Key followingRowKey = sk.followingKey(PartialKey.ROW);

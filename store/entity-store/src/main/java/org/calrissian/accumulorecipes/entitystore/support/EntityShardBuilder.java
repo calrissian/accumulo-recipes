@@ -15,13 +15,13 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
-import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.mango.domain.entity.Entity;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
+import org.calrissian.mango.domain.entity.Entity;
 
 import static java.lang.String.format;
 
@@ -51,7 +51,11 @@ public class EntityShardBuilder implements ShardBuilder<Entity> {
         return ret;
     }
 
-    @Override
+  @Override public int numPartitions() {
+    return partitionSize;
+  }
+
+  @Override
     public String buildShard(Entity item) {
         return buildShard(item.getType(), item.getId());
     }

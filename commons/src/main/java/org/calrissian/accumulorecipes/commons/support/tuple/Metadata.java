@@ -16,9 +16,9 @@
 package org.calrissian.accumulorecipes.commons.support.tuple;
 
 
-import org.calrissian.mango.domain.Tuple;
-
 import java.util.Map;
+
+import org.calrissian.mango.domain.Tuple;
 
 public class Metadata {
 
@@ -65,5 +65,36 @@ public class Metadata {
             else
                 return (String)tuple.getMetadataValue(VISIBILITY);
         }
+
+
+      public static String getVisibility(Map<String,Object> tuple, String defaultVisibility) {
+        if(!tuple.containsKey(VISIBILITY))
+          return defaultVisibility;
+        else
+          return (String)tuple.get(VISIBILITY);
+      }
+
     }
+
+    public static class Timestamp {
+
+      public static final String TIMESTAMP = "timestamp";
+
+      private Timestamp(){}
+
+      public static Map<String, Object> setTimestamp(Map<String, Object> metadata, long timestamp) {
+        metadata.put(TIMESTAMP, timestamp);
+
+        return metadata;
+      }
+
+      public static long getTimestamp(Map<String,Object> metadata, long defaultTimestamp) {
+        if(!metadata.containsKey(TIMESTAMP))
+          return defaultTimestamp;
+        else
+          return (Long)metadata.get(TIMESTAMP);
+      }
+
+    }
+
 }

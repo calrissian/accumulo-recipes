@@ -15,6 +15,13 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -22,10 +29,12 @@ import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
-import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
+import org.calrissian.mango.criteria.domain.HasLeaf;
+import org.calrissian.mango.criteria.domain.HasNotLeaf;
+import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.util.*;
 
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;

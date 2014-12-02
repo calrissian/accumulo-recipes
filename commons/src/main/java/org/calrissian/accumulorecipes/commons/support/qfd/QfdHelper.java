@@ -23,6 +23,9 @@ import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -44,13 +47,14 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
-import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
+import org.calrissian.accumulorecipes.commons.iterators.MetadataCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
-import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerdeFactory;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -59,11 +63,14 @@ import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
+import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
+import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
@@ -74,7 +81,10 @@ import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visi
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 
+
+
 public abstract class QfdHelper<T extends TupleStore> {
+
 
     private static final Kryo kryo = new Kryo();
     private final Connector connector;
@@ -86,13 +96,14 @@ public abstract class QfdHelper<T extends TupleStore> {
     private ShardBuilder<T> shardBuilder;
     private TypeRegistry<String> typeRegistry;
     private MetadataSerDe metadataSerDe;
+    private MetadataSerdeFactory metadataSerdeFactory;
 
     private KeyValueIndex<T> keyValueIndex;
 
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-                     ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
-                     MetadataSerDe metadataSerDe)
-            throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
+        MetadataSerdeFactory metadaSerdeFactory)
+        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         checkNotNull(connector);
         checkNotNull(indexTable);
@@ -101,7 +112,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         checkNotNull(shardBuilder);
         checkNotNull(typeRegistry);
         checkNotNull(keyValueIndex);
-        checkNotNull(metadataSerDe);
+        checkNotNull(metadaSerdeFactory);
 
         this.connector = connector;
         this.indexTable = indexTable;
@@ -113,7 +124,8 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.keyValueIndex = keyValueIndex;
         this.nodeToJexl = new NodeToJexl(typeRegistry);
 
-        this.metadataSerDe = metadataSerDe;
+        this.metadataSerDe = metadaSerdeFactory.create();
+        this.metadataSerdeFactory = metadaSerdeFactory;
 
         if (!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -129,29 +141,35 @@ public abstract class QfdHelper<T extends TupleStore> {
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
-            connector.tableOperations().create(this.shardTable);
+            connector.tableOperations().create(this.shardTable, false, LOGICAL);
             configureShardTable(connector, this.shardTable);
         }
 
-        if(connector.tableOperations().getIteratorSetting(this.shardTable, "expiration", majc) == null) {
-          IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
-          MetadataExpirationFilter.setMetadataSerde(expirationFilter, metadataSerDe);
-          connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
+        if(connector.tableOperations().getIteratorSetting(this.shardTable, "metacombiner", majc) == null) {
+            IteratorSetting metadataCombiner = new IteratorSetting(9, "metacombiner", MetadataCombiner.class);
+            MetadataCombiner.setCombineAllColumns(metadataCombiner, true);
+            MetadataCombiner.setMetadataSerdeFactory(metadataCombiner, metadaSerdeFactory.getClass());
+            connector.tableOperations().attachIterator(this.shardTable, metadataCombiner, allOf(IteratorScope.class));
         }
 
         initializeKryo(kryo);
-        this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+        this.shardWriter = connector.createBatchWriter(shardTable, config.getMaxMemory(), config.getMaxLatency(),
+            config.getMaxWriteThreads());
     }
 
 
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-                     ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
-            throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerDe(typeRegistry));
+        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
+        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerdeFactory());
     }
 
     public MetadataSerDe getMetadataSerDe() {
         return metadataSerDe;
+    }
+
+    public MetadataSerdeFactory getMetadataSerdeFactory() {
+        return metadataSerdeFactory;
     }
 
     public static Kryo getKryo() {
@@ -168,45 +186,74 @@ public abstract class QfdHelper<T extends TupleStore> {
      */
     public void save(Iterable<? extends T> items) {
         checkNotNull(items);
+
+        Map<String, ColumnVisibility> colVisCache = new HashMap<String,ColumnVisibility>();
+        Value value = new Value();
+        Text forwardCF = new Text();
+        Text forwardCQ = new Text();
+        Text invertedCF = new Text();
+        Text invertedCQ = new Text();
+
         try {
+
+            Multimap<ObjectVisCacheKey,Map<String,Object>> tupleByObjectCache = ArrayListMultimap.create();
 
             for (T item : items) {
 
                 //If there are no getTuples then don't write anything to the data store.
-                if (item.getTuples() != null && !item.getTuples().isEmpty()) {
+                if (item.size() > 0) {
 
                     String shardId = shardBuilder.buildShard(item);
 
                     Mutation shardMutation = new Mutation(shardId);
+                    for(String key : item.keys()) {
+                        tupleByObjectCache = ArrayListMultimap.create();
+                        for (Tuple tuple : item.getAll(key))
+                            tupleByObjectCache.put(
+                                new ObjectVisCacheKey(getVisibility(tuple.getMetadata(), ""),
+                                    tuple.getValue()),
+                                newHashMap(tuple.getMetadata()
+                                )
+                            );
 
-                    for (Tuple tuple : item.getTuples()) {
+                        for(ObjectVisCacheKey visCache : tupleByObjectCache.keys()) {
 
-                        String aliasValue = typeRegistry.getAlias(tuple.getValue()) + ONE_BYTE +
-                                typeRegistry.encode(tuple.getValue());
+                            String aliasValue = typeRegistry.getAlias(visCache.getObj()) + ONE_BYTE +
+                                typeRegistry.encode(visCache.getObj());
 
-                        ColumnVisibility columnVisibility = new ColumnVisibility(getVisibility(tuple, ""));
-                        Map<String, Object> metadata = new HashMap<String, Object>(tuple.getMetadata());
-                        metadata.remove(VISIBILITY);    // save a little space by removing this.
+                            ColumnVisibility columnVisibility = colVisCache.get(visCache.getVis());
+                            if(columnVisibility == null) {
+                                columnVisibility = new ColumnVisibility(visCache.getVis());
+                                colVisCache.put(visCache.getVis(), columnVisibility);
+                            }
 
-                        // forward mutation
-                        shardMutation.put(new Text(buildId(item)),
-                                new Text(tuple.getKey() + NULL_BYTE + aliasValue),
+                            Collection<Map<String, Object>> metas = tupleByObjectCache.get(visCache);
+                            metas = Collections2.transform(metas, removeVisFunction);
+
+                            value.set(metas.size() > 0 ? metadataSerDe.serialize(metas) : EMPTY_VALUE.get());
+
+                            String id = buildId(item);
+                            forwardCF.set(id);
+                            forwardCQ.set(key + NULL_BYTE + aliasValue);
+                            invertedCF.set(PREFIX_FI + NULL_BYTE + key);
+                            invertedCQ.set(aliasValue + NULL_BYTE + id);
+
+                            // forward mutation
+                            shardMutation.put(forwardCF,
+                                forwardCQ,
                                 columnVisibility,
-                                buildTimestamp(item),
-                                new Value(metadataSerDe.serialize(metadata)));
+                                value);
 
-                        // reverse mutation
-                        shardMutation.put(new Text(PREFIX_FI + NULL_BYTE + tuple.getKey()),
-                                new Text(aliasValue + NULL_BYTE + buildId(item)),
+                            // reverse mutation
+                            shardMutation.put(invertedCF,
+                                invertedCQ,
                                 columnVisibility,
-                                buildTimestamp(item),
-                                new Value(metadataSerDe.serialize(metadata)));  // forward mutation
+                                value);  // forward mutation
+                        }
                     }
-
                     shardWriter.addMutation(shardMutation);
                 }
             }
-
             keyValueIndex.indexKeyValues(items);
 
         } catch (RuntimeException re) {
@@ -217,7 +264,7 @@ public abstract class QfdHelper<T extends TupleStore> {
     }
 
     public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Node query,
-                                      Function<Map.Entry<Key, Value>, T> transform, Auths auths) {
+        Function<Map.Entry<Key, Value>, T> transform, Auths auths) {
         checkNotNull(query);
         checkNotNull(auths);
 
@@ -231,12 +278,12 @@ public abstract class QfdHelper<T extends TupleStore> {
         Set<String> shards = optimizer.getShards();
 
         Collection<Range> ranges = new HashSet<Range>();
-        if(jexl.equals("()") || jexl.equals("")) {
+        if(jexl.equals("()") || jexl.equals(""))
             ranges.add(new Range(END_BYTE));
-        } else {
+        else
             for (String shard : shards)
                 ranges.add(new Range(shard));
-        }
+
 
         scanner.setRanges(ranges);
 
@@ -278,10 +325,6 @@ public abstract class QfdHelper<T extends TupleStore> {
     protected abstract void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
 
     protected abstract String buildId(T item);
-
-    protected abstract Value buildValue(T item);
-
-    protected abstract long buildTimestamp(T item);
 
     public BatchScanner buildIndexScanner(Authorizations auths) {
         return buildScanner(indexTable, auths);
@@ -327,4 +370,58 @@ public abstract class QfdHelper<T extends TupleStore> {
     public TypeRegistry<String> getTypeRegistry() {
         return typeRegistry;
     }
+
+    private static Function<Map<String,Object>, Map<String,Object>> removeVisFunction =
+        new Function<Map<String,Object>,Map<String,Object>>() {
+            @Override
+            public Map<String,Object> apply(Map<String,Object> stringObjectMap) {
+                stringObjectMap.remove(VISIBILITY);
+                return stringObjectMap;
+            }
+        };
+
+    private static class ObjectVisCacheKey {
+        private final String vis;
+        private final Object obj;
+
+        private ObjectVisCacheKey(String vis, Object obj) {
+            this.vis = vis;
+            this.obj = obj;
+        }
+
+        public String getVis() {
+            return vis;
+        }
+
+        public Object getObj() {
+            return obj;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+
+            ObjectVisCacheKey that = (ObjectVisCacheKey) o;
+
+            if (obj != null ? !obj.equals(that.obj) : that.obj != null)
+                return false;
+
+            if (vis != null ? !vis.equals(that.vis) : that.vis != null)
+                return false;
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = vis != null ? vis.hashCode() : 0;
+            result = 31 * result + (obj != null ? obj.hashCode() : 0);
+            return result;
+        }
+    }
+
 }

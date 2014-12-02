@@ -20,20 +20,27 @@ import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKe
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 public class EventCardinalityKey extends BaseCardinalityKey {
 
     public EventCardinalityKey(Key key) {
 
         String row = key.getRow().toString();
-        if (row.startsWith(INDEX_V)) {
+        int part0Idx = row.indexOf("_");
+        int part1Idx = row.indexOf("__");
+        int firstNBIdx = row.indexOf(NULL_BYTE);
 
-            this.alias = row.substring(row.indexOf("_") + 1, row.indexOf("__"));
-            this.normalizedValue = row.substring(row.indexOf("__") +2, row.length());
-            this.key = key.getColumnFamily().toString();
+        if (row.startsWith(INDEX_V)) {
+            int lastNBIdx = row.lastIndexOf(NULL_BYTE);
+            this.alias = row.substring(part0Idx + 1, part1Idx);
+            this.key = row.substring(part1Idx+2, firstNBIdx);
+            this.normalizedValue = row.substring(firstNBIdx + 1, lastNBIdx);
+            this.shard = row.substring(lastNBIdx+1, row.length());
         } else if (row.startsWith(INDEX_K)) {
-            this.key = row.substring(row.indexOf("_")+1, row.length());
-            this.alias = key.getColumnFamily().toString();
+            this.key = row.substring(part0Idx+1, part1Idx);
+            this.alias = row.substring(part1Idx+2, firstNBIdx);
+            this.shard = row.substring(firstNBIdx + 1, row.length());
         }
     }
 }

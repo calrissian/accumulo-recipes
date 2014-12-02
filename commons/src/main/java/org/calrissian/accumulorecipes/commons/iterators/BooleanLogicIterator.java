@@ -16,6 +16,21 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+
 import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -24,17 +39,30 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.apache.commons.jexl2.parser.*;
+import org.apache.commons.jexl2.parser.ASTAndNode;
+import org.apache.commons.jexl2.parser.ASTEQNode;
+import org.apache.commons.jexl2.parser.ASTERNode;
+import org.apache.commons.jexl2.parser.ASTGENode;
+import org.apache.commons.jexl2.parser.ASTGTNode;
+import org.apache.commons.jexl2.parser.ASTJexlScript;
+import org.apache.commons.jexl2.parser.ASTLENode;
+import org.apache.commons.jexl2.parser.ASTLTNode;
+import org.apache.commons.jexl2.parser.ASTNENode;
+import org.apache.commons.jexl2.parser.ASTNRNode;
+import org.apache.commons.jexl2.parser.ASTNotNode;
+import org.apache.commons.jexl2.parser.ASTOrNode;
+import org.apache.commons.jexl2.parser.ParseException;
+import org.apache.commons.jexl2.parser.ParserTreeConstants;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.calrissian.accumulorecipes.commons.iterators.support.*;
+import org.calrissian.accumulorecipes.commons.iterators.support.BooleanLogicTreeNode;
+import org.calrissian.accumulorecipes.commons.iterators.support.FieldIndexKeyParser;
+import org.calrissian.accumulorecipes.commons.iterators.support.JexlOperatorConstants;
+import org.calrissian.accumulorecipes.commons.iterators.support.QueryParser;
 import org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.QueryTerm;
 import org.calrissian.accumulorecipes.commons.iterators.support.RangeCalculator.RangeBounds;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
+import org.calrissian.accumulorecipes.commons.iterators.support.TreeNode;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
@@ -271,7 +299,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
             throw new IllegalArgumentException("Failed to parse criteria", ex);
         } catch (Exception ex) {
             initfailed = true;
-//      throw new IllegalArgumentException("probably had no indexed terms", ex);
+            //      throw new IllegalArgumentException("probably had no indexed terms", ex);
         }
 
     }
@@ -389,7 +417,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
         }
 
         FieldIndexIterator iter = new FieldIndexIterator(node.getType(), rowId, node.getFieldName(), node.getFieldValue(), node.isNegated(),
-                node.getFieldOperator());
+            node.getFieldOperator());
 
         Map<String, String> options = new HashMap<String, String>();
         iter.init(sourceIterator.deepCopy(env), options, env);
@@ -435,9 +463,9 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
                     node.addToSet(node.getTopKey());
 
                 } else if (node.getType() == ParserTreeConstants.JJTANDNODE || node.getType() == ParserTreeConstants.JJTEQNODE
-                        || node.getType() == ParserTreeConstants.JJTERNODE || node.getType() == ParserTreeConstants.JJTLENODE
-                        || node.getType() == ParserTreeConstants.JJTLTNODE || node.getType() == ParserTreeConstants.JJTGENODE
-                        || node.getType() == ParserTreeConstants.JJTGTNODE) {
+                    || node.getType() == ParserTreeConstants.JJTERNODE || node.getType() == ParserTreeConstants.JJTLENODE
+                    || node.getType() == ParserTreeConstants.JJTLTNODE || node.getType() == ParserTreeConstants.JJTGENODE
+                    || node.getType() == ParserTreeConstants.JJTGTNODE) {
                     // sub iterator guarantees it is in its internal range,
                     // otherwise, no top.
                     node.setValid(node.hasTop());
@@ -463,8 +491,8 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
                 node.setValid(child.isValid());
                 node.setTopKey(child.getTopKey());
             } else if (child.getType() == ParserTreeConstants.JJTEQNODE || child.getType() == ParserTreeConstants.JJTERNODE
-                    || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTGENODE
-                    || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTLENODE) {// BooleanLogicTreeNode.NodeType.SEL) {
+                || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTGENODE
+                || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTLENODE) {// BooleanLogicTreeNode.NodeType.SEL) {
                 node.setValid(true);
                 node.setTopKey(child.getTopKey());
                 if (child.getTopKey() == null) {
@@ -492,9 +520,9 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
             BooleanLogicTreeNode child = (BooleanLogicTreeNode) children.nextElement();
 
             if (child.getType() == ParserTreeConstants.JJTEQNODE || child.getType() == ParserTreeConstants.JJTANDNODE
-                    || child.getType() == ParserTreeConstants.JJTERNODE || child.getType() == ParserTreeConstants.JJTNENODE
-                    || child.getType() == ParserTreeConstants.JJTGENODE || child.getType() == ParserTreeConstants.JJTLENODE
-                    || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTLTNODE) {
+                || child.getType() == ParserTreeConstants.JJTERNODE || child.getType() == ParserTreeConstants.JJTNENODE
+                || child.getType() == ParserTreeConstants.JJTGENODE || child.getType() == ParserTreeConstants.JJTLENODE
+                || child.getType() == ParserTreeConstants.JJTGTNODE || child.getType() == ParserTreeConstants.JJTLTNODE) {
 
                 if (child.isNegated()) {
                     if (child.hasTop()) {
@@ -677,10 +705,10 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
             // and negation
             BooleanLogicTreeNode child = (BooleanLogicTreeNode) children.nextElement();
             if (child.getType() == ParserTreeConstants.JJTEQNODE || child.getType() == ParserTreeConstants.JJTNENODE
-                    || child.getType() == ParserTreeConstants.JJTANDNODE || child.getType() == ParserTreeConstants.JJTERNODE
-                    || child.getType() == ParserTreeConstants.JJTNRNODE || child.getType() == ParserTreeConstants.JJTLENODE
-                    || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTGENODE
-                    || child.getType() == ParserTreeConstants.JJTGTNODE) {
+                || child.getType() == ParserTreeConstants.JJTANDNODE || child.getType() == ParserTreeConstants.JJTERNODE
+                || child.getType() == ParserTreeConstants.JJTNRNODE || child.getType() == ParserTreeConstants.JJTLENODE
+                || child.getType() == ParserTreeConstants.JJTLTNODE || child.getType() == ParserTreeConstants.JJTGENODE
+                || child.getType() == ParserTreeConstants.JJTGTNODE) {
 
                 if (child.hasTop()) {
                     if (child.isNegated()) {
@@ -804,7 +832,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
         }
 
         if (node.getType().equals(ASTLTNode.class) || node.getType().equals(ASTLENode.class) || node.getType().equals(ASTGTNode.class)
-                || node.getType().equals(ASTGENode.class)) {
+            || node.getType().equals(ASTGENode.class)) {
             Multimap<String, QueryTerm> terms = node.getTerms();
             for (String fName : terms.keySet()) {
                 Collection<QueryTerm> values = terms.get(fName);
@@ -1072,7 +1100,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
                             for (int j = temp.size() - 1; j >= 0; j--) {
                                 BooleanLogicTreeNode c = temp.get(j);
                                 if (c.getType() == JexlOperatorConstants.JJTLENODE || c.getType() == JexlOperatorConstants.JJTLTNODE
-                                        || c.getType() == JexlOperatorConstants.JJTGENODE || c.getType() == JexlOperatorConstants.JJTGTNODE) {
+                                    || c.getType() == JexlOperatorConstants.JJTGENODE || c.getType() == JexlOperatorConstants.JJTGTNODE) {
                                     c.removeFromParent();
                                 }
                             }
@@ -1179,7 +1207,6 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
 
     private String getEventKeyUid(Key k) {
         try {
-            int idx = 0;
             String sKey = k.getColumnFamily().toString();
             return sKey;
         } catch (Exception e) {
@@ -1189,7 +1216,6 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
 
     private String getIndexKeyUid(Key k) {
         try {
-            int idx = 0;
             String sKey = k.getColumnQualifier().toString();
             return sKey;
         } catch (Exception e) {
@@ -1870,7 +1896,7 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
 
     public IteratorOptions describeOptions() {
         return new IteratorOptions(getClass().getSimpleName(), "evaluates event objects against an expression", Collections.singletonMap(QUERY_OPTION,
-                "criteria expression"), null);
+            "criteria expression"), null);
     }
 
     public boolean validateOptions(Map<String, String> options) {

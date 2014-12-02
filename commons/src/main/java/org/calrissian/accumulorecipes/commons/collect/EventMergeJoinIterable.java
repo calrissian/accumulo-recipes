@@ -15,12 +15,12 @@
  */
 package org.calrissian.accumulorecipes.commons.collect;
 
-import org.calrissian.mango.collect.PeekingCloseableIterator;
-import org.calrissian.mango.domain.event.Event;
-
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.calrissian.mango.collect.PeekingCloseableIterator;
+import org.calrissian.mango.domain.event.Event;
 
 import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
 import static org.calrissian.mango.collect.CloseableIterators.wrap;
@@ -37,7 +37,7 @@ public class EventMergeJoinIterable implements Iterable<Event> {
     public Iterator<Event> iterator() {
 
         final List<PeekingCloseableIterator<Event>> iterators =
-                new LinkedList<PeekingCloseableIterator<Event>>();
+            new LinkedList<PeekingCloseableIterator<Event>>();
         for (Iterable<Event> entries : cursors)
             iterators.add(peekingIterator(wrap(entries.iterator())));
 
@@ -58,7 +58,7 @@ public class EventMergeJoinIterable implements Iterable<Event> {
                 PeekingCloseableIterator<Event> curEntry = null;
                 for (PeekingCloseableIterator<Event> itr : iterators) {
                     if (itr.hasNext() && (curEntry == null ||
-                            (itr.peek()).getTimestamp() > curEntry.peek().getTimestamp()))
+                        (itr.peek()).getTimestamp() > curEntry.peek().getTimestamp()))
                         curEntry = itr;
                 }
 

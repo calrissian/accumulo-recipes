@@ -15,17 +15,18 @@
 */
 package org.calrissian.accumulorecipes.commons.support.metadata;
 
-import org.junit.Test;
-
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
+import org.junit.Test;
+
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 
 public class SimpleMetadataSerDeTest {
 
-    MetadataSerDe metadataSerDe = new SimpleMetadataSerDe(SIMPLE_TYPES);
+    MetadataSerdeFactory metadataSerDe = new SimpleMetadataSerdeFactory();
 
     @Test
     public void testSimpleSerializationDeserialization() {
@@ -37,9 +38,10 @@ public class SimpleMetadataSerDeTest {
         map.put("key4", 1.0);
         map.put("key5", true);
 
-        byte[] bytes = metadataSerDe.serialize(map);
+        byte[] bytes = metadataSerDe.create().serialize(newArrayList(map));
 
-        Map<String,Object> actualMap = metadataSerDe.deserialize(bytes);
-        assertEquals(map, actualMap);
+        Collection<Map<String,Object>> actualMap = metadataSerDe.create().deserialize(bytes);
+        assertEquals(1, actualMap.size());
+        assertEquals(map, actualMap.iterator().next());
     }
 }
