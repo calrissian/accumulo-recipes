@@ -33,7 +33,6 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
-import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -48,11 +47,7 @@ import static com.google.common.collect.Iterables.size;
 import static com.google.common.io.Resources.getResource;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.Charset.defaultCharset;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_STORE_CONFIG;
 import static org.calrissian.mango.json.util.json.JsonTupleStore.fromJson;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -71,8 +66,7 @@ public class JsonEventStoreTest {
 
   @Before
   public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-    connector = getConnector();
-    store = new AccumuloEventStore(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, LEXI_TYPES, new HourlyShardBuilder(25));
+    store = new AccumuloEventStore(getConnector());
   }
 
   @Test
