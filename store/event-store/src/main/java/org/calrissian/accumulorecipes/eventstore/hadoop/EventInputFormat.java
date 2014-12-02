@@ -64,27 +64,89 @@ import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
+/**
+ * A Hadoop {@link InputFormat} for streaming events from Accumulo tablet servers directly into mapreduce jobs
+ * (preserving data locality if possible).
+ */
 public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
     private static final String XFORM_KEY = "xform";
     private static final String QUERY_XFORM = "queryXform";
     private static final String CF_XFORM = "cfXform";
 
-
+    /**
+     * Sets basic input info on the job- username, password, and authorizations
+     * @param job
+     * @param username
+     * @param password
+     * @param auths
+     * @throws AccumuloSecurityException
+     */
     public static void setInputInfo(Job job, String username, byte[] password, Authorizations auths) throws AccumuloSecurityException {
         setConnectorInfo(job, username, new PasswordToken(password));
         setInputTableName(job, DEFAULT_SHARD_TABLE_NAME);
         setScanAuthorizations(job, auths);
     }
 
+    /**
+     * Sets up the job to stream all events between the start and end times
+     * @param job
+     * @param start
+     * @param end
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     * @throws IOException
+     */
     public static void setQueryInfo(Job job, Date start, Date end) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-    setQueryInfo(job, start, end, null, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
-  }
+       setQueryInfo(job, start, end, null, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+    }
 
+    /**
+     * Sets up the job to stream all events between the start and end times. This method will allow a custom
+     * shard builder and type registry to be used.
+     * @param job
+     * @param start
+     * @param end
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     * @throws IOException
+     */
+    public static void setQueryInfo(Job job, Date start, Date end, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(job, start, end, null, shardBuilder, typeRegistry);
+    }
+
+    /**
+     * Sets up the job to stream all events between the given start and end times that match the given query.
+     * The query is propagated down to the tablet servers through iterators so that data can be scanned
+     * close to the disks.
+     * @param job
+     * @param start
+     * @param end
+     * @param query
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     * @throws IOException
+     */
     public static void setQueryInfo(Job job, Date start, Date end, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
         setQueryInfo(job, start, end, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
 
+    /**
+     * Sets up the job to stream all events between the given start and end times that match the given query.
+     * The query is propagated down to the tablet servers through iterators so that data can be scanned
+     * close to the disks. This method will allow a custom shard builder and type registry to be used.
+     * @param job
+     * @param start
+     * @param end
+     * @param query
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     * @throws IOException
+     */
     public static void setQueryInfo(Job job, Date start, Date end, Node query, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
       validateOptions(job);
@@ -125,12 +187,20 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
     }
 
+    /**
+     * Sets a custom {@link MetadataSerDe} to be used on the job. Only use this if a custom {@link MetadataSerD«e} was
+     * used to persist the events.
+     * @param configuration
+     * @param metadataSerDe
+     * @throws IOException
+     */
     public static void setMetadataSerDe(Configuration configuration, MetadataSerDe metadataSerDe) throws IOException {
         configuration.set("metadataSerDe", new String(toBase64(metadataSerDe)));
     }
 
     /**
-     * Sets selection fields on the current configuration.
+     * Sets selection fields on the current configuration. Only fields in the given set of select fields will be included
+     * in the resulting events.
      */
     public static void setSelectFields(Configuration config, Set<String> selectFields) {
 

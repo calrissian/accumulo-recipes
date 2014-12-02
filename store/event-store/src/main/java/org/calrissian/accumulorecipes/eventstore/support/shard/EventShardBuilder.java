@@ -22,6 +22,13 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.mango.domain.event.Event;
 
+/**
+ * This specifies how to build a single shard for a given partition
+ * and how to build a set of shards within a given time range. With
+ * this class, different shard strategies can be built pretty easily.
+ * The main constraint on the shard scheme is that it needs to be
+ * able to be scanned lexicographically by time.
+ */
 public interface EventShardBuilder extends ShardBuilder<Event> {
 
     String buildShard(long timestamp, int partition);

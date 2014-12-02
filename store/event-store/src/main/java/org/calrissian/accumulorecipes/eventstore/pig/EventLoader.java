@@ -15,6 +15,12 @@
 */
 package org.calrissian.accumulorecipes.eventstore.pig;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
@@ -23,7 +29,6 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
@@ -40,23 +45,26 @@ import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.uri.support.UriUtils;
 import org.joda.time.DateTime;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
+import static org.apache.accumulo.core.client.mapreduce.AbstractInputFormat.setZooKeeperInstance;
 import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat.setInputInfo;
+import static org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat.setQueryInfo;
+import static org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat.setSelectFields;
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
+import static org.calrissian.mango.uri.support.UriUtils.splitQuery;
 
+/**
+ * Allows events to be streamed from the event store into Pig tuples. This class is really a proxy
+ * for the {@link EventInputFormat} which also decomposes the attributes of an event into quads
+ * (id, timestamp, key, value) which can be manipulated easily through pig statements.
+ */
 public class EventLoader extends LoadFunc implements Serializable {
 
     public static final String USAGE = "Usage: event://indexTable/shardTable?user=&pass=&inst=&zk=&start=&end=&auths=[&fields=]";
@@ -79,7 +87,6 @@ public class EventLoader extends LoadFunc implements Serializable {
         } catch(Exception e) {
             throw new RuntimeException("There was an error parsing the groovy query string. ");
         }
-
     }
 
     @Override
@@ -89,13 +96,13 @@ public class EventLoader extends LoadFunc implements Serializable {
         if(!isConnectorInfoSet(AccumuloInputFormat.class, job.getConfiguration())) {
             String path = uri.substring(uri.indexOf("://")+3, uri.indexOf("?"));
 
-            String[] indexAndShardTable = StringUtils.splitPreserveAllTokens(path, "/");
+            String[] indexAndShardTable = splitPreserveAllTokens(path, "/");
             if(indexAndShardTable.length != 2)
                 throw new IOException("Path portion of URI must contain the index and shard tables. " + USAGE);
 
             if(uri.startsWith("event")) {
                 String queryPortion = uri.substring(uri.indexOf("?")+1, uri.length());
-                Multimap<String, String> queryParams = UriUtils.splitQuery(queryPortion);
+                Multimap<String, String> queryParams = splitQuery(queryPortion);
 
                 String accumuloUser = getProp(queryParams, "user");
                 String accumuloPass = getProp(queryParams, "pass");
@@ -119,16 +126,16 @@ public class EventLoader extends LoadFunc implements Serializable {
                 DateTime startDT = new DateTime(startTime);
                 DateTime endDT = new DateTime(endTime);
 
-                EventInputFormat.setZooKeeperInstance(job, accumuloInst, zookeepers);
+                setZooKeeperInstance(job, accumuloInst, zookeepers);
                 try {
-                    EventInputFormat.setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
+                    setInputInfo(job, accumuloUser, accumuloPass.getBytes(), new Authorizations(auths.getBytes()));
                 } catch (AccumuloSecurityException e) {
                     throw new RuntimeException(e);
                 }
                 try {
-                    EventInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), qb.build());
+                    setQueryInfo(job, startDT.toDate(), endDT.toDate(), qb.build());
                     if(fields != null)
-                        EventInputFormat.setSelectFields(conf, fields);
+                        setSelectFields(conf, fields);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

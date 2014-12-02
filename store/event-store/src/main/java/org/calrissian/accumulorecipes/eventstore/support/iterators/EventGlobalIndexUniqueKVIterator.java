@@ -20,7 +20,8 @@ import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInPrefixedRowI
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 /**
- * Created by cjnolet on 11/9/14.
+ * This iterator will propagate through the key rows of the event global index
+ * table to return all the unique keys for the given set of rows.
  */
 public class EventGlobalIndexUniqueKVIterator extends FirstEntryInPrefixedRowIterator {
 

@@ -26,7 +26,8 @@ import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
 
 /**
- * An event store generally holds temporal keys/values.
+ * An event store generally holds temporal events each with some number of
+ * defining attributes.
  */
 public interface EventStore {
 
@@ -38,6 +39,11 @@ public interface EventStore {
      */
     void save(Iterable<? extends Event> events);
 
+    /**
+     * Force persistence of all events currently in-memory to the backing persistence
+     * implementation.
+     * @throws Exception
+     */
     void flush() throws Exception;
 
     /**

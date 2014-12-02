@@ -16,20 +16,25 @@
 package org.calrissian.accumulorecipes.eventstore.cli;
 
 
-import org.apache.accumulo.core.client.*;
+import java.util.SortedSet;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.joda.time.DateTime;
 
-import java.util.SortedSet;
-
-public class ShardSplitter {
+public class HourlyShardSplitter {
 
     public static void main(String args[]) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         if (args.length != 7) {
-            System.out.println("Usage: " + ShardSplitter.class.getName() + "<zookeepers> <instance> <username> <password> <tableName> <start day: yyyy-mm-dd> <stop day: yyyy-mm-dd>");
+            System.out.println("Usage: " + HourlyShardSplitter.class.getName() + "<zookeepers> <instance> <username> <password> <tableName> <start day: yyyy-mm-dd> <stop day: yyyy-mm-dd>");
             System.exit(1);
         }
 
