@@ -17,7 +17,6 @@ package org.calrissian.accumulorecipes.eventstore.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,6 +46,8 @@ import static com.google.common.collect.Iterables.size;
 import static com.google.common.io.Resources.getResource;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.Charset.defaultCharset;
+import static java.util.Collections.sort;
+import static org.calrissian.mango.json.util.json.JsonTupleStore.FlattenedLevelsComparator;
 import static org.calrissian.mango.json.util.json.JsonTupleStore.fromJson;
 import static org.junit.Assert.assertEquals;
 
@@ -56,84 +57,90 @@ import static org.junit.Assert.assertEquals;
  */
 public class JsonEventStoreTest {
 
-  private Connector connector;
-  private EventStore store;
-  private ObjectMapper objectMapper = new ObjectMapper();
+    private static FlattenedLevelsComparator comparator = new FlattenedLevelsComparator();
 
-  public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-    return new MockInstance().getConnector("root", "".getBytes());
-  }
+    private EventStore store;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-  @Before
-  public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-    store = new AccumuloEventStore(getConnector());
-  }
-
-  @Test
-  public void testTwitterJson() throws Exception {
-
-    List<Event> eventList = new ArrayList<Event>();
-
-    /**
-     * First, we'll load a json object representing tweets
-     */
-    String tweetJson = Resources.toString(getResource("twitter_tweets.json"), defaultCharset());
-
-    /**
-     * Create tweet event
-     */
-    Event tweetEvent = new BaseEvent();
-    tweetEvent.putAll(fromJson(tweetJson, objectMapper));
-
-    eventList.add(tweetEvent);
-
-    /**
-     * Next, we'll load a json array containing user timeline data
-     */
-    String timelineJson = Resources.toString(getResource("twitter_timeline.json"), defaultCharset());
-
-    /**
-     * Since we need to persist objects, we'll loop through the array and create
-     * events out of the objects
-     */
-    ArrayNode node = (ArrayNode) objectMapper.readTree(timelineJson);
-    for(JsonNode node1 : node) {
-
-      // create an event from the current json object
-      Event timelineEvent = new BaseEvent();
-      timelineEvent.putAll(fromJson((ObjectNode) node1));
-
-      eventList.add(timelineEvent);
+    public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
+        return new MockInstance().getConnector("root", "".getBytes());
     }
 
-    /**
-     * Save events in the event store and flush
-     */
-    store.save(eventList);
-    store.flush();
+    @Before
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+        store = new AccumuloEventStore(getConnector());
+    }
 
-    /**
-     * Build our query to retrieve stored events by their flattened json
-     * representation.
-     */
-    Node query = new QueryBuilder()
-        .and()
-          .eq("statuses$entities$hashtags$indices", 29)     // the json tree has been flattened
-          .eq("statuses$user$name", "Sean Cummings")        // into key/value objects
-        .end()
-      .build();
+    @Test
+    public void testTwitterJson() throws Exception {
 
-    CloseableIterable<Event> results = store.query(
-        new Date(0),
-        new Date(currentTimeMillis() + 5000),
-        query,
-        new Auths()
-    );
+        List<Event> eventList = new ArrayList<Event>();
 
-    assertEquals(1, size(results));
-    assertEquals(new HashSet<Tuple>(tweetEvent.getTuples()),
-                 new HashSet<Tuple>(get(results, 0).getTuples())
-    );
-  }
+        /**
+         * First, we'll load a json object representing tweets
+         */
+        String tweetJson = Resources.toString(getResource("twitter_tweets.json"), defaultCharset());
+
+        /**
+         * Create tweet event with a random UUID and timestamp of current time
+         * (both of these can be set manually in the constructor)
+         */
+        Event tweetEvent = new BaseEvent();
+        tweetEvent.putAll(fromJson(tweetJson, objectMapper));
+
+        eventList.add(tweetEvent);
+
+        /**
+         * Next, we'll load a json array containing user timeline data
+         */
+        String timelineJson = Resources.toString(getResource("twitter_timeline.json"), defaultCharset());
+
+        /**
+         * Since we need to persist objects, we'll loop through the array and create
+         * events out of the objects
+         */
+        ArrayNode node = (ArrayNode) objectMapper.readTree(timelineJson);
+        for(JsonNode node1 : node) {
+
+            // create an event from the current json object
+            Event timelineEvent = new BaseEvent();
+            timelineEvent.putAll(fromJson((ObjectNode) node1));
+
+            eventList.add(timelineEvent);
+        }
+
+        /**
+         * Save events in the event store and flush
+         */
+        store.save(eventList);
+        store.flush();
+
+        /**
+         * Build our query to retrieve stored events by their flattened json
+         * representation.
+         */
+        Node query = new QueryBuilder()
+            .and()
+                .eq("statuses$entities$hashtags$indices", 29)     // the json tree has been flattened
+                .eq("statuses$user$name", "Sean Cummings")        // into key/value objects
+            .end()
+        .build();
+
+        CloseableIterable<Event> results = store.query(
+            new Date(0),
+            new Date(currentTimeMillis()),
+            query,
+            new Auths()
+        );
+
+        assertEquals(1, size(results));
+
+        List<Tuple> expectedTuples = new ArrayList(tweetEvent.getTuples());
+        List<Tuple> actualTuples = new ArrayList<Tuple>(get(results, 0).getTuples());
+        sort(expectedTuples, comparator);
+        sort(actualTuples, comparator);
+
+        assertEquals(expectedTuples, actualTuples);
+    }
 
 }
