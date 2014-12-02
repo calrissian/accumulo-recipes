@@ -72,6 +72,14 @@ public class AccumuloEventStore implements EventStore {
     private final EventShardBuilder shardBuilder;
     private final EventQfdHelper helper;
 
+    /**
+     * Simple constructor uses common defaults for many input parameters
+     * @param connector
+     * @throws TableExistsException
+     * @throws AccumuloSecurityException
+     * @throws AccumuloException
+     * @throws TableNotFoundException
+     */
     public AccumuloEventStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         this(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, LEXI_TYPES, DEFAULT_SHARD_BUILDER);
     }
@@ -146,6 +154,11 @@ public class AccumuloEventStore implements EventStore {
         return events;
     }
 
+    @Override
+    public CloseableIterable<Event> query(Date start, Date end, Node node, Auths auths) {
+        return query(start, end, node, null, auths);
+    }
+
     /**
      * This method will batch get a bunch of events by uuid (and optionally timestamp). If another store is used to
      * index into events in this store in a specially designed way (i.e. getting the last-n events, etc...) then
@@ -185,5 +198,9 @@ public class AccumuloEventStore implements EventStore {
         }
     }
 
+    @Override
+    public CloseableIterable<Event> get(Collection<EventIndex> indexes, Auths auths) {
+        return get(indexes, auths);
+    }
 
 }

@@ -100,7 +100,6 @@ public class MetadataExpirationFilter extends Filter {
         setting.addOption(METADATA_SERDE_FACTORY_KEY, factoryClazz.getName());
     }
 
-
     private Value nextTop;
 
     /**

@@ -15,15 +15,15 @@
  */
 package org.calrissian.accumulorecipes.eventstore;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.Set;
+
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.Set;
 
 /**
  * An event store generally holds temporal keys/values.
@@ -41,7 +41,7 @@ public interface EventStore {
     void flush() throws Exception;
 
     /**
-     * Query the store using criteria specified
+     * Query the store using criteria specified with the specified filter fields
      *
      * @param start
      * @param end
@@ -52,12 +52,31 @@ public interface EventStore {
     CloseableIterable<Event> query(Date start, Date end, Node node, Set<String> selectFields, Auths auths);
 
     /**
+     * Query the store using criteria specified
+     *
+     * @param start
+     * @param end
+     * @param node
+     * @param auths
+     * @return
+     */
+    CloseableIterable<Event> query(Date start, Date end, Node node, Auths auths);
+
+    /**
      * If an event is already being indexed in another store, it's often useful to query a bunch
-     * back in batches.
+     * back in batches. This method allows the selection of specific fields.
      *
      * @param indexes
      * @param auths
      * @return
      */
     CloseableIterable<Event> get(Collection<EventIndex> indexes, Set<String> selectFields, Auths auths);
+
+    /**
+     * Queries events back by id and timestamp.
+     * @param indexes
+     * @param auths
+     * @return
+     */
+    CloseableIterable<Event> get(Collection<EventIndex> indexes, Auths auths);
 }

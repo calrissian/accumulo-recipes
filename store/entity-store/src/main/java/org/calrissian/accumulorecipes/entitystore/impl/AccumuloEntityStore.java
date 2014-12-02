@@ -15,8 +15,21 @@
  */
 package org.calrissian.accumulorecipes.entitystore.impl;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.base.Function;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -29,7 +42,11 @@ import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterato
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
-import org.calrissian.accumulorecipes.entitystore.support.*;
+import org.calrissian.accumulorecipes.entitystore.support.EntityCardinalityKey;
+import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
+import org.calrissian.accumulorecipes.entitystore.support.EntityKeyValueIndex;
+import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
+import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
@@ -38,15 +55,15 @@ import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.types.TypeRegistry;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.*;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -126,6 +143,10 @@ public class AccumuloEntityStore implements EntityStore {
         }
     }
 
+    @Override public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Auths auths) {
+        return get(typesAndIds, null, auths);
+    }
+
     @Override
     public CloseableIterable<Entity> getAllByType(Set<String> types, Set<String> selectFields, Auths auths) {
         checkNotNull(types);
@@ -160,6 +181,10 @@ public class AccumuloEntityStore implements EntityStore {
         }
     }
 
+    @Override public CloseableIterable<Entity> getAllByType(Set<String> types, Auths auths) {
+        return getAllByType(types, null, auths);
+    }
+
     @Override
     public CloseableIterable<Entity> query(Set<String> types, Node query, Set<String> selectFields, Auths auths) {
 
@@ -178,6 +203,10 @@ public class AccumuloEntityStore implements EntityStore {
         indexScanner.close();
 
         return entities;
+    }
+
+    @Override public CloseableIterable<Entity> query(Set<String> types, Node query, Auths auths) {
+        return query(types, query, null, auths);
     }
 
     @Override
@@ -200,10 +229,6 @@ public class AccumuloEntityStore implements EntityStore {
         });
     }
 
-    @Override
-    public void delete(Iterable<EntityIndex> typesAndIds, Auths auths) {
-        throw new NotImplementedException();
-    }
 
     @Override
     public void flush() throws Exception {

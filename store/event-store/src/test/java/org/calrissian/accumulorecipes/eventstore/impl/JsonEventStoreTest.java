@@ -15,11 +15,6 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -29,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.io.Resources;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -44,14 +40,14 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.json.util.json.JsonTupleStore;
 import org.junit.Before;
 import org.junit.Test;
 
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Iterables.size;
+import static com.google.common.io.Resources.getResource;
 import static java.lang.System.currentTimeMillis;
-import static java.util.Collections.singleton;
+import static java.nio.charset.Charset.defaultCharset;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_STORE_CONFIG;
@@ -59,6 +55,10 @@ import static org.calrissian.mango.json.util.json.JsonTupleStore.fromJson;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
+/**
+ * A real-world example to test storage/query of twitter json.
+ * @throws Exception
+ */
 public class JsonEventStoreTest {
 
   private Connector connector;
@@ -75,11 +75,6 @@ public class JsonEventStoreTest {
     store = new AccumuloEventStore(connector, DEFAULT_IDX_TABLE_NAME, DEFAULT_SHARD_TABLE_NAME, DEFAULT_STORE_CONFIG, LEXI_TYPES, new HourlyShardBuilder(25));
   }
 
-
-  /**
-   * A real-world example to test storage/query of twitter json
-   * @throws Exception
-   */
   @Test
   public void testTwitterJson() throws Exception {
 
@@ -88,7 +83,7 @@ public class JsonEventStoreTest {
     /**
      * First, we'll load a json object representing tweets
      */
-    String tweetJson = loadResourceAsString("twitter_tweets.json");
+    String tweetJson = Resources.toString(getResource("twitter_tweets.json"), defaultCharset());
 
     /**
      * Create tweet event
@@ -101,7 +96,7 @@ public class JsonEventStoreTest {
     /**
      * Next, we'll load a json array containing user timeline data
      */
-    String timelineJson = loadResourceAsString("twitter_timeline.json");
+    String timelineJson = Resources.toString(getResource("twitter_timeline.json"), defaultCharset());
 
     /**
      * Since we need to persist objects, we'll loop through the array and create
@@ -129,16 +124,15 @@ public class JsonEventStoreTest {
      */
     Node query = new QueryBuilder()
         .and()
-          .eq("statuses$entities$hashtags$indices", 29)
-          .eq("statuses$user$name", "Sean Cummings")
+          .eq("statuses$entities$hashtags$indices", 29)     // the json tree has been flattened
+          .eq("statuses$user$name", "Sean Cummings")        // into key/value objects
         .end()
       .build();
 
     CloseableIterable<Event> results = store.query(
         new Date(0),
-        new Date(System.currentTimeMillis() + 5000),
+        new Date(currentTimeMillis() + 5000),
         query,
-        null,
         new Auths()
     );
 
@@ -148,55 +142,4 @@ public class JsonEventStoreTest {
     );
   }
 
-  @Test
-  public void test() throws Exception {
-
-    // Nested json
-    String json = "{ \"name\":\"Corey\", \"nestedObject\":{\"anotherNest\":{\"innerObj\":\"innerVal\"}}, \"nestedArray\":[\"2\",[[\"4\"],[\"1\"],[\"1\"], \"7\"]], \"ids\":[\"5\",\"2\"], \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":\"BlahBlah Lane\"}]}]}";
-
-    // Create event from json
-    Event event = new BaseEvent();
-    event.putAll(fromJson(json, objectMapper));
-
-    // Persist event
-    store.save(singleton(event));
-    store.flush();
-
-    Node query = new QueryBuilder()
-      .and()
-        .eq("name", "Corey")
-        .eq("nestedObject$anotherNest$innerObj", "innerVal")
-        .eq("nestedArray", "2")
-      .end()
-    .build();
-
-    CloseableIterable<Event> results = store.query(
-        new Date(currentTimeMillis()-5000),
-        new Date(),
-        query,
-        null,
-        new Auths()
-    );
-
-    assertEquals(1, size(results));
-
-    for(Event even : results) {
-      System.out.println(even);
-      System.out.println(JsonTupleStore.toJsonString(even.getTuples(), objectMapper));
-    }
-  }
-
-  private String loadResourceAsString(String resource) throws IOException {
-
-    InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
-    BufferedInputStream bif = new BufferedInputStream(inputStream);
-    BufferedReader reader = new BufferedReader(new InputStreamReader(bif));
-
-    String string = "";
-    String line;
-    while((line = reader.readLine()) != null)
-      string+=line;
-
-    return string;
-  }
 }
