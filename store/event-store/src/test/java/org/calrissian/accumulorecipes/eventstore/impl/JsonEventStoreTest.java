@@ -62,15 +62,6 @@ public class JsonEventStoreTest {
     private EventStore store;
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance().getConnector("root", "".getBytes());
-    }
-
-    @Before
-    public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        store = new AccumuloEventStore(getConnector());
-    }
-
     @Test
     public void testTwitterJson() throws Exception {
 
@@ -142,5 +133,15 @@ public class JsonEventStoreTest {
 
         assertEquals(expectedTuples, actualTuples);
     }
+
+    public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
+        return new MockInstance().getConnector("root", "".getBytes());
+    }
+
+    @Before
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+        store = new AccumuloEventStore(getConnector());
+    }
+
 
 }
