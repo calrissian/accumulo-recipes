@@ -15,9 +15,33 @@
  */
 package org.calrissian.accumulorecipes.entitystore.hadoop;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static org.apache.accumulo.core.data.Range.prefix;
+import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_BUILDER;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME;
+import static org.calrissian.mango.io.Serializables.fromBase64;
+import static org.calrissian.mango.io.Serializables.toBase64;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -38,18 +62,6 @@ import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.io.IOException;
-import java.util.*;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
-import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.*;
-import static org.calrissian.mango.io.Serializables.fromBase64;
-import static org.calrissian.mango.io.Serializables.toBase64;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable> {
 
@@ -98,26 +110,19 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         for (String type : entityTypes) {
             Set<Text> shards = shardBuilder.buildShardsForTypes(singleton(type));
             for (Text shard : shards)
-                ranges.add(prefix(shard.toString(), type));
+                ranges.add(prefix(shard.toString(), "e" + ONE_BYTE + type));
         }
 
         setRanges(job, ranges);
 
-        IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-        addIterator(job, iteratorSetting);
+        addIterator(job, new IteratorSetting(18, WholeColumnFamilyIterator.class));
+
 
         job.getConfiguration().setBoolean(QUERY, false);
         job.getConfiguration().set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
     }
 
-    /**
-     * Sets selection fields on the current configuration.
-     */
-    public static void setSelectFields(Configuration config, Set<String> selectFields) {
 
-        if(selectFields != null)
-            config.setStrings("selectFields", selectFields.toArray(new String[] {}));
-    }
 
     @Override
     protected Function<Map.Entry<Key, Value>, Entity> getTransform(Configuration configuration) {
@@ -142,9 +147,9 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
             initializeKryo(kryo);
 
             if(configuration.getBoolean(QUERY, false))
-                return new EntityQfdHelper.QueryXform(kryo, typeRegistry, finalSelectFields, metadataSerDe);
+                return new EntityQfdHelper.QueryXform(kryo, typeRegistry, metadataSerDe);
             else
-                return new EntityQfdHelper.WholeColFXform(kryo, typeRegistry, finalSelectFields, metadataSerDe);
+                return new EntityQfdHelper.WholeColFXform(kryo, typeRegistry, metadataSerDe);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

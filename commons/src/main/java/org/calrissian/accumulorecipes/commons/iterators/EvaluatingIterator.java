@@ -16,9 +16,13 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.decodeRow;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -31,12 +35,10 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
-import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
-
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-
 
 public class EvaluatingIterator extends AbstractEvaluatingIterator {
+
+    public static final String AUTHS = "auths";
 
     LRUMap visibilityMap = new LRUMap();
 
@@ -46,6 +48,10 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
 
     public EvaluatingIterator(AbstractEvaluatingIterator other, IteratorEnvironment env) {
         super(other, env);
+    }
+
+    @Override public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
+        super.init(source, options, env);
     }
 
     public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
@@ -77,14 +83,32 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         //
         //    }
         //
-        // For the partitioned table, the field name and field value are stored in the column qualifier
+        // For the partitioned table, the field name and field values are encoded in to the value of the document keyValue. Once decoded,
+        // each field name and field value are stored in the column qualifier
         // separated by a \0.
-        String colq = key.getColumnQualifier().toString();
-        int idx = colq.indexOf(NULL_BYTE);
-        String fieldName = colq.substring(0, idx);
-        String fieldValue = colq.substring(idx + 1);
 
-        event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes(), value.get()));
+        List<Map.Entry<Key,Value>> entryList = Collections.emptyList();
+        try {
+            entryList = decodeRow(key, value);
+        } catch (Exception e) {
+            /**
+             * It's possible there is no content encoded into the value, if this is the case, adding no fields to the
+             * event will cause it to be skipped by the {@link AbstractEvaluatingIterator}
+             */
+        }
+
+        try {
+              for(Map.Entry<Key,Value> kv : entryList) {
+                String colq = kv.getKey().getColumnQualifier().toString();
+                int idx = colq.indexOf(NULL_BYTE);
+                String fieldName = colq.substring(0, idx);
+                String fieldValue = colq.substring(idx + 1);
+                event.put(fieldName, new EventFields.FieldValue(getColumnVisibility(kv.getKey()), fieldValue.getBytes(), kv.getValue().get()));
+              }
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     /**

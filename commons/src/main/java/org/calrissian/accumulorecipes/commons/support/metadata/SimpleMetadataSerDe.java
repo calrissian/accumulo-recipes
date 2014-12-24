@@ -21,10 +21,7 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.calrissian.mango.types.TypeRegistry;
@@ -41,29 +38,25 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     }
 
     @Override
-    public byte[] serialize(Collection<Map<String, Object>> metadata) {
+    public byte[] serialize(Map<String, Object> metadata) {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutput dataOutput = new DataOutputStream(baos);
 
         try {
 
-            dataOutput.writeInt(metadata.size());
+            int count = 0;
+            for(Map.Entry<String, Object> entry : metadata.entrySet()) {
+                if(entry.getValue() != null)
+                    count++;
+            }
 
-            for(Map<String,Object> map : metadata) {
-                int count = 0;
-                for(Map.Entry<String, Object> entry : map.entrySet()) {
-                    if(entry.getValue() != null)
-                        count++;
-                }
+            dataOutput.writeInt(count);
 
-                dataOutput.writeInt(count);
-
-                for(Map.Entry<String, Object> entry : map.entrySet()) {
-                    dataOutput.writeUTF(entry.getKey());
-                    dataOutput.writeUTF(typeRegistry.getAlias(entry.getValue()));
-                    dataOutput.writeUTF(typeRegistry.encode(entry.getValue()));
-                }
+            for(Map.Entry<String, Object> entry : metadata.entrySet()) {
+                dataOutput.writeUTF(entry.getKey());
+                dataOutput.writeUTF(typeRegistry.getAlias(entry.getValue()));
+                dataOutput.writeUTF(typeRegistry.encode(entry.getValue()));
             }
 
 
@@ -81,31 +74,23 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     }
 
     @Override
-    public Collection<Map<String, Object>> deserialize(byte[] bytes) {
+    public Map<String, Object> deserialize(byte[] bytes) {
 
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         DataInputStream dis = new DataInputStream(bais);
 
 
-        List<Map<String, Object>> metadata = new ArrayList<Map<String,Object>>();
-
-
+        Map<String, Object> map = new HashMap<String,Object>();
         try {
-            int listCount = dis.readInt();
 
-            for(int i = 0; i < listCount; i++) {
-                Map<String, Object> map = new HashMap<String,Object>();
-                int count = dis.readInt();
+            int count = dis.readInt();
 
-                for(int j = 0; j < count; j++) {
-                    String key = dis.readUTF();
-                    String alias = dis.readUTF();
-                    String encodedVal = dis.readUTF();
+            for(int j = 0; j < count; j++) {
+                String key = dis.readUTF();
+                String alias = dis.readUTF();
+                String encodedVal = dis.readUTF();
 
-                    map.put(key, typeRegistry.decode(alias, encodedVal));
-                }
-
-                metadata.add(map);
+                map.put(key, typeRegistry.decode(alias, encodedVal));
             }
 
         } catch(Exception e) {
@@ -116,6 +101,7 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
             } catch (IOException e) {
             }
         }
-        return metadata;
+
+        return map;
     }
 }

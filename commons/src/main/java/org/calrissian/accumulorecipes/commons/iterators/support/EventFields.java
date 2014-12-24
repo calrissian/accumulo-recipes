@@ -74,7 +74,8 @@ public class EventFields extends Serializer<EventFields> implements SetMultimap<
 
   }
 
-  @Override public EventFields read(Kryo kryo, Input input, Class<EventFields> eventFieldsClass) {
+  @Override
+  public EventFields read(Kryo kryo, Input input, Class<EventFields> eventFieldsClass) {
 
     // Read in the number of map entries
     int entries = intSerializer.read(kryo, input, Integer.class);

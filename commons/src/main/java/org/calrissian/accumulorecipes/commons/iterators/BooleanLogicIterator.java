@@ -208,14 +208,12 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
     }
 
     public static void showBreadthFirstTraversal(BooleanLogicTreeNode root) {
-        System.out.println("BreadthFirstTraversal");
         log.debug("BooleanLogicIterator.showBreadthFirstTraversal()");
         Enumeration<?> e = root.breadthFirstEnumeration();
         int i = -1;
         while (e.hasMoreElements()) {
             i += 1;
             BooleanLogicTreeNode n = (BooleanLogicTreeNode) e.nextElement();
-            System.out.println(i + " : " + n);
             log.debug(i + " : " + n);
         }
     }

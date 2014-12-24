@@ -15,19 +15,14 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
-import java.util.Set;
-
 import com.esotericsoftware.kryo.Kryo;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.commons.lang.StringUtils;
-import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -39,8 +34,6 @@ import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static java.util.EnumSet.allOf;
-import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope.majc;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
 
@@ -54,15 +47,15 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     @Override
     protected String buildId(Entity item) {
-        return item.getType() + ONE_BYTE + item.getId();
+        return "e" + ONE_BYTE + item.getType() + ONE_BYTE + item.getId();
     }
 
-    public QueryXform buildQueryXform(Set<String> selectFields) {
-        return new QueryXform(getKryo(), getTypeRegistry(), selectFields, getMetadataSerDe());
+    public QueryXform buildQueryXform() {
+        return new QueryXform(getKryo(), getTypeRegistry(), getMetadataSerDe());
     }
 
-    public WholeColFXform buildWholeColFXform(Set<String> selectFields) {
-        return new WholeColFXform(getKryo(), getTypeRegistry(), selectFields, getMetadataSerDe());
+    public WholeColFXform buildWholeColFXform() {
+        return new WholeColFXform(getKryo(), getTypeRegistry(), getMetadataSerDe());
     }
 
     @Override
@@ -71,36 +64,32 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     @Override
     protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        if(connector.tableOperations().getIteratorSetting(tableName, "expiration", majc) == null) {
-            IteratorSetting expirationFilter = new IteratorSetting(10, "expiration", MetadataExpirationFilter.class);
-            MetadataExpirationFilter.setMetadataSerdeFactory(expirationFilter, getMetadataSerdeFactory().getClass());
-            connector.tableOperations().attachIterator(tableName, expirationFilter, allOf(IteratorUtil.IteratorScope.class));
-        }
+
     }
 
     public static class QueryXform extends KeyToTupleCollectionQueryXform<Entity> {
 
-        public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
-            super(kryo, typeRegistry, selectFields, metadataSerDe);
+        public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
+            super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
         protected Entity buildTupleCollectionFromKey(Key k) {
             String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
-            return new BaseEntity(typeId[0], typeId[1]);
+            return new BaseEntity(typeId[1], typeId[2]);
         }
     }
 
     public static class WholeColFXform extends KeyToTupleCollectionWholeColFXform<Entity> {
 
-        public WholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, Set<String> selectFields, MetadataSerDe metadataSerDe) {
-            super(kryo, typeRegistry, selectFields, metadataSerDe);
+        public WholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
+            super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
         protected Entity buildEntryFromKey(Key k) {
             String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
-            return new BaseEntity(typeId[0], typeId[1]);
+            return new BaseEntity(typeId[1], typeId[2]);
         }
 
     }

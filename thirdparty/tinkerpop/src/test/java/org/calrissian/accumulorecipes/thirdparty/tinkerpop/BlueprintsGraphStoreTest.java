@@ -22,12 +22,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
@@ -55,7 +51,7 @@ public class BlueprintsGraphStoreTest {
     Entity edge = new EdgeEntity("edgeType1", "edgeId", vertex1, "", vertex2, "", "label1");
 
     @Before
-    public void start() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void start() throws Exception {
         Instance instance = new MockInstance();
         connector = instance.getConnector("root", "".getBytes());
         entityGraphStore = new AccumuloEntityGraphStore(connector);
@@ -113,7 +109,7 @@ public class BlueprintsGraphStoreTest {
     }
 
     @Test
-    public void testEdges() {
+    public void testEdges() throws Exception {
 
         CloseableIterable<Edge> edges = graph.getEdges();
 

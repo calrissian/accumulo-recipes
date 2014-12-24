@@ -15,6 +15,13 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import static com.google.common.collect.Iterables.size;
+import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -46,14 +53,6 @@ import org.calrissian.mango.domain.event.EventIndex;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static com.google.common.collect.Iterables.size;
-import static java.lang.System.currentTimeMillis;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 public class AccumuloEventStoreTest {
 
@@ -110,7 +109,7 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
-    public void testVisibility() {
+    public void testGet_withVisibilities() {
 
         Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
@@ -136,6 +135,61 @@ public class AccumuloEventStoreTest {
         assertEquals(1, Iterables.get(actualEvent1, 1).size());
     }
 
+  @Test
+  public void testVisibilityForAndQuery_noResults() {
+
+    Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
+
+    Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+    event.put(new Tuple("key1", "val1", meta));
+    event.put(new Tuple("key2", "val2", shouldntSee));
+
+    Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+    event2.put(new Tuple("key1", "val1", meta));
+    event2.put(new Tuple("key2", "val2", shouldntSee));
+
+    store.save(asList(event, event2));
+
+    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+
+    Iterable<Event> actualEvent1 = store.query(new Date(event.getTimestamp() - 500),
+        new Date(event.getTimestamp() + 500), query, null, new Auths("A"));
+
+    assertEquals(0, Iterables.size(actualEvent1));
+
+  }
+
+  @Test
+  public void testVisibilityForQuery_resultsReturned() {
+
+    Map<String, Object> canSee = new MetadataBuilder().setVisibility("A&B").build();
+    Map<String, Object> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
+
+    Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+    event.put(new Tuple("key1", "val1", meta));
+    event.put(new Tuple("key2", "val2", canSee));
+    event.put(new Tuple("key3", "val3", cantSee));
+
+    Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+    event2.put(new Tuple("key1", "val1", meta));
+    event2.put(new Tuple("key2", "val2", canSee));
+    event2.put(new Tuple("key3", "val3", cantSee));
+
+    store.save(asList(event, event2));
+
+    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+
+    Iterable<Event> actualEvent1 = store.query(new Date(event.getTimestamp() - 500),
+        new Date(event.getTimestamp() + 500), query, null, new Auths("A,B"));
+
+    assertEquals(2, Iterables.size(actualEvent1));
+
+    assertEquals(2, Iterables.get(actualEvent1, 0).size());
+    assertEquals(2, Iterables.get(actualEvent1, 1).size());
+  }
+
+
+  @Ignore // ignoring for now. We may not need tuples to expire
     @Test
     public void testExpirationOfTuples_get() {
 
@@ -156,6 +210,7 @@ public class AccumuloEventStoreTest {
         assertEquals(1, Iterables.get(events, 0).size());
     }
 
+    @Ignore
     @Test
     public void testExpirationOfTuples_query() {
 
@@ -175,9 +230,6 @@ public class AccumuloEventStoreTest {
         assertEquals(1, Iterables.size(events));
         assertEquals(1, Iterables.get(events, 0).size());
     }
-
-
-
 
     @Test
     public void testQueryKeyNotInIndex() {
@@ -311,7 +363,6 @@ public class AccumuloEventStoreTest {
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
         event2.put(new Tuple("key1", "val1", meta));
         event2.put(new Tuple("key2", "val2", meta));
-
 
         store.save(asList(event, event2));
 

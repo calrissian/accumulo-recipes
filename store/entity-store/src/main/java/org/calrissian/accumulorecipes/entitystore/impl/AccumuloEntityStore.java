@@ -15,6 +15,20 @@
  */
 package org.calrissian.accumulorecipes.entitystore.impl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+import static org.apache.accumulo.core.data.Range.exact;
+import static org.apache.accumulo.core.data.Range.prefix;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,8 +50,8 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
 import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
+import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -53,21 +67,6 @@ import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.types.TypeRegistry;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static org.apache.accumulo.core.data.Range.exact;
-import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.collect.CloseableIterables.wrap;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloEntityStore implements EntityStore {
 
@@ -121,21 +120,22 @@ public class AccumuloEntityStore implements EntityStore {
             Collection<Range> ranges = new LinkedList<Range>();
             for (EntityIndex curIndex : typesAndIds) {
                 String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
-                ranges.add(exact(shardId, curIndex.getType() + ONE_BYTE + curIndex.getId()));
+                ranges.add(exact(shardId, PREFIX_E + ONE_BYTE + curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
 
             scanner.setRanges(ranges);
 
-            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-            scanner.addScanIterator(iteratorSetting);
-
             if (selectFields != null && selectFields.size() > 0) {
-                iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-                EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+                IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
+                SelectFieldsExtractor.setSelectFields(iteratorSetting, selectFields);
                 scanner.addScanIterator(iteratorSetting);
             }
 
-            return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
+            IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
+            scanner.addScanIterator(setting);
+
+
+            return transform(closeableIterable(scanner), helper.buildWholeColFXform());
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
@@ -159,21 +159,22 @@ public class AccumuloEntityStore implements EntityStore {
             for (String type : types) {
                 Set<Text> shards = shardBuilder.buildShardsForTypes(singleton(type));
                 for (Text shard : shards)
-                    ranges.add(prefix(shard.toString(), type));
+                    ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type));
             }
 
             scanner.setRanges(ranges);
 
-            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-            scanner.addScanIterator(iteratorSetting);
-
             if (selectFields != null && selectFields.size() > 0) {
-                iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-                EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+                IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
+                SelectFieldsExtractor.setSelectFields(iteratorSetting, selectFields);
                 scanner.addScanIterator(iteratorSetting);
             }
 
-            return transform(closeableIterable(scanner), helper.buildWholeColFXform(selectFields));
+            IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
+            scanner.addScanIterator(setting);
+
+
+            return transform(closeableIterable(scanner), helper.buildWholeColFXform());
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
@@ -198,8 +199,7 @@ public class AccumuloEntityStore implements EntityStore {
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types);
 
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
-        CloseableIterable<Entity> entities = helper.query(scanner, globalIndexVisitor, query,
-                helper.buildQueryXform(selectFields), auths);
+        CloseableIterable<Entity> entities = helper.query(scanner, globalIndexVisitor, query, helper.buildQueryXform(), selectFields, auths);
         indexScanner.close();
 
         return entities;

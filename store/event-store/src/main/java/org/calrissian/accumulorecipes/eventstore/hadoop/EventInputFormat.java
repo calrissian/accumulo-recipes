@@ -15,6 +15,17 @@
  */
 package org.calrissian.accumulorecipes.eventstore.hadoop;
 
+import static org.apache.accumulo.core.data.Range.prefix;
+import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_BUILDER;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME;
+import static org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper.QueryXform;
+import static org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper.WholeColFXForm;
+import static org.calrissian.mango.io.Serializables.fromBase64;
+import static org.calrissian.mango.io.Serializables.toBase64;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
@@ -50,19 +61,6 @@ import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-
-import static java.util.Arrays.asList;
-import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
-import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_BUILDER;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME;
-import static org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper.QueryXform;
-import static org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper.WholeColFXForm;
-import static org.calrissian.mango.io.Serializables.fromBase64;
-import static org.calrissian.mango.io.Serializables.toBase64;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
  * A Hadoop {@link InputFormat} for streaming events from Accumulo tablet servers directly into mapreduce jobs
@@ -162,12 +160,11 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
             ranges.add(prefix(shard.toString(), PREFIX_E));
 
 
-          IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-          addIterator(job, iteratorSetting);
 
           job.getConfiguration().set(XFORM_KEY, CF_XFORM);
 
           setRanges(job, ranges);
+          addIterator(job, new IteratorSetting(18, WholeColumnFamilyIterator.class));
 
         } else {
 
@@ -180,6 +177,7 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
           EventTimeLimitingFilter.setCurrentTime(timeSetting, end.getTime());
           EventTimeLimitingFilter.setTTL(timeSetting, end.getTime() - start.getTime());
           addIterator(job, timeSetting);
+
 
           job.getConfiguration().set(XFORM_KEY, QUERY_XFORM);
           configureScanner(job, query, globalIndexVisitor, typeRegistry);
@@ -198,22 +196,10 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
         configuration.set("metadataSerDe", new String(toBase64(metadataSerDe)));
     }
 
-    /**
-     * Sets selection fields on the current configuration. Only fields in the given set of select fields will be included
-     * in the resulting events.
-     */
-    public static void setSelectFields(Configuration config, Set<String> selectFields) {
-
-        if(selectFields != null)
-            config.setStrings("selectFields", selectFields.toArray(new String[] {}));
-    }
-
-
     @Override
     protected Function<Map.Entry<Key, Value>, Event> getTransform(Configuration configuration) {
 
         try {
-            final String[] selectFields = configuration.getStrings("selectFields");
 
             TypeRegistry<String> typeRegistry = fromBase64(configuration.get("typeRegistry").getBytes());
 
@@ -227,9 +213,9 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
             initializeKryo(kryo);
 
             if(configuration.get(XFORM_KEY).equals(QUERY_XFORM))
-              return new QueryXform(kryo, typeRegistry, selectFields != null ? new HashSet<String>(asList(selectFields)) : null, metadataSerDe);
+              return new QueryXform(kryo, typeRegistry, metadataSerDe);
             else
-              return new WholeColFXForm(kryo, typeRegistry, selectFields != null ? new HashSet<String>(asList(selectFields)) : null, metadataSerDe);
+              return new WholeColFXForm(kryo, typeRegistry,metadataSerDe);
 
         } catch(Exception e) {
             throw new RuntimeException(e);
