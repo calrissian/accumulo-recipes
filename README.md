@@ -1,4 +1,5 @@
-![travis](https://travis-ci.org/calrissian/accumulo-recipes.svg?branch=master)
+[![Build Status](https://travis-ci.org/calrissian/accumulo-recipes.svg?branch=master)](https://travis-ci.org/calrissian/accumulo-recipes)
+
 
 #What are Accumulo Recipes?
 
