@@ -15,9 +15,48 @@
  */
 package org.calrissian.accumulorecipes.graphstore.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.accumulo.core.data.Range.prefix;
+import static org.apache.commons.lang.StringUtils.defaultString;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
+import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
+import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.HEAD;
+import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.LABEL;
+import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.TAIL;
+import static org.calrissian.mango.collect.CloseableIterables.concat;
+import static org.calrissian.mango.collect.CloseableIterables.filter;
+import static org.calrissian.mango.collect.CloseableIterables.partition;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_RELATIONSHIP_ALIAS;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -32,8 +71,8 @@ import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.support.EdgeGroupingIterator;
+import org.calrissian.accumulorecipes.graphstore.support.EdgeToVertexIndexXform;
 import org.calrissian.accumulorecipes.graphstore.support.TupleStoreCriteriaPredicate;
-import org.calrissian.accumulorecipes.graphstore.tinkerpop.EntityGraph;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
@@ -42,26 +81,6 @@ import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
 import org.calrissian.mango.domain.entity.EntityRelationship;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.accumulo.core.data.Range.prefix;
-import static org.apache.commons.lang.StringUtils.defaultString;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
-import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
-import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
-import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.*;
-import static org.calrissian.mango.collect.CloseableIterables.*;
-import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_RELATIONSHIP_ALIAS;
 
 /**
  * The AccumuloEntityGraphStore wraps an {@link AccumuloEntityStore} to provide an extra index which is capable
@@ -176,7 +195,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                                                  Set<String> labels,
                                                  final Auths auths) {
         CloseableIterable<Entity> edges = findAdjacentEdges(fromVertices, query, direction, labels, auths);
-        CloseableIterable<EntityIndex> indexes = transform(edges, new EntityGraph.EdgeToVertexIndexXform(direction));
+        CloseableIterable<EntityIndex> indexes = transform(edges, new EdgeToVertexIndexXform(direction));
         return concat(transform(partition(indexes, bufferSize),
                 new Function<List<EntityIndex>, Iterable<Entity>>() {
                     @Override

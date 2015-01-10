@@ -18,18 +18,28 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.calrissian.accumulorecipes</groupId>
-    <artifactId>store</artifactId>
+    <artifactId>thirdparty</artifactId>
     <version>2.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>entity-store</artifactId>
+  <artifactId>thirdparty-pig</artifactId>
   <packaging>jar</packaging>
-  <name>Calrissian Accumulo Recipes Entity Store</name>
-  <description>The entity store is a document store for real-world modeled objects called Entities.</description>
+  <name>Calrissian Accumulo Recipes Pig Integration</name>
+  <description>Provides integration components for Apache Pig.</description>
   <dependencies>
     <!-- Accumulo Recipes -->
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
-      <artifactId>commons</artifactId>
+      <artifactId>event-store</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>entity-store</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>feature-store</artifactId>
       <version>${project.version}</version>
     </dependency>
     <!-- Mango -->
@@ -47,18 +57,12 @@ limitations under the License.
       <artifactId>hadoop-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
     </dependency>
-
-    <!-- JUNIT -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
     </dependency>
 
     <!-- Joda-Time -->
@@ -66,18 +70,30 @@ limitations under the License.
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
     </dependency>
+
+    <!-- pig -->
+    <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <!-- Test -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
       <artifactId>test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
 </project>
