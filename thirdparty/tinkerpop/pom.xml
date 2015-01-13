@@ -26,6 +26,7 @@ limitations under the License.
   <name>Calrissian Accumulo Recipes Graph Store</name>
   <description>The graph store allows breadth-first traversal of graphs through vertices and edges.</description>
   <dependencies>
+
     <!-- Accumulo Recipes -->
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
@@ -37,15 +38,13 @@ limitations under the License.
       <artifactId>entity-store</artifactId>
       <version>${project.version}</version>
     </dependency>
+
     <!-- Mango -->
     <dependency>
       <groupId>org.calrissian.mango</groupId>
       <artifactId>mango-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-json</artifactId>
-    </dependency>
+
     <!-- Hadoop / CB -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
@@ -55,10 +54,8 @@ limitations under the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-    </dependency>
+
+    <!-- Blueprints -->
     <dependency>
       <groupId>com.tinkerpop.blueprints</groupId>
       <artifactId>blueprints-core</artifactId>
@@ -74,17 +71,18 @@ limitations under the License.
     <dependency>
       <groupId>com.tinkerpop.blueprints</groupId>
       <artifactId>blueprints-test</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

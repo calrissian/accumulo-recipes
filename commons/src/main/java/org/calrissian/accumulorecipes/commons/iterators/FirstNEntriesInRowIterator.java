@@ -16,17 +16,14 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.encodeRow;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -37,8 +34,6 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-
-import static com.google.common.collect.Maps.immutableEntry;
 
 /**
  * This {@link org.apache.accumulo.core.iterators.SortedKeyValueIterator} will return only the first n
@@ -64,8 +59,7 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
     private Key topKey;
     private Value topValue;
 
-    private List<Key> keys = new ArrayList<Key>();
-    private List<Value> values = new ArrayList<Value>();
+    private Collection<Map.Entry<Key,Value>> keysValues = Lists.newArrayList();
 
     private boolean hasSeeked = false;
 
@@ -113,17 +107,15 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
             return;
         }
 
-        keys.clear();
-        values.clear();
+        keysValues.clear();
 
-        while(getSource().hasTop() && keys.size() < n && getSource().getTopKey().getRow().equals(lastRowFound)) {
-            keys.add(new Key(getSource().getTopKey()));
-            values.add(new Value(getSource().getTopValue()));
+        while(getSource().hasTop() && keysValues.size() < n && getSource().getTopKey().getRow().equals(lastRowFound)) {
+            keysValues.add(Maps.immutableEntry(new Key(getSource().getTopKey()), new Value(getSource().getTopValue())));
             getSource().next();
         }
 
-        topKey = new Key(lastRowFound, keys.get(0).getColumnFamily());
-        topValue = encodeRow(keys, values);
+        topKey = new Key(lastRowFound, keysValues.iterator().next().getKey().getColumnFamily());
+        topValue = encodeRow(keysValues);
     }
 
     private boolean finished = true;
@@ -234,85 +226,6 @@ public class FirstNEntriesInRowIterator implements OptionDescriber, SortedKeyVal
         return true;
     }
 
-    // decode a bunch of key value pairs that have been encoded into a single value
-    public static final List<Map.Entry<Key,Value>> decodeRow(Key rowKey, Value rowValue) throws IOException {
-        List<Map.Entry<Key,Value>> map = new ArrayList<Map.Entry<Key, Value>>();
-        ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
-        DataInputStream din = new DataInputStream(in);
-        int numKeys = din.readInt();
 
-        for (int i = 0; i < numKeys; i++) {
-            byte[] cf;
-            byte[] cq;
-            byte[] cv;
-            byte[] valBytes;
-            // read the col fam
-            {
-                int len = din.readInt();
-                cf = new byte[len];
-                din.read(cf);
-            }
-            // read the col qual
-            {
-                int len = din.readInt();
-                cq = new byte[len];
-                din.read(cq);
-            }
-            // read the col visibility
-            {
-                int len = din.readInt();
-                cv = new byte[len];
-                din.read(cv);
-            }
-            // read the timestamp
-            long timestamp = din.readLong();
-            // read the value
-            {
-                int len = din.readInt();
-                valBytes = new byte[len];
-                din.read(valBytes);
-            }
-            map.add(immutableEntry(new Key(rowKey.getRowData().toArray(), cf, cq, cv, timestamp, false, false), new Value(valBytes, false)));
-        }
-        return map;
-    }
-
-    // take a stream of keys and values and output a value that encodes everything but their row
-    // keys and values must be paired one for one
-    public static final Value encodeRow(List<Key> keys, List<Value> values) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        DataOutputStream dout = new DataOutputStream(out);
-        dout.writeInt(keys.size());
-        for (int i = 0; i < keys.size(); i++) {
-            Key k = keys.get(i);
-            Value v = values.get(i);
-            // write the colfam
-            {
-                ByteSequence bs = k.getColumnFamilyData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the colqual
-            {
-                ByteSequence bs = k.getColumnQualifierData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the column visibility
-            {
-                ByteSequence bs = k.getColumnVisibilityData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the timestamp
-            dout.writeLong(k.getTimestamp());
-            // write the value
-            byte[] valBytes = v.get();
-            dout.writeInt(valBytes.length);
-            dout.write(valBytes);
-        }
-
-        return new Value(out.toByteArray());
-    }
 
 }

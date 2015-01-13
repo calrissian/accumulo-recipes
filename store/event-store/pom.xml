@@ -26,18 +26,15 @@ limitations under the License.
   <name>Calrissian Accumulo Recipes Event Store</name>
   <description>The event store is a document store for time-based events.</description>
   <dependencies>
+
     <!-- Accumulo Recipes -->
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- Mango -->
-    <dependency>
-      <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-json</artifactId>
-    </dependency>
-    <!-- Hadoop / CB -->
+
+    <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
@@ -46,25 +43,22 @@ limitations under the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
+
+    <!-- Joda-Time -->
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
-      <artifactId>groovy</artifactId>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
     </dependency>
 
-    <!-- JUNIT -->
+    <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-
-    <!-- Joda-Time -->
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
@@ -75,6 +69,12 @@ limitations under the License.
       <groupId>org.calrissian.accumulorecipes</groupId>
       <artifactId>test</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- Just for the JsonEventStoreTest -->
+      <groupId>org.calrissian.mango</groupId>
+      <artifactId>mango-json</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

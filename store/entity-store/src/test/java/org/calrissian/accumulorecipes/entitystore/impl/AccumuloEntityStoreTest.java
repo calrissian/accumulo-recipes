@@ -15,6 +15,18 @@
  */
 package org.calrissian.accumulorecipes.entitystore.impl;
 
+import static com.google.common.collect.Iterables.get;
+import static com.google.common.collect.Iterables.size;
+import static com.google.common.collect.Sets.newHashSet;
+import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -45,19 +57,8 @@ import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-
-import static com.google.common.collect.Iterables.get;
-import static com.google.common.collect.Iterables.size;
-import static com.google.common.collect.Sets.newHashSet;
-import static java.lang.System.currentTimeMillis;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 public class AccumuloEntityStoreTest {
 
@@ -107,7 +108,7 @@ public class AccumuloEntityStoreTest {
 
 
     @Test
-    public void testVisibility() {
+    public void testGet_withVisibilities() {
 
         Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
@@ -131,6 +132,58 @@ public class AccumuloEntityStoreTest {
         assertEquals(2, Iterables.size(actualEntities));
         assertEquals(1, get(actualEntities, 0).size());
         assertEquals(1, get(actualEntities, 1).size());
+    }
+
+    @Test
+    public void testVisibilityForQuery_noResults() {
+
+      Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
+
+      Entity entity = new BaseEntity("type", "id1");
+      entity.put(new Tuple("key1", "val1", meta));
+      entity.put(new Tuple("key2", "val2", shouldntSee));
+
+      Entity entity2 = new BaseEntity("type", "id2");
+      entity2.put(new Tuple("key1", "val1", meta));
+      entity2.put(new Tuple("key2", "val2", shouldntSee));
+
+      store.save(asList(entity, entity2));
+
+      Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+
+      Iterable<Entity> actualEntity1 = store.query(Collections.singleton("type"), query, null, new Auths("A"));
+
+      assertEquals(0, Iterables.size(actualEntity1));
+
+    }
+
+
+    @Test
+    public void testVisibilityForQuery_resultsReturned() {
+
+      Map<String, Object> canSee = new MetadataBuilder().setVisibility("A&B").build();
+      Map<String, Object> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
+
+      Entity entity = new BaseEntity("type", "id1");
+      entity.put(new Tuple("key1", "val1", meta));
+      entity.put(new Tuple("key2", "val2", canSee));
+      entity.put(new Tuple("key3", "val3", cantSee));
+
+      Entity entity2 = new BaseEntity("type", "id2");
+      entity2.put(new Tuple("key1", "val1", meta));
+      entity2.put(new Tuple("key2", "val2", canSee));
+      entity2.put(new Tuple("key3", "val3", cantSee));
+
+      store.save(asList(entity, entity2));
+
+      Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+
+      Iterable<Entity> actualEntity1 = store.query(Collections.singleton("type"), query, null, new Auths("A,B"));
+
+      assertEquals(2, Iterables.size(actualEntity1));
+
+      assertEquals(2, Iterables.get(actualEntity1, 0).size());
+      assertEquals(2, Iterables.get(actualEntity1, 1).size());
     }
 
 
@@ -292,8 +345,9 @@ public class AccumuloEntityStoreTest {
         entity2.put(new Tuple("key3", "val3", meta));
 
         store.save(asList(entity, entity2));
+        store.flush();
 
-        AccumuloTestUtils.dumpTable(connector, "entity_shard");
+        AccumuloTestUtils.dumpTable(connector, "entity_shard", DEFAULT_AUTHS.getAuths());
 
         Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").end().build();
 
@@ -413,9 +467,6 @@ public class AccumuloEntityStoreTest {
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(0, Iterables.size(itr));
     }
-
-
-
 
     @Test
     public void testQuery_greaterThan() {
@@ -554,6 +605,7 @@ public class AccumuloEntityStoreTest {
         assertEquals(new Pair<String, String>("ip", "string"), get(keys, 1));
     }
 
+    @Ignore
     @Test
     public void testExpirationOfTuples_get() throws Exception {
 
@@ -576,6 +628,7 @@ public class AccumuloEntityStoreTest {
 
     }
 
+    @Ignore
     @Test
     public void testExpirationOfTuples_query() throws Exception {
 

@@ -82,22 +82,6 @@ limitations under the License.
         <artifactId>commons-math3</artifactId>
         <version>${commons.math.version}</version>
       </dependency>
-      <!-- Accumulo -->
-      <dependency>
-        <groupId>org.apache.accumulo</groupId>
-        <artifactId>accumulo-core</artifactId>
-        <version>${accumulo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-client</artifactId>
-        <version>${hadoop.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.zookeeper</groupId>
-        <artifactId>zookeeper</artifactId>
-        <version>${zookeeper.version}</version>
-      </dependency>
       <dependency>
         <groupId>com.tinkerpop.blueprints</groupId>
         <artifactId>blueprints-core</artifactId>
@@ -119,11 +103,30 @@ limitations under the License.
         <artifactId>kryo</artifactId>
         <version>${commons.kryo.version}</version>
       </dependency>
+      <!-- Accumulo -->
+      <dependency>
+        <groupId>org.apache.accumulo</groupId>
+        <artifactId>accumulo-core</artifactId>
+        <version>${accumulo.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-client</artifactId>
+        <version>${hadoop.version}</version>
+        <scope>provided</scope>
+      </dependency>
       <dependency>
         <groupId>org.apache.pig</groupId>
         <artifactId>pig</artifactId>
         <version>${pig.version}</version>
         <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.zookeeper</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>${zookeeper.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>

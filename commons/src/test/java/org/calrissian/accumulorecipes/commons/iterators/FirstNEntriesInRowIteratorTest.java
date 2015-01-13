@@ -16,8 +16,20 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.IOException;
+import java.util.Map;
+
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -28,10 +40,7 @@ import org.apache.hadoop.io.Text;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.Map;
-
-import static org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator.decodeRow;
+import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.decodeRow;
 import static org.junit.Assert.assertEquals;
 
 public class FirstNEntriesInRowIteratorTest {

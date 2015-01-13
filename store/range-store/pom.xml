@@ -27,13 +27,15 @@ limitations under the License.
   <description>The range store provides overlapping queries of intervals that overlap (or are contained inside of)
         other intervals.</description>
   <dependencies>
+
     <!-- Accumulo Recipes -->
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- Hadoop / CB -->
+
+    <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
@@ -42,6 +44,7 @@ limitations under the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
+
     <!-- JUNIT -->
     <dependency>
       <groupId>junit</groupId>

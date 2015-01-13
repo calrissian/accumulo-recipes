@@ -15,6 +15,14 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.accumulo.core.data.Range.prefix;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -31,8 +39,8 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Range;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.EventFieldsFilteringIterator;
-import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
+import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
@@ -48,15 +56,6 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
 import org.calrissian.mango.types.TypeRegistry;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
  * The Accumulo implementation of the EventStore which uses deterministic sharding to distribute ingest/queries over
@@ -142,13 +141,14 @@ public class AccumuloEventStore implements EventStore {
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
 
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
-        IteratorSetting timeFilter = new IteratorSetting(7, EventTimeLimitingFilter.class);
+
+        IteratorSetting timeFilter = new IteratorSetting(5, EventTimeLimitingFilter.class);
         EventTimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
         EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
         CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, query,
-            helper.buildQueryXform(selectFields), auths);
+            helper.buildQueryXform(),selectFields,  auths);
         indexScanner.close();
 
         return events;
@@ -181,14 +181,17 @@ public class AccumuloEventStore implements EventStore {
 
             eventScanner.setRanges(eventRanges);
 
-            IteratorSetting iteratorSetting = new IteratorSetting(16, "wholeColumnFamilyIterator", WholeColumnFamilyIterator.class);
-            eventScanner.addScanIterator(iteratorSetting);
-
             if (selectFields != null && selectFields.size() > 0) {
-                iteratorSetting = new IteratorSetting(15, EventFieldsFilteringIterator.class);
-                EventFieldsFilteringIterator.setSelectFields(iteratorSetting, selectFields);
+                IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
+                SelectFieldsExtractor.setSelectFields(iteratorSetting, selectFields);
                 eventScanner.addScanIterator(iteratorSetting);
             }
+
+//            IteratorSetting setting = new IteratorSetting(17, EmptyEncodedRowFilter.class);
+//            eventScanner.addScanIterator(setting);
+
+            IteratorSetting setting = new IteratorSetting(18, WholeColumnQualifierIterator.class);
+            eventScanner.addScanIterator(setting);
 
             return transform(closeableIterable(eventScanner), helper.buildWholeColFXform());
         } catch (RuntimeException re) {

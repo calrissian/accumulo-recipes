@@ -16,6 +16,8 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -27,6 +29,8 @@ import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.google.common.collect.Sets;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
@@ -36,6 +40,7 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.OptionDescriber;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.commons.jexl2.parser.ParseException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.commons.iterators.support.QueryEvaluator;
@@ -72,6 +77,15 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
     private EventFields event = null;
     private Range seekRange = null;
     private Set<String> skipExpressions = null;
+
+    protected static final String SELECT_FIELDS = "selectFields";
+    private Set<String> selectFields;
+
+    public static void setSelectFields(IteratorSetting is, Set<String> selectFields) {
+        is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, NULL_BYTE));
+    }
+
+
 
     protected AbstractEvaluatingIterator(AbstractEvaluatingIterator other, IteratorEnvironment env) {
         iterator = other.iterator.deepCopy(env);
@@ -186,7 +200,14 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
                         // Wrap in ByteBuffer to work with Kryo
                         ByteBuffer buf = ByteBuffer.wrap(serializedMap);
                         // Serialize the EventFields object
-                        ByteBufferOutput output = new ByteBufferOutput(buf);
+                        if(selectFields != null) {
+                            Set<String> keys = new HashSet<String>(event.keySet());
+                            for(String key :keys) {
+                                if(!selectFields.contains(key))
+                                    event.removeAll(key);
+                            }
+                        }
+
                         event.write(kryo, new ByteBufferOutput(buf), event);
                         // Truncate array to the used size.
                         returnValue = new Value(Arrays.copyOfRange(serializedMap, 0, buf.position()));
@@ -270,6 +291,12 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
         event = new EventFields();
         this.comparator = getKeyComparator();
         this.iterator = source;
+
+        String eventFieldsOpt = options.get(SELECT_FIELDS);
+
+        if(eventFieldsOpt != null)
+            selectFields = Sets.newHashSet(splitPreserveAllTokens(eventFieldsOpt, NULL_BYTE));
+
         try {
             // Replace any expressions that we should not evaluate.
             if (null != this.skipExpressions && this.skipExpressions.size() != 0) {
@@ -303,7 +330,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
         if (options.containsKey(UNEVALUTED_EXPRESSIONS)) {
             String expressionList = options.get(UNEVALUTED_EXPRESSIONS);
             if (expressionList != null && !expressionList.trim().equals("")) {
-                this.skipExpressions = new HashSet<String>();
+                this.skipExpressions = Sets.newHashSet();
                 for (String e : expressionList.split(","))
                     this.skipExpressions.add(e);
             }

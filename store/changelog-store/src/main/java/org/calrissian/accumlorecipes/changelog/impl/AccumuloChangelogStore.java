@@ -15,9 +15,32 @@
  */
 package org.calrissian.accumlorecipes.changelog.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Map.Entry;
+import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestamp;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
+import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
+import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import com.google.common.base.Function;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -33,23 +56,6 @@ import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.hash.tree.MerkleTree;
-import org.calrissian.mango.json.tuple.TupleModule;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Map.Entry;
-import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MINS;
-import static org.calrissian.accumlorecipes.changelog.support.Utils.*;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
-import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
  * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent
@@ -59,8 +65,6 @@ public class AccumuloChangelogStore implements ChangelogStore {
 
     private static final String DEFAULT_TABLE_NAME = "changelog";
     private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
-
-    private final ObjectMapper objectMapper;
 
     private final String tableName;
     private final Connector connector;
@@ -101,7 +105,6 @@ public class AccumuloChangelogStore implements ChangelogStore {
         this.tableName = tableName;
         this.config = config;
         this.bucketSize = bucketSize;
-        this.objectMapper = new ObjectMapper().registerModule(new TupleModule(LEXI_TYPES)); //TODO allow caller to pass in types.
 
         if (!connector.tableOperations().exists(tableName)) {
             connector.tableOperations().create(tableName);

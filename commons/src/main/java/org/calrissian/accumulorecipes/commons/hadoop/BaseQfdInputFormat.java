@@ -15,10 +15,16 @@
  */
 package org.calrissian.accumulorecipes.commons.hadoop;
 
+import static org.apache.accumulo.core.util.format.DefaultFormatter.formatEntry;
+import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
@@ -38,6 +44,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
@@ -45,11 +52,9 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.apache.accumulo.core.util.format.DefaultFormatter.formatEntry;
-import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
-import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-
 public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settable> extends InputFormatBase<Key, W> {
+
+    public static final String SELECT_FIELDS = "selectFields";
 
     protected static void configureScanner(Job job, Node query, GlobalIndexVisitor globalInexVisitor, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
@@ -72,12 +77,29 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
         setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
         setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
+        final String[] selectFields = job.getConfiguration().getStrings(SELECT_FIELDS);
+
+        if (selectFields != null && selectFields.length > 0) {
+            IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
+            SelectFieldsExtractor.setSelectFields(iteratorSetting, new HashSet<String>(Arrays.asList(selectFields)));
+        }
+
+
         addIterator(job, setting);
     }
 
     protected abstract Function<Map.Entry<Key, Value>, T> getTransform(Configuration configuration);
 
     protected abstract W getWritable();
+
+    /**
+     * Sets selection fields on the current configuration.
+     */
+    public static void setSelectFields(Configuration config, Set<String> selectFields) {
+
+      if(selectFields != null)
+        config.setStrings(SELECT_FIELDS, selectFields.toArray(new String[] {}));
+    }
 
     @Override
     public RecordReader<Key, W> createRecordReader(InputSplit split, final TaskAttemptContext context) throws IOException, InterruptedException {

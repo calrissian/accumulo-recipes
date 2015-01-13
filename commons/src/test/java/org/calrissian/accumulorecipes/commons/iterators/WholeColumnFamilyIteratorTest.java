@@ -16,21 +16,31 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static org.junit.Assert.assertEquals;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.commons.support.RowEncoderUtil;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 public class WholeColumnFamilyIteratorTest {
 
@@ -52,8 +62,8 @@ public class WholeColumnFamilyIteratorTest {
 
         assertEquals(1, Iterables.size(scanner));
         for (Map.Entry<Key, Value> entry : scanner) {
-            Map<Key, Value> items = WholeColumnFamilyIterator.decodeRow(entry.getKey(), entry.getValue());
-            assertEquals(500, Iterables.size(items.entrySet()));
+            List<Map.Entry<Key, Value>> items = RowEncoderUtil.decodeRow(entry.getKey(), entry.getValue());
+            assertEquals(500, items.size());
         }
     }
 
@@ -66,8 +76,8 @@ public class WholeColumnFamilyIteratorTest {
 
         assertEquals(50, Iterables.size(scanner));
         for (Map.Entry<Key, Value> entry : scanner) {
-            Map<Key, Value> items = WholeColumnFamilyIterator.decodeRow(entry.getKey(), entry.getValue());
-            assertEquals(500, Iterables.size(items.entrySet()));
+            List<Map.Entry<Key, Value>> items = RowEncoderUtil.decodeRow(entry.getKey(), entry.getValue());
+            assertEquals(500, items.size());
         }
     }
 

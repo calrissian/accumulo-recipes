@@ -81,6 +81,7 @@ public class JsonEventStoreTest {
 
         eventList.add(tweetEvent);
 
+
         /**
          * Next, we'll load a json array containing user timeline data
          */
@@ -103,6 +104,7 @@ public class JsonEventStoreTest {
         /**
          * Save events in the event store and flush
          */
+
         store.save(eventList);
         store.flush();
 

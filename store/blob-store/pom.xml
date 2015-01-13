@@ -26,13 +26,15 @@ limitations under the License.
   <name>Calrissian Accumulo Recipes Blob Store</name>
   <description>Blob store allows bytes to be indexed and streamed into and out of Accumulo rows</description>
   <dependencies>
+
     <!-- Accumulo Recipes -->
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- Hadoop / CB -->
+
+    <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
@@ -41,11 +43,13 @@ limitations under the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
+
     <!-- JUNIT -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+
     <!--Json-->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

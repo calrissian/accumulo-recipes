@@ -15,8 +15,32 @@
  */
 package org.calrissian.accumulorecipes.geospatialstore.impl;
 
+import static java.lang.Math.abs;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.base.Function;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -26,6 +50,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
+import org.calrissian.accumulorecipes.commons.support.RowEncoderUtil;
 import org.calrissian.accumulorecipes.geospatialstore.GeoSpatialStore;
 import org.calrissian.accumulorecipes.geospatialstore.support.BoundingBoxFilter;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeHelper;
@@ -35,22 +60,6 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import static java.lang.Math.abs;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
-import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
@@ -62,8 +71,8 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
             String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), NULL_BYTE);
             Event entry = new BaseEvent(cfParts[0], Long.parseLong(cfParts[1]));
             try {
-                Map<Key, Value> map = WholeColumnFamilyIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
-                for (Map.Entry<Key, Value> curEntry : map.entrySet()) {
+                List<Map.Entry<Key, Value>> map = RowEncoderUtil.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+                for (Map.Entry<Key, Value> curEntry : map) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
                     Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, Object>(1), vis));

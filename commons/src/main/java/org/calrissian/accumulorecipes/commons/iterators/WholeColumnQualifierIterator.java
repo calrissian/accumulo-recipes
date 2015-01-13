@@ -15,16 +15,13 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
@@ -33,14 +30,11 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-
-import static com.google.common.collect.Maps.immutableEntry;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import org.calrissian.accumulorecipes.commons.support.RowEncoderUtil;
 
 public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key, Value> {
 
-    List<Key> keys = new ArrayList<Key>();
-    List<Value> values = new ArrayList<Value>();
+    List<Map.Entry<Key,Value>> keysValues = Lists.newArrayList();
     private SortedKeyValueIterator<Key, Value> sourceIter;
     private Key topKey = null;
     private Value topValue = null;
@@ -53,85 +47,6 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
         this.sourceIter = source;
     }
 
-    // decode a bunch of key value pairs that have been encoded into a single value
-    public static final List<Map.Entry<Key, Value>> decodeRow(Key rowKey, Value rowValue) throws IOException {
-        List<Map.Entry<Key, Value>> map = new ArrayList<Map.Entry<Key, Value>>();
-        ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
-        DataInputStream din = new DataInputStream(in);
-        int numKeys = din.readInt();
-        for (int i = 0; i < numKeys; i++) {
-            byte[] cf;
-            byte[] cq;
-            byte[] cv;
-            byte[] valBytes;
-            // read the col fam
-            {
-                int len = din.readInt();
-                cf = new byte[len];
-                din.read(cf);
-            }
-            // read the col qual
-            {
-                int len = din.readInt();
-                cq = new byte[len];
-                din.read(cq);
-            }
-            // read the col visibility
-            {
-                int len = din.readInt();
-                cv = new byte[len];
-                din.read(cv);
-            }
-            // read the timestamp
-            long timestamp = din.readLong();
-            // read the value
-            {
-                int len = din.readInt();
-                valBytes = new byte[len];
-                din.read(valBytes);
-            }
-            map.add(immutableEntry(new Key(rowKey.getRowData().toArray(), cf, cq, cv, timestamp, false, false), new Value(valBytes, false)));
-        }
-        return map;
-    }
-
-    // take a stream of keys and values and output a value that encodes everything but their row
-    // keys and values must be paired one for one
-    public static final Value encodeRow(List<Key> keys, List<Value> values) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        DataOutputStream dout = new DataOutputStream(out);
-        dout.writeInt(keys.size());
-        for (int i = 0; i < keys.size(); i++) {
-            Key k = keys.get(i);
-            Value v = values.get(i);
-            // write the colfam
-            {
-                ByteSequence bs = k.getColumnFamilyData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the colqual
-            {
-                ByteSequence bs = k.getColumnQualifierData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the column visibility
-            {
-                ByteSequence bs = k.getColumnVisibilityData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the timestamp
-            dout.writeLong(k.getTimestamp());
-            // write the value
-            byte[] valBytes = v.get();
-            dout.writeInt(valBytes.length);
-            dout.write(valBytes);
-        }
-
-        return new Value(out.toByteArray());
-    }
 
     private void prepKeys() throws IOException {
         if (topKey != null)
@@ -146,18 +61,16 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
         currentColF = new Text(sourceIter.getTopKey().getColumnFamily());
         currentColQ = new Text(sourceIter.getTopKey().getColumnQualifier());
 
-        keys.clear();
-        values.clear();
+        keysValues.clear();
         while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
             sourceIter.getTopKey().getColumnFamily().equals(currentColF) &&
             sourceIter.getTopKey().getColumnQualifier().equals(currentColQ)) {
-            keys.add(new Key(sourceIter.getTopKey()));
-            values.add(new Value(sourceIter.getTopValue()));
+            keysValues.add(Maps.immutableEntry(new Key(sourceIter.getTopKey()), new Value(sourceIter.getTopValue())));
             sourceIter.next();
         }
 
         topKey = new Key(currentRow, currentColF);
-        topValue = encodeRow(keys, values);
+        topValue = RowEncoderUtil.encodeRow(keysValues);
     }
 
     @Override
@@ -185,14 +98,6 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
     @Override
     public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
         sourceIter = source;
-    }
-
-    private String getUuid(Key k) {
-
-        String cq = k.getColumnQualifier().toString();
-        int idx = cq.lastIndexOf(ONE_BYTE);
-
-        return cq.substring(idx+1, cq.length());
     }
 
 

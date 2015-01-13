@@ -15,13 +15,11 @@
 */
 package org.calrissian.accumulorecipes.commons.support.metadata;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 
 public class SimpleMetadataSerDeTest {
@@ -38,10 +36,9 @@ public class SimpleMetadataSerDeTest {
         map.put("key4", 1.0);
         map.put("key5", true);
 
-        byte[] bytes = metadataSerDe.create().serialize(newArrayList(map));
+        byte[] bytes = metadataSerDe.create().serialize(map);
 
-        Collection<Map<String,Object>> actualMap = metadataSerDe.create().deserialize(bytes);
-        assertEquals(1, actualMap.size());
-        assertEquals(map, actualMap.iterator().next());
+        Map<String,Object> actualMap = metadataSerDe.create().deserialize(bytes);
+        assertEquals(map, actualMap);
     }
 }

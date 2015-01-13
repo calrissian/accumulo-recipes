@@ -26,16 +26,14 @@ limitations under the License.
   <name>Calrissian Accumulo Recipes LastN Store</name>
   <description>The last-n store provides a window into data being stored that can is evicted by count.</description>
   <dependencies>
+
     <!-- Accumulo Recipes -->
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.calrissian.mango</groupId>
-      <artifactId>mango-json</artifactId>
-    </dependency>
+
     <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
@@ -45,6 +43,7 @@ limitations under the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
+
     <!-- JUNIT -->
     <dependency>
       <groupId>junit</groupId>

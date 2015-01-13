@@ -15,7 +15,19 @@
  */
 package org.calrissian.accumulorecipes.eventstore.iterator.query;
 
-import org.apache.accumulo.core.client.*;
+import java.util.Arrays;
+import java.util.Map;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -32,9 +44,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Map;
-
+@Deprecated
 public class OptimizedQueryIteratorTest {
 
     private static Logger log = LoggerFactory.getLogger(OptimizedQueryIteratorTest.class);
@@ -120,6 +130,7 @@ public class OptimizedQueryIteratorTest {
         IteratorSetting setting = new IteratorSetting(15, OptimizedQueryIterator.class);
         setting.addOption(EvaluatingIterator.QUERY_OPTION, "f:between(key, 'string\u000100000008', 'string\u000100000009')");
         setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, query);
+        setting.addOption("auths", new Authorizations().serialize());
         scanner.addScanIterator(setting);
 
         for (Map.Entry<Key, Value> entry : scanner) {
