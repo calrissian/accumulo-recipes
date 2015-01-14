@@ -47,8 +47,8 @@ import static com.google.common.io.Resources.getResource;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.sort;
-import static org.calrissian.mango.json.util.json.JsonTupleStore.FlattenedLevelsComparator;
-import static org.calrissian.mango.json.util.json.JsonTupleStore.fromJson;
+import static org.calrissian.mango.json.util.store.JsonTupleStore.FlattenedLevelsComparator;
+import static org.calrissian.mango.json.util.store.JsonTupleStore.fromJson;
 import static org.junit.Assert.assertEquals;
 
 /**
