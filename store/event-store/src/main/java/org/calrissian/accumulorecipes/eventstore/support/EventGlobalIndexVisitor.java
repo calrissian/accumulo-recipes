@@ -15,6 +15,13 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex.INDEX_SEP;
+import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -39,13 +46,6 @@ import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-
 public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
     private static TypeRegistry<String> registry = LEXI_TYPES;
@@ -57,14 +57,16 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
     private Set<String> shards = new HashSet<String>();
     private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+    private Set<String> types;
 
     private Set<Leaf> leaves = new HashSet<Leaf>();
 
-    public EventGlobalIndexVisitor(Date start, Date end, BatchScanner indexScanner, EventShardBuilder shardBuilder) {
+    public EventGlobalIndexVisitor(Date start, Date end, Set<String> types, BatchScanner indexScanner, EventShardBuilder shardBuilder) {
         this.start = start;
         this.end = end;
         this.indexScanner = indexScanner;
         this.shardBuilder = shardBuilder;
+        this.types = types;
     }
 
     @Override
@@ -108,12 +110,15 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
             } else {
 
                 String normVal = registry.encode(kvLeaf.getValue());
-                ranges.add(
-                    new Range(
-                        new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + startShard),
-                        new Key(INDEX_V + "_" + alias + "__" + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + stopShard)
-                    )
-                );
+
+                for(String type : types) {
+                  ranges.add(
+                      new Range(
+                          new Key(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + startShard),
+                          new Key(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + stopShard)
+                      )
+                  );
+                }
 
             }
         }
@@ -135,10 +140,13 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     private void buildRangeForSingleAlias(Collection<Range> ranges, String key, String alias, String startShard, String stopShard) {
-        ranges.add(new Range(
-            new Key(INDEX_K + "_" + key + "__" + alias + NULL_BYTE + startShard),
-            new Key(INDEX_K + "_" + key + "__" + alias + NULL_BYTE + stopShard)
-        ));
+
+        for(String type : types) {
+          ranges.add(new Range(
+              new Key(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + startShard),
+              new Key(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + stopShard)
+          ));
+        }
     }
 
     private void buildRangeForAllAliases(Collection<Range> ranges, String key, String startShard, String stopShard) {

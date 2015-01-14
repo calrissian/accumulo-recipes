@@ -67,7 +67,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
     protected static final byte[] EMPTY_BYTE = new byte[0];
     private static Logger log = Logger.getLogger(AbstractEvaluatingIterator.class);
     private static Kryo kryo = new Kryo();
-    protected SortedKeyValueIterator<Key, Value> iterator;
+    protected SortedKeyValueIterator<Key,Value> iterator;
     private PartialKey comparator = null;
     private Key currentKey = new Key();
     private Key returnKey;
@@ -84,8 +84,6 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
     public static void setSelectFields(IteratorSetting is, Set<String> selectFields) {
         is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, NULL_BYTE));
     }
-
-
 
     protected AbstractEvaluatingIterator(AbstractEvaluatingIterator other, IteratorEnvironment env) {
         iterator = other.iterator.deepCopy(env);
@@ -191,7 +189,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
                     aggregateRowColumn(event);
 
                     // Evaluate the event against the expression
-                    if (event.size() > 0 && this.evaluator.evaluate(event)) {
+                    if (event.size() > 0 && this.evaluator.evaluate(returnKey, event)) {
                         if (log.isDebugEnabled()) {
                             log.debug("Event evaluated to true, key = " + returnKey);
                         }
@@ -200,10 +198,10 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
                         // Wrap in ByteBuffer to work with Kryo
                         ByteBuffer buf = ByteBuffer.wrap(serializedMap);
                         // Serialize the EventFields object
-                        if(selectFields != null) {
+                        if (selectFields != null) {
                             Set<String> keys = new HashSet<String>(event.keySet());
-                            for(String key :keys) {
-                                if(!selectFields.contains(key))
+                            for (String key : keys) {
+                                if (!selectFields.contains(key))
                                     event.removeAll(key);
                             }
                         }
@@ -286,7 +284,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
 
     }
 
-    public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options, IteratorEnvironment env) throws IOException {
+    public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
         validateOptions(options);
         event = new EventFields();
         this.comparator = getKeyComparator();
@@ -294,7 +292,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
 
         String eventFieldsOpt = options.get(SELECT_FIELDS);
 
-        if(eventFieldsOpt != null)
+        if (eventFieldsOpt != null)
             selectFields = Sets.newHashSet(splitPreserveAllTokens(eventFieldsOpt, NULL_BYTE));
 
         try {
@@ -307,7 +305,7 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
                     this.expression = this.expression.replaceAll(skip, field + " == null");
                 }
             }
-            this.evaluator = new QueryEvaluator(this.expression);
+            this.evaluator = getQueryEvaluator(this.expression);
         } catch (ParseException e) {
             throw new IllegalArgumentException("Failed to parse criteria", e);
         }
@@ -315,13 +313,13 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
     }
 
     public IteratorOptions describeOptions() {
-        Map<String, String> options = new HashMap<String, String>();
+        Map<String,String> options = new HashMap<String,String>();
         options.put(QUERY_OPTION, "criteria expression");
         options.put(UNEVALUTED_EXPRESSIONS, "comma separated list of expressions to skip");
         return new IteratorOptions(getClass().getSimpleName(), "evaluates event objects against an expression", options, null);
     }
 
-    public boolean validateOptions(Map<String, String> options) {
+    public boolean validateOptions(Map<String,String> options) {
         if (!options.containsKey(QUERY_OPTION))
             return false;
         else
@@ -341,4 +339,6 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
     public String getQueryExpression() {
         return this.expression;
     }
+
+    public abstract QueryEvaluator getQueryEvaluator(String expression) throws ParseException;
 }

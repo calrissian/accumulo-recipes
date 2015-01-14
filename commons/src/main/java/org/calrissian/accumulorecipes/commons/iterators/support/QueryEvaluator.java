@@ -16,16 +16,25 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.google.common.collect.Multimap;
-import org.apache.commons.jexl2.*;
+import org.apache.accumulo.core.data.Key;
+import org.apache.commons.jexl2.Expression;
+import org.apache.commons.jexl2.JexlContext;
+import org.apache.commons.jexl2.JexlEngine;
+import org.apache.commons.jexl2.MapContext;
+import org.apache.commons.jexl2.Script;
 import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.commons.jexl2.parser.ParserTreeConstants;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 
 /**
@@ -189,7 +198,7 @@ public class QueryEvaluator {
      *
      * @param eventFields
      */
-    public boolean evaluate(EventFields eventFields) {
+    public boolean evaluate(Key topKey, EventFields eventFields) {
 
         this.modifiedQuery = null;
         boolean rewritten = false;
@@ -203,7 +212,7 @@ public class QueryEvaluator {
 
         // Loop through the event fields and add them to the JexlContext.
         for (Entry<String, Collection<FieldValue>> field : eventFields.asMap().entrySet()) {
-            String fName = field.getKey();
+            String fName = normalizeKey(topKey, field.getKey());
             if (caseInsensitive) {
                 fName = fName.toLowerCase();
             }
@@ -220,14 +229,14 @@ public class QueryEvaluator {
             } else if (field.getValue().size() == 1) {
                 // We are explicitly converting these bytes to a String.
                 if (caseInsensitive) {
-                    ctx.set(field.getKey().toLowerCase(), (new String(field.getValue().iterator().next().getValue())).toLowerCase());
+                    ctx.set(fName.toLowerCase(), (new String(field.getValue().iterator().next().getValue())).toLowerCase());
                 } else {
-                    ctx.set(field.getKey(), new String(field.getValue().iterator().next().getValue()));
+                    ctx.set(fName, new String(field.getValue().iterator().next().getValue()));
                 }
 
             } else {
                 // q = queryRewrite(q, field.getKey(), field.getValue());
-                q = rewriteQuery(q, field.getKey(), field.getValue());
+                q = rewriteQuery(q, fName, field.getValue());
                 rewritten = true;
             }// End of if
 
@@ -274,4 +283,12 @@ public class QueryEvaluator {
     public String getModifiedQuery() {
         return this.modifiedQuery;
     }
+
+
+    public String normalizeKey(Key topKey, String fieldKey) {
+      return fieldKey;
+    }
+
+
+
 }

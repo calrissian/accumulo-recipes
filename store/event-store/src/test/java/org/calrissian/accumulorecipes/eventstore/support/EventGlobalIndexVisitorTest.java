@@ -15,7 +15,21 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
-import org.apache.accumulo.core.client.*;
+import static java.util.Arrays.asList;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.test.AccumuloTestUtils.dumpTable;
+import static org.junit.Assert.assertEquals;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.support.Constants;
@@ -30,14 +44,6 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Test;
-
-import java.util.Date;
-import java.util.Map;
-
-import static java.util.Arrays.asList;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
-import static org.calrissian.accumulorecipes.test.AccumuloTestUtils.dumpTable;
-import static org.junit.Assert.assertEquals;
 
 public class EventGlobalIndexVisitorTest {
 
@@ -64,7 +70,7 @@ public class EventGlobalIndexVisitorTest {
         Node node = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").eq("key3", true).end().build();
 
         BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, new Authorizations(), 2);
-        GlobalIndexVisitor visitor = new EventGlobalIndexVisitor(new Date(0), new Date(), scanner,
+        GlobalIndexVisitor visitor = new EventGlobalIndexVisitor(new Date(0), new Date(), Collections.singleton(""), scanner,
                 new HourlyShardBuilder(Constants.DEFAULT_PARTITION_SIZE));
 
         node.accept(visitor);

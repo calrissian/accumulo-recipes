@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -78,12 +79,12 @@ public class AccumuloEventStoreTest {
     public void testGet() throws Exception {
 
         long time = currentTimeMillis();
-        Event event = new BaseEvent(UUID.randomUUID().toString(), time);
+        Event event = new BaseEvent("", UUID.randomUUID().toString(), time);
         event.put(new Tuple("key1", "val1", meta));
 
         event.put(new Tuple("key2", "val2", meta));
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), time);
+        Event event2 = new BaseEvent("", UUID.randomUUID().toString(), time);
         event2.put(new Tuple("key1", "val1", meta));
         event2.put(new Tuple("key2", "val2", meta));
 
@@ -91,7 +92,7 @@ public class AccumuloEventStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", new Authorizations("A"));
 
-        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex(event.getId(), event.getTimestamp())), null, DEFAULT_AUTHS);
+        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex("", event.getId(), event.getTimestamp())), null, DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));
         Event actual = actualEvent.iterator().next();
@@ -99,7 +100,7 @@ public class AccumuloEventStoreTest {
         assertEquals(actual.getId(), event.getId());
         System.out.println(actual);
 
-        actualEvent = store.get(singletonList(new EventIndex(event.getId(), time)), null, DEFAULT_AUTHS);
+        actualEvent = store.get(singletonList(new EventIndex("", event.getId(), time)), null, DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));
         actual = actualEvent.iterator().next();
@@ -291,7 +292,7 @@ public class AccumuloEventStoreTest {
         store.save(asList(event, event2));
         store.flush();
 
-        AccumuloTestUtils.dumpTable(connector, "eventStore_index", DEFAULT_AUTHS.getAuths());
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
 
         CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), new QueryBuilder().greaterThan("key2", 9).build(), null, DEFAULT_AUTHS);
 
@@ -454,23 +455,23 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        Event event = new BaseEvent("", UUID.randomUUID().toString(), currentTimeMillis());
         event.put(new Tuple("key1", "val1", meta));
         event.put(new Tuple("key2", "val2", meta));
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
+        Event event2 = new BaseEvent("", UUID.randomUUID().toString(), currentTimeMillis());
         event2.put(new Tuple("key1", "val1", meta));
         event2.put(new Tuple("key3", "val3", meta));
 
         store.save(asList(event, event2));
         store.flush();
 
-        AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
 
         Node query = new QueryBuilder().eq("key1", "val1").build();
 
         Iterator<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
-                new Date(), query, null, DEFAULT_AUTHS).iterator();
+            new Date(), query, null, DEFAULT_AUTHS).iterator();
 
         Event actualEvent = itr.next();
         if (actualEvent.getId().equals(event.getId())) {
@@ -487,6 +488,38 @@ public class AccumuloEventStoreTest {
         }
     }
 
+
+    @Test
+    public void testQuery_multipleTypes() throws Exception {
+
+        Event event = new BaseEvent("type1", UUID.randomUUID().toString(), currentTimeMillis());
+        event.put(new Tuple("key1", "val1", meta));
+        event.put(new Tuple("key2", "val2", meta));
+
+        Event event2 = new BaseEvent("type2", UUID.randomUUID().toString(), currentTimeMillis());
+        event2.put(new Tuple("key1", "val1", meta));
+        event2.put(new Tuple("key3", "val3", meta));
+
+        store.save(asList(event, event2));
+        store.flush();
+
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
+
+        Node query = new QueryBuilder().eq("key1", "val1").build();
+
+        CloseableIterable<Event> events = store.query(new Date(currentTimeMillis() - 5000),
+            new Date(), Sets.newHashSet("type1", "type2"), query, null, DEFAULT_AUTHS);
+
+        assertEquals(2, Iterables.size(events));
+
+        events = store.query(new Date(currentTimeMillis() - 5000),
+            new Date(), Sets.newHashSet("type1"), query, null, DEFAULT_AUTHS);
+
+        assertEquals(1, Iterables.size(events));
+        assertEquals("type1", Iterables.get(events, 0).getType());
+
+    }
+
     @Test
     public void testQuery_emptyNodeReturnsNoResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
@@ -501,7 +534,7 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_MultipleNotInQuery() throws Exception {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(),
+        Event event = new BaseEvent("", UUID.randomUUID().toString(),
                 currentTimeMillis());
         event.put(new Tuple("hasIp", "true", meta));
         event.put(new Tuple("ip", "1.1.1.1", meta));
@@ -517,6 +550,9 @@ public class AccumuloEventStoreTest {
         event3.put(new Tuple("ip", "3.3.3.3", meta));
 
         store.save(asList(event, event2, event3));
+        store.flush();
+
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
 
         Node query = new QueryBuilder()
                 .and()

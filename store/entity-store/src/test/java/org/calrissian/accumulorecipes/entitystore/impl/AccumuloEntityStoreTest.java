@@ -107,6 +107,8 @@ public class AccumuloEntityStoreTest {
     }
 
 
+
+
     @Test
     public void testGet_withVisibilities() {
 

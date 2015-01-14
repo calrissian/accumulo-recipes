@@ -15,7 +15,12 @@
  */
 package org.calrissian.accumulorecipes.eventstore.hadoop;
 
+import static java.util.Collections.singleton;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.UUID;
@@ -42,11 +47,6 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Before;
 import org.junit.Test;
-
-import static java.util.Collections.singleton;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class EventInputFormatTest {
 
@@ -78,7 +78,7 @@ public class EventInputFormatTest {
         job.setInputFormatClass(EventInputFormat.class);
         EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EventInputFormat.setMockInstance(job, "eventInst");
-        EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(),
+        EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), Collections.singleton(""),
                 new QueryBuilder().eq("key1", "val1").build());
         job.setOutputFormatClass(NullOutputFormat.class);
 
@@ -112,7 +112,7 @@ public class EventInputFormatTest {
     job.setInputFormatClass(EventInputFormat.class);
     EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
     EventInputFormat.setMockInstance(job, "eventInst2");
-    EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date());
+    EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), Collections.singleton(""));
     job.setOutputFormatClass(NullOutputFormat.class);
 
     job.submit();

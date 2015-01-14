@@ -56,6 +56,8 @@ import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIn
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
+import org.calrissian.accumulorecipes.eventstore.support.EventOptimizedQueryIterator;
+import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
 import org.calrissian.accumulorecipes.eventstore.support.iterators.EventTimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -63,7 +65,7 @@ import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
 /**
- * A Hadoop {@link InputFormat} for streaming events from Accumulo tablet servers directly into mapreduce jobs
+ * A Hadoop InputFormat for streaming events from Accumulo tablet servers directly into mapreduce jobs
  * (preserving data locality if possible).
  */
 public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
@@ -96,8 +98,8 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
      * @throws TableNotFoundException
      * @throws IOException
      */
-    public static void setQueryInfo(Job job, Date start, Date end) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-       setQueryInfo(job, start, end, null, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+    public static void setQueryInfo(Job job, Date start, Date end, Set<String> types) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+       setQueryInfo(job, start, end, types, null, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
 
     /**
@@ -111,8 +113,8 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
      * @throws TableNotFoundException
      * @throws IOException
      */
-    public static void setQueryInfo(Job job, Date start, Date end, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-        setQueryInfo(job, start, end, null, shardBuilder, typeRegistry);
+    public static void setQueryInfo(Job job, Date start, Date end, Set<String> types, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(job, start, end, types, null, shardBuilder, typeRegistry);
     }
 
     /**
@@ -128,8 +130,8 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
      * @throws TableNotFoundException
      * @throws IOException
      */
-    public static void setQueryInfo(Job job, Date start, Date end, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
-        setQueryInfo(job, start, end, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+    public static void setQueryInfo(Job job, Date start, Date end, Set<String> types, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+        setQueryInfo(job, start, end, types, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
 
     /**
@@ -145,7 +147,7 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
      * @throws TableNotFoundException
      * @throws IOException
      */
-    public static void setQueryInfo(Job job, Date start, Date end, Node query, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
+    public static void setQueryInfo(Job job, Date start, Date end, Set<String> types, Node query, EventShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
       validateOptions(job);
 
@@ -171,7 +173,7 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
           Instance instance = getInstance(job);
           Connector connector = instance.getConnector(getPrincipal(job), getAuthenticationToken(job));
           BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getScanAuthorizations(job), 5);
-          GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, scanner, shardBuilder);
+          GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, types, scanner, shardBuilder);
 
           IteratorSetting timeSetting = new IteratorSetting(14, EventTimeLimitingFilter.class);
           EventTimeLimitingFilter.setCurrentTime(timeSetting, end.getTime());
@@ -180,7 +182,8 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
 
           job.getConfiguration().set(XFORM_KEY, QUERY_XFORM);
-          configureScanner(job, query, globalIndexVisitor, typeRegistry);
+          configureScanner(job, types, query, new EventQfdHelper.EventNodeToJexl(typeRegistry), globalIndexVisitor, typeRegistry,
+              EventOptimizedQueryIterator.class);
         }
 
     }

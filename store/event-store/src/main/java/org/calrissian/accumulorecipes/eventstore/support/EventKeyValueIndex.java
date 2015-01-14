@@ -15,6 +15,17 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
+import static org.apache.commons.lang.StringUtils.join;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +44,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
@@ -48,19 +60,9 @@ import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.StringUtils.join;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.mango.collect.CloseableIterables.transform;
-
 public class EventKeyValueIndex implements KeyValueIndex<Event> {
+
+    public static final String INDEX_SEP = "__";
 
     private final ShardBuilder<Event> shardBuilder;
     private final TypeRegistry<String> typeRegistry;
@@ -100,7 +102,8 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
                         tuple.getKey(),
                         typeRegistry.getAlias(tuple.getValue()),
                         typeRegistry.encode(tuple.getValue()),
-                        getVisibility(tuple, "")
+                        getVisibility(tuple, ""),
+                        item.getType()
                 };
 
                 String cacheKey = join(strings, ONE_BYTE);
@@ -131,9 +134,10 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
             String shard = indexParts[0];
             String vis = indexParts[4];
             String val = indexParts[3];
+            String type = indexParts[5];
 
-            Mutation keyMutation = new Mutation(INDEX_K + "_" + key + "__" + alias + NULL_BYTE + shard);
-            Mutation valueMutation = new Mutation(INDEX_V + "_" + alias + "__" + key + NULL_BYTE + val + NULL_BYTE + shard);
+            Mutation keyMutation = new Mutation(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + shard);
+            Mutation valueMutation = new Mutation(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + key + NULL_BYTE + val + NULL_BYTE + shard);
 
             Long expiration = expirationCache.get(indexCacheKey.getKey());
             Value value = new GlobalIndexValue(indexCacheKey.getValue(), expiration).toValue();
@@ -148,7 +152,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
         }
     }
 
-    public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, Auths auths) {
+    public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths) {
 
         checkNotNull(prefix);
         checkNotNull(auths);
@@ -159,8 +163,8 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
             scanner.addScanIterator(setting);
 
             scanner.setRanges(singletonList(
-                new Range(INDEX_K + "_" + prefix + Constants.NULL_BYTE,
-                          INDEX_K + "_" + prefix + Constants.END_BYTE))
+                new Range(INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.NULL_BYTE,
+                          INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.END_BYTE))
             );
 
             return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
@@ -173,6 +177,29 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public CloseableIterable<String> getTypes(Auths auths) {
+
+      checkNotNull(auths);
+
+      try {
+        BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+        IteratorSetting setting = new IteratorSetting(15, EventGlobalIndexTypesIterator.class);
+        scanner.addScanIterator(setting);
+
+        scanner.setRanges(singletonList(new Range(INDEX_K + INDEX_SEP, INDEX_K + INDEX_SEP + "\uffff")));
+
+        return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, String>() {
+          @Override
+          public String apply(Map.Entry<Key, Value> keyValueEntry) {
+            String[] parts = StringUtils.splitByWholeSeparatorPreserveAllTokens(keyValueEntry.getKey().getRow().toString(), INDEX_SEP);
+            return parts[1];
+          }
+        });
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
 
     @Override

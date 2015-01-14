@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -120,7 +121,7 @@ public class EventLoaderTest extends AccumuloInputFormat {
         Job job = new Job();
         URI location = new URI("event://eventStore_index/eventStore_shard?user=root&pass=&inst=" +
                 inst + "&zk=" + zk  +
-                "&start=2014-01-01&end=2014-01-02&auths=");
+                "&start=2014-01-01&end=2014-01-02&auths=&types=type1,type2");
         EventLoader loader = new EventLoader("q.eq('key','val')");
         loader.setLocation(location.toString(), job);
         loader.setLocation(location.toString(), job);   // make sure two calls to set location don't fail
@@ -149,7 +150,7 @@ public class EventLoaderTest extends AccumuloInputFormat {
 
         EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EventInputFormat.setMockInstance(job, "instName");
-        EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(),
+        EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), Collections.singleton(""),
                 new QueryBuilder().eq("key1", "val1").build());
 
     }

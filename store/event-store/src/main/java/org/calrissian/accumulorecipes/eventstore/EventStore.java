@@ -55,9 +55,13 @@ public interface EventStore {
      * @param auths
      * @return
      */
+    @Deprecated
     CloseableIterable<Event> query(Date start, Date end, Node node, Set<String> selectFields, Auths auths);
 
-    /**
+
+    CloseableIterable<Event> query(Date start, Date end, Set<String> types, Node node, Set<String> selectFields, Auths auths);
+
+  /**
      * Query the store using criteria specified
      *
      * @param start
@@ -66,9 +70,13 @@ public interface EventStore {
      * @param auths
      * @return
      */
+    @Deprecated
     CloseableIterable<Event> query(Date start, Date end, Node node, Auths auths);
 
-    /**
+
+    CloseableIterable<Event> query(Date start, Date end, Set<String> types, Node node, Auths auths);
+
+  /**
      * If an event is already being indexed in another store, it's often useful to query a bunch
      * back in batches. This method allows the selection of specific fields.
      *

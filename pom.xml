@@ -56,6 +56,7 @@ limitations under the License.
   </properties>
   <dependencyManagement>
     <dependencies>
+
       <!-- Mango -->
       <dependency>
         <groupId>org.calrissian.mango</groupId>
@@ -72,12 +73,14 @@ limitations under the License.
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
       </dependency>
+
       <!--Json-->
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
+
       <dependency>
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
@@ -109,6 +112,7 @@ limitations under the License.
         <artifactId>kryo</artifactId>
         <version>${commons.kryo.version}</version>
       </dependency>
+
       <!-- Accumulo -->
       <dependency>
         <groupId>org.apache.accumulo</groupId>

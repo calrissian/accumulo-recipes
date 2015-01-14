@@ -24,6 +24,7 @@ import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableI
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Set;
@@ -132,14 +133,19 @@ public class AccumuloEventStore implements EventStore {
      */
     @Override
     public CloseableIterable<Event> query(Date start, Date end, Node query, final Set<String> selectFields, Auths auths) {
+        return query(start, end, Collections.singleton(""), query, selectFields, auths);
+    }
+
+    @Override
+    public CloseableIterable<Event> query(Date start, Date end, Set<String> types, Node node, Set<String> selectFields, Auths auths) {
         checkNotNull(start);
         checkNotNull(end);
-        checkNotNull(query);
+        checkNotNull(types);
+        checkNotNull(node);
         checkNotNull(auths);
 
         BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
-        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
-
+        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, types, indexScanner, shardBuilder);
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
         IteratorSetting timeFilter = new IteratorSetting(5, EventTimeLimitingFilter.class);
@@ -147,8 +153,7 @@ public class AccumuloEventStore implements EventStore {
         EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
-        CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, query,
-            helper.buildQueryXform(),selectFields,  auths);
+        CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, types, node, helper.buildQueryXform(),selectFields,  auths);
         indexScanner.close();
 
         return events;
@@ -157,6 +162,11 @@ public class AccumuloEventStore implements EventStore {
     @Override
     public CloseableIterable<Event> query(Date start, Date end, Node node, Auths auths) {
         return query(start, end, node, null, auths);
+    }
+
+    @Override
+    public CloseableIterable<Event> query(Date start, Date end, Set<String> types, Node node, Auths auths) {
+        return null;
     }
 
     /**
@@ -175,8 +185,8 @@ public class AccumuloEventStore implements EventStore {
             Collection<Range> eventRanges = new LinkedList<Range>();
 
             for (EventIndex curIndex : uuids) {
-                String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getId(), curIndex.getTimestamp()));
-                eventRanges.add(prefix(shardId, PREFIX_E + ONE_BYTE + curIndex.getId()));
+                String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getType(), curIndex.getId(), curIndex.getTimestamp()));
+                eventRanges.add(prefix(shardId, PREFIX_E + ONE_BYTE + curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
 
             eventScanner.setRanges(eventRanges);
@@ -187,8 +197,8 @@ public class AccumuloEventStore implements EventStore {
                 eventScanner.addScanIterator(iteratorSetting);
             }
 
-//            IteratorSetting setting = new IteratorSetting(17, EmptyEncodedRowFilter.class);
-//            eventScanner.addScanIterator(setting);
+            //            IteratorSetting setting = new IteratorSetting(17, EmptyEncodedRowFilter.class);
+            //            eventScanner.addScanIterator(setting);
 
             IteratorSetting setting = new IteratorSetting(18, WholeColumnQualifierIterator.class);
             eventScanner.addScanIterator(setting);

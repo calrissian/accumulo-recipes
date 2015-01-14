@@ -15,6 +15,10 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
+
 import com.esotericsoftware.kryo.Kryo;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -23,6 +27,8 @@ import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
@@ -33,20 +39,26 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
-
 public class EventQfdHelper extends QfdHelper<Event> {
+
+    public static final String FI_TYPE_KEY_SEP = "__$";
 
     public EventQfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
         ShardBuilder<Event> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<Event> keyValueIndex)
         throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
+        super(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new EventNodeToJexl(typeRegistry));
     }
 
-    @Override
-    protected String buildId(Event item) {
-        return PREFIX_E + ONE_BYTE + item.getId() + ONE_BYTE + item.getTimestamp();
+    public static class EventNodeToJexl extends NodeToJexl {
+
+        public EventNodeToJexl(TypeRegistry<String> registry) {
+            super(registry);
+        }
+
+        @Override
+        protected String buildKey(String type, String key) {
+            return buildTupleKey(type, key);
+        }
     }
 
     public QueryXform buildQueryXform() {
@@ -57,15 +69,28 @@ public class EventQfdHelper extends QfdHelper<Event> {
         return new WholeColFXForm(getKryo(), getTypeRegistry(), getMetadataSerDe());
     }
 
+    @Override
+    protected String buildId(Event item) {
+        return PREFIX_E + ONE_BYTE + item.getType() + ONE_BYTE + item.getId() + ONE_BYTE + item.getTimestamp();
+    }
 
     @Override
-    protected void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    protected String buildTupleKey(Event item, String key) {
+        return buildTupleKey(item.getType(), key);
+    }
+
+    private static final String buildTupleKey(String type, String key) {
+        return type + FI_TYPE_KEY_SEP + key;
     }
 
 
     @Override
     protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     }
+    @Override
+    protected void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    }
+
 
     public static class QueryXform extends KeyToTupleCollectionQueryXform<Event> {
 
@@ -90,13 +115,19 @@ public class EventQfdHelper extends QfdHelper<Event> {
         }
     }
 
+    @Override
+    protected Class<? extends OptimizedQueryIterator> getOptimizedQueryIteratorClass() {
+        return EventOptimizedQueryIterator.class;
+    }
+
     private static final Event createEventFromkey(Key key) {
         String cf = key.getColumnFamily().toString();
-        int uuidIdx = cf.indexOf(ONE_BYTE);
-        int tsIdx = cf.lastIndexOf(ONE_BYTE);
-        String uuid =  cf.substring(uuidIdx+1, tsIdx);
-        long ts = Long.parseLong(cf.substring(tsIdx+1, cf.length()));
-        return new BaseEvent(uuid, ts);
+        String cfParts[] = splitPreserveAllTokens(cf, ONE_BYTE);
+
+        String type = cfParts[1];
+        String uuid =  cfParts[2];
+        long ts = Long.parseLong(cfParts[3]);
+        return new BaseEvent(type, uuid, ts);
     }
 
     public static final Long parseTimestampFromKey(Key k) {
