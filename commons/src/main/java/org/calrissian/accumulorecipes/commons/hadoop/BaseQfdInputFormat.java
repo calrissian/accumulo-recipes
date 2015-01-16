@@ -56,12 +56,13 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
 
     public static final String SELECT_FIELDS = "selectFields";
 
-    protected static void configureScanner(Job job, Node query, GlobalIndexVisitor globalInexVisitor, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+    protected static void configureScanner(Job job, Set<String> types, Node query, NodeToJexl nodeToJexl, GlobalIndexVisitor globalInexVisitor,
+        TypeRegistry<String> typeRegistry, Class<? extends OptimizedQueryIterator> optimizedQueryIteratorClass)
+          throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor, typeRegistry);
-        NodeToJexl nodeToJexl = new NodeToJexl(typeRegistry);
-        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-        String originalJexl = nodeToJexl.transform(query);
+        String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
+        String originalJexl = nodeToJexl.transform(types, query);
 
         Collection<Range> ranges = new ArrayList<Range>();
         if(jexl.equals("()") || jexl.equals("")) {
@@ -73,7 +74,7 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
 
         setRanges(job, ranges);
 
-        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+        IteratorSetting setting = new IteratorSetting(16, optimizedQueryIteratorClass);
         setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
         setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 

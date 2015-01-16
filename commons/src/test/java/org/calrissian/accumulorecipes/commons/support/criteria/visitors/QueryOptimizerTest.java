@@ -15,13 +15,14 @@
  */
 package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import java.util.Collections;
+
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.junit.Test;
-
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class QueryOptimizerTest {
 
@@ -32,7 +33,7 @@ public class QueryOptimizerTest {
 
         QueryOptimizer optimizer = new QueryOptimizer(query, LEXI_TYPES);
 
-        System.out.println(new NodeToJexl(LEXI_TYPES).transform(optimizer.getOptimizedQuery()));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(Collections.singleton(""), optimizer.getOptimizedQuery()));
 
     }
 }

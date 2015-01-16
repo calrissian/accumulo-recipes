@@ -15,6 +15,18 @@
  */
 package org.calrissian.accumulorecipes.featurestore.hadoop;
 
+import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
+import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.DEFAULT_TABLE_NAME;
+import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
+import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
+import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
+import static org.calrissian.mango.io.Serializables.fromBase64;
+import static org.calrissian.mango.io.Serializables.toBase64;
+import java.io.IOException;
+import java.util.Date;
+import java.util.Map;
+
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
@@ -27,28 +39,18 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.util.Pair;
 import org.apache.accumulo.core.util.format.DefaultFormatter;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.Map;
-
-import static java.util.Collections.singleton;
-import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.DEFAULT_TABLE_NAME;
-import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
-import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
-import static org.calrissian.mango.io.Serializables.fromBase64;
-import static org.calrissian.mango.io.Serializables.toBase64;
-
 /**
- * A Hadoop {@link InputFormat} that allows any Feature to be streamed into a map/reduce job based on a given query.
+ * A Hadoop InputFormat that allows any Feature to be streamed into a map/reduce job based on a given query.
  */
 public class FeaturesInputFormat extends InputFormatBase<Key, Feature> {
 

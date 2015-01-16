@@ -15,7 +15,6 @@
 */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
-import static java.util.Arrays.asList;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -116,7 +115,10 @@ public class EventLoader extends LoadFunc implements Serializable {
                     auths = "";     // default auths to empty
                 String selectFields = getProp(queryParams, "fields");
 
-                Set<String> fields = selectFields != null ? Sets.newHashSet(asList(StringUtils.splitPreserveAllTokens(selectFields, ","))) : null;
+                String types = getProp(queryParams, "types");
+
+                Set<String> fields = selectFields != null ? Sets.newHashSet(StringUtils.splitPreserveAllTokens(selectFields, ",")) : null;
+                Set<String> finalTypes = types != null ? Sets.newHashSet(StringUtils.splitPreserveAllTokens(types, ",")) : null;
 
                 DateTime startDT = new DateTime(startTime);
                 DateTime endDT = new DateTime(endTime);
@@ -128,7 +130,7 @@ public class EventLoader extends LoadFunc implements Serializable {
                     throw new RuntimeException(e);
                 }
                 try {
-                    EventInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), qb.build());
+                    EventInputFormat.setQueryInfo(job, startDT.toDate(), endDT.toDate(), finalTypes, qb.build());
                     if(fields != null)
                         EventInputFormat.setSelectFields(conf, fields);
                 } catch (Exception e) {

@@ -15,6 +15,15 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import static com.google.common.collect.Iterables.get;
+import static com.google.common.collect.Iterables.size;
+import static com.google.common.io.Resources.getResource;
+import static java.lang.System.currentTimeMillis;
+import static java.nio.charset.Charset.defaultCharset;
+import static java.util.Collections.sort;
+import static org.calrissian.mango.json.util.store.JsonTupleStore.FlattenedLevelsComparator;
+import static org.calrissian.mango.json.util.store.JsonTupleStore.fromJson;
+import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

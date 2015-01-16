@@ -31,6 +31,7 @@ limitations under the License.
       <artifactId>blob-store</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>

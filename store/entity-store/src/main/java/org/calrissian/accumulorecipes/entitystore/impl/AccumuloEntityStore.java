@@ -25,6 +25,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_P
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
+
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -199,7 +200,8 @@ public class AccumuloEntityStore implements EntityStore {
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types);
 
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
-        CloseableIterable<Entity> entities = helper.query(scanner, globalIndexVisitor, query, helper.buildQueryXform(), selectFields, auths);
+        CloseableIterable<Entity> entities = helper.query(scanner, globalIndexVisitor, types, query,
+                helper.buildQueryXform(), selectFields, auths);
         indexScanner.close();
 
         return entities;
