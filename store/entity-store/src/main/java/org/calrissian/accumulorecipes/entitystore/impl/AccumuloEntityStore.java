@@ -144,7 +144,8 @@ public class AccumuloEntityStore implements EntityStore {
         }
     }
 
-    @Override public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Auths auths) {
+    @Override
+    public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Auths auths) {
         return get(typesAndIds, null, auths);
     }
 

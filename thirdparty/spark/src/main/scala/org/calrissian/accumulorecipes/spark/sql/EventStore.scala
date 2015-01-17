@@ -74,7 +74,6 @@ class EventStore extends RelationProvider {
 case class EventStoreTableScan(inst: String, zk: String, user: String, pass: String,
                                start: DateTime, stop: DateTime, eventType: String, @transient val sqlContext: SQLContext) extends PrunedFilteredScan {
 
-
   private val instance = new ZooKeeperInstance(inst, zk)
   private val connector = instance.getConnector(user, new PasswordToken(pass))
   private val keys = EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)

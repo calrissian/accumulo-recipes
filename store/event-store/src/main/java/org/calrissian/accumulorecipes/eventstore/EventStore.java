@@ -86,6 +86,10 @@ public interface EventStore {
      */
     CloseableIterable<Event> get(Collection<EventIndex> indexes, Set<String> selectFields, Auths auths);
 
+    CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Set<String> selectFields, Auths auths);
+
+    CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Auths auths);
+
     /**
      * Queries events back by id and timestamp.
      * @param indexes
