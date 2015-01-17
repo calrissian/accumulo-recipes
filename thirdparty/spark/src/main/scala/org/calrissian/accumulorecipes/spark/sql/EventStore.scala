@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2014 The Calrissian Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.calrissian.accumulorecipes.spark.sql
 
 import org.apache.spark.sql.sources._
@@ -29,6 +44,7 @@ import org.apache.spark.sql.sources.In
 import org.apache.spark.sql.sources.LessThan
 import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
 import org.apache.hadoop.mapreduce.Job
+import org.calrissian.mango.domain.TupleStore
 
 /**
  * A RelationProvider allowing the {@link EventStore} to be integrated directly into SparkSQL.
@@ -105,7 +121,7 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
   }
 
   private def asRow(event: Event, schema: StructType): Row = {
-    val row = new GenericMutableRow(schema.fields.length)   // Still want to keep the raw event so that we can re-explode any possibly flattened tuples later
+    val row = new TupleStoreRow(schema.fields.length, event)   // Still want to keep the raw event so that we can re-explode any possibly flattened tuples later
     schema.fields.zipWithIndex.foreach {
       case (StructField(name, dataType, _, _), i) =>
         row.update(i, enforceCorrectType(event.get(name).getValue, dataType))
@@ -113,6 +129,14 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
 
     row
   }
+
+  /**
+   * A TupleStoreRow is a wrapper around a GenericMutableRow which applies a given schema (based on the event's type)
+   * to the items in an event.
+   * @param aSize
+   * @param tupleStore
+   */
+  case class TupleStoreRow(aSize: Int, tupleStore: TupleStore) extends GenericMutableRow(aSize)
 
   private  def enforceCorrectType(value: Any, desiredType: DataType): Any ={
     if (value == null) {
@@ -159,6 +183,4 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
       case value: Date => value
     }
   }
-
-
 }
