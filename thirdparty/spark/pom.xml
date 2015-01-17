@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) 2013 The Calrissian Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.calrissian.accumulorecipes</groupId>
+    <artifactId>thirdparty</artifactId>
+    <version>2.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>thirdparty-spark</artifactId>
+  <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Spark Integration</name>
+  <description>Spark integration allows the Accumulo recipes to work in the Spark framework..</description>
+  <dependencies>
+
+    <!-- Accumulo Recipes -->
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>entity-store</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>event-store</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Spark -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.10</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_2.10</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.nscala-time</groupId>
+      <artifactId>nscala-time_2.10</artifactId>
+      <version>1.6.0</version>
+    </dependency>
+
+    <!-- Hadoop / Accumulo -->
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-minicluster</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+          <encoding>UTF-8</encoding>
+          <maxmem>1024m</maxmem>
+          <fork>true</fork>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <configuration>
+          <sourceDir>src/main/scala</sourceDir>
+          <testSourceDir>src/test/scala</testSourceDir>
+        </configuration>
+        <executions>
+          <execution>
+            <id>scala-compile-first</id>
+            <goals>
+              <goal>add-source</goal>
+              <goal>compile</goal>
+            </goals>
+            <phase>process-resources</phase>
+          </execution>
+          <execution>
+            <id>scala-test-compile</id>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <phase>process-test-resources</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
