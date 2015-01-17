@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.eventstore.hadoop;
 
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_BUILDER;
@@ -160,12 +160,12 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
       if(query == null) {
 
-          //TODO: This could be dangerous- so it may be reasonable to limit the possible number of shards
+          //TODO: This could be dangerous- so it may be reasonable to limit the possible number of shards- perhaps indexing the shards for the types would help?
           Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
           Set<Range> ranges = new HashSet<Range>();
           for(String type : types) {
               for(Text shard : shards)
-                  ranges.add(prefix(shard.toString(), PREFIX_E + NULL_BYTE + type));
+                  ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type));
           }
 
 

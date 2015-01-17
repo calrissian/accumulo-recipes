@@ -41,6 +41,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
@@ -93,7 +94,7 @@ public class EventInputFormatTest {
     }
 
   @Test
-  public void testNoQuery() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+  public void testNoQuery() throws Exception {
 
     Instance instance = new MockInstance("eventInst2");
     Connector connector = instance.getConnector("root", "".getBytes());
@@ -102,7 +103,8 @@ public class EventInputFormatTest {
     event.put(new Tuple("key1", "val1"));
     event.put(new Tuple("key2", false));
     store.save(singleton(event));
-
+    store.flush();
+      AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
     Job job = new Job(new Configuration());
     job.setJarByClass(getClass());
     job.setMapperClass(TestMapper.class);
@@ -118,7 +120,7 @@ public class EventInputFormatTest {
     job.submit();
     job.waitForCompletion(true);
 
-    System.out.println(TestMapper.entry);
+    System.out.println("RESULT: " + TestMapper.entry);
 
     assertNotNull(TestMapper.entry);
     assertEquals(TestMapper.entry.getId(), event.getId());

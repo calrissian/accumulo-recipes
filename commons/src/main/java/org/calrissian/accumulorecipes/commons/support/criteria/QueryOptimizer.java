@@ -15,7 +15,17 @@
  */
 package org.calrissian.accumulorecipes.commons.support.criteria;
 
-import org.calrissian.accumulorecipes.commons.support.criteria.visitors.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
+import java.util.Set;
+
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.CardinalityReorderVisitor;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.ExtractInNotInVisitor;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.ExtractRangesVisitor;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.NoOrNotEqualsValidator;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.QueryKeysExtractorVisitor;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.RangeSplitterVisitor;
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.domain.ParentNode;
@@ -25,13 +35,8 @@ import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.criteria.visitor.SingleClauseCollapseVisitor;
 import org.calrissian.mango.types.TypeRegistry;
 
-import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
-
 /**
- * Visit criteria to validate and config to perform the criteria against the swift event service.
+ * Visit criteria to validate and config to perform the criteria against the event service.
  */
 public class QueryOptimizer implements NodeVisitor {
 
@@ -70,6 +75,7 @@ public class QueryOptimizer implements NodeVisitor {
             }
 
             Node previous = node.clone(null);
+            runOptimizations(node);
             while(!previous.equals(node)) {
                 runOptimizations(node);
                 previous = node.clone(null);

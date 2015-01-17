@@ -15,14 +15,20 @@
  */
 package org.calrissian.accumulorecipes.test;
 
+import java.util.Collections;
+import java.util.Map;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchDeleter;
+import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
-
-import java.util.Map;
 
 public class AccumuloTestUtils {
 
@@ -38,5 +44,20 @@ public class AccumuloTestUtils {
 
     public static void dumpTable(Connector connector, String table) throws TableNotFoundException {
         dumpTable(connector, table, new Authorizations());
+    }
+
+    public static void clearTable(Connector connector, String table) throws AccumuloException, TableNotFoundException, AccumuloSecurityException {
+
+        Authorizations userAuths = connector.securityOperations().getUserAuthorizations(connector.whoami());
+
+        BatchDeleter batchDelete = connector.createBatchDeleter("eventStore_index", userAuths, 1, new BatchWriterConfig());
+        batchDelete.setRanges(Collections.singleton(new Range()));
+        batchDelete.delete();
+        batchDelete.close();
+
+        batchDelete = connector.createBatchDeleter("eventStore_shard", userAuths, 1, new BatchWriterConfig());
+        batchDelete.setRanges(Collections.singleton(new Range()));
+        batchDelete.delete();
+        batchDelete.close();
     }
 }

@@ -15,38 +15,31 @@
  */
 package org.calrissian.accumulorecipes.spark.sql
 
-import org.apache.spark.sql.sources._
-import org.apache.spark.sql.{StructType, Row, SQLContext}
-import org.apache.spark.rdd.RDD
-import org.calrissian.mango.criteria.builder.QueryBuilder
-import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat
-import org.apache.accumulo.core.security.Authorizations
-import org.joda.time.DateTime
-import org.calrissian.accumulorecipes.commons.hadoop.{EventWritable, BaseQfdInputFormat}
-import org.apache.accumulo.core.data.Key
-import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex
+import java.util.Date
+
 import org.apache.accumulo.core.client.ZooKeeperInstance
 import org.apache.accumulo.core.client.security.tokens.PasswordToken
-import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
+import org.apache.accumulo.core.data.Key
+import org.apache.accumulo.core.security.Authorizations
+import org.apache.hadoop.mapreduce.Job
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
+import org.apache.spark.sql.catalyst.types.{StructField, _}
+import org.apache.spark.sql.sources.{EqualTo, GreaterThan, GreaterThanOrEqual, In, LessThan, LessThanOrEqual, _}
+import org.apache.spark.sql.{Row, SQLContext, StructType}
 import org.calrissian.accumulorecipes.commons.domain.Auths
+import org.calrissian.accumulorecipes.commons.hadoop.{BaseQfdInputFormat, EventWritable}
+import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat
+import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
+import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex
+import org.calrissian.mango.criteria.builder.QueryBuilder
+import org.calrissian.mango.domain.TupleStore
+import org.calrissian.mango.domain.event.Event
+import org.calrissian.mango.types.encoders.AliasConstants._
+import org.joda.time.DateTime
+
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters.setAsJavaSetConverter
-import org.calrissian.mango.types.encoders.AliasConstants._
-import org.apache.spark.sql.catalyst.types._
-import org.calrissian.mango.domain.event.Event
-import java.util.Date
-import org.apache.spark.sql.catalyst.types.StructField
-import org.apache.spark.sql.sources.EqualTo
-import org.apache.spark.sql.sources.GreaterThan
-import org.apache.spark.sql.sources.GreaterThanOrEqual
-import org.apache.spark.sql.sources.LessThanOrEqual
-import org.apache.spark.sql.sources.In
-import org.apache.spark.sql.sources.LessThan
-import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
-import org.apache.hadoop.mapreduce.Job
-import org.calrissian.mango.domain.TupleStore
-import org.apache.accumulo.core.client.mapreduce.{AbstractInputFormat, AccumuloInputFormat}
-import com.google.common.collect.Iterables
 
 /**
  * A RelationProvider allowing the {@link EventStore} to be integrated directly into SparkSQL.
@@ -78,29 +71,32 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
 
 
   val internalSchema: StructType = parseSchema()
-  override def schema: StructType = internalSchema
+  override def schema: StructType = {
+    println("RETURNING SCHEMA: " + internalSchema.json)
+    internalSchema
+  }
 
   private def parseSchema(): StructType = {
 
     val instance = new ZooKeeperInstance(inst, zk)
     val connector = instance.getConnector(user, new PasswordToken(pass))
-    val keys = EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
+    val keyValueIndex = EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
+    val keys = keyValueIndex.toList
 
-    System.out.println("KEYS: "+Iterables.size(keys))
+    keyValueIndex.closeQuietly()
 
     // turn keys into StructType
-    val schema = StructType(keys.map(it => (it.getOne, it.getTwo)).collect(_ match {
-      case (key, value) if value == INTEGER_ALIAS => StructField(key, IntegerType)
-      case (key, value) if value == BOOLEAN_ALIAS => StructField(key, BooleanType)
-      case (key, value) if value == BYTE_ALIAS => StructField(key, ByteType)
-      case (key, value) if value == DATE_ALIAS => StructField(key, DateType)
-      case (key, value) if value == DOUBLE_ALIAS => StructField(key, DoubleType)
-      case (key, value) if value == FLOAT_ALIAS => StructField(key, FloatType)
-      case (key, value) if value == LONG_ALIAS => StructField(key, LongType)
-      case (key, value) if value == STRING_ALIAS => StructField(key, StringType)
-    }).toSeq)
+    val schema = StructType(keys.map(it => (it.getOne, it.getTwo)).collect {
+      case (key: String, value) if value == INTEGER_ALIAS => StructField(key, IntegerType)
+      case (key: String, value) if value == BOOLEAN_ALIAS => StructField(key, BooleanType)
+      case (key: String, value) if value == BYTE_ALIAS => StructField(key, ByteType)
+      case (key: String, value) if value == DATE_ALIAS => StructField(key, DateType)
+      case (key: String, value) if value == DOUBLE_ALIAS => StructField(key, DoubleType)
+      case (key: String, value) if value == FLOAT_ALIAS => StructField(key, FloatType)
+      case (key: String, value) if value == LONG_ALIAS => StructField(key, LongType)
+      case (key: String, value) if value == STRING_ALIAS => StructField(key, StringType)
+    }.toList)
 
-    System.out.println("SCHEMA: " + schema.json)
     schema
   }
 
@@ -117,9 +113,6 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
       case In(attr, values) => andNode = andNode.in(attr, values)
     })
 
-    System.out.println("FIELDS: " + columns.toList.toString)
-    System.out.println("FILTERS: " + filters.toList.toString)
-
     val conf = sqlContext.sparkContext.hadoopConfiguration
     val job = new Job(conf)
     EventInputFormat.setInputInfo(job, user, pass.getBytes, new Authorizations)
@@ -128,20 +121,35 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
       EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType), andNode.end.build)
     else
       EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType))
+    BaseQfdInputFormat.setSelectFields(job.getConfiguration, setAsJavaSet(columns.toSet))
 
     // translate from Event into Row
     sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[EventInputFormat], classOf[Key], classOf[EventWritable])
       .map(_._2.get())
-      .filter(it => columns.filter(it.containsKey).size == columns.size) // TODO: Get this filtering into an iterator
-      .map(it => asRow(it, schema))
+      .map(it => {
+
+        println(it)
+        asRow(it, schema, columns)
+      })
   }
 
-  private def asRow(event: Event, schema: StructType): Row = {
+  private def asRow(event: Event, schema: StructType, columns: Array[String]): Row = {
+    /**
+     * The framework depends on the values being placed into the row in the same order in which they appear in the requiredColumns array.
+     * Making a note here in case this is changed in the future- because it took a while to figure out.
+     */
     val row = new TupleStoreRow(schema.fields.length, event)   // Still want to keep the raw event so that we can re-explode any possibly flattened tuples later
-    schema.fields.zipWithIndex.foreach {
-      case (StructField(name, dataType, _, _), i) =>
-        row.update(i, enforceCorrectType(event.get(name).getValue, dataType))
-    }
+    columns.zipWithIndex.foreach (it => {
+      val schemaField = schema.apply(it._1)
+      schemaField match {
+        case StructField(name, dataType, _, _)=> {
+          val attr = event.get(name)
+          row.update(it._2, enforceCorrectType((if(attr != null) attr.getValue else null), dataType))
+        }
+      }
+    })
+
+    println(row)
 
     row
   }
@@ -161,15 +169,22 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
       desiredType match {
         case StringType => toString(value)
         case _ if value == null || value == "" => null // guard the non string type
-        case IntegerType => value.asInstanceOf[Int]
+        case IntegerType => toInt(value)
         case LongType => toLong(value)
         case DoubleType => toDouble(value)
-        case BooleanType => value.asInstanceOf[Boolean]
+        case BooleanType => value.asInstanceOf[java.lang.Boolean].asInstanceOf[Boolean]
         case DateType => toDate(value)
       }
     }
   }
 
+
+  private def toInt(value: Any): Int = {
+    value match {
+      case value: java.lang.Integer => value.asInstanceOf[Int]
+      case value: java.lang.Long => value.asInstanceOf[Long].toInt
+    }
+  }
 
   private def toLong(value: Any): Long = {
     value match {

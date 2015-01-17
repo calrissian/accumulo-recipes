@@ -64,6 +64,8 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
         String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
         String originalJexl = nodeToJexl.transform(types, query);
 
+        System.out.println("ORIGINAL JEXL: "+ originalJexl);
+        System.out.println("OPTIMIZED JEXL: "+ jexl);
         Collection<Range> ranges = new ArrayList<Range>();
         if(jexl.equals("()") || jexl.equals("")) {
             ranges.add(new Range(END_BYTE));
