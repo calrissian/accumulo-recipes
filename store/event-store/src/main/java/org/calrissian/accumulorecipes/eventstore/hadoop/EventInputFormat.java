@@ -89,6 +89,10 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
         setScanAuthorizations(job, auths);
     }
 
+    public static void setZooKeeperInstanceInfo(Job job, String inst, String zk) {
+        setZooKeeperInstance(job, inst, zk);
+    }
+
     /**
      * Sets up the job to stream all events between the start and end times for the types given
      * @param job

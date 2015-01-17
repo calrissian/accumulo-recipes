@@ -45,6 +45,8 @@ import org.apache.spark.sql.sources.LessThan
 import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
 import org.apache.hadoop.mapreduce.Job
 import org.calrissian.mango.domain.TupleStore
+import org.apache.accumulo.core.client.mapreduce.{AbstractInputFormat, AccumuloInputFormat}
+import com.google.common.collect.Iterables
 
 /**
  * A RelationProvider allowing the {@link EventStore} to be integrated directly into SparkSQL.
@@ -74,17 +76,20 @@ class EventStore extends RelationProvider {
 case class EventStoreTableScan(inst: String, zk: String, user: String, pass: String,
                                start: DateTime, stop: DateTime, eventType: String, @transient val sqlContext: SQLContext) extends PrunedFilteredScan {
 
-  private val instance = new ZooKeeperInstance(inst, zk)
-  private val connector = instance.getConnector(user, new PasswordToken(pass))
-  private val keys = EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
 
-  private val internalSchema: StructType = parseSchema()
-
+  val internalSchema: StructType = parseSchema()
   override def schema: StructType = internalSchema
 
   private def parseSchema(): StructType = {
+
+    val instance = new ZooKeeperInstance(inst, zk)
+    val connector = instance.getConnector(user, new PasswordToken(pass))
+    val keys = EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
+
+    System.out.println("KEYS: "+Iterables.size(keys))
+
     // turn keys into StructType
-    StructType(keys.map(it => (it.getOne, it.getTwo)).collect(_ match {
+    val schema = StructType(keys.map(it => (it.getOne, it.getTwo)).collect(_ match {
       case (key, value) if value == INTEGER_ALIAS => StructField(key, IntegerType)
       case (key, value) if value == BOOLEAN_ALIAS => StructField(key, BooleanType)
       case (key, value) if value == BYTE_ALIAS => StructField(key, ByteType)
@@ -94,6 +99,9 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
       case (key, value) if value == LONG_ALIAS => StructField(key, LongType)
       case (key, value) if value == STRING_ALIAS => StructField(key, StringType)
     }).toSeq)
+
+    System.out.println("SCHEMA: " + schema.json)
+    schema
   }
 
   override def buildScan(columns: Array[String], filters: Array[Filter]): RDD[Row] = {
@@ -109,17 +117,23 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
       case In(attr, values) => andNode = andNode.in(attr, values)
     })
 
+    System.out.println("FIELDS: " + columns.toList.toString)
+    System.out.println("FILTERS: " + filters.toList.toString)
+
     val conf = sqlContext.sparkContext.hadoopConfiguration
     val job = new Job(conf)
     EventInputFormat.setInputInfo(job, user, pass.getBytes, new Authorizations)
+    EventInputFormat.setZooKeeperInstanceInfo(job, inst, zk)
     if(filters.size > 0)
       EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType), andNode.end.build)
     else
       EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType))
-    BaseQfdInputFormat.setSelectFields(conf, columns.toSet.asJava)
 
     // translate from Event into Row
-    sqlContext.sparkContext.newAPIHadoopRDD(conf, classOf[EventInputFormat], classOf[Key], classOf[EventWritable]).map(it => asRow(it._2.get(), schema))
+    sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[EventInputFormat], classOf[Key], classOf[EventWritable])
+      .map(_._2.get())
+      .filter(it => columns.filter(it.containsKey).size == columns.size) // TODO: Get this filtering into an iterator
+      .map(it => asRow(it, schema))
   }
 
   private def asRow(event: Event, schema: StructType): Row = {
@@ -147,10 +161,10 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
       desiredType match {
         case StringType => toString(value)
         case _ if value == null || value == "" => null // guard the non string type
-        case IntegerType => value.asInstanceOf[IntegerType.type]
+        case IntegerType => value.asInstanceOf[Int]
         case LongType => toLong(value)
         case DoubleType => toDouble(value)
-        case BooleanType => value.asInstanceOf[BooleanType.type]
+        case BooleanType => value.asInstanceOf[Boolean]
         case DateType => toDate(value)
       }
     }
