@@ -112,7 +112,10 @@ case class EventStoreTableScan(inst: String, zk: String, user: String, pass: Str
     val conf = sqlContext.sparkContext.hadoopConfiguration
     val job = new Job(conf)
     EventInputFormat.setInputInfo(job, user, pass.getBytes, new Authorizations)
-    EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType), andNode.end.build)
+    if(filters.size > 0)
+      EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType), andNode.end.build)
+    else
+      EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType))
     BaseQfdInputFormat.setSelectFields(conf, columns.toSet.asJava)
 
     // translate from Event into Row

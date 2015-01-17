@@ -17,6 +17,7 @@ package org.calrissian.accumulorecipes.eventstore.hadoop;
 
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_BUILDER;
@@ -89,7 +90,7 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
     }
 
     /**
-     * Sets up the job to stream all events between the start and end times
+     * Sets up the job to stream all events between the start and end times for the types given
      * @param job
      * @param start
      * @param end
@@ -158,8 +159,10 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
           //TODO: This could be dangerous- so it may be reasonable to limit the possible number of shards
           Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
           Set<Range> ranges = new HashSet<Range>();
-          for(Text shard : shards)
-            ranges.add(prefix(shard.toString(), PREFIX_E));
+          for(String type : types) {
+              for(Text shard : shards)
+                  ranges.add(prefix(shard.toString(), PREFIX_E + NULL_BYTE + type));
+          }
 
 
 
