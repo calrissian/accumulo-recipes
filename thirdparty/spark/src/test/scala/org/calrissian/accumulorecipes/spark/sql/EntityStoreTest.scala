@@ -21,19 +21,18 @@ import org.apache.accumulo.minicluster.impl.MiniAccumuloClusterImpl
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.{SparkConf, SparkContext}
-import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
+import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils
 import org.calrissian.mango.domain.Tuple
-import org.calrissian.mango.domain.event.BaseEvent
-import org.joda.time.DateTime
+import org.calrissian.mango.domain.entity.BaseEntity
 import org.junit._
 import org.junit.rules.TemporaryFolder
 
-object EventStoreTest {
+object EntityStoreTest {
 
   private val tempDir = new TemporaryFolder()
   private var miniCluster: MiniAccumuloClusterImpl = _
-  private var eventStore:AccumuloEventStore = _
+  private var entityStore: AccumuloEntityStore = _
   private var sparkContext: SparkContext = _
   private var sqlContext: SQLContext = _
 
@@ -44,9 +43,9 @@ object EventStoreTest {
     miniCluster = new MiniAccumuloClusterImpl(tempDir.getRoot, "secret")
     miniCluster.start
 
-    eventStore = new AccumuloEventStore(miniCluster.getConnector("root", "secret"))
+    entityStore = new AccumuloEntityStore(miniCluster.getConnector("root", "secret"))
 
-    val sparkConf = new SparkConf().setMaster("local").setAppName("TestEventStoreSQL")
+    val sparkConf = new SparkConf().setMaster("local").setAppName("TestEntityStoreSQL")
     sparkContext = new SparkContext(sparkConf)
     sqlContext = new SQLContext(sparkContext)
   }
@@ -55,27 +54,25 @@ object EventStoreTest {
 
     sqlContext.sql(
       s"""
-        |CREATE TEMPORARY TABLE events
-        |USING org.calrissian.accumulorecipes.spark.sql.EventStore
+        |CREATE TEMPORARY TABLE entities
+        |USING org.calrissian.accumulorecipes.spark.sql.EntityStore
         |OPTIONS (
         | inst '${miniCluster.getInstanceName}',
         | zk '${miniCluster.getZooKeepers}',
         | user 'root',
         | pass 'secret',
-        | type 'type',
-        | start '${new DateTime(System.currentTimeMillis() - 5000)}',
-        | end '${new DateTime(System.currentTimeMillis() + 5000)}'
+        | type 'type'
         |)
       """.stripMargin)
   }
 
-  private def persistEvents = {
-    val event = new BaseEvent("type", "id")
-    event.put(new Tuple("key1", "val1"))
-    event.put(new Tuple("key2", 5))
+  private def persistEntities = {
+    val entity = new BaseEntity("type", "id")
+    entity.put(new Tuple("key1", "val1"))
+    entity.put(new Tuple("key2", 5))
 
-    eventStore.save(Collections.singleton(event))
-    eventStore.flush()
+    entityStore.save(Collections.singleton(entity))
+    entityStore.flush()
   }
 
   @AfterClass
@@ -86,27 +83,27 @@ object EventStoreTest {
   }
 
 }
-class EventStoreTest {
+class EntityStoreTest {
 
-  import org.calrissian.accumulorecipes.spark.sql.EventStoreTest._
+  import org.calrissian.accumulorecipes.spark.sql.EntityStoreTest._
 
   @Before
   def setupTest: Unit = {
-    persistEvents
+    persistEntities
     createTempTable
   }
 
   @After
   def teardownTest: Unit = {
-    sqlContext.dropTempTable("events")
-    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "eventStore_shard")
-    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "eventStore_index")
+    sqlContext.dropTempTable("entities")
+    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "entity_shard")
+    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "entity_index")
   }
 
   @Test
   def testSelectionAndWhereWithAndOperator() {
 
-    val rows = sqlContext.sql("SELECT key2,key1 FROM events WHERE (key1 = 'val1' and key2 >= 5)").collect
+    val rows = sqlContext.sql("SELECT key2,key1 FROM entities WHERE (key1 = 'val1' and key2 >= 5)").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals(5, rows(0).getAs[Int](0))
@@ -116,7 +113,7 @@ class EventStoreTest {
   @Test
   def testSelectAndWhereSingleOperator() {
 
-    val rows = sqlContext.sql("SELECT key1,key2 FROM events WHERE (key1 = 'val1')").collect
+    val rows = sqlContext.sql("SELECT key1,key2 FROM entities WHERE (key1 = 'val1')").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals(5, rows(0).getAs[Int](1))
@@ -126,7 +123,7 @@ class EventStoreTest {
   @Test
   def testSelectionOnlyMultipleFields() {
 
-    val rows = sqlContext.sql("SELECT key1,key2 FROM events").collect
+    val rows = sqlContext.sql("SELECT key1,key2 FROM entities").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals(5, rows(0).getAs[Int](1))
@@ -135,18 +132,18 @@ class EventStoreTest {
 
   @Test
   def testFieldInSchemaMissingFromEventIsNull: Unit = {
-    val event = new BaseEvent("type", "id2")
-    event.put(new Tuple("key1", "val2"))
-    event.put(new Tuple("key2", 10))
-    event.put(new Tuple("key3", 5))
-    eventStore.save(Collections.singleton(event))
-    eventStore.flush
+    val entity = new BaseEntity("type", "id2")
+    entity.put(new Tuple("key1", "val2"))
+    entity.put(new Tuple("key2", 10))
+    entity.put(new Tuple("key3", 5))
+    entityStore.save(Collections.singleton(entity))
+    entityStore.flush
 
     // Reset temporary table to provide updated schema
-    sqlContext.dropTempTable("events")
+    sqlContext.dropTempTable("entities")
     createTempTable
 
-    val rows = sqlContext.sql("SELECT * FROM events WHERE key2 >= 5 ORDER BY key2 ASC").collect
+    val rows = sqlContext.sql("SELECT * FROM entities WHERE key2 >= 5 ORDER BY key2 ASC").collect
 
     Assert.assertEquals(2, rows.length)
     Assert.assertNull(rows(0).apply(2)) // the event missing key3 should sort first given the orderBy
@@ -156,7 +153,7 @@ class EventStoreTest {
   @Test
   def testSelectionOnlySingleField = {
 
-    val rows = sqlContext.sql("SELECT key1 FROM events").collect
+    val rows = sqlContext.sql("SELECT key1 FROM entities").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals("val1", rows(0).getAs(0))
@@ -165,7 +162,7 @@ class EventStoreTest {
   @Test
   def testNoSelectionAndNoWhereClause = {
 
-    val rows = sqlContext.sql("SELECT * FROM events").collect
+    val rows = sqlContext.sql("SELECT * FROM entities").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals(5, rows(0).getAs[Int](1))
@@ -173,10 +170,10 @@ class EventStoreTest {
   }
 
   @Test(expected = classOf[TreeNodeException[_]])
-  def testSelectFieldNotInSchema: Unit = sqlContext.sql("SELECT doesntExist FROM events").collect
+  def testSelectFieldNotInSchema: Unit = sqlContext.sql("SELECT doesntExist FROM entities").collect
 
   @Test
-  def testWhereClauseNoMatches: Unit = Assert.assertEquals(0, sqlContext.sql("SELECT * FROM events WHERE key2 > 5").collect.length)
+  def testWhereClauseNoMatches: Unit = Assert.assertEquals(0, sqlContext.sql("SELECT * FROM entities WHERE key2 > 5").collect.length)
 
 
 }

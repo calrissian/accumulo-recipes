@@ -76,6 +76,11 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         setScanAuthorizations(job, auths);
     }
 
+    public static void setZooKeeperInstanceInfo(Job job, String inst, String zk) {
+        setZooKeeperInstance(job, inst, zk);
+    }
+
+
     public static void setQueryInfo(Job job, Set<String> entityTypes, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
         setQueryInfo(job, entityTypes, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }

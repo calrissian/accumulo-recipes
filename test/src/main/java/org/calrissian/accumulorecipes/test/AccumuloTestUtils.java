@@ -50,12 +50,12 @@ public class AccumuloTestUtils {
 
         Authorizations userAuths = connector.securityOperations().getUserAuthorizations(connector.whoami());
 
-        BatchDeleter batchDelete = connector.createBatchDeleter("eventStore_index", userAuths, 1, new BatchWriterConfig());
+        BatchDeleter batchDelete = connector.createBatchDeleter(table, userAuths, 1, new BatchWriterConfig());
         batchDelete.setRanges(Collections.singleton(new Range()));
         batchDelete.delete();
         batchDelete.close();
 
-        batchDelete = connector.createBatchDeleter("eventStore_shard", userAuths, 1, new BatchWriterConfig());
+        batchDelete = connector.createBatchDeleter(table, userAuths, 1, new BatchWriterConfig());
         batchDelete.setRanges(Collections.singleton(new Range()));
         batchDelete.delete();
         batchDelete.close();

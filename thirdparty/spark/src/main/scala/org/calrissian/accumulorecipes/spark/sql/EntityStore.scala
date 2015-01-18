@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Calrissian Authors
+ * Copyright (C) 2014 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,21 +28,19 @@ import org.apache.spark.sql.catalyst.types.{StructField, _}
 import org.apache.spark.sql.sources.{EqualTo, GreaterThan, GreaterThanOrEqual, In, LessThan, LessThanOrEqual, _}
 import org.apache.spark.sql.{Row, SQLContext, StructType}
 import org.calrissian.accumulorecipes.commons.domain.Auths
-import org.calrissian.accumulorecipes.commons.hadoop.{BaseQfdInputFormat, EventWritable}
-import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat
-import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
-import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex
+import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat
+import org.calrissian.accumulorecipes.entitystore.hadoop.EntityInputFormat
+import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore
+import org.calrissian.accumulorecipes.entitystore.model.EntityWritable
 import org.calrissian.mango.criteria.builder.QueryBuilder
-import org.calrissian.mango.domain.TupleStore
-import org.calrissian.mango.domain.event.Event
+import org.calrissian.mango.domain.entity.Entity
 import org.calrissian.mango.types.encoders.AliasConstants._
 import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters.setAsJavaSetConverter
 
 /**
- * A RelationProvider allowing the {@link EventStore} to be integrated directly into SparkSQL.
+ * A RelationProvider allowing the {@link EntityStore} to be integrated directly into SparkSQL.
  * Some lightweight setup needs to be done in order to properly wire up the input format which
  * will ultimately be used
  *
@@ -53,39 +51,33 @@ import scala.collection.JavaConverters.setAsJavaSetConverter
  *  zk    'zookeepers',
  *  user  'username',
  *  pass  'password',
- *  start '2014-01-02',
- *  end   '2014-01-15',
- *  type  'eventType'
+ *  type  'entityType'
  * )
  */
-class EventStore extends RelationProvider {
+class EntityStore extends RelationProvider {
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
-    EventStoreScan(parameters("inst"), parameters("zk"), parameters("user"), parameters("pass"),
-                        DateTime.parse(parameters("start")), DateTime.parse(parameters("end")), parameters("type"), sqlContext)
+    EntityStoreScan(parameters("inst"), parameters("zk"), parameters("user"), parameters("pass"),
+      parameters("type"), sqlContext)
   }
 }
 
-case class EventStoreScan(inst: String, zk: String, user: String, pass: String,
-                               start: DateTime, stop: DateTime, eventType: String,
-                               @transient val sqlContext: SQLContext) extends PrunedFilteredScan {
-
+case class EntityStoreScan(inst: String, zk: String, user: String, pass: String,
+                           entityType: String,
+                           @transient val sqlContext: SQLContext) extends PrunedFilteredScan {
   val internalSchema: StructType = parseSchema()
-  override def schema: StructType = {
-    println("RETURNING SCHEMA: " + internalSchema.json)
-    internalSchema
-  }
+  override def schema: StructType = internalSchema
 
   private def parseSchema(): StructType = {
 
     val instance = new ZooKeeperInstance(inst, zk)
     val connector = instance.getConnector(user, new PasswordToken(pass))
-    val keyValueIndex = EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
+
+    val keyValueIndex = new AccumuloEntityStore(connector).keys(entityType, new Auths)
     val keys = keyValueIndex.toList
 
     keyValueIndex.closeQuietly()
 
-    // turn keys into StructType
     val schema = StructType(keys.map(it => (it.getOne, it.getTwo)).collect {
       case (key: String, value) if value == INTEGER_ALIAS => StructField(key, IntegerType)
       case (key: String, value) if value == BOOLEAN_ALIAS => StructField(key, BooleanType)
@@ -115,25 +107,23 @@ case class EventStoreScan(inst: String, zk: String, user: String, pass: String,
 
     val conf = sqlContext.sparkContext.hadoopConfiguration
     val job = new Job(conf)
-    EventInputFormat.setInputInfo(job, user, pass.getBytes, new Authorizations)
-    EventInputFormat.setZooKeeperInstanceInfo(job, inst, zk)
+    EntityInputFormat.setInputInfo(job, user, pass.getBytes, new Authorizations)
+    EntityInputFormat.setZooKeeperInstanceInfo(job, inst, zk)
     if(filters.size > 0)
-      EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType), andNode.end.build)
+      EntityInputFormat.setQueryInfo(job, Set(entityType), andNode.end.build)
     else
-      EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType))
+      EntityInputFormat.setQueryInfo(job, Set(entityType))
     BaseQfdInputFormat.setSelectFields(job.getConfiguration, setAsJavaSet(columns.toSet))
 
     // translate from Event into Row
-    sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[EventInputFormat], classOf[Key], classOf[EventWritable])
+    sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[EntityInputFormat], classOf[Key], classOf[EntityWritable])
       .map(_._2.get())
       .map(it => {
-
-        println(it)
-        asRow(it, schema, columns)
-      })
+      asRow(it, schema, columns)
+    })
   }
 
-  private def asRow(event: Event, schema: StructType, columns: Array[String]): Row = {
+  private def asRow(entity: Entity, schema: StructType, columns: Array[String]): Row = {
     /**
      * The framework depends on the values being placed into the row in the same order in which they appear in the requiredColumns array.
      * Making a note here in case this is changed in the future- because it took a while to figure out.
@@ -143,7 +133,7 @@ case class EventStoreScan(inst: String, zk: String, user: String, pass: String,
       val schemaField = schema.apply(it._1)
       schemaField match {
         case StructField(name, dataType, _, _)=> {
-          val attr = event.get(name)
+          val attr = entity.get(name)
           row.update(it._2, enforceCorrectType((if(attr != null) attr.getValue else null), dataType))
         }
       }
