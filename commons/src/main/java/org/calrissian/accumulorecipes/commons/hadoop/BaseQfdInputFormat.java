@@ -51,8 +51,12 @@ import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIn
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settable> extends InputFormatBase<Key, W> {
+
+    public static final Logger log = LoggerFactory.getLogger(BaseQfdInputFormat.class);
 
     public static final String SELECT_FIELDS = "selectFields";
 
@@ -64,8 +68,9 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
         String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
         String originalJexl = nodeToJexl.transform(types, query);
 
-        System.out.println("ORIGINAL JEXL: "+ originalJexl);
-        System.out.println("OPTIMIZED JEXL: "+ jexl);
+        log.debug("Original Jexl: "+ originalJexl);
+        log.debug("Optimized Jexl: "+ jexl);
+
         Collection<Range> ranges = new ArrayList<Range>();
         if(jexl.equals("()") || jexl.equals("")) {
             ranges.add(new Range(END_BYTE));

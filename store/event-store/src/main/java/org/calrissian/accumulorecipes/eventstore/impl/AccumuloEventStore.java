@@ -112,7 +112,7 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
-     * Events getAllByType save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
+     * Events get saved into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
      * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
      *
      * @param events
@@ -172,7 +172,7 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
-     * This method will batch getAllByType a bunch of events by uuid (and optionally timestamp). If another store is used to
+     * This method will batch get a bunch of events by uuid (and optionally timestamp). If another store is used to
      * index into events in this store in a specially designed way (i.e. getting the last-n events, etc...) then
      * the most optimal way to store the index would be the UUID and the timestamp. However, if all that is known
      * about an event is the uuid, this method will do the extra fetch of the timestamp from the index table.
