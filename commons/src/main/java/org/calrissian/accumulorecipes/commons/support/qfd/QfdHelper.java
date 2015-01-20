@@ -137,7 +137,7 @@ public abstract class QfdHelper<T extends Entity> {
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
-            connector.tableOperations().create(this.shardTable, true);
+            connector.tableOperations().create(this.shardTable, false);
             configureShardTable(connector, this.shardTable);
         }
 
@@ -184,10 +184,7 @@ public abstract class QfdHelper<T extends Entity> {
 
         try {
 
-            Multimap<ObjectVisCacheKey,Map<String,Object>> tupleByObjectCache;
-
             for (T item : items) {
-
 
                 //If there are no getTuples then don't write anything to the data store.
                 if (item.size() > 0) {
@@ -229,7 +226,6 @@ public abstract class QfdHelper<T extends Entity> {
                   }
                   shardWriter.addMutation(shardMutation);
                 }
-
             }
             keyValueIndex.indexKeyValues(items);
 
@@ -391,12 +387,9 @@ public abstract class QfdHelper<T extends Entity> {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-
             ObjectVisCacheKey that = (ObjectVisCacheKey) o;
-
             if (obj != null ? !obj.equals(that.obj) : that.obj != null)
                 return false;
-
             if (vis != null ? !vis.equals(that.vis) : that.vis != null)
                 return false;
             return true;

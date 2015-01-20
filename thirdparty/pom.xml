@@ -25,6 +25,7 @@ limitations under the License.
   <packaging>pom</packaging>
   <modules>
     <module>pig</module>
+    <module>spark</module>
     <module>tinkerpop</module>
   </modules>
 </project>

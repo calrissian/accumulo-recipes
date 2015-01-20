@@ -98,12 +98,12 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
             String shardId = shardBuilder.buildShard(item);
             for (Tuple tuple : item.getTuples()) {
                 String[] strings = new String[]{
-                        shardId,
-                        tuple.getKey(),
-                        typeRegistry.getAlias(tuple.getValue()),
-                        typeRegistry.encode(tuple.getValue()),
-                        getVisibility(tuple, ""),
-                        item.getType()
+                    shardId,
+                    tuple.getKey(),
+                    typeRegistry.getAlias(tuple.getValue()),
+                    typeRegistry.encode(tuple.getValue()),
+                    getVisibility(tuple, ""),
+                    item.getType()
                 };
 
                 String cacheKey = join(strings, ONE_BYTE);
@@ -153,18 +153,22 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
     }
 
     public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths) {
+        return uniqueKeys(connector, indexTable, prefix, type, config.getMaxQueryThreads(), auths);
+    }
+
+    public static CloseableIterable<Pair<String,String>> uniqueKeys(Connector connector, String indexTable, String prefix, String type, int maxQueryThreads, Auths auths) {
 
         checkNotNull(prefix);
         checkNotNull(auths);
 
         try {
-            BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+            BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), maxQueryThreads);
             IteratorSetting setting = new IteratorSetting(15, EventGlobalIndexUniqueKVIterator.class);
             scanner.addScanIterator(setting);
 
             scanner.setRanges(singletonList(
-                new Range(INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.NULL_BYTE,
-                          INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.END_BYTE))
+                    new Range(INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.NULL_BYTE,
+                        INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.END_BYTE))
             );
 
             return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
@@ -181,25 +185,25 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
 
     public CloseableIterable<String> getTypes(Auths auths) {
 
-      checkNotNull(auths);
+        checkNotNull(auths);
 
-      try {
-        BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
-        IteratorSetting setting = new IteratorSetting(15, EventGlobalIndexTypesIterator.class);
-        scanner.addScanIterator(setting);
+        try {
+            BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+            IteratorSetting setting = new IteratorSetting(15, EventGlobalIndexTypesIterator.class);
+            scanner.addScanIterator(setting);
 
-        scanner.setRanges(singletonList(new Range(INDEX_K + INDEX_SEP, INDEX_K + INDEX_SEP + "\uffff")));
+            scanner.setRanges(singletonList(new Range(INDEX_K + INDEX_SEP, INDEX_K + INDEX_SEP + "\uffff")));
 
-        return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, String>() {
-          @Override
-          public String apply(Map.Entry<Key, Value> keyValueEntry) {
-            String[] parts = StringUtils.splitByWholeSeparatorPreserveAllTokens(keyValueEntry.getKey().getRow().toString(), INDEX_SEP);
-            return parts[1];
-          }
-        });
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+            return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, String>() {
+                @Override
+                public String apply(Map.Entry<Key, Value> keyValueEntry) {
+                    String[] parts = StringUtils.splitByWholeSeparatorPreserveAllTokens(keyValueEntry.getKey().getRow().toString(), INDEX_SEP);
+                    return parts[1];
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
