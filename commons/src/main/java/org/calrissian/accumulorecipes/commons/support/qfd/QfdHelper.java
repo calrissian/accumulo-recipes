@@ -74,12 +74,12 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.TupleStore;
+import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
 
 
-public abstract class QfdHelper<T extends TupleStore> {
+public abstract class QfdHelper<T extends Entity> {
 
 
     private static final Kryo kryo = new Kryo();
@@ -98,7 +98,7 @@ public abstract class QfdHelper<T extends TupleStore> {
 
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
         ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
-        MetadataSerdeFactory metadaSerdeFactory)
+        MetadataSerdeFactory metadaSerdeFactory, NodeToJexl nodeToJexl)
         throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         checkNotNull(connector);
@@ -118,7 +118,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         this.shardBuilder = shardBuilder;
         this.typeRegistry = typeRegistry;
         this.keyValueIndex = keyValueIndex;
-        this.nodeToJexl = new NodeToJexl(typeRegistry);
+        this.nodeToJexl = nodeToJexl;
 
         this.metadataSerDe = metadaSerdeFactory.create();
         this.metadataSerdeFactory = metadaSerdeFactory;
@@ -137,7 +137,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
-            connector.tableOperations().create(this.shardTable, true);
+            connector.tableOperations().create(this.shardTable, false);
             configureShardTable(connector, this.shardTable);
         }
 
@@ -148,9 +148,9 @@ public abstract class QfdHelper<T extends TupleStore> {
 
 
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex)
+        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex, NodeToJexl nodeToJexl)
         throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerdeFactory());
+        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerdeFactory(), nodeToJexl);
     }
 
     public MetadataSerDe getMetadataSerDe() {
@@ -179,13 +179,12 @@ public abstract class QfdHelper<T extends TupleStore> {
         Value value = new Value();
         Text forwardCF = new Text();
         Text forwardCQ = new Text();
-        Text invertedCF = new Text();
-        Text invertedCQ = new Text();
+        Text fieldIndexCF = new Text();
+        Text fieldIndexCQ = new Text();
 
         try {
 
             for (T item : items) {
-
 
                 //If there are no getTuples then don't write anything to the data store.
                 if (item.size() > 0) {
@@ -208,15 +207,15 @@ public abstract class QfdHelper<T extends TupleStore> {
 
                         forwardCF.set(id);
                         forwardCQ.set(tuple.getKey() + NULL_BYTE + aliasValue);
-                        invertedCF.set(PREFIX_FI + NULL_BYTE + tuple.getKey());
-                        invertedCQ.set(aliasValue + NULL_BYTE + id);
+                        fieldIndexCF.set(PREFIX_FI + NULL_BYTE + buildTupleKey(item, tuple.getKey()));
+                        fieldIndexCQ.set(aliasValue + NULL_BYTE + id);
 
                         Key key = new Key(new Text(shardId), forwardCF, forwardCQ, columnVisibility, 0);
                         Value valuePart = new Value(value);
                         visToKeyCache.put(columnVisibility, Maps.immutableEntry(key, valuePart));
 
-                        shardMutation.put(invertedCF,
-                            invertedCQ,
+                        shardMutation.put(fieldIndexCF,
+                            fieldIndexCQ,
                             columnVisibility,
                             value);
                     }
@@ -227,7 +226,6 @@ public abstract class QfdHelper<T extends TupleStore> {
                   }
                   shardWriter.addMutation(shardMutation);
                 }
-
             }
             keyValueIndex.indexKeyValues(items);
 
@@ -238,7 +236,7 @@ public abstract class QfdHelper<T extends TupleStore> {
         }
     }
 
-    public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Node query,
+    public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Set<String> types, Node query,
         Function<Map.Entry<Key, Value>, T> transform, Set<String> selectFields, Auths auths) {
         checkNotNull(query);
         checkNotNull(auths);
@@ -248,8 +246,8 @@ public abstract class QfdHelper<T extends TupleStore> {
         if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
             return wrap(EMPTY_LIST);
 
-        String jexl = nodeToJexl.transform(optimizer.getOptimizedQuery());
-        String originalJexl = nodeToJexl.transform(query);
+        String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
+        String originalJexl = nodeToJexl.transform(types, query);
         Set<String> shards = optimizer.getShards();
 
         Collection<Range> ranges = new HashSet<Range>();
@@ -262,7 +260,7 @@ public abstract class QfdHelper<T extends TupleStore> {
 
         scanner.setRanges(ranges);
 
-        IteratorSetting setting = new IteratorSetting(16, OptimizedQueryIterator.class);
+        IteratorSetting setting = new IteratorSetting(16, getOptimizedQueryIteratorClass());
         setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
         setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
@@ -272,6 +270,10 @@ public abstract class QfdHelper<T extends TupleStore> {
         scanner.addScanIterator(setting);
 
         return transform(closeableIterable(scanner), transform);
+    }
+
+    protected Class<? extends OptimizedQueryIterator> getOptimizedQueryIteratorClass() {
+      return OptimizedQueryIterator.class;
     }
 
     public void shutdown() {
@@ -303,6 +305,8 @@ public abstract class QfdHelper<T extends TupleStore> {
     protected abstract void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException;
 
     protected abstract String buildId(T item);
+
+    protected abstract String buildTupleKey(T item, String key);
 
     public BatchScanner buildIndexScanner(Authorizations auths) {
         return buildScanner(indexTable, auths);
@@ -383,12 +387,9 @@ public abstract class QfdHelper<T extends TupleStore> {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-
             ObjectVisCacheKey that = (ObjectVisCacheKey) o;
-
             if (obj != null ? !obj.equals(that.obj) : that.obj != null)
                 return false;
-
             if (vis != null ? !vis.equals(that.vis) : that.vis != null)
                 return false;
             return true;

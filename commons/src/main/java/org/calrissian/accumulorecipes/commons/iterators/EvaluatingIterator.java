@@ -33,8 +33,10 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.collections.map.LRUMap;
+import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
+import org.calrissian.accumulorecipes.commons.iterators.support.QueryEvaluator;
 
 public class EvaluatingIterator extends AbstractEvaluatingIterator {
 
@@ -54,7 +56,12 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         super.init(source, options, env);
     }
 
-    public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
+  @Override
+  public QueryEvaluator getQueryEvaluator(String expression) throws ParseException  {
+    return new QueryEvaluator(expression);
+  }
+
+  public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         return new EvaluatingIterator(this, env);
     }
 

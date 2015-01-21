@@ -26,6 +26,7 @@ limitations under the License.
   <name>Calrissian Accumulo Recipes Pig Integration</name>
   <description>Provides integration components for Apache Pig.</description>
   <dependencies>
+
     <!-- Accumulo Recipes -->
     <dependency>
       <groupId>org.calrissian.accumulorecipes</groupId>
@@ -52,11 +53,13 @@ limitations under the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
-
-    <!-- Groovy -->
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
     </dependency>
 
     <!-- Joda-Time -->
@@ -65,7 +68,7 @@ limitations under the License.
       <artifactId>joda-time</artifactId>
     </dependency>
 
-    <!-- Pig -->
+    <!-- pig -->
     <dependency>
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
@@ -73,10 +76,6 @@ limitations under the License.
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
     </dependency>
 
     <!-- Test -->

@@ -51,7 +51,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
+import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerDe;
@@ -74,6 +76,11 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         setScanAuthorizations(job, auths);
     }
 
+    public static void setZooKeeperInstanceInfo(Job job, String inst, String zk) {
+        setZooKeeperInstance(job, inst, zk);
+    }
+
+
     public static void setQueryInfo(Job job, Set<String> entityTypes, Node query) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
         setQueryInfo(job, entityTypes, query, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
@@ -87,7 +94,7 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getScanAuthorizations(job), 5);
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(scanner, shardBuilder, entityTypes);
 
-        configureScanner(job, query, globalIndexVisitor, typeRegistry);
+        configureScanner(job, entityTypes, query, new NodeToJexl(typeRegistry), globalIndexVisitor, typeRegistry, OptimizedQueryIterator.class);
 
         job.getConfiguration().setBoolean(QUERY, true);
         job.getConfiguration().set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));

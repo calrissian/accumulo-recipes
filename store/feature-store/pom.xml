@@ -33,16 +33,24 @@ limitations under the License.
       <artifactId>commons</artifactId>
       <version>${project.version}</version>
     </dependency>
+
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
     </dependency>
 
-    <!-- Hadoop / Accumlo -->
+    <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
@@ -60,11 +68,6 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.calrissian.accumulorecipes</groupId>
-      <artifactId>test</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

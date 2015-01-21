@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Calrissian Authors
+ * Copyright (C) 2015 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
-import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -143,7 +142,8 @@ public class AccumuloEntityStore implements EntityStore {
         }
     }
 
-    @Override public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Auths auths) {
+    @Override
+    public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Auths auths) {
         return get(typesAndIds, null, auths);
     }
 
@@ -199,7 +199,8 @@ public class AccumuloEntityStore implements EntityStore {
         GlobalIndexVisitor globalIndexVisitor = new EntityGlobalIndexVisitor(indexScanner, shardBuilder, types);
 
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
-        CloseableIterable<Entity> entities = helper.query(scanner, globalIndexVisitor, query, helper.buildQueryXform(), selectFields, auths);
+        CloseableIterable<Entity> entities = helper.query(scanner, globalIndexVisitor, types, query,
+                helper.buildQueryXform(), selectFields, auths);
         indexScanner.close();
 
         return entities;
@@ -220,7 +221,7 @@ public class AccumuloEntityStore implements EntityStore {
         scanner.addScanIterator(setting);
         scanner.setRanges(singletonList(Range.prefix(type + "_" + INDEX_K + "_")));
 
-        return transform(wrap(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
+        return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
             @Override
             public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
                 EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());

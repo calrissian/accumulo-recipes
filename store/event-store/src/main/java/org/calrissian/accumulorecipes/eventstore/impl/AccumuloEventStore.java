@@ -24,6 +24,7 @@ import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableI
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Set;
@@ -37,9 +38,11 @@ import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Range;
+import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
+import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -109,7 +112,7 @@ public class AccumuloEventStore implements EventStore {
     }
 
     /**
-     * Events get save into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
+     * Events get saved into a sharded table to parallelize queries & ingest. Since the data is temporal by default,
      * an index table allows the lookup of events by UUID only (when the event's timestamp is not known).
      *
      * @param events
@@ -132,14 +135,19 @@ public class AccumuloEventStore implements EventStore {
      */
     @Override
     public CloseableIterable<Event> query(Date start, Date end, Node query, final Set<String> selectFields, Auths auths) {
+        return query(start, end, Collections.singleton(""), query, selectFields, auths);
+    }
+
+    @Override
+    public CloseableIterable<Event> query(Date start, Date end, Set<String> types, Node node, Set<String> selectFields, Auths auths) {
         checkNotNull(start);
         checkNotNull(end);
-        checkNotNull(query);
+        checkNotNull(types);
+        checkNotNull(node);
         checkNotNull(auths);
 
         BatchScanner indexScanner = helper.buildIndexScanner(auths.getAuths());
-        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, indexScanner, shardBuilder);
-
+        GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, types, indexScanner, shardBuilder);
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
         IteratorSetting timeFilter = new IteratorSetting(5, EventTimeLimitingFilter.class);
@@ -147,8 +155,7 @@ public class AccumuloEventStore implements EventStore {
         EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
-        CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, query,
-            helper.buildQueryXform(),selectFields,  auths);
+        CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, types, node, helper.buildQueryXform(),selectFields,  auths);
         indexScanner.close();
 
         return events;
@@ -157,6 +164,11 @@ public class AccumuloEventStore implements EventStore {
     @Override
     public CloseableIterable<Event> query(Date start, Date end, Node node, Auths auths) {
         return query(start, end, node, null, auths);
+    }
+
+    @Override
+    public CloseableIterable<Event> query(Date start, Date end, Set<String> types, Node node, Auths auths) {
+        return null;
     }
 
     /**
@@ -175,8 +187,8 @@ public class AccumuloEventStore implements EventStore {
             Collection<Range> eventRanges = new LinkedList<Range>();
 
             for (EventIndex curIndex : uuids) {
-                String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getId(), curIndex.getTimestamp()));
-                eventRanges.add(prefix(shardId, PREFIX_E + ONE_BYTE + curIndex.getId()));
+                String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getType(), curIndex.getId(), curIndex.getTimestamp()));
+                eventRanges.add(prefix(shardId, PREFIX_E + ONE_BYTE + curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
 
             eventScanner.setRanges(eventRanges);
@@ -187,9 +199,6 @@ public class AccumuloEventStore implements EventStore {
                 eventScanner.addScanIterator(iteratorSetting);
             }
 
-//            IteratorSetting setting = new IteratorSetting(17, EmptyEncodedRowFilter.class);
-//            eventScanner.addScanIterator(setting);
-
             IteratorSetting setting = new IteratorSetting(18, WholeColumnQualifierIterator.class);
             eventScanner.addScanIterator(setting);
 
@@ -199,6 +208,44 @@ public class AccumuloEventStore implements EventStore {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Set<String> selectFields, Auths auths) {
+        checkNotNull(types);
+        checkNotNull(auths);
+        try {
+
+            BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
+
+            Collection<Range> ranges = new LinkedList<Range>();
+            for (String type : types) {
+                Set<Text> shards = shardBuilder.buildShardsInRange(start, stop);
+                for (Text shard : shards)
+                    ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type));
+            }
+
+            scanner.setRanges(ranges);
+
+            if (selectFields != null && selectFields.size() > 0) {
+                IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
+                SelectFieldsExtractor.setSelectFields(iteratorSetting, selectFields);
+                scanner.addScanIterator(iteratorSetting);
+            }
+
+            IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
+            scanner.addScanIterator(setting);
+
+            return transform(closeableIterable(scanner), helper.buildWholeColFXform());
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }    }
+
+    @Override
+    public CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Auths auths) {
+        return getAllByType(start, stop, types, null, auths);
     }
 
     @Override

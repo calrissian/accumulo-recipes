@@ -75,7 +75,7 @@ public class OptimizedQueryIterator implements SortedKeyValueIterator<Key, Value
         }
 
         // Setup the EvaluatingIterator
-        event = new EvaluatingIterator();
+        event = getEvaluatingIterator();
         event.init(source.deepCopy(env), options, env);
 
         // if queue size and timeout are set, then use the read ahead iterator
@@ -202,5 +202,9 @@ public class OptimizedQueryIterator implements SortedKeyValueIterator<Key, Value
                 }
             }
         }
+    }
+
+    protected EvaluatingIterator getEvaluatingIterator() {
+      return new EvaluatingIterator();
     }
 }

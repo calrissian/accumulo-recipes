@@ -15,6 +15,8 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+
 import com.esotericsoftware.kryo.Kryo;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -24,6 +26,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.commons.lang.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
@@ -34,15 +37,13 @@ import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-
 
 public class EntityQfdHelper extends QfdHelper<Entity> {
 
     public EntityQfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-                           ShardBuilder<Entity> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<Entity> keyValueIndex)
-            throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        super(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
+        ShardBuilder<Entity> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<Entity> keyValueIndex)
+        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        super(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new NodeToJexl(typeRegistry));
     }
 
     @Override
@@ -52,6 +53,11 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     public QueryXform buildQueryXform() {
         return new QueryXform(getKryo(), getTypeRegistry(), getMetadataSerDe());
+    }
+
+    @Override
+    protected String buildTupleKey(Entity item, String key) {
+        return key;
     }
 
     public WholeColFXform buildWholeColFXform() {

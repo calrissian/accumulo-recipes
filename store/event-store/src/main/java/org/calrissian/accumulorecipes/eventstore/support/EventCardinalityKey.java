@@ -15,32 +15,35 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
-import org.apache.accumulo.core.data.Key;
-import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
-
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex.INDEX_SEP;
+
+import org.apache.accumulo.core.data.Key;
+import org.apache.commons.lang.StringUtils;
+import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
 
 public class EventCardinalityKey extends BaseCardinalityKey {
+
+
 
     public EventCardinalityKey(Key key) {
 
         String row = key.getRow().toString();
-        int part0Idx = row.indexOf("_");
-        int part1Idx = row.indexOf("__");
-        int firstNBIdx = row.indexOf(NULL_BYTE);
+        String parts[] = StringUtils.splitByWholeSeparatorPreserveAllTokens(row, INDEX_SEP);
+        int firstNBIdx = parts[3].indexOf(NULL_BYTE);
 
         if (row.startsWith(INDEX_V)) {
-            int lastNBIdx = row.lastIndexOf(NULL_BYTE);
-            this.alias = row.substring(part0Idx + 1, part1Idx);
-            this.key = row.substring(part1Idx+2, firstNBIdx);
-            this.normalizedValue = row.substring(firstNBIdx + 1, lastNBIdx);
-            this.shard = row.substring(lastNBIdx+1, row.length());
+            int lastNBIdx = parts[3].lastIndexOf(NULL_BYTE);
+            this.alias = parts[2];
+            this.key = parts[3].substring(0, firstNBIdx);
+            this.normalizedValue = parts[3].substring(firstNBIdx + 1, lastNBIdx);
+            this.shard = parts[3].substring(lastNBIdx + 1, parts[3].length());
         } else if (row.startsWith(INDEX_K)) {
-            this.key = row.substring(part0Idx+1, part1Idx);
-            this.alias = row.substring(part1Idx+2, firstNBIdx);
-            this.shard = row.substring(firstNBIdx + 1, row.length());
+            this.key = parts[2];
+            this.alias = parts[3].substring(0, firstNBIdx);
+            this.shard = parts[3].substring(firstNBIdx + 1, parts[3].length());
         }
     }
 }

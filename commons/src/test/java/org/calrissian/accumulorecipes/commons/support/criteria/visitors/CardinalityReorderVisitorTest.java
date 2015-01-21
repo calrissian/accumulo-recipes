@@ -15,19 +15,23 @@
  */
 package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
+import static java.util.Collections.singleton;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
+import org.calrissian.mango.criteria.domain.AndNode;
+import org.calrissian.mango.criteria.domain.EqualsLeaf;
+import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.domain.OrNode;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class CardinalityReorderVisitorTest {
 
@@ -44,7 +48,7 @@ public class CardinalityReorderVisitorTest {
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(singleton(""), node));
 
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof AndNode);
@@ -66,7 +70,7 @@ public class CardinalityReorderVisitorTest {
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(singleton(""), node));
 
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof EqualsLeaf);
@@ -87,7 +91,7 @@ public class CardinalityReorderVisitorTest {
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(singleton(""), node));
 
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof EqualsLeaf);
@@ -108,7 +112,7 @@ public class CardinalityReorderVisitorTest {
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
 
-        System.out.println(new NodeToJexl(LEXI_TYPES).transform(node));
+        System.out.println(new NodeToJexl(LEXI_TYPES).transform(singleton(""), node));
 
         assertTrue(node instanceof OrNode);
         assertEquals(0, node.children().size());
