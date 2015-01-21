@@ -36,13 +36,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
+import static java.util.Collections.emptySet;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.rangestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.mango.collect.Iterables2.emptyIterable;
 
 public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T> {
 
@@ -244,7 +244,7 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
 
         //No point of running this check if the criteria range has spanned the max distance.
         if (maxDistance == null || helper.distance(queryRange).compareTo(maxDistance) >= 0)
-            return emptyIterable();
+            return emptySet();
 
         //We do [(high - maxdistance) -> low] on the forward table as it would only
         //account for large intervals that are close but outside the range of the ranges already scanned.
