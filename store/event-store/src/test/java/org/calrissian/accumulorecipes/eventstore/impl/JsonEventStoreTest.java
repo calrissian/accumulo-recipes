@@ -50,16 +50,6 @@ import org.calrissian.mango.domain.event.Event;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.google.common.collect.Iterables.get;
-import static com.google.common.collect.Iterables.size;
-import static com.google.common.io.Resources.getResource;
-import static java.lang.System.currentTimeMillis;
-import static java.nio.charset.Charset.defaultCharset;
-import static java.util.Collections.sort;
-import static org.calrissian.mango.json.util.store.JsonTupleStore.FlattenedLevelsComparator;
-import static org.calrissian.mango.json.util.store.JsonTupleStore.fromJson;
-import static org.junit.Assert.assertEquals;
-
 /**
  * A real-world example to test storage/query of twitter json.
  * @throws Exception
@@ -123,8 +113,8 @@ public class JsonEventStoreTest {
          */
         Node query = new QueryBuilder()
             .and()
-                .eq("statuses$entities$hashtags$indices", 29)     // the json tree has been flattened
-                .eq("statuses$user$name", "Sean Cummings")        // into key/value objects
+                .eq("statuses_$entities_$hashtags_$indices", 29)     // the json tree has been flattened
+                .eq("statuses_$user_$name", "Sean Cummings")        // into key/value objects
             .end()
         .build();
 
