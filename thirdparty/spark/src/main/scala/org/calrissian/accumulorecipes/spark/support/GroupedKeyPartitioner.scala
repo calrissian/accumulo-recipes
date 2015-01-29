@@ -24,6 +24,15 @@ import org.calrissian.accumulorecipes.commons.support.Constants
 import scala.collection.JavaConversions._
 import scala.collection.{SortedMap, SortedSet}
 
+/**
+ * A partitioner for Spark to allow an RDD[(GroupedKey, Value)] to be partitioned both by
+ * group (table name) and into buckets defined by the row id of the key. The buckets, or splits,
+ * for each table are passed into the constructor of this class. The buckets for each table are
+ * bounded on upper and lower sides to make sure that partitions for a row never cross group
+ * boundaries (e.g. a key meant for 'table 1' never gets placed on a partition for 'table 2' just
+ * because a key had a row id which was larger than the highest split point set for that table.
+ * @param groupsAndSplits
+ */
 class GroupedKeyPartitioner(groupsAndSplits: SortedMap[String, SortedSet[String]]) extends Partitioner {
 
   class SearchableSeq[T](a: Seq[T])(implicit ordering: Ordering[T]) {
