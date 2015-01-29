@@ -18,7 +18,6 @@ package org.calrissian.accumulorecipes.spark.sql
 import org.apache.accumulo.core.client.Connector
 import org.apache.accumulo.core.data.Key
 import org.apache.accumulo.core.security.Authorizations
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
