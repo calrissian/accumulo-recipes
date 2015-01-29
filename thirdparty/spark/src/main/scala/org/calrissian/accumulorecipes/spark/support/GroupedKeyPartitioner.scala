@@ -17,8 +17,11 @@ package org.calrissian.accumulorecipes.spark.support
 
 import java.util.{Collections, List => JList}
 
-import org.apache.spark.Partitioner
-import org.calrissian.accumulorecipes.commons.hadoop.GroupedKey
+import org.apache.accumulo.core.data.Value
+import org.apache.spark.SparkContext._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{Partitioner, SparkContext}
+import org.calrissian.accumulorecipes.commons.hadoop.{AccumuloMultipleOuputs, GroupedKey}
 import org.calrissian.accumulorecipes.commons.support.Constants
 
 import scala.collection.JavaConversions._
@@ -33,14 +36,17 @@ import scala.collection.{SortedMap, SortedSet}
  * because a key had a row id which was larger than the highest split point set for that table.
  * @param groupsAndSplits
  */
-class GroupedKeyPartitioner(groupsAndSplits: SortedMap[String, SortedSet[String]]) extends Partitioner {
-
+object GroupedKeyPartitioner {
   class SearchableSeq[T](a: Seq[T])(implicit ordering: Ordering[T]) {
     val list: JList[T] = a.toList
     def binarySearch(key: T): Int = Collections.binarySearch(list, key, ordering)
   }
   implicit def seqToSearchable[T](a: Seq[T])(implicit ordering: Ordering[T]) =
     new SearchableSeq(a)(ordering)
+}
+class GroupedKeyPartitioner(groupsAndSplits: SortedMap[String, SortedSet[String]]) extends Partitioner {
+
+  import GroupedKeyPartitioner._
 
   private lazy val internalSplits: Seq[String] = groupsAndSplits.flatMap(it =>
     (Set("\u0000", "\uffff") ++ it._2).toSeq.sorted.map(it._1 + Constants.NULL_BYTE + _)
@@ -48,9 +54,7 @@ class GroupedKeyPartitioner(groupsAndSplits: SortedMap[String, SortedSet[String]
 
   private lazy val numSplits = internalSplits.size
 
-  println(internalSplits)
-
-  override def numPartitions: Int = numPartitions
+  override def numPartitions: Int = numSplits
 
   override def getPartition(key: Any): Int = {
 
@@ -62,6 +66,11 @@ class GroupedKeyPartitioner(groupsAndSplits: SortedMap[String, SortedSet[String]
       }
       case _ => throw new IllegalArgumentException(s"Expected key type was ${classOf[GroupedKey]} but was ${key.getClass} instead")
     }
+  }
+
+  def bulkIngestRDD(basePath: String, rdd: RDD[(GroupedKey, Value)])(implicit sparkContext: SparkContext): Unit = {
+    rdd.repartitionAndSortWithinPartitions(this)
+      .saveAsHadoopFile(basePath, classOf[GroupedKey], classOf[Value], classOf[AccumuloMultipleOuputs])
   }
 }
 
