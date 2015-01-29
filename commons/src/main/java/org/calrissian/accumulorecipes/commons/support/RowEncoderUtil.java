@@ -83,8 +83,6 @@ public class RowEncoderUtil {
         dout.writeInt(keyValueCollection.size());
 
         for(Map.Entry<Key,Value> entry : keyValueCollection) {
-
-
             Key k = entry.getKey();
             Value v = entry.getValue();
             // write the colfam
