@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
@@ -156,6 +157,16 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
         return uniqueKeys(connector, indexTable, prefix, type, config.getMaxQueryThreads(), auths);
     }
 
+    /**
+     * Returns all the unique keys for the given event type for the given prefix. Unique key is defined as a unique key + data type alias
+     * @param connector
+     * @param indexTable
+     * @param prefix
+     * @param type
+     * @param maxQueryThreads
+     * @param auths
+     * @return
+     */
     public static CloseableIterable<Pair<String,String>> uniqueKeys(Connector connector, String indexTable, String prefix, String type, int maxQueryThreads, Auths auths) {
 
         checkNotNull(prefix);
@@ -168,7 +179,7 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
 
             scanner.setRanges(singletonList(
                     new Range(INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.NULL_BYTE,
-                        INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + Constants.END_BYTE))
+                        INDEX_K + INDEX_SEP + type + INDEX_SEP + prefix + END_BYTE))
             );
 
             return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
@@ -183,6 +194,51 @@ public class EventKeyValueIndex implements KeyValueIndex<Event> {
         }
     }
 
+    /**
+     * Returns all the unique values for the given event type for the given key, alias, and prefix. It's possible that a large
+     * set of unique values could take a long time to return.
+     * @param connector
+     * @param indexTable
+     * @param prefix
+     * @param type
+     * @param alias
+     * @param key
+     * @param maxQueryThreads
+     * @param auths
+     * @return
+     */
+    public CloseableIterable<Object> uniqueValuesForKey(String prefix, String type, String alias, String key, Auths auths) {
+
+        checkNotNull(prefix);
+        checkNotNull(auths);
+
+        try {
+            BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
+            IteratorSetting setting = new IteratorSetting(15, EventGlobalIndexUniqueKVIterator.class);
+            scanner.addScanIterator(setting);
+
+            scanner.setRanges(singletonList(
+                    new Range(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + key + NULL_BYTE + prefix + NULL_BYTE,
+                        INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + key + NULL_BYTE + prefix + END_BYTE))
+            );
+
+            return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Object>() {
+                @Override
+                public Object apply(Map.Entry<Key, Value> keyValueEntry) {
+                    EventCardinalityKey key = new EventCardinalityKey(keyValueEntry.getKey());
+                    return typeRegistry.decode(key.getAlias(), key.getNormalizedValue());
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Returns all the unique event types in the event store.
+     * @param auths
+     * @return
+     */
     public CloseableIterable<String> getTypes(Auths auths) {
 
         checkNotNull(auths);
