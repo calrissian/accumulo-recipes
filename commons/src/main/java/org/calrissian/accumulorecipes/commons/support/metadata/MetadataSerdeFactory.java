@@ -15,11 +15,13 @@
  */
 package org.calrissian.accumulorecipes.commons.support.metadata;
 
+import java.io.Serializable;
+
 /**
  * It's important that this class work with a default constructor as it will be getting newed up
  * through reflection.
  */
-public interface MetadataSerdeFactory {
+public interface MetadataSerdeFactory extends Serializable {
 
     MetadataSerDe create();
 }
