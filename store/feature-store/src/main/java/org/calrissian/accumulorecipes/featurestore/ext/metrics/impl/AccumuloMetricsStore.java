@@ -15,7 +15,13 @@
  */
 package org.calrissian.accumulorecipes.featurestore.ext.metrics.impl;
 
-import org.apache.accumulo.core.client.*;
+import java.util.Date;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
@@ -25,8 +31,6 @@ import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
 import org.calrissian.accumulorecipes.featurestore.support.config.MetricFeatureConfig;
 import org.calrissian.mango.collect.CloseableIterable;
-
-import java.util.Date;
 
 /**
  * The Accumulo implementation of the metrics store allows the statistical summaries to be aggregated during the
@@ -55,5 +59,10 @@ public class AccumuloMetricsStore implements MetricStore{
     @Override
     public CloseableIterable<MetricFeature> query(Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Auths auths) {
         return featureStore.query(start, end, group, type, name, timeUnit, MetricFeature.class, auths);
+    }
+
+    @Override
+    public void flush() throws Exception {
+        featureStore.flush();
     }
 }

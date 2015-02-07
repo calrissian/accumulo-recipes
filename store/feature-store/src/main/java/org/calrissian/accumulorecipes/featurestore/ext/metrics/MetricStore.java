@@ -15,12 +15,12 @@
  */
 package org.calrissian.accumulorecipes.featurestore.ext.metrics;
 
+import java.util.Date;
+
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.mango.collect.CloseableIterable;
-
-import java.util.Date;
 
 /**
  * A metrics store API for persisting and querying statistical summaries of things. These statistical summaries
@@ -38,5 +38,7 @@ public interface MetricStore {
      */
     CloseableIterable<MetricFeature> query(Date start, Date end, String group, String type,
                                           String name, TimeUnit timeUnit, Auths auths);
+
+    void flush() throws Exception;
 
 }
