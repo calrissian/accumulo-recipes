@@ -70,6 +70,7 @@ import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIn
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -176,7 +177,8 @@ public abstract class QfdHelper<T extends Entity> {
     public void save(Iterable<? extends T> items) {
         checkNotNull(items);
 
-        Value value = new Value();
+        Value shardVal = new Value();
+        Value fiVal = new Value();
         Text forwardCF = new Text();
         Text forwardCQ = new Text();
         Text fieldIndexCF = new Text();
@@ -203,7 +205,8 @@ public abstract class QfdHelper<T extends Entity> {
 
                         Map<String,Object> meta = tuple.getMetadata();
 
-                        value.set(metadataSerDe.serialize(meta));
+                        shardVal.set(metadataSerDe.serialize(meta));
+                        fiVal.set(Metadata.Expiration.getExpiration(meta, -1).toString().getBytes());
 
                         forwardCF.set(id);
                         forwardCQ.set(tuple.getKey() + NULL_BYTE + aliasValue);
@@ -211,13 +214,13 @@ public abstract class QfdHelper<T extends Entity> {
                         fieldIndexCQ.set(aliasValue + NULL_BYTE + id);
 
                         Key key = new Key(new Text(shardId), forwardCF, forwardCQ, columnVisibility, 0);
-                        Value valuePart = new Value(value);
+                        Value valuePart = new Value(shardVal);
                         visToKeyCache.put(columnVisibility, Maps.immutableEntry(key, valuePart));
 
                         shardMutation.put(fieldIndexCF,
                             fieldIndexCQ,
                             columnVisibility,
-                            value);
+                            fiVal);
                     }
 
                   for(ColumnVisibility colVis : visToKeyCache.keySet()) {
