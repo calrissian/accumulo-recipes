@@ -168,7 +168,7 @@ public class AccumuloEventStore implements EventStore {
 
     @Override
     public CloseableIterable<Event> query(Date start, Date end, Set<String> types, Node node, Auths auths) {
-        return null;
+        return query(start, end, types, node, null, auths);
     }
 
     /**
