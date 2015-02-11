@@ -15,6 +15,8 @@
  */
 package org.calrissian.accumulorecipes.spark.sql
 
+import java.util.Date
+
 import org.apache.accumulo.core.client.Connector
 import org.apache.accumulo.core.data.Key
 import org.apache.accumulo.core.security.Authorizations
@@ -51,7 +53,7 @@ import scala.collection.JavaConversions._
  *  end   '2014-01-15',
  *  type  'eventType'
  * )
- */
+ **/
 class EventStore extends RelationProvider {
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
@@ -88,3 +90,4 @@ class EventStoreScan(inst: String, zk: String, user: String, pass: String,
   }
 
 }
+

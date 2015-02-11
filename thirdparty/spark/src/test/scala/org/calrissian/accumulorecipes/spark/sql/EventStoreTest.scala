@@ -22,6 +22,7 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.{SparkConf, SparkContext}
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
+import org.calrissian.accumulorecipes.spark.sql.util.TableUtil
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils
 import org.calrissian.mango.domain.Tuple
 import org.calrissian.mango.domain.event.BaseEvent
@@ -35,7 +36,7 @@ object EventStoreTest {
   private var miniCluster: MiniAccumuloClusterImpl = _
   private var eventStore:AccumuloEventStore = _
   private var sparkContext: SparkContext = _
-  private var sqlContext: SQLContext = _
+  private implicit var sqlContext: SQLContext = _
 
   @BeforeClass
   def setup: Unit = {
@@ -53,20 +54,14 @@ object EventStoreTest {
 
   private def createTempTable = {
 
-    sqlContext.sql(
-      s"""
-        |CREATE TEMPORARY TABLE events
-        |USING org.calrissian.accumulorecipes.spark.sql.EventStore
-        |OPTIONS (
-        | inst '${miniCluster.getInstanceName}',
-        | zk '${miniCluster.getZooKeepers}',
-        | user 'root',
-        | pass 'secret',
-        | type 'type',
-        | start '${new DateTime(System.currentTimeMillis() - 5000)}',
-        | end '${new DateTime(System.currentTimeMillis() + 5000)}'
-        |)
-      """.stripMargin)
+    TableUtil.registerEventTable("root",
+                             "secret",
+                             miniCluster.getInstanceName,
+                             miniCluster.getZooKeepers,
+                             new DateTime(System.currentTimeMillis() - 5000),
+                             new DateTime(System.currentTimeMillis() + 5000),
+                             "type",
+                             "events")
   }
 
   private def persistEvents = {
