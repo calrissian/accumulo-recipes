@@ -47,6 +47,7 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
     @Override
     public void write(DataOutput dataOutput) throws IOException {
 
+        dataOutput.writeUTF(entry.getType());
         dataOutput.writeUTF(entry.getId());
         dataOutput.writeLong(entry.getTimestamp());
 
@@ -59,9 +60,10 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
+        String type = dataInput.readUTF();
         String uuid = dataInput.readUTF();
         long timestamp = dataInput.readLong();
-        entry = new BaseEvent(uuid, timestamp);
+        entry = new BaseEvent(type, uuid, timestamp);
 
         int count = dataInput.readInt();
         for (int i = 0; i < count; i++) {
