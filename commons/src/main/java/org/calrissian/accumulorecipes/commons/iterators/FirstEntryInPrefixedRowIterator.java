@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -102,7 +103,7 @@ public abstract class FirstEntryInPrefixedRowIterator extends SkippingIterator i
 
                 // determine where to seek to, but don't go beyond the user-specified range
 
-                Key nextKey = new Key(curPrefix + "\uffff");
+                Key nextKey = new Key(curPrefix + END_BYTE);
 
                 if (!latestRange.afterEndKey(nextKey))
                     getSource().seek(new Range(nextKey, true, latestRange.getEndKey(), latestRange.isEndKeyInclusive()), latestColumnFamilies, latestInclusive);

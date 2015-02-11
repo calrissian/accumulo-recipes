@@ -15,14 +15,15 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
-import org.apache.commons.lang.StringUtils;
+import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
+import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex.INDEX_SEP;
+
 import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInPrefixedRowIterator;
 
 public class EventGlobalIndexTypesIterator extends FirstEntryInPrefixedRowIterator {
   @Override
   protected String getPrefix(String rowStr) {
-
-    String[] parts = StringUtils.splitByWholeSeparatorPreserveAllTokens(rowStr, "__");
-    return parts[1];
+    String[] parts = splitByWholeSeparatorPreserveAllTokens(rowStr, INDEX_SEP);
+    return parts[0] + INDEX_SEP + parts[1];
   }
 }

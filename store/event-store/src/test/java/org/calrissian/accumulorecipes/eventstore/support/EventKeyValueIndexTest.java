@@ -48,7 +48,6 @@ public class EventKeyValueIndexTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         EventStore eventStore = new AccumuloEventStore(connector);
 
-
         EventKeyValueIndex eventKeyValueIndex = new EventKeyValueIndex(
             connector, "eventStore_index", DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG,
             LEXI_TYPES
