@@ -165,7 +165,7 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
           Set<Range> ranges = new HashSet<Range>();
           for(String type : types) {
               for(Text shard : shards)
-                  ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type));
+                  ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type + ONE_BYTE));
           }
 
 

@@ -222,7 +222,7 @@ public class AccumuloEventStore implements EventStore {
             for (String type : types) {
                 Set<Text> shards = shardBuilder.buildShardsInRange(start, stop);
                 for (Text shard : shards)
-                    ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type));
+                    ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type + ONE_BYTE));
             }
 
             scanner.setRanges(ranges);

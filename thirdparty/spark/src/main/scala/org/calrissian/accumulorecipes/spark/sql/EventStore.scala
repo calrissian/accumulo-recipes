@@ -76,7 +76,7 @@ class EventStoreScan(inst: String, zk: String, user: String, pass: String,
 
   override def buildRDD(columns: Array[String], filters: Array[Filter], query: Node): RDD[T] = {
     val conf = sqlContext.sparkContext.hadoopConfiguration
-    val job = new Job(conf)
+    val job = Job.getInstance(conf)
     EventInputFormat.setInputInfo(job, user, pass.getBytes, new Authorizations)
     EventInputFormat.setZooKeeperInstanceInfo(job, inst, zk)
     if(filters.size > 0)
@@ -85,8 +85,12 @@ class EventStoreScan(inst: String, zk: String, user: String, pass: String,
       EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType))
     BaseQfdInputFormat.setSelectFields(job.getConfiguration, setAsJavaSet(columns.toSet))
 
-    sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[I], classOf[Key], classOf[V])
+    val ret = sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[I], classOf[Key], classOf[V])
       .map(_._2.get())
+
+
+    System.out.println("SIZE: "+ ret.count() + " type " + eventType)
+    ret
   }
 
 }

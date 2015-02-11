@@ -69,7 +69,13 @@ object EventStoreTest {
     event.put(new Tuple("key1", "val1"))
     event.put(new Tuple("key2", 5))
 
+
+    val entity2 = new BaseEvent("type2", "id")
+    entity2.put(new Tuple("key1", "val1"))
+    entity2.put(new Tuple("key3", "val3"))
+
     eventStore.save(Collections.singleton(event))
+    eventStore.save(Collections.singleton(entity2))
     eventStore.flush()
   }
 
@@ -99,6 +105,30 @@ class EventStoreTest {
   }
 
   @Test
+  def testJoin(): Unit = {
+    TableUtil.registerEventTable("root",
+      "secret",
+      miniCluster.getInstanceName,
+      miniCluster.getZooKeepers,
+      new DateTime(System.currentTimeMillis() - 5000),
+      new DateTime(System.currentTimeMillis() + 5000),
+      "type2",
+      "events2")
+
+    AccumuloTestUtils.dumpTable(miniCluster.getConnector("root", "secret"), "eventStore_shard")
+
+    val rows = sqlContext.sql("SELECT e.key1,e.key2,t.key3 FROM events e INNER JOIN events2 t ON e.key1 = t.key1").collect
+
+    System.out.println(rows.toList)
+    Assert.assertEquals(1, rows.length)
+    Assert.assertEquals("val1", rows(0).getAs[String](0))
+    Assert.assertEquals(5, rows(0).getAs[Int](1))
+    Assert.assertEquals("val3", rows(0).getAs[String](2))
+
+    sqlContext.dropTempTable("events2")
+  }
+
+  @Test
   def testSelectionAndWhereWithAndOperator() {
 
     val rows = sqlContext.sql("SELECT key2,key1 FROM events WHERE (key1 = 'val1' and key2 >= 5)").collect
@@ -111,7 +141,7 @@ class EventStoreTest {
   @Test
   def testSelectAndWhereSingleOperator() {
 
-    val rows = sqlContext.sql("SELECT key1,key2 FROM events WHERE (key1 = 'val1')").collect
+    val rows = sqlContext.sql("SELECT key1, key2, key3 FROM events JOIN events2 on events. WHERE (key1 = 'val1')").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals(5, rows(0).getAs[Int](1))
