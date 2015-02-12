@@ -28,7 +28,7 @@ import org.calrissian.mango.domain.entity.BaseEntity
 import org.junit._
 import org.junit.rules.TemporaryFolder
 
-object EntityStoreTest {
+object EntityStoreFilteredTest {
 
   private val tempDir = new TemporaryFolder()
   private var miniCluster: MiniAccumuloClusterImpl = _
@@ -55,7 +55,7 @@ object EntityStoreTest {
     sqlContext.sql(
       s"""
         |CREATE TEMPORARY TABLE entities
-        |USING org.calrissian.accumulorecipes.spark.sql.EntityStore
+        |USING org.calrissian.accumulorecipes.spark.sql.EntityStoreFiltered
         |OPTIONS (
         | inst '${miniCluster.getInstanceName}',
         | zk '${miniCluster.getZooKeepers}',
@@ -83,9 +83,9 @@ object EntityStoreTest {
   }
 
 }
-class EntityStoreTest {
+class EntityStoreFilteredTest {
 
-  import org.calrissian.accumulorecipes.spark.sql.EntityStoreTest._
+  import org.calrissian.accumulorecipes.spark.sql.EntityStoreFilteredTest._
 
   @Before
   def setupTest: Unit = {

@@ -30,7 +30,7 @@ import org.joda.time.DateTime
 import org.junit._
 import org.junit.rules.TemporaryFolder
 
-object EventStoreTest {
+object EventStoreFilteredTest {
 
   private val tempDir = new TemporaryFolder()
   private var miniCluster: MiniAccumuloClusterImpl = _
@@ -54,7 +54,7 @@ object EventStoreTest {
 
   private def createTempTable = {
 
-    TableUtil.registerEventTable("root",
+    TableUtil.registerEventFilteredTable("root",
                              "secret",
                              miniCluster.getInstanceName,
                              miniCluster.getZooKeepers,
@@ -87,9 +87,9 @@ object EventStoreTest {
   }
 
 }
-class EventStoreTest {
+class EventStoreFilteredTest {
 
-  import org.calrissian.accumulorecipes.spark.sql.EventStoreTest._
+  import org.calrissian.accumulorecipes.spark.sql.EventStoreFilteredTest._
 
   @Before
   def setupTest: Unit = {
@@ -106,7 +106,7 @@ class EventStoreTest {
 
   @Test
   def testJoin(): Unit = {
-    TableUtil.registerEventTable("root",
+    TableUtil.registerEventFilteredTable("root",
       "secret",
       miniCluster.getInstanceName,
       miniCluster.getZooKeepers,

@@ -16,12 +16,14 @@
 package org.calrissian.accumulorecipes.spark.sql.util
 
 import org.apache.spark.sql.SQLContext
-import org.calrissian.accumulorecipes.spark.sql.EventStore
+import org.calrissian.accumulorecipes.spark.sql.{EventStoreCatalyst, EventStoreFiltered}
 import org.joda.time.DateTime
 
 object TableUtil {
 
-  def registerEventTable(accUser: String,
+  private def registerEventTable(
+                    clazz: String,
+                    accUser: String,
                     accPass: String,
                     accInst: String,
                     zk: String,
@@ -33,7 +35,7 @@ object TableUtil {
     sqlContext.sql(
       s"""
       |CREATE TEMPORARY TABLE ${tableName}
-      |USING ${classOf[EventStore].getName.replace("$", "")}
+      |USING ${clazz}
       |OPTIONS (
       | inst  '${accInst}',
       | zk    '${zk}',
@@ -45,4 +47,33 @@ object TableUtil {
       |)
     """.stripMargin)
   }
+
+  def registerEventCatalystTable(accUser: String,
+                         accPass: String,
+                         accInst: String,
+                         zk: String,
+                         startDate: DateTime,
+                         endDate: DateTime,
+                         eventType: String,
+                         tableName: String)
+                        (implicit sqlContext: SQLContext): Unit = {
+
+    registerEventTable(classOf[EventStoreCatalyst].getName.replace("$", ""),
+      accUser, accPass, accInst, zk, startDate, endDate, eventType, tableName)
+  }
+
+  def registerEventFilteredTable(accUser: String,
+                                 accPass: String,
+                                 accInst: String,
+                                 zk: String,
+                                 startDate: DateTime,
+                                 endDate: DateTime,
+                                 eventType: String,
+                                 tableName: String)
+                                (implicit sqlContext: SQLContext): Unit = {
+
+    registerEventTable(classOf[EventStoreFiltered].getName.replace("$", ""),
+      accUser, accPass, accInst, zk, startDate, endDate, eventType, tableName)
+  }
+
 }

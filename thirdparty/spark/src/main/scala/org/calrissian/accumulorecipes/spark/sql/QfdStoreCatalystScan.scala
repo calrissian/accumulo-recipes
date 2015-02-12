@@ -20,10 +20,10 @@ import java.util.Date
 import org.apache.accumulo.core.client.security.tokens.PasswordToken
 import org.apache.accumulo.core.client.{Connector, ZooKeeperInstance}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
-import org.apache.spark.sql.catalyst.types.{BooleanType, ByteType, IntegerType}
-import org.apache.spark.sql.sources._
-import org.apache.spark.sql.{DataType, DateType, DoubleType, FloatType, LongType, StringType, StructField, StructType, _}
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.types._
+import org.apache.spark.sql.sources.CatalystScan
+import org.apache.spark.sql.{Row, SQLContext}
 import org.calrissian.accumulorecipes.commons.domain.Gettable
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat
 import org.calrissian.mango.collect.CloseableIterable
@@ -36,10 +36,12 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 
-abstract class QfdScan(inst: String, zk: String, user: String, pass: String, objectType: String,
-                          @transient val sqlContext: SQLContext) extends PrunedFilteredScan with Serializable {   // TODO: Find out what's forcing this to be serializable
 
-  private val log = LoggerFactory.getLogger(classOf[QfdScan])
+
+abstract class QfdStoreCatalystScan(inst: String, zk: String, user: String, pass: String, objectType: String,
+                       @transient val sqlContext: SQLContext) extends CatalystScan with Serializable {   // TODO: Find out what's forcing this to be serializable
+
+  private val log = LoggerFactory.getLogger(classOf[QfdFilteredScan])
 
   type T <: TupleStore
   type V <: Gettable[T]
@@ -49,7 +51,7 @@ abstract class QfdScan(inst: String, zk: String, user: String, pass: String, obj
 
   override def schema: StructType = internalSchema
 
-  def uniqueKeys(connector: Connector): CloseableIterable[org.calrissian.mango.domain.Pair[String, String]];
+  def uniqueKeys(connector: Connector): CloseableIterable[org.calrissian.mango.domain.Pair[String, String]]
 
   private def parseSchema(): StructType = {
 
@@ -76,27 +78,28 @@ abstract class QfdScan(inst: String, zk: String, user: String, pass: String, obj
     schema
   }
 
-  private def buildQuery(filters: Array[Filter]): Node = {
-    var andNode = new QueryBuilder().and()
 
-    filters.foreach(it => it match {
-      case EqualTo(attr, value) => andNode = andNode.eq(attr, value)
-      case GreaterThan(attr, value) => andNode = andNode.greaterThan(attr, value)
-      case GreaterThanOrEqual(attr, value) => andNode = andNode.greaterThanEq(attr, value)
-      case LessThan(attr, value) => andNode = andNode.lessThan(attr, value)
-      case LessThanOrEqual(attr, value) => andNode = andNode.lessThanEq(attr, value)
-      case In(attr, values) => andNode = andNode.in(attr, values)
-      case _ => log.warn("Invalid filter found- not applying in query [" + it.getClass + "]")
-    })
-
-    andNode.end.build
+  override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
+    val node = buildQuery(new QueryBuilder().and(), filters).end().build()
+    buildRDD(requiredColumns, filters, node).map(it => asRow(it, schema, requiredColumns.map(_.name).toArray))
   }
 
-  def buildRDD(columns: Array[String], filters: Array[Filter], query: Node): RDD[T]
 
-  override def buildScan(columns: Array[String], filters: Array[Filter]): RDD[Row] =
-    buildRDD(columns, filters, buildQuery(filters))
-      .map(it => asRow(it, schema, columns))
+  def buildRDD(requiredColumns: Seq[Attribute], filters: Seq[Expression], node: Node): RDD[T]
+
+  private def buildQuery(qb: QueryBuilder, filters: Seq[Expression]): QueryBuilder = {
+    var query = qb
+    filters.foreach(it => it match {
+      case EqualTo(AttributeReference(key, dt, nb, meta), Literal(value, dataType)) => query = query.eq(key, value)
+      case and: And => query = buildQuery(query.and(), Array(and.left, and.right)).end()
+      case or: Or => query = buildQuery(query.or(), Array(or.left, or.right)).end()
+      case GreaterThan(AttributeReference(key, dt, nb, meta), Literal(right, datType)) => query = query.greaterThan(key, right)
+      case LessThan(AttributeReference(key, dt, nb, meta), Literal(right, dataType)) => query = query.lessThan(key, right)
+      case LessThanOrEqual(AttributeReference(key, dt, nb, meta), Literal(right, dataType)) => query = query.lessThanEq(key, right)
+      case _ => query
+    })
+    query
+  }
 
   private def asRow(event: T, schema: StructType, columns: Array[String]): Row = {
     /**

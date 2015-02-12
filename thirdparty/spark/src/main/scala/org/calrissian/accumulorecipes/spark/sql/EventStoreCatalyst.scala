@@ -15,14 +15,13 @@
  */
 package org.calrissian.accumulorecipes.spark.sql
 
-import java.util.Date
-
 import org.apache.accumulo.core.client.Connector
 import org.apache.accumulo.core.data.Key
 import org.apache.accumulo.core.security.Authorizations
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
 import org.apache.spark.sql.sources._
 import org.calrissian.accumulorecipes.commons.domain.Auths
 import org.calrissian.accumulorecipes.commons.hadoop.{BaseQfdInputFormat, EventWritable}
@@ -54,17 +53,17 @@ import scala.collection.JavaConversions._
  *  type  'eventType'
  * )
  **/
-class EventStore extends RelationProvider {
+class EventStoreCatalyst extends RelationProvider {
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
-    new EventStoreScan(parameters("inst"), parameters("zk"), parameters("user"), parameters("pass"),
-                        DateTime.parse(parameters("start")), DateTime.parse(parameters("end")), parameters("type"), sqlContext)
+    new EventStoreFilteredScan(parameters("inst"), parameters("zk"), parameters("user"), parameters("pass"),
+      DateTime.parse(parameters("start")), DateTime.parse(parameters("end")), parameters("type"), sqlContext)
   }
 }
 
-class EventStoreScan(inst: String, zk: String, user: String, pass: String,
-                               start: DateTime, stop: DateTime, eventType: String,
-                               @transient val innerSqlContext: SQLContext) extends QfdScan(inst, zk, user, pass, eventType, innerSqlContext) {
+class EventStoreCatalystScan(inst: String, zk: String, user: String, pass: String,
+                     start: DateTime, stop: DateTime, eventType: String,
+                     @transient val innerSqlContext: SQLContext) extends QfdStoreCatalystScan(inst, zk, user, pass, eventType, innerSqlContext) {
 
   type T = Event
   type V = EventWritable
@@ -74,7 +73,7 @@ class EventStoreScan(inst: String, zk: String, user: String, pass: String,
     EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
 
 
-  override def buildRDD(columns: Array[String], filters: Array[Filter], query: Node): RDD[T] = {
+  override def buildRDD(columns: Seq[Attribute], filters: Seq[Expression], query: Node): RDD[T] = {
     val conf = sqlContext.sparkContext.hadoopConfiguration
     val job = Job.getInstance(conf)
     EventInputFormat.setInputInfo(job, user, pass.getBytes, new Authorizations)
@@ -83,14 +82,10 @@ class EventStoreScan(inst: String, zk: String, user: String, pass: String,
       EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType), query)
     else
       EventInputFormat.setQueryInfo(job, start.toDate, stop.toDate, Set(eventType))
-    BaseQfdInputFormat.setSelectFields(job.getConfiguration, setAsJavaSet(columns.toSet))
+    BaseQfdInputFormat.setSelectFields(job.getConfiguration, setAsJavaSet(columns.map(_.name).toSet))
 
-    val ret = sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[I], classOf[Key], classOf[V])
+    sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[I], classOf[Key], classOf[V])
       .map(_._2.get())
-
-
-    System.out.println("SIZE: "+ ret.count() + " type " + eventType)
-    ret
   }
 
 }
