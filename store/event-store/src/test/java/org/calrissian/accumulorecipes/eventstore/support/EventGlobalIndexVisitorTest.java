@@ -33,7 +33,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.support.Constants;
-import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
@@ -78,7 +78,7 @@ public class EventGlobalIndexVisitorTest {
 
 
         assertEquals(3, visitor.getCardinalities().size());
-        for (Map.Entry<CardinalityKey, Long> entry : visitor.getCardinalities().entrySet()) {
+        for (Map.Entry<TupleIndexKey, Long> entry : visitor.getCardinalities().entrySet()) {
             if (entry.getKey().getKey().equals("key1"))
                 assertEquals(2l, (long) entry.getValue());
             else if (entry.getKey().getKey().equals("key2"))

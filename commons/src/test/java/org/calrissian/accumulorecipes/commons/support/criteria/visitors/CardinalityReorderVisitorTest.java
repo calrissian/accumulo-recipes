@@ -24,7 +24,7 @@ import java.util.Map;
 
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
-import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
@@ -38,7 +38,7 @@ public class CardinalityReorderVisitorTest {
     @Test
     public void test_basicReorder() {
 
-        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
         cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 500l);
         cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 50l);
         cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
@@ -60,7 +60,7 @@ public class CardinalityReorderVisitorTest {
     @Test
     public void test_pruneCardinalities_AndNode() {
 
-        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
         cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 500l);
         cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
         cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
@@ -81,7 +81,7 @@ public class CardinalityReorderVisitorTest {
     @Test
     public void test_pruneCardinalities_OrNode() {
 
-        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
         cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
         cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
         cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 1000l);
@@ -102,7 +102,7 @@ public class CardinalityReorderVisitorTest {
     @Test
     public void test_pruneCardinalities_AllNodesZero() {
 
-        Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+        Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
         cardinalities.put(new BaseCardinalityKey("key1", "val1", "string"), 0l);
         cardinalities.put(new BaseCardinalityKey("key2", "val2", "string"), 0l);
         cardinalities.put(new BaseCardinalityKey("key3", "val3", "string"), 0l);

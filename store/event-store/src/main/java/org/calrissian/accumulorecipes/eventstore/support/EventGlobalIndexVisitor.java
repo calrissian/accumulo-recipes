@@ -34,7 +34,7 @@ import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
@@ -55,8 +55,8 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     private BatchScanner indexScanner;
     private EventShardBuilder shardBuilder;
 
-    private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
-    private Map<CardinalityKey, Set<String>> mappedShards = new HashMap<CardinalityKey, Set<String>>();
+    private Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
+    private Map<TupleIndexKey, Set<String>> mappedShards = new HashMap<TupleIndexKey, Set<String>>();
     private Set<String> types;
 
     private Set<Leaf> leaves = new HashSet<Leaf>();
@@ -70,12 +70,12 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     @Override
-    public Map<CardinalityKey, Long> getCardinalities() {
+    public Map<TupleIndexKey, Long> getCardinalities() {
         return cardinalities;
     }
 
     @Override
-    public Map<CardinalityKey, Set<String>> getShards() {
+    public Map<TupleIndexKey, Set<String>> getShards() {
         return mappedShards;
     }
 
@@ -127,7 +127,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
         for (Map.Entry<Key, Value> entry : indexScanner) {
 
-            CardinalityKey key = new EventCardinalityKey(entry.getKey());
+            TupleIndexKey key = new EventCardinalityKey(entry.getKey());
             Long cardinality = cardinalities.get(key);
             if (cardinality == null)
                 cardinality = 0l;
@@ -142,6 +142,8 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
             shardsForKey.add(key.getShard());
         }
+
+        System.out.println(mappedShards);
 
         indexScanner.close();
     }

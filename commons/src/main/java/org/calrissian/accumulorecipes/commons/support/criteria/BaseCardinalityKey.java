@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.commons.support.criteria;
 
-public class BaseCardinalityKey implements CardinalityKey {
+public class BaseCardinalityKey implements TupleIndexKey {
 
     protected String key;
     protected String normalizedValue;
@@ -23,13 +23,6 @@ public class BaseCardinalityKey implements CardinalityKey {
     protected String shard;
 
     protected BaseCardinalityKey() {
-    }
-
-    public BaseCardinalityKey(String key, String value, String alias, String shard) {
-        this.key = key;
-        this.normalizedValue = value;
-        this.alias = alias;
-        this.shard = shard;
     }
 
     public BaseCardinalityKey(String key, String value, String alias) {

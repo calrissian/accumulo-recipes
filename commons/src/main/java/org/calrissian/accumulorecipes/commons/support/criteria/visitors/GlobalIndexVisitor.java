@@ -18,14 +18,14 @@ package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 import java.util.Map;
 import java.util.Set;
 
-import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 
 public interface GlobalIndexVisitor extends NodeVisitor {
 
-    Map<CardinalityKey, Long> getCardinalities();
+    Map<TupleIndexKey, Long> getCardinalities();
 
-    Map<CardinalityKey, Set<String>> getShards();
+    Map<TupleIndexKey, Set<String>> getShards();
 
     void exec();
 }
