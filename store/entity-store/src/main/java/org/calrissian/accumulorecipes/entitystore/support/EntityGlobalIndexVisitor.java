@@ -15,6 +15,11 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
+import static org.apache.accumulo.core.data.Range.prefix;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,6 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -36,12 +42,6 @@ import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.apache.accumulo.core.data.Range.prefix;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
-import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-
 public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
 
     private static TypeRegistry<String> registry = LEXI_TYPES;
@@ -51,6 +51,7 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
 
     private Set<String> shards = new HashSet<String>();
     private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+    private Map<CardinalityKey, Set<String>> mappedShards = new HashMap<CardinalityKey, Set<String>>();
 
     private Set<String> types;
 
@@ -68,8 +69,8 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     @Override
-    public Set<String> getShards() {
-        return shards;
+    public Map<CardinalityKey, Set<String>> getShards() {
+        return mappedShards;
     }
 
     @Override
@@ -111,7 +112,14 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
                 cardinality = 0l;
             long newCardinality = new GlobalIndexValue(entry.getValue()).getCardinatlity();
             cardinalities.put(key, cardinality + newCardinality);
-            shards.add(entry.getKey().getColumnQualifier().toString());
+
+            Set<String> shardsForKey = mappedShards.get(key);
+            if(shardsForKey == null) {
+                shardsForKey = Sets.newHashSet();
+                mappedShards.put(key, shardsForKey);
+            }
+
+            shardsForKey.add(key.getShard());
         }
 
         indexScanner.close();

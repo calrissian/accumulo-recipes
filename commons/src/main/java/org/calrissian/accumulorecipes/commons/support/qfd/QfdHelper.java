@@ -65,7 +65,7 @@ import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.support.criteria.LogicalPlan;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
@@ -244,7 +244,7 @@ public abstract class QfdHelper<T extends Entity> {
         checkNotNull(query);
         checkNotNull(auths);
 
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor, typeRegistry);
+        LogicalPlan optimizer = new LogicalPlan(query, globalIndexVisitor, typeRegistry);
 
         if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
             return wrap(EMPTY_LIST);

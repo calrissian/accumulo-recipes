@@ -55,8 +55,8 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     private BatchScanner indexScanner;
     private EventShardBuilder shardBuilder;
 
-    private Set<String> shards = new HashSet<String>();
     private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+    private Map<CardinalityKey, Set<String>> mappedShards = new HashMap<CardinalityKey, Set<String>>();
     private Set<String> types;
 
     private Set<Leaf> leaves = new HashSet<Leaf>();
@@ -75,8 +75,8 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     @Override
-    public Set<String> getShards() {
-        return shards;
+    public Map<CardinalityKey, Set<String>> getShards() {
+        return mappedShards;
     }
 
     @Override
@@ -133,7 +133,14 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
                 cardinality = 0l;
             GlobalIndexValue value = new GlobalIndexValue(entry.getValue());
             cardinalities.put(key, cardinality + value.getCardinatlity());
-            shards.add(key.getShard());
+
+            Set<String> shardsForKey = mappedShards.get(key);
+            if(shardsForKey == null) {
+                shardsForKey = new HashSet<String>();
+                mappedShards.put(key, shardsForKey);
+            }
+
+            shardsForKey.add(key.getShard());
         }
 
         indexScanner.close();

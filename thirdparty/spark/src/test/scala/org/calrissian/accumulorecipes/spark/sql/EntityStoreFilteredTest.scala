@@ -68,7 +68,7 @@ object EntityStoreFilteredTest {
 
   private def persistEntities = {
     val entity = new BaseEntity("type", "id")
-    entity.put(new Tuple("key1", "val1"))
+    entity.put(new Tuple("key1", true))
     entity.put(new Tuple("key2", 5))
 
     entityStore.save(Collections.singleton(entity))
@@ -113,7 +113,7 @@ class EntityStoreFilteredTest {
   @Test
   def testSelectAndWhereSingleOperator() {
 
-    val rows = sqlContext.sql("SELECT key1,key2 FROM entities WHERE (key1 = 'val1')").collect
+    val rows = sqlContext.sql("SELECT key1,key2 FROM entities WHERE (key1 = true)").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals(5, rows(0).getAs[Int](1))
@@ -169,7 +169,7 @@ class EntityStoreFilteredTest {
     Assert.assertEquals("val1", rows(0).getAs(0))
   }
 
-  @Test(expected = classOf[TreeNodeException[_]])
+  @Test(expected = classOf[TIreeNodeException[_]])
   def testSelectFieldNotInSchema: Unit = sqlContext.sql("SELECT doesntExist FROM entities").collect
 
   @Test

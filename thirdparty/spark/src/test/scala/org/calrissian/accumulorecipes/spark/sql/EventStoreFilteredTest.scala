@@ -66,7 +66,7 @@ object EventStoreFilteredTest {
 
   private def persistEvents = {
     val event = new BaseEvent("type", "id")
-    event.put(new Tuple("key1", "val1"))
+    event.put(new Tuple("key1", true))
     event.put(new Tuple("key2", 5))
 
 
@@ -141,7 +141,7 @@ class EventStoreFilteredTest {
   @Test
   def testSelectAndWhereSingleOperator() {
 
-    val rows = sqlContext.sql("SELECT key1, key2 FROM events WHERE (key1 = 'val1')").collect
+    val rows = sqlContext.sql("SELECT key1, key2 FROM events WHERE (key1 = true and key2 = 5)").collect
 
     Assert.assertEquals(1, rows.length)
     Assert.assertEquals(5, rows(0).getAs[Int](1))

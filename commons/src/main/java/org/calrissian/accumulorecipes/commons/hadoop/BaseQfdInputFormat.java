@@ -46,7 +46,7 @@ import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.support.criteria.LogicalPlan;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.TupleStore;
@@ -64,7 +64,7 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
         TypeRegistry<String> typeRegistry, Class<? extends OptimizedQueryIterator> optimizedQueryIteratorClass)
           throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor, typeRegistry);
+        LogicalPlan optimizer = new LogicalPlan(query, globalInexVisitor, typeRegistry);
         String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
         String originalJexl = nodeToJexl.transform(types, query);
 
