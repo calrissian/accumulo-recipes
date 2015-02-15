@@ -48,8 +48,7 @@ public class CalculateShardsVisitor implements NodeVisitor {
     public CalculateShardsVisitor(Map<TupleIndexKey,Set<String>> shards, TypeRegistry<String> registry) {
         this.keysToShards = shards;
         this.registry = registry;
-
-        // TODO: This is shared w/ the ReorderVisitor- pull it out into a central location
+        
         for (TupleIndexKey key : shards.keySet()) {
             Set<TupleIndexKey> tupleIndexKey = accumuloKeyToTupleIndexKey.get(key.getKey());
             if (tupleIndexKey == null) {
