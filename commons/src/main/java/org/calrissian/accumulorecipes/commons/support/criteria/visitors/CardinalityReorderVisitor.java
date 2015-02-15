@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.BaseTupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
@@ -135,7 +135,7 @@ public class CardinalityReorderVisitor implements NodeVisitor {
             String normalizedVal = null;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
-            TupleIndexKey cardinalityKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
+            TupleIndexKey cardinalityKey = new BaseTupleIndexKey(kvLeaf.getKey(), normalizedVal, alias);
             Long cardinality = cardinalities.get(cardinalityKey);
 
             if (cardinality == null) {

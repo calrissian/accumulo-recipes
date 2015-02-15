@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.BaseTupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -33,9 +33,9 @@ public class CalculateShardsVisitorTest {
     private CalculateShardsVisitor runShardsVisitor(Node node) {
 
         Map<TupleIndexKey,Set<String>> shards = new HashMap<TupleIndexKey, Set<String>>();
-        shards.put(new BaseCardinalityKey("key1", "val1", "string"), Sets.newHashSet("1", "2"));
-        shards.put(new BaseCardinalityKey("key2", "val2", "string"), Sets.newHashSet("2", "3"));
-        shards.put(new BaseCardinalityKey("key3", "val3", "string"), Sets.newHashSet("2", "5"));
+        shards.put(new BaseTupleIndexKey("key1", "val1", "string"), Sets.newHashSet("1", "2"));
+        shards.put(new BaseTupleIndexKey("key2", "val2", "string"), Sets.newHashSet("2", "3"));
+        shards.put(new BaseTupleIndexKey("key3", "val3", "string"), Sets.newHashSet("2", "5"));
 
         CalculateShardsVisitor visitor = new CalculateShardsVisitor(shards, LexiTypeEncoders.LEXI_TYPES);
         node.accept(visitor);

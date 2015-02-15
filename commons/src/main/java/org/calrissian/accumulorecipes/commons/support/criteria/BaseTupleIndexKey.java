@@ -15,17 +15,17 @@
  */
 package org.calrissian.accumulorecipes.commons.support.criteria;
 
-public class BaseCardinalityKey implements TupleIndexKey {
+public class BaseTupleIndexKey implements TupleIndexKey {
 
     protected String key;
     protected String normalizedValue;
     protected String alias;
     protected String shard;
 
-    protected BaseCardinalityKey() {
+    protected BaseTupleIndexKey() {
     }
 
-    public BaseCardinalityKey(String key, String value, String alias) {
+    public BaseTupleIndexKey(String key, String value, String alias) {
       this.key = key;
       this.normalizedValue = value;
       this.alias = alias;
@@ -55,7 +55,7 @@ public class BaseCardinalityKey implements TupleIndexKey {
       } else if(o == null)
         return false;
 
-      BaseCardinalityKey that = (BaseCardinalityKey) o;
+      BaseTupleIndexKey that = (BaseTupleIndexKey) o;
 
       if (alias != null ? !alias.equals(that.alias) : that.alias != null) {
         return false;

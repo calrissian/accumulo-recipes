@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.BaseTupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
@@ -142,7 +142,7 @@ public class CalculateShardsVisitor implements NodeVisitor {
             String normalizedVal;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
-            TupleIndexKey tupleIndexKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
+            TupleIndexKey tupleIndexKey = new BaseTupleIndexKey(kvLeaf.getKey(), normalizedVal, alias);
             Set<String> leafShards = keysToShards.get(tupleIndexKey);
 
             if (leafShards == null)
