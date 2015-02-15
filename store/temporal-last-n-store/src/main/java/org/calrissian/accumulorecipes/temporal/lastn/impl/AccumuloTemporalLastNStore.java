@@ -38,7 +38,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.collect.EventMergeJoinIterable;
+import org.calrissian.accumulorecipes.temporal.lastn.support.EventMergeJoinIterable;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator;

@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
+import static java.util.Collections.sort;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,8 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.BaseTupleIndexKey;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.HasLeaf;
@@ -31,30 +31,36 @@ import org.calrissian.mango.criteria.domain.HasNotLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.NegationLeaf;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.criteria.domain.OrNode;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static java.util.Collections.sort;
-
+/**
+ * This visitor is an optimization that looks up cardinality information in the index table and reorders
+ * the leaves and subtrees of the queries to minimize the amount of items that need to be queried. A good
+ * example is in the case of a foreach. If I am looking for entries with x = 1 and y = 2 and the cardinalities
+ * are as follows: {x: 5M, y: 5}, we would benefit greatly from looking throw all the y's first and finding
+ * all entries with a y = 2 that also have an x = 1.
+ */
 public class CardinalityReorderVisitor implements NodeVisitor {
 
     private static TypeRegistry<String> registry;
     private Map<TupleIndexKey, Long> cardinalities;
-    private Map<String, Set<TupleIndexKey>> keyToCarinalityKey = new HashMap<String, Set<TupleIndexKey>>();
+    private Map<String, Set<TupleIndexKey>> accumuloKeyToTupleIndexKey = new HashMap<String, Set<TupleIndexKey>>();
 
     public CardinalityReorderVisitor(Map<TupleIndexKey, Long> cardinalities, TypeRegistry<String> typeRegistry) {
         this.cardinalities = cardinalities;
         this.registry = typeRegistry;
         for (TupleIndexKey key : cardinalities.keySet()) {
-            Set<TupleIndexKey> cardinalityKey = keyToCarinalityKey.get(key.getKey());
-            if (cardinalityKey == null) {
-                cardinalityKey = new HashSet<TupleIndexKey>();
-                keyToCarinalityKey.put(key.getKey(), cardinalityKey);
+            Set<TupleIndexKey> tupleIndexKey = accumuloKeyToTupleIndexKey.get(key.getKey());
+            if (tupleIndexKey == null) {
+                tupleIndexKey = new HashSet<TupleIndexKey>();
+                accumuloKeyToTupleIndexKey.put(key.getKey(), tupleIndexKey);
             }
-            cardinalityKey.add(key);
+            tupleIndexKey.add(key);
         }
     }
 
@@ -115,9 +121,13 @@ public class CardinalityReorderVisitor implements NodeVisitor {
 
         AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
 
+        /**
+         * If the leaf represents an unbounded range (including !=) then it will be harder for us to zero
+         * in on an exact set of shards. At the very least, we can find shards that contain the keys we're after.
+         */
         // hasKey and hasNotKey need special treatment since we don't know the aliases
-        if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf)) {
-            Set<TupleIndexKey> cardinalityKeys = keyToCarinalityKey.get(kvLeaf.getKey());
+        if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf) || leaf instanceof NotEqualsLeaf) {
+            Set<TupleIndexKey> cardinalityKeys = accumuloKeyToTupleIndexKey.get(kvLeaf.getKey());
 
             Long cardinality = 0l;
             if (cardinalityKeys == null) {
@@ -130,12 +140,17 @@ public class CardinalityReorderVisitor implements NodeVisitor {
             }
 
             return cardinality;
+
+        /**
+         * Just about the most efficient type of query one can do is one in which the value portion of the index can
+         * be used. This will amount to a smaller more granular set of shards.
+         */
         } else {
             String alias = registry.getAlias(kvLeaf.getValue());
             String normalizedVal = null;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
-            TupleIndexKey cardinalityKey = new BaseTupleIndexKey(kvLeaf.getKey(), normalizedVal, alias);
+            TupleIndexKey cardinalityKey = new TupleIndexKey(kvLeaf.getKey(), normalizedVal, alias);
             Long cardinality = cardinalities.get(cardinalityKey);
 
             if (cardinality == null) {
@@ -148,15 +163,15 @@ public class CardinalityReorderVisitor implements NodeVisitor {
     }
 
     @Override
-    public void end(ParentNode parentNode) {
-
-    }
+    public void end(ParentNode parentNode) {}
 
     @Override
-    public void visit(Leaf leaf) {
+    public void visit(Leaf leaf) {}
 
-    }
-
+    /**
+     * A private class to represent a query node with a cardinality that
+     * can be sorted by the cardinality
+     */
     private class CardinalityNode implements Comparable<CardinalityNode> {
         private Long cardinality;
         private Node node;

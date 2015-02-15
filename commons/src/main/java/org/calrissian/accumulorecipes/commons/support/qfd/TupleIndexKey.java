@@ -13,25 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.support.qfd.planner;
+package org.calrissian.accumulorecipes.commons.support.qfd;
 
-public class BaseTupleIndexKey implements TupleIndexKey {
+/**
+ * A tuple index key represents an entry in an index table. The reason a separate object is used
+ * instead of just representing this information in a {@link LeafNode} is because it's possible
+ * several different leaf nodes could benefit from sharing state of the same index key in a
+ * query. A good example could be this:
+ *
+ * (x != 1 and x < 5) or (x != 1 and x > 5)
+ *
+ * In the query above, we should be able to perform only one index from the index table- that is,
+ * we know we can just find all the shards that have a key x. We represent that information in
+ * the implementers of this interface so that we wouldn't need to fetch/store cardinality and other
+ * index information more times than is necessary.
+ */
+public class TupleIndexKey {
 
     protected String key;
     protected String normalizedValue;
     protected String alias;
     protected String shard;
 
-    protected BaseTupleIndexKey() {
+    protected TupleIndexKey() {
     }
 
-    public BaseTupleIndexKey(String key, String value, String alias) {
+    public TupleIndexKey(String key, String value, String alias) {
       this.key = key;
       this.normalizedValue = value;
       this.alias = alias;
     }
 
-  public String getKey() {
+    public String getKey() {
         return key;
     }
 
@@ -43,10 +56,15 @@ public class BaseTupleIndexKey implements TupleIndexKey {
         return alias;
     }
 
-    @Override public String getShard() {
+    public String getShard() {
       return shard;
     }
 
+    /**
+     * It's important for subclasses that override this method to be aware that shard has
+     * been purposefully left out of the comparison.
+     * @return
+     */
     @Override
     public boolean equals(Object o) {
 
@@ -55,7 +73,7 @@ public class BaseTupleIndexKey implements TupleIndexKey {
       } else if(o == null)
         return false;
 
-      BaseTupleIndexKey that = (BaseTupleIndexKey) o;
+      TupleIndexKey that = (TupleIndexKey) o;
 
       if (alias != null ? !alias.equals(that.alias) : that.alias != null) {
         return false;
@@ -70,6 +88,11 @@ public class BaseTupleIndexKey implements TupleIndexKey {
       return true;
     }
 
+    /**
+     * It's important for subclasses that override this method to be aware that
+     * the shard is purposefully left out of the calculation.
+     * @return
+     */
     @Override
     public int hashCode() {
       int result = key != null ? key.hashCode() : 0;
@@ -78,13 +101,12 @@ public class BaseTupleIndexKey implements TupleIndexKey {
       return result;
     }
 
-
-    @Override public String toString() {
-    return "BaseCardinalityKey{" +
-        "key='" + key + '\'' +
-        ", normalizedValue='" + normalizedValue + '\'' +
-        ", alias='" + alias + '\'' +
-        ", shard='" + shard + '\'' +
-        '}';
+    @Override
+    public String toString() {
+        return "BaseCardinalityKey{" +
+            "key='" + key + '\'' +
+            ", normalizedValue='" + normalizedValue + '\'' +
+            ", alias='" + alias + '\'' +
+            '}';
   }
 }

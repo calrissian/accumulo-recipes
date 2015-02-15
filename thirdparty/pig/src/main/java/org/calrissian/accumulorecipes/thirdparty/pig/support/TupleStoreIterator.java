@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.collect;
+package org.calrissian.accumulorecipes.thirdparty.pig.support;
 
 import java.util.Iterator;
 

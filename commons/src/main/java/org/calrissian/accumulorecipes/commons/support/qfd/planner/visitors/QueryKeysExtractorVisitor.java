@@ -15,14 +15,18 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 
-import java.util.HashSet;
-import java.util.Set;
-
+/**
+ * This class will extract all the keys used anywhere in a query. This can be helpful
+ * for metrics and statistical analysis of queries.
+ */
 public class QueryKeysExtractorVisitor implements NodeVisitor {
 
     private Set<String> keysFound = new HashSet<String>();

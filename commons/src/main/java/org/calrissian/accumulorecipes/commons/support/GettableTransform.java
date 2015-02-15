@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.calrissian.accumulorecipes.commons.transform;
+package org.calrissian.accumulorecipes.commons.support;
 
 import com.google.common.base.Function;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;

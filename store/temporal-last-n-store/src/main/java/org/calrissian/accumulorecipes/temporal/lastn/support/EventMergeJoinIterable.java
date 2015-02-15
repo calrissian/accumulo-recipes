@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.collect;
+package org.calrissian.accumulorecipes.temporal.lastn.support;
 
+import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
+import static org.calrissian.mango.collect.CloseableIterators.wrap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,9 +24,10 @@ import java.util.List;
 import org.calrissian.mango.collect.PeekingCloseableIterator;
 import org.calrissian.mango.domain.event.Event;
 
-import static org.calrissian.mango.collect.CloseableIterators.peekingIterator;
-import static org.calrissian.mango.collect.CloseableIterators.wrap;
-
+/**
+ * Given several iterables which are sorted and contain events in ascending order,
+ * this iterable will
+ */
 public class EventMergeJoinIterable implements Iterable<Event> {
 
     private Iterable<Iterable<Event>> cursors;

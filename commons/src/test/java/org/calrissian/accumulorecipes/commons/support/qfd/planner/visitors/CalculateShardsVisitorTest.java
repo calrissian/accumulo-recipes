@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.BaseTupleIndexKey;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.types.LexiTypeEncoders;
@@ -33,9 +32,9 @@ public class CalculateShardsVisitorTest {
     private CalculateShardsVisitor runShardsVisitor(Node node) {
 
         Map<TupleIndexKey,Set<String>> shards = new HashMap<TupleIndexKey, Set<String>>();
-        shards.put(new BaseTupleIndexKey("key1", "val1", "string"), Sets.newHashSet("1", "2"));
-        shards.put(new BaseTupleIndexKey("key2", "val2", "string"), Sets.newHashSet("2", "3"));
-        shards.put(new BaseTupleIndexKey("key3", "val3", "string"), Sets.newHashSet("2", "5"));
+        shards.put(new TupleIndexKey("key1", "val1", "string"), Sets.newHashSet("1", "2"));
+        shards.put(new TupleIndexKey("key2", "val2", "string"), Sets.newHashSet("2", "3"));
+        shards.put(new TupleIndexKey("key3", "val3", "string"), Sets.newHashSet("2", "5"));
 
         CalculateShardsVisitor visitor = new CalculateShardsVisitor(shards, LexiTypeEncoders.LEXI_TYPES);
         node.accept(visitor);

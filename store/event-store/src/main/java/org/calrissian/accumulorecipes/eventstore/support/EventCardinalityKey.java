@@ -22,9 +22,9 @@ import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueInd
 
 import org.apache.accumulo.core.data.Key;
 import org.apache.commons.lang.StringUtils;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.BaseTupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 
-public class EventCardinalityKey extends BaseTupleIndexKey {
+public class EventCardinalityKey extends TupleIndexKey {
 
 
 

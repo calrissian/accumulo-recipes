@@ -18,9 +18,15 @@ package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 import java.util.Map;
 import java.util.Set;
 
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 
+/**
+ * A global index visitor knows how to extract 2 very important things
+ * from an index table when given a query. It can do its best to find
+ * cardinality information from each leaf in the query and it can
+ * pull back a set of shards for each leaf.
+ */
 public interface GlobalIndexVisitor extends NodeVisitor {
 
     Map<TupleIndexKey, Long> getCardinalities();

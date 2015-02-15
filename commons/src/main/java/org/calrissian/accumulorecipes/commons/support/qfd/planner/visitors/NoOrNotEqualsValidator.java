@@ -22,7 +22,7 @@ import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 
 /**
- * Current, it's not valid to have a NotEqualsLead in an Or node
+ * Currently, it's not valid to have a NotEqualsLead in an Or node
  */
 public class NoOrNotEqualsValidator implements NodeVisitor {
 

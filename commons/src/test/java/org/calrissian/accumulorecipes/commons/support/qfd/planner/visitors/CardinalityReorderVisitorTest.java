@@ -23,8 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.BaseTupleIndexKey;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
@@ -39,9 +38,9 @@ public class CardinalityReorderVisitorTest {
     public void test_basicReorder() {
 
         Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
-        cardinalities.put(new BaseTupleIndexKey("key1", "val1", "string"), 500l);
-        cardinalities.put(new BaseTupleIndexKey("key2", "val2", "string"), 50l);
-        cardinalities.put(new BaseTupleIndexKey("key3", "val3", "string"), 1000l);
+        cardinalities.put(new TupleIndexKey("key1", "val1", "string"), 500l);
+        cardinalities.put(new TupleIndexKey("key2", "val2", "string"), 50l);
+        cardinalities.put(new TupleIndexKey("key3", "val3", "string"), 1000l);
 
         Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
@@ -61,9 +60,9 @@ public class CardinalityReorderVisitorTest {
     public void test_pruneCardinalities_AndNode() {
 
         Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
-        cardinalities.put(new BaseTupleIndexKey("key1", "val1", "string"), 500l);
-        cardinalities.put(new BaseTupleIndexKey("key2", "val2", "string"), 0l);
-        cardinalities.put(new BaseTupleIndexKey("key3", "val3", "string"), 1000l);
+        cardinalities.put(new TupleIndexKey("key1", "val1", "string"), 500l);
+        cardinalities.put(new TupleIndexKey("key2", "val2", "string"), 0l);
+        cardinalities.put(new TupleIndexKey("key3", "val3", "string"), 1000l);
 
         Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
@@ -82,9 +81,9 @@ public class CardinalityReorderVisitorTest {
     public void test_pruneCardinalities_OrNode() {
 
         Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
-        cardinalities.put(new BaseTupleIndexKey("key1", "val1", "string"), 0l);
-        cardinalities.put(new BaseTupleIndexKey("key2", "val2", "string"), 0l);
-        cardinalities.put(new BaseTupleIndexKey("key3", "val3", "string"), 1000l);
+        cardinalities.put(new TupleIndexKey("key1", "val1", "string"), 0l);
+        cardinalities.put(new TupleIndexKey("key2", "val2", "string"), 0l);
+        cardinalities.put(new TupleIndexKey("key3", "val3", "string"), 1000l);
 
         Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
@@ -103,9 +102,9 @@ public class CardinalityReorderVisitorTest {
     public void test_pruneCardinalities_AllNodesZero() {
 
         Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
-        cardinalities.put(new BaseTupleIndexKey("key1", "val1", "string"), 0l);
-        cardinalities.put(new BaseTupleIndexKey("key2", "val2", "string"), 0l);
-        cardinalities.put(new BaseTupleIndexKey("key3", "val3", "string"), 0l);
+        cardinalities.put(new TupleIndexKey("key1", "val1", "string"), 0l);
+        cardinalities.put(new TupleIndexKey("key2", "val2", "string"), 0l);
+        cardinalities.put(new TupleIndexKey("key3", "val3", "string"), 0l);
 
         Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();

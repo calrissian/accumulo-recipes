@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.BaseTupleIndexKey;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.HasLeaf;
@@ -87,6 +86,9 @@ public class CalculateShardsVisitor implements NodeVisitor {
 
     private Set<String> getShards(ParentNode node) {
 
+        /**
+         * First, we grab all shards for all subtrees (until we reach the leaves).
+         */
         Set<Set<String>> resultShards = new HashSet<Set<String>>();
         for (Node child : node.children()) {
             if (child instanceof AndNode || child instanceof OrNode)
@@ -99,6 +101,11 @@ public class CalculateShardsVisitor implements NodeVisitor {
 
         Set<String> combinedSet = null;
 
+        /**
+         * We want to intersect the shards for all AND queries since the query will only return true for
+         * shards that will all make the tree return true.
+         */
+
         // if the parent is an AndNode, we need to intersect keysToShards
         if(node instanceof AndNode) {
             for(Set<String> curShards : resultShards) {
@@ -110,7 +117,11 @@ public class CalculateShardsVisitor implements NodeVisitor {
                 }
             }
 
-            // otherwise the paren is an OrNode, and we need to union
+        /**
+         * For OR nodes, we can just union the shards together because any one of the shards
+         * will make the tree return true.
+         */
+
         } else {
             for(Set<String> curShards : resultShards) {
                 if(combinedSet == null)
@@ -119,15 +130,18 @@ public class CalculateShardsVisitor implements NodeVisitor {
             }
         }
 
-        if(combinedSet == null)
-            combinedSet = Sets.newHashSet();
-
-        return combinedSet;
+        return (combinedSet != null ? combinedSet : Sets.<String>newHashSet());
     }
 
     private Set<String> getShards(Leaf leaf) {
         AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
 
+        /**
+         * Range leaves are unbounded- that is, any number of shards within the beginning and ending shard
+         * ranges given could have values that would evaluate these leaves to true. Because of this, we
+         * can help eliminate shards which do not contain any values for the keys associated with
+         * each leaf.
+         */
         // hasKey and hasNotKey need special treatment since we don't know the aliases
         if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf) || leaf instanceof NotEqualsLeaf) {
             Set<TupleIndexKey> tupleIndexKeys = accumuloKeyToTupleIndexKey.get(kvLeaf.getKey());
@@ -142,12 +156,18 @@ public class CalculateShardsVisitor implements NodeVisitor {
             }
 
             return unionedShards;
+
+        /**
+         * EqualsLeaf and other discrete leaves have the best ability to filter down shards as they are directly
+         * indexed so we know exactly which shards will contain these values. It's still possible every shard does
+         * contain the value- but at least we can be sure we'll get results from those shards.
+         */
         } else {
             String alias = registry.getAlias(kvLeaf.getValue());
             String normalizedVal;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
-            TupleIndexKey tupleIndexKey = new BaseTupleIndexKey(kvLeaf.getKey(), normalizedVal, alias);
+            TupleIndexKey tupleIndexKey = new TupleIndexKey(kvLeaf.getKey(), normalizedVal, alias);
             Set<String> leafShards = keysToShards.get(tupleIndexKey);
 
             if (leafShards == null)
