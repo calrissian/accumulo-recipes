@@ -39,6 +39,7 @@ import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.HasLeaf;
 import org.calrissian.mango.criteria.domain.HasNotLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -90,7 +91,7 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
             String alias = registry.getAlias(kvLeaf.getValue());
 
             for (String type : types) {
-                if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+                if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || leaf instanceof NotEqualsLeaf) {
                     if (alias != null)
                         ranges.add(prefix(type + "_" + INDEX_K + "_" + kvLeaf.getKey(), alias));
                     else

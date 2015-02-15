@@ -64,18 +64,18 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
         TypeRegistry<String> typeRegistry, Class<? extends OptimizedQueryIterator> optimizedQueryIteratorClass)
           throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-        LogicalPlan optimizer = new LogicalPlan(query, globalInexVisitor, typeRegistry);
-        String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
+        LogicalPlan logicalPlan = new LogicalPlan(query, globalInexVisitor, typeRegistry);
+        String jexl = nodeToJexl.transform(types, logicalPlan.getOptimizedQuery());
         String originalJexl = nodeToJexl.transform(types, query);
 
         log.debug("Original Jexl: "+ originalJexl);
         log.debug("Optimized Jexl: "+ jexl);
 
         Collection<Range> ranges = new ArrayList<Range>();
-        if(jexl.equals("()") || jexl.equals("")) {
+        if(jexl.equals("()") || jexl.equals("") || logicalPlan.getShards().size() == 0) {
             ranges.add(new Range(END_BYTE));
         } else {
-            for (String shard : optimizer.getShards())
+            for (String shard : logicalPlan.getShards())
                 ranges.add(new Range(shard));
         }
 

@@ -30,6 +30,7 @@ import org.calrissian.mango.criteria.domain.HasNotLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.NegationLeaf;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.criteria.domain.OrNode;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -39,7 +40,7 @@ import org.calrissian.mango.types.TypeRegistry;
 public class CalculateShardsVisitor implements NodeVisitor {
 
     private final Map<TupleIndexKey,Set<String>> keysToShards;
-    private Map<String, Set<TupleIndexKey>> keyToCarinalityKey = new HashMap<String, Set<TupleIndexKey>>();
+    private Map<String, Set<TupleIndexKey>> accumuloKeyToTupleIndexKey = new HashMap<String, Set<TupleIndexKey>>();
     private TypeRegistry<String> registry;
 
     private Set<String> finalShards;
@@ -50,12 +51,12 @@ public class CalculateShardsVisitor implements NodeVisitor {
 
         // TODO: This is shared w/ the ReorderVisitor- pull it out into a central location
         for (TupleIndexKey key : shards.keySet()) {
-            Set<TupleIndexKey> cardinalityKey = keyToCarinalityKey.get(key.getKey());
-            if (cardinalityKey == null) {
-                cardinalityKey = new HashSet<TupleIndexKey>();
-                keyToCarinalityKey.put(key.getKey(), cardinalityKey);
+            Set<TupleIndexKey> tupleIndexKey = accumuloKeyToTupleIndexKey.get(key.getKey());
+            if (tupleIndexKey == null) {
+                tupleIndexKey = new HashSet<TupleIndexKey>();
+                accumuloKeyToTupleIndexKey.put(key.getKey(), tupleIndexKey);
             }
-            cardinalityKey.add(key);
+            tupleIndexKey.add(key);
         }
     }
 
@@ -81,24 +82,21 @@ public class CalculateShardsVisitor implements NodeVisitor {
 
     private Set<String> getShards(ParentNode node) {
 
-        Set<Set<String>> finalShards = new HashSet<Set<String>>();
-        Set<String> finalNegatedShards = new HashSet<String>();
+        Set<Set<String>> resultShards = new HashSet<Set<String>>();
         for (Node child : node.children()) {
             if (child instanceof AndNode || child instanceof OrNode)
-                finalShards.add(getShards((ParentNode) child));
+                resultShards.add(getShards((ParentNode) child));
             else if (child instanceof Leaf)  {
                 Set<String> childShards = getShards((Leaf) child);
-                if(child instanceof NegationLeaf)
-                    finalNegatedShards.addAll(childShards);
-                else
-                    finalShards.add(childShards);
+                resultShards.add(childShards);
             }
         }
 
         Set<String> combinedSet = null;
+
         // if the parent is an AndNode, we need to intersect keysToShards
         if(node instanceof AndNode) {
-            for(Set<String> curShards : finalShards) {
+            for(Set<String> curShards : resultShards) {
                 if(combinedSet == null)
                     combinedSet = curShards;
                 else {
@@ -107,27 +105,17 @@ public class CalculateShardsVisitor implements NodeVisitor {
                 }
             }
 
-            /**
-             * In order to eliminate any negated shards that don't match the other non-negated shards, we'll
-             * union the negated shards to our non-negated shards and then intersect against the non-negated shards.
-             */
-            if(combinedSet != null) {
-                finalNegatedShards.addAll(combinedSet);
-                Set<String> intersected = Sets.intersection(combinedSet, finalNegatedShards);
-                System.out.println(intersected);
-                return intersected;
-            } else {
-                return Sets.newHashSet();
-            }
-
-        // otherwise the paren is an OrNode, and we need to union
+            // otherwise the paren is an OrNode, and we need to union
         } else {
-            for(Set<String> curShards : finalShards) {
+            for(Set<String> curShards : resultShards) {
                 if(combinedSet == null)
                     combinedSet = Sets.newHashSet();
                 combinedSet.addAll(curShards);
             }
         }
+
+        if(combinedSet == null)
+            combinedSet = Sets.newHashSet();
 
         return combinedSet;
     }
@@ -136,14 +124,14 @@ public class CalculateShardsVisitor implements NodeVisitor {
         AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
 
         // hasKey and hasNotKey need special treatment since we don't know the aliases
-        if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf)) {
-            Set<TupleIndexKey> cardinalityKeys = keyToCarinalityKey.get(kvLeaf.getKey());
+        if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf) || leaf instanceof NotEqualsLeaf) {
+            Set<TupleIndexKey> tupleIndexKeys = accumuloKeyToTupleIndexKey.get(kvLeaf.getKey());
             Set<String> unionedShards = new HashSet<String>();
-            if (cardinalityKeys == null) {
+            if (tupleIndexKeys == null) {
                 if (leaf instanceof NegationLeaf)
                     return unionedShards;
             } else {
-                for (TupleIndexKey key : cardinalityKeys) {
+                for (TupleIndexKey key : tupleIndexKeys) {
                     unionedShards.addAll(this.keysToShards.get(key));
                 }
             }
@@ -151,7 +139,7 @@ public class CalculateShardsVisitor implements NodeVisitor {
             return unionedShards;
         } else {
             String alias = registry.getAlias(kvLeaf.getValue());
-            String normalizedVal = null;
+            String normalizedVal;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
             TupleIndexKey tupleIndexKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);

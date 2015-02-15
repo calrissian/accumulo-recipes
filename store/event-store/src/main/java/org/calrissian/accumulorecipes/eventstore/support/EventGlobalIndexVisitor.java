@@ -22,7 +22,6 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE
 import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex.INDEX_SEP;
 import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,6 +41,7 @@ import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.HasLeaf;
 import org.calrissian.mango.criteria.domain.HasNotLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.TypeRegistry;
@@ -82,7 +82,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     @Override
     public void exec() {
 
-        Collection<Range> ranges = new ArrayList<Range>();
+        Set<Range> ranges = new HashSet<Range>();
         for (Leaf leaf : leaves) {
 
             AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
@@ -91,7 +91,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
             String startShard = shardBuilder.buildShard(start.getTime(), 0);
             String stopShard = shardBuilder.buildShard(end.getTime(), shardBuilder.numPartitions() - 1) + END_BYTE;
 
-            if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+            if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || leaf instanceof NotEqualsLeaf) {
 
                 if(leaf instanceof HasLeaf) {
                     String hasLeafAlias = registry.getAlias(((HasLeaf)leaf).getClazz());
