@@ -40,7 +40,7 @@ import org.calrissian.mango.types.TypeRegistry;
 /**
  * Visit criteria to validate and config to perform the criteria against the event service.
  */
-public class LogicalPlan implements NodeVisitor {
+public class QueryPlanner implements NodeVisitor {
 
     protected Node node;
     protected Set<String> shards = Sets.newHashSet();
@@ -48,7 +48,7 @@ public class LogicalPlan implements NodeVisitor {
     protected GlobalIndexVisitor indexVisitor;
     protected TypeRegistry<String> typeRegistry;
 
-    public LogicalPlan(Node query, GlobalIndexVisitor indexVisitor, TypeRegistry<String> typeRegistry) {
+    public QueryPlanner(Node query, GlobalIndexVisitor indexVisitor, TypeRegistry<String> typeRegistry) {
         checkNotNull(query);
 
         this.node = query.clone(null);  // cloned so that original is not modified during optimization
@@ -58,7 +58,7 @@ public class LogicalPlan implements NodeVisitor {
         init();
     }
 
-    public LogicalPlan(Node query, TypeRegistry<String> typeRegistry) {
+    public QueryPlanner(Node query, TypeRegistry<String> typeRegistry) {
         this(query, null, typeRegistry);
     }
 

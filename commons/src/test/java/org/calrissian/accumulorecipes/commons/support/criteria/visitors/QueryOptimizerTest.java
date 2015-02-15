@@ -19,7 +19,7 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collections;
 
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.LogicalPlan;
+import org.calrissian.accumulorecipes.commons.support.criteria.QueryPlanner;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.junit.Test;
@@ -31,7 +31,7 @@ public class QueryOptimizerTest {
 
         Node query = new QueryBuilder().and().and().or().end().end().end().build();
 
-        LogicalPlan optimizer = new LogicalPlan(query, LEXI_TYPES);
+        QueryPlanner optimizer = new QueryPlanner(query, LEXI_TYPES);
 
         System.out.println(new NodeToJexl(LEXI_TYPES).transform(Collections.singleton(""), optimizer.getOptimizedQuery()));
 
