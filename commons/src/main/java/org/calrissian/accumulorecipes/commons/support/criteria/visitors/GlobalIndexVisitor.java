@@ -15,17 +15,17 @@
  */
 package org.calrissian.accumulorecipes.commons.support.criteria.visitors;
 
-import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
-import org.calrissian.mango.criteria.visitor.NodeVisitor;
-
 import java.util.Map;
 import java.util.Set;
 
+import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
+import org.calrissian.mango.criteria.visitor.NodeVisitor;
+
 public interface GlobalIndexVisitor extends NodeVisitor {
 
-    Map<CardinalityKey, Long> getCardinalities();
+    Map<TupleIndexKey, Long> getCardinalities();
 
-    Set<String> getShards();
+    Map<TupleIndexKey, Set<String>> getShards();
 
     void exec();
 }

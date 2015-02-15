@@ -22,7 +22,6 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE
 import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex.INDEX_SEP;
 import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,7 +33,7 @@ import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
@@ -42,6 +41,7 @@ import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.HasLeaf;
 import org.calrissian.mango.criteria.domain.HasNotLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
+import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.TypeRegistry;
@@ -55,8 +55,8 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     private BatchScanner indexScanner;
     private EventShardBuilder shardBuilder;
 
-    private Set<String> shards = new HashSet<String>();
-    private Map<CardinalityKey, Long> cardinalities = new HashMap<CardinalityKey, Long>();
+    private Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
+    private Map<TupleIndexKey, Set<String>> mappedShards = new HashMap<TupleIndexKey, Set<String>>();
     private Set<String> types;
 
     private Set<Leaf> leaves = new HashSet<Leaf>();
@@ -70,19 +70,19 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     @Override
-    public Map<CardinalityKey, Long> getCardinalities() {
+    public Map<TupleIndexKey, Long> getCardinalities() {
         return cardinalities;
     }
 
     @Override
-    public Set<String> getShards() {
-        return shards;
+    public Map<TupleIndexKey, Set<String>> getShards() {
+        return mappedShards;
     }
 
     @Override
     public void exec() {
 
-        Collection<Range> ranges = new ArrayList<Range>();
+        Set<Range> ranges = new HashSet<Range>();
         for (Leaf leaf : leaves) {
 
             AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
@@ -91,7 +91,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
             String startShard = shardBuilder.buildShard(start.getTime(), 0);
             String stopShard = shardBuilder.buildShard(end.getTime(), shardBuilder.numPartitions() - 1) + END_BYTE;
 
-            if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+            if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || leaf instanceof NotEqualsLeaf) {
 
                 if(leaf instanceof HasLeaf) {
                     String hasLeafAlias = registry.getAlias(((HasLeaf)leaf).getClazz());
@@ -127,14 +127,23 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
         for (Map.Entry<Key, Value> entry : indexScanner) {
 
-            CardinalityKey key = new EventCardinalityKey(entry.getKey());
+            TupleIndexKey key = new EventCardinalityKey(entry.getKey());
             Long cardinality = cardinalities.get(key);
             if (cardinality == null)
                 cardinality = 0l;
             GlobalIndexValue value = new GlobalIndexValue(entry.getValue());
             cardinalities.put(key, cardinality + value.getCardinatlity());
-            shards.add(key.getShard());
+
+            Set<String> shardsForKey = mappedShards.get(key);
+            if(shardsForKey == null) {
+                shardsForKey = new HashSet<String>();
+                mappedShards.put(key, shardsForKey);
+            }
+
+            shardsForKey.add(key.getShard());
         }
+
+        System.out.println(mappedShards);
 
         indexScanner.close();
     }

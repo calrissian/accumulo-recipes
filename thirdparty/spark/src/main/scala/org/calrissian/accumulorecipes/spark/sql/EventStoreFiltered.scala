@@ -73,7 +73,6 @@ class EventStoreFilteredScan(inst: String, zk: String, user: String, pass: Strin
   override def uniqueKeys(connector: Connector): CloseableIterable[Pair[String, String]] =
     EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
 
-
   override def buildRDD(columns: Array[String], filters: Array[Filter], query: Node): RDD[T] = {
     val conf = sqlContext.sparkContext.hadoopConfiguration
     val job = Job.getInstance(conf)

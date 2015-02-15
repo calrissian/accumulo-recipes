@@ -685,7 +685,6 @@ public class AccumuloEntityStoreTest {
             x++;
             Entity e = itr.next();
             assertEquals("3.3.3.3", e.get("ip").getValue());
-
         }
         assertEquals(1, x);
     }

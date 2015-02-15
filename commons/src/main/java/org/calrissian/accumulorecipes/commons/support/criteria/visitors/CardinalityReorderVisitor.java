@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.support.criteria.BaseCardinalityKey;
-import org.calrissian.accumulorecipes.commons.support.criteria.CardinalityKey;
+import org.calrissian.accumulorecipes.commons.support.criteria.TupleIndexKey;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.HasLeaf;
@@ -42,16 +42,16 @@ import static java.util.Collections.sort;
 public class CardinalityReorderVisitor implements NodeVisitor {
 
     private static TypeRegistry<String> registry;
-    private Map<CardinalityKey, Long> cardinalities;
-    private Map<String, Set<CardinalityKey>> keyToCarinalityKey = new HashMap<String, Set<CardinalityKey>>();
+    private Map<TupleIndexKey, Long> cardinalities;
+    private Map<String, Set<TupleIndexKey>> keyToCarinalityKey = new HashMap<String, Set<TupleIndexKey>>();
 
-    public CardinalityReorderVisitor(Map<CardinalityKey, Long> cardinalities, TypeRegistry<String> typeRegistry) {
+    public CardinalityReorderVisitor(Map<TupleIndexKey, Long> cardinalities, TypeRegistry<String> typeRegistry) {
         this.cardinalities = cardinalities;
         this.registry = typeRegistry;
-        for (CardinalityKey key : cardinalities.keySet()) {
-            Set<CardinalityKey> cardinalityKey = keyToCarinalityKey.get(key.getKey());
+        for (TupleIndexKey key : cardinalities.keySet()) {
+            Set<TupleIndexKey> cardinalityKey = keyToCarinalityKey.get(key.getKey());
             if (cardinalityKey == null) {
-                cardinalityKey = new HashSet<CardinalityKey>();
+                cardinalityKey = new HashSet<TupleIndexKey>();
                 keyToCarinalityKey.put(key.getKey(), cardinalityKey);
             }
             cardinalityKey.add(key);
@@ -117,14 +117,14 @@ public class CardinalityReorderVisitor implements NodeVisitor {
 
         // hasKey and hasNotKey need special treatment since we don't know the aliases
         if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf)) {
-            Set<CardinalityKey> cardinalityKeys = keyToCarinalityKey.get(kvLeaf.getKey());
+            Set<TupleIndexKey> cardinalityKeys = keyToCarinalityKey.get(kvLeaf.getKey());
 
             Long cardinality = 0l;
             if (cardinalityKeys == null) {
                 if (leaf instanceof NegationLeaf)
                     return 1;
             } else {
-                for (CardinalityKey key : cardinalityKeys) {
+                for (TupleIndexKey key : cardinalityKeys) {
                     cardinality += this.cardinalities.get(key);
                 }
             }
@@ -135,7 +135,7 @@ public class CardinalityReorderVisitor implements NodeVisitor {
             String normalizedVal = null;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
-            CardinalityKey cardinalityKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
+            TupleIndexKey cardinalityKey = new BaseCardinalityKey(kvLeaf.getKey(), normalizedVal, alias);
             Long cardinality = cardinalities.get(cardinalityKey);
 
             if (cardinality == null) {

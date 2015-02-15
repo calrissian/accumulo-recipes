@@ -18,6 +18,7 @@ package org.calrissian.accumulorecipes.spark.sql
 import java.util.Collections
 
 import org.apache.accumulo.minicluster.impl.MiniAccumuloClusterImpl
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.{SparkConf, SparkContext}
@@ -97,6 +98,8 @@ class EventStoreCatalystTest {
     createTempTable
   }
 
+
+
   @After
   def teardownTest: Unit = {
     sqlContext.dropTempTable("events")
@@ -117,7 +120,7 @@ class EventStoreCatalystTest {
 
     AccumuloTestUtils.dumpTable(miniCluster.getConnector("root", "secret"), "eventStore_shard")
 
-    val rows = sqlContext.sql("SELECT e.key1,e.key2,t.key3 FROM events e INNER JOIN events2 t ON e.key1 = t.key1").collect
+    val rows = sqlContext.sql("SELECT e.key1,e.key2,t.key3 FROM events e  JOIN events2 t ON e.key1 = t.key1").collect
 
     System.out.println(rows.toList)
     Assert.assertEquals(1, rows.length)
@@ -126,6 +129,18 @@ class EventStoreCatalystTest {
     Assert.assertEquals("val3", rows(0).getAs[String](2))
 
     sqlContext.dropTempTable("events2")
+  }
+
+  val myfunc = () => {
+    1
+  }
+
+  @Test
+  def test() = {
+
+    val rdd:RDD[Int] = sqlContext.sparkContext.parallelize(0 to 500)
+    val rdd2: RDD[Seq[Int]] = rdd.mapPartitions(_.grouped(10))
+    System.out.println(rdd2.collect.toList)
   }
 
   @Test

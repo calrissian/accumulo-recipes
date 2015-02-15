@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
+import org.calrissian.accumulorecipes.commons.support.criteria.visitors.CalculateShardsVisitor;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.CardinalityReorderVisitor;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.ExtractInNotInVisitor;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.ExtractRangesVisitor;
@@ -38,14 +40,15 @@ import org.calrissian.mango.types.TypeRegistry;
 /**
  * Visit criteria to validate and config to perform the criteria against the event service.
  */
-public class QueryOptimizer implements NodeVisitor {
+public class LogicalPlan implements NodeVisitor {
 
     protected Node node;
+    protected Set<String> shards = Sets.newHashSet();
     protected Set<String> keysInQuery;
     protected GlobalIndexVisitor indexVisitor;
     protected TypeRegistry<String> typeRegistry;
 
-    public QueryOptimizer(Node query, GlobalIndexVisitor indexVisitor, TypeRegistry<String> typeRegistry) {
+    public LogicalPlan(Node query, GlobalIndexVisitor indexVisitor, TypeRegistry<String> typeRegistry) {
         checkNotNull(query);
 
         this.node = query.clone(null);  // cloned so that original is not modified during optimization
@@ -55,7 +58,7 @@ public class QueryOptimizer implements NodeVisitor {
         init();
     }
 
-    public QueryOptimizer(Node query, TypeRegistry<String> typeRegistry) {
+    public LogicalPlan(Node query, TypeRegistry<String> typeRegistry) {
         this(query, null, typeRegistry);
     }
 
@@ -72,6 +75,10 @@ public class QueryOptimizer implements NodeVisitor {
                 node.accept(indexVisitor);
                 indexVisitor.exec();
                 node.accept(new CardinalityReorderVisitor(indexVisitor.getCardinalities(), typeRegistry));
+
+                CalculateShardsVisitor calculateShardsVisitor = new CalculateShardsVisitor(indexVisitor.getShards(), typeRegistry);
+                node.accept(calculateShardsVisitor);
+                shards = calculateShardsVisitor.getShards();
             }
 
             Node previous = node.clone(null);
@@ -128,8 +135,9 @@ public class QueryOptimizer implements NodeVisitor {
     }
 
     public Set<String> getShards() {
+
         if (indexVisitor != null)
-            return indexVisitor.getShards();
+            return shards;
         else
             throw new RuntimeException("A global index visitor was not configured on this optimizer.");
     }

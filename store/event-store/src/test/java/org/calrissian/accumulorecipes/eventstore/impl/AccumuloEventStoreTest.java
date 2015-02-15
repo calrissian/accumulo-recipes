@@ -553,6 +553,7 @@ public class AccumuloEventStoreTest {
         store.flush();
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
+        AccumuloTestUtils.dumpTable(connector, "eventStore_index");
 
         Node query = new QueryBuilder()
                 .and()

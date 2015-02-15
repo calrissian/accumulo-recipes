@@ -46,7 +46,7 @@ import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.support.criteria.LogicalPlan;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.TupleStore;
@@ -64,18 +64,18 @@ public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settabl
         TypeRegistry<String> typeRegistry, Class<? extends OptimizedQueryIterator> optimizedQueryIteratorClass)
           throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalInexVisitor, typeRegistry);
-        String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
+        LogicalPlan logicalPlan = new LogicalPlan(query, globalInexVisitor, typeRegistry);
+        String jexl = nodeToJexl.transform(types, logicalPlan.getOptimizedQuery());
         String originalJexl = nodeToJexl.transform(types, query);
 
         log.debug("Original Jexl: "+ originalJexl);
         log.debug("Optimized Jexl: "+ jexl);
 
         Collection<Range> ranges = new ArrayList<Range>();
-        if(jexl.equals("()") || jexl.equals("")) {
+        if(jexl.equals("()") || jexl.equals("") || logicalPlan.getShards().size() == 0) {
             ranges.add(new Range(END_BYTE));
         } else {
-            for (String shard : optimizer.getShards())
+            for (String shard : logicalPlan.getShards())
                 ranges.add(new Range(shard));
         }
 

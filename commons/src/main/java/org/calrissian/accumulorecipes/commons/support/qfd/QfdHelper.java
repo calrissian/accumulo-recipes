@@ -65,7 +65,7 @@ import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.QueryOptimizer;
+import org.calrissian.accumulorecipes.commons.support.criteria.LogicalPlan;
 import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
@@ -244,17 +244,18 @@ public abstract class QfdHelper<T extends Entity> {
         checkNotNull(query);
         checkNotNull(auths);
 
-        QueryOptimizer optimizer = new QueryOptimizer(query, globalIndexVisitor, typeRegistry);
+        LogicalPlan logicalPlan = new LogicalPlan(query, globalIndexVisitor, typeRegistry);
 
-        if (NodeUtils.isEmpty(optimizer.getOptimizedQuery()))
+        if (NodeUtils.isEmpty(logicalPlan.getOptimizedQuery()))
             return wrap(EMPTY_LIST);
 
-        String jexl = nodeToJexl.transform(types, optimizer.getOptimizedQuery());
+        String jexl = nodeToJexl.transform(types, logicalPlan.getOptimizedQuery());
         String originalJexl = nodeToJexl.transform(types, query);
-        Set<String> shards = optimizer.getShards();
+        Set<String> shards = logicalPlan.getShards();
 
         Collection<Range> ranges = new HashSet<Range>();
-        if(jexl.equals("()") || jexl.equals(""))
+        // If we were able to determine from the index table that we don't have a match, let's just scan beyond the range of the table
+        if(jexl.equals("()") || jexl.equals("") || shards.size() == 0)
             ranges.add(new Range(END_BYTE));
         else
             for (String shard : shards)
