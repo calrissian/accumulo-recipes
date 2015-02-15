@@ -25,7 +25,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_P
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
@@ -52,7 +52,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.support.EntityCardinalityKey;

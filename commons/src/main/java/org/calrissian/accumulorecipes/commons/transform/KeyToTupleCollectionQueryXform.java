@@ -27,7 +27,7 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
-import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.TupleStore;
 import org.calrissian.mango.types.TypeRegistry;

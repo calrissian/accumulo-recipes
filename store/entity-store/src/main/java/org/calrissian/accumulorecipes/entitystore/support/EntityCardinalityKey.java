@@ -19,7 +19,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 
 import org.apache.accumulo.core.data.Key;
-import org.calrissian.accumulorecipes.commons.support.criteria.BaseTupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.BaseTupleIndexKey;
 
 public class EntityCardinalityKey extends BaseTupleIndexKey {
 

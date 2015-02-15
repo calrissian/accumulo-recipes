@@ -40,7 +40,7 @@ import org.apache.hadoop.io.Text;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import static org.junit.Assert.assertEquals;
 
 public class FirstNEntriesInRowIteratorTest {

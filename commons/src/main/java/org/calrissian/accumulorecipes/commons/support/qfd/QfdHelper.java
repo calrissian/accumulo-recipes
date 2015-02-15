@@ -25,8 +25,8 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_FI;
-import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.encodeRow;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.VISIBILITY;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
@@ -65,11 +65,11 @@ import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.criteria.QueryPlanner;
-import org.calrissian.accumulorecipes.commons.support.criteria.visitors.GlobalIndexVisitor;
-import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
-import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerdeFactory;
-import org.calrissian.accumulorecipes.commons.support.metadata.SimpleMetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.QueryPlanner;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.tuple.metadata.SimpleMetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
@@ -244,14 +244,15 @@ public abstract class QfdHelper<T extends Entity> {
         checkNotNull(query);
         checkNotNull(auths);
 
-        QueryPlanner logicalPlan = new QueryPlanner(query, globalIndexVisitor, typeRegistry);
 
-        if (NodeUtils.isEmpty(logicalPlan.getOptimizedQuery()))
+        QueryPlanner queryPlan = new QueryPlanner(query, globalIndexVisitor, typeRegistry);
+
+        if (NodeUtils.isEmpty(queryPlan.getOptimizedQuery()))
             return wrap(EMPTY_LIST);
 
-        String jexl = nodeToJexl.transform(types, logicalPlan.getOptimizedQuery());
+        String jexl = nodeToJexl.transform(types, queryPlan.getOptimizedQuery());
         String originalJexl = nodeToJexl.transform(types, query);
-        Set<String> shards = logicalPlan.getShards();
+        Set<String> shards = queryPlan.getShards();
 
         Collection<Range> ranges = new HashSet<Range>();
         // If we were able to determine from the index table that we don't have a match, let's just scan beyond the range of the table

@@ -38,7 +38,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.support.RowEncoderUtil;
+import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 import org.junit.Before;
 import org.junit.Test;
 

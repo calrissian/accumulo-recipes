@@ -37,7 +37,7 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 
 /**

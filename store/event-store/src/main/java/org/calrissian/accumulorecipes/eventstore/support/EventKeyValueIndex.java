@@ -24,7 +24,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import java.util.HashMap;

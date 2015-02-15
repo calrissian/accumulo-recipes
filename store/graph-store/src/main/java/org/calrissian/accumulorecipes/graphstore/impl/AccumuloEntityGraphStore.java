@@ -22,7 +22,7 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;

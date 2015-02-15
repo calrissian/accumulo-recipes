@@ -17,7 +17,7 @@
 package org.calrissian.accumulorecipes.commons.iterators;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;

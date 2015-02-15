@@ -15,8 +15,8 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.decodeRow;
-import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.encodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;

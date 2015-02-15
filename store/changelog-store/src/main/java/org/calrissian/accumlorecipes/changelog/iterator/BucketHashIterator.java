@@ -38,7 +38,7 @@ import java.util.Map;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.hashEntry;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class BucketHashIterator extends WrappingIterator {

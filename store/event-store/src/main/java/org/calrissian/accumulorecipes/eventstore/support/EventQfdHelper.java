@@ -29,7 +29,7 @@ import org.apache.accumulo.core.data.Key;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;

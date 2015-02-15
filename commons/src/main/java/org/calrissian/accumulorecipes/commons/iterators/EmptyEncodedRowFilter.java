@@ -21,7 +21,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Filter;
 
-import static org.calrissian.accumulorecipes.commons.support.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 
 /**
  * A simple filter to skip over keys where the content encoded in the value is either missing, or is not able to be decoded

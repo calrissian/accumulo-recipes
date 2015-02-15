@@ -30,7 +30,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.commons.support.RowEncoderUtil;
+import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 
 public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key, Value> {
 

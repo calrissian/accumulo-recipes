@@ -24,8 +24,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import static org.junit.Assert.assertEquals;
 
 public class EventWritableTest {

@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.featurestore.hadoop;
 
 import static java.util.Collections.singleton;
-import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.generateTimestamp;
+import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.generateTimestamp;
 import static org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore.DEFAULT_TABLE_NAME;
 import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
 import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;

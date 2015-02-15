@@ -22,9 +22,9 @@ import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MI
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestamp;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
-import static org.calrissian.accumulorecipes.commons.support.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.serialize;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import java.io.IOException;
 import java.util.ArrayList;

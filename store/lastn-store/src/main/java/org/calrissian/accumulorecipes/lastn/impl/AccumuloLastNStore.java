@@ -42,7 +42,7 @@ import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.WritableUtils2.asWritable;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 

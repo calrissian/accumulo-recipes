@@ -18,13 +18,12 @@ package org.calrissian.accumulorecipes.featurestore.support;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 
 import static java.util.Map.Entry;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.TimestampUtil.revertTimestamp;
+import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.revertTimestamp;
 
 /**
  * Simple utility class to extract the metadata from a Key/Value to allow specific Metric types to be returned.
