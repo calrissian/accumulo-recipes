@@ -37,6 +37,12 @@ import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 import org.calrissian.mango.types.TypeRegistry;
 
+/**
+ * An optimization function that calculates the sets of shards for each section of a given query
+ * tree and tries to eliminate as many shards as possible by determining shards that will
+ * never match the given query. This is done by taking intersections of the shards in AND
+ * trees and taking unions of shards in OR trees.
+ */
 public class CalculateShardsVisitor implements NodeVisitor {
 
     private final Map<TupleIndexKey,Set<String>> keysToShards;
@@ -48,7 +54,7 @@ public class CalculateShardsVisitor implements NodeVisitor {
     public CalculateShardsVisitor(Map<TupleIndexKey,Set<String>> shards, TypeRegistry<String> registry) {
         this.keysToShards = shards;
         this.registry = registry;
-        
+
         for (TupleIndexKey key : shards.keySet()) {
             Set<TupleIndexKey> tupleIndexKey = accumuloKeyToTupleIndexKey.get(key.getKey());
             if (tupleIndexKey == null) {
