@@ -52,8 +52,8 @@ import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
 import org.calrissian.accumulorecipes.eventstore.support.iterators.EventMetadataExpirationFilter;
 import org.calrissian.accumulorecipes.eventstore.support.iterators.EventTimeLimitingFilter;
+import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
-import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.event.BaseEvent;
@@ -71,7 +71,7 @@ public class AccumuloEventStore implements EventStore {
     public static final String DEFAULT_SHARD_TABLE_NAME = "eventStore_shard";
 
     public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
-    public static final EventShardBuilder DEFAULT_SHARD_BUILDER = new HourlyShardBuilder(DEFAULT_PARTITION_SIZE);
+    public static final EventShardBuilder DEFAULT_SHARD_BUILDER = new DailyShardBuilder(DEFAULT_PARTITION_SIZE);
     private final EventShardBuilder shardBuilder;
     private final EventQfdHelper helper;
 

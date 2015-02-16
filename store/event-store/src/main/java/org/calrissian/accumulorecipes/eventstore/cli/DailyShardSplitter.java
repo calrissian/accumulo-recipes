@@ -26,15 +26,15 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.support.Constants;
-import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
+import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder;
 import org.joda.time.DateTime;
 
-public class HourlyShardSplitter {
+public class DailyShardSplitter {
 
     public static void main(String args[]) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         if (args.length != 7) {
-            System.out.println("Usage: " + HourlyShardSplitter.class.getName() + "<zookeepers> <instance> <username> <password> <tableName> <start day: yyyy-mm-dd> <stop day: yyyy-mm-dd>");
+            System.out.println("Usage: " + DailyShardSplitter.class.getName() + "<zookeepers> <instance> <username> <password> <tableName> <start day: yyyy-mm-dd> <stop day: yyyy-mm-dd>");
             System.exit(1);
         }
 
@@ -50,7 +50,7 @@ public class HourlyShardSplitter {
         Instance accInst = new ZooKeeperInstance(instance, zookeepers);
         Connector connector = accInst.getConnector(username, password.getBytes());
 
-        SortedSet<Text> shards = new HourlyShardBuilder(Constants.DEFAULT_PARTITION_SIZE)
+        SortedSet<Text> shards = new DailyShardBuilder(Constants.DEFAULT_PARTITION_SIZE)
                 .buildShardsInRange(start.toDate(), stop.toDate());
 
         connector.tableOperations().addSplits(tableName, shards);

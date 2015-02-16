@@ -132,11 +132,11 @@ public class EntityInputFormatTest {
 
         assertEquals(2, TestMapper.entities.size());
         System.out.println(TestMapper.entities);
-        assertEquals(TestMapper.entities.get(1).getId(), entity.getId());
-        assertEquals(TestMapper.entities.get(1).getType(), entity.getType());
+        assertEquals(TestMapper.entities.get(0).getId(), entity.getId());
+        assertEquals(TestMapper.entities.get(0).getType(), entity.getType());
         assertEquals(new HashSet<Tuple>(entity.getTuples()), new HashSet<Tuple>(TestMapper.entities.get(1).getTuples()));
-        assertEquals(TestMapper.entities.get(0).getId(), entity2.getId());
-        assertEquals(TestMapper.entities.get(0).getType(), entity2.getType());
+        assertEquals(TestMapper.entities.get(1).getId(), entity2.getId());
+        assertEquals(TestMapper.entities.get(1).getType(), entity2.getType());
         assertEquals(new HashSet<Tuple>(entity2.getTuples()), new HashSet<Tuple>(TestMapper.entities.get(1).getTuples()));
     }
 

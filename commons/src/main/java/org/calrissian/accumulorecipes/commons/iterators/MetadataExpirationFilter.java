@@ -15,6 +15,8 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static java.lang.Math.min;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -39,16 +41,16 @@ public abstract class MetadataExpirationFilter extends WrappingIterator {
             ByteArrayInputStream bais = new ByteArrayInputStream(v.get());
             DataInputStream dis = new DataInputStream(bais);
             try {
-                int size = dis.readInt();
+                dis.readInt();
                 long expiration = dis.readLong();
                 if(shouldExpire(expiration, parseTimestampFromKey(k))) {
 
                     long newMinExpiration = Long.MAX_VALUE;
                     List<Map.Entry<Key,Value>> finalKeyValList = new ArrayList();
-                    for(Map.Entry<Key,Value> curEntry : RowEncoderUtil.decodeRow(k, bais)) {
+                    for(Map.Entry<Key,Value> curEntry : decodeRow(k, bais)) {
                         long curExpiration = Long.parseLong(curEntry.getKey().getColumnFamily().toString());
                         if(!shouldExpire(curExpiration, curEntry.getKey().getTimestamp())) {
-                            Math.min(curExpiration, newMinExpiration);
+                            min(curExpiration, newMinExpiration);
                             finalKeyValList.add(curEntry);
                         }
                     }

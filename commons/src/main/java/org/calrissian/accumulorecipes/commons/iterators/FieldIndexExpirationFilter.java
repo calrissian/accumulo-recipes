@@ -25,13 +25,11 @@ public class FieldIndexExpirationFilter extends Filter {
     @Override
     public boolean accept(Key k, Value v) {
         String cf = k.getColumnFamily().toString();
-        String row = k.getRow().toString();
         if(cf.startsWith(PREFIX_FI)) {
             long expiration = Long.parseLong(new String(v.get()));
             return !MetadataExpirationFilter.shouldExpire(expiration, k.getTimestamp());
         }
 
         return true;
-
     }
 }

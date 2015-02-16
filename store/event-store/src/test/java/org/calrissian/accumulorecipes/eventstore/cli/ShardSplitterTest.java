@@ -15,16 +15,21 @@
  */
 package org.calrissian.accumulorecipes.eventstore.cli;
 
-import org.apache.accumulo.core.client.*;
+import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
+import static org.junit.Assert.assertEquals;
+import java.io.IOException;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-
-import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
-import static org.junit.Assert.assertEquals;
 
 public class ShardSplitterTest {
 
@@ -43,7 +48,7 @@ public class ShardSplitterTest {
         Connector connector = instance.getConnector("root", "secret".getBytes());
         connector.tableOperations().create("event_shard");
 
-        HourlyShardSplitter.main(new String[] {
+        DailyShardSplitter.main(new String[] {
             mac.getZooKeepers(),
             mac.getInstanceName(),
             "root",
@@ -55,7 +60,7 @@ public class ShardSplitterTest {
 
         assertEquals(DEFAULT_PARTITION_SIZE, connector.tableOperations().getSplits("event_shard").size());
 
-        HourlyShardSplitter.main(new String[] {
+        DailyShardSplitter.main(new String[] {
             mac.getZooKeepers(),
             mac.getInstanceName(),
             "root",
@@ -67,7 +72,7 @@ public class ShardSplitterTest {
 
         System.out.println(connector.tableOperations().getSplits("event_shard"));
 
-        assertEquals(24 * DEFAULT_PARTITION_SIZE, connector.tableOperations().getSplits("event_shard").size());
+        assertEquals(DEFAULT_PARTITION_SIZE, connector.tableOperations().getSplits("event_shard").size());
 
 
         mac.stop();

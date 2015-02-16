@@ -37,7 +37,7 @@ import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
-import org.calrissian.accumulorecipes.eventstore.support.shard.HourlyShardBuilder;
+import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Tuple;
@@ -71,7 +71,7 @@ public class EventGlobalIndexVisitorTest {
 
         BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, new Authorizations(), 2);
         GlobalIndexVisitor visitor = new EventGlobalIndexVisitor(new Date(0), new Date(), Collections.singleton(""), scanner,
-                new HourlyShardBuilder(Constants.DEFAULT_PARTITION_SIZE));
+                new DailyShardBuilder(Constants.DEFAULT_PARTITION_SIZE));
 
         node.accept(visitor);
         visitor.exec();

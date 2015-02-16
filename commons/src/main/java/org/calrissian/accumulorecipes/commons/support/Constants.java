@@ -20,7 +20,7 @@ import org.apache.accumulo.core.data.Value;
 
 public class Constants {
 
-    public static final int DEFAULT_PARTITION_SIZE = 7;
+    public static final int DEFAULT_PARTITION_SIZE = 181;
 
     public static final String PREFIX_E = "e";          // event prefix
     public static final String PREFIX_FI = "fi";        // field index index

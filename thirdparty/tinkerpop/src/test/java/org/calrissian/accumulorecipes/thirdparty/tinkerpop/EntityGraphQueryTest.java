@@ -115,8 +115,8 @@ public class EntityGraphQueryTest {
         query = graph.query();
         vertices = (CloseableIterable<Vertex>) query.has("key", "val").vertices();
         Assert.assertEquals(2, Iterables.size(vertices));
-        assertEntitiesEqual(vertex1, ((EntityVertex) Iterables.get(vertices, 0)).getEntity());
-        assertEntitiesEqual(vertex2, ((EntityVertex) Iterables.get(vertices, 1)).getEntity());
+        assertEntitiesEqual(vertex1, ((EntityVertex) Iterables.get(vertices, 1)).getEntity());
+        assertEntitiesEqual(vertex2, ((EntityVertex) Iterables.get(vertices, 0)).getEntity());
     }
 
     @Test
@@ -130,8 +130,8 @@ public class EntityGraphQueryTest {
         query = graph.query();
         vertices = (CloseableIterable<Vertex>) query.has("key").vertices();
         Assert.assertEquals(2, Iterables.size(vertices));
-        assertEntitiesEqual(vertex1, ((EntityVertex) Iterables.get(vertices, 0)).getEntity());
-        assertEntitiesEqual(vertex2, ((EntityVertex) Iterables.get(vertices, 1)).getEntity());
+        assertEntitiesEqual(vertex1, ((EntityVertex) Iterables.get(vertices, 1)).getEntity());
+        assertEntitiesEqual(vertex2, ((EntityVertex) Iterables.get(vertices, 0)).getEntity());
     }
 
     @Test
