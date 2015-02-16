@@ -31,6 +31,8 @@ import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeR
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -196,6 +198,8 @@ public abstract class QfdHelper<T extends Entity> {
 
                     Multimap<ColumnVisibility,Map.Entry<Key,Value>> visToKeyCache = ArrayListMultimap.create();
                     Mutation shardMutation = new Mutation(shardId);
+
+                    long minExpiration = Long.MAX_VALUE;
                     for (Tuple tuple : item.getTuples()) {
                         String visibility = getVisibility(tuple.getMetadata(), "");
                         String aliasValue = typeRegistry.getAlias(tuple.getValue()) + ONE_BYTE +
@@ -205,27 +209,38 @@ public abstract class QfdHelper<T extends Entity> {
 
                         Map<String,Object> meta = tuple.getMetadata();
 
+                        Long expiration = Metadata.Expiration.getExpiration(meta, -1);
                         shardVal.set(metadataSerDe.serialize(meta));
-                        fiVal.set(Metadata.Expiration.getExpiration(meta, -1).toString().getBytes());
+                        fiVal.set(expiration.toString().getBytes());
 
-                        forwardCF.set(id);
+                        if(expiration > -1)
+                            minExpiration = Math.min(minExpiration, expiration);
+
+                        forwardCF.set(expiration.toString());  // no need to copy the id when this is going to be rolled up anyways
                         forwardCQ.set(tuple.getKey() + NULL_BYTE + aliasValue);
                         fieldIndexCF.set(PREFIX_FI + NULL_BYTE + buildTupleKey(item, tuple.getKey()));
                         fieldIndexCQ.set(aliasValue + NULL_BYTE + id);
 
-                        Key key = new Key(new Text(shardId), forwardCF, forwardCQ, columnVisibility, 0);
+                        long timestamp  = buildTupleTimestampForEntity(item);
+
+                        Key key = new Key(new Text(shardId), forwardCF, forwardCQ, columnVisibility, timestamp);
                         Value valuePart = new Value(shardVal);
                         visToKeyCache.put(columnVisibility, Maps.immutableEntry(key, valuePart));
 
                         shardMutation.put(fieldIndexCF,
                             fieldIndexCQ,
                             columnVisibility,
+                            timestamp,
                             fiVal);
                     }
 
                   for(ColumnVisibility colVis : visToKeyCache.keySet()) {
-                    Value row = encodeRow(visToKeyCache.get(colVis));
-                    shardMutation.put(new Text(id), new Text(), colVis, row);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    DataOutputStream dout = new DataOutputStream(baos);
+                    dout.writeLong(minExpiration == Long.MAX_VALUE ? -1 : minExpiration);   // -1 means don't expire.
+                    dout.flush();
+                    encodeRow(visToKeyCache.get(colVis), baos);
+                    shardMutation.put(new Text(id), new Text(), colVis, new Value(baos.toByteArray()));
                   }
                   shardWriter.addMutation(shardMutation);
                 }
@@ -358,6 +373,7 @@ public abstract class QfdHelper<T extends Entity> {
         return keyValueIndex;
     }
 
+    protected abstract long buildTupleTimestampForEntity(T e);
     public TypeRegistry<String> getTypeRegistry() {
         return typeRegistry;
     }

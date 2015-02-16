@@ -20,6 +20,8 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -63,8 +65,11 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
       List<Map.Entry<Key,Value>> groupedKVs = decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
       for (Map.Entry<Key,Value> groupedEvent : groupedKVs) {
+          ByteArrayInputStream bais = new ByteArrayInputStream(groupedEvent.getValue().get());
+          DataInputStream dis = new DataInputStream(bais);
+          dis.readLong();
 
-        List<Map.Entry<Key,Value>> keyValues = decodeRow(groupedEvent.getKey(), groupedEvent.getValue());
+        List<Map.Entry<Key,Value>> keyValues = decodeRow(groupedEvent.getKey(), bais);
 
         for (Map.Entry<Key,Value> curEntry : keyValues) {
 

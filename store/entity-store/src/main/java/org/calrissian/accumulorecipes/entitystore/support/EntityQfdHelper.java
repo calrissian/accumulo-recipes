@@ -16,6 +16,7 @@
 package org.calrissian.accumulorecipes.entitystore.support;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 
 import com.esotericsoftware.kryo.Kryo;
 import org.apache.accumulo.core.client.AccumuloException;
@@ -48,7 +49,7 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     @Override
     protected String buildId(Entity item) {
-        return "e" + ONE_BYTE + item.getType() + ONE_BYTE + item.getId();
+        return PREFIX_E + ONE_BYTE + item.getType() + ONE_BYTE + item.getId();
     }
 
     public QueryXform buildQueryXform() {
@@ -58,6 +59,11 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
     @Override
     protected String buildTupleKey(Entity item, String key) {
         return key;
+    }
+
+    @Override
+    protected long buildTupleTimestampForEntity(Entity e) {
+        return System.currentTimeMillis();
     }
 
     public WholeColFXform buildWholeColFXform() {

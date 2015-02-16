@@ -79,6 +79,11 @@ public class EventQfdHelper extends QfdHelper<Event> {
         return buildTupleKey(item.getType(), key);
     }
 
+    @Override
+    protected long buildTupleTimestampForEntity(Event e) {
+        return e.getTimestamp();
+    }
+
     private static final String buildTupleKey(String type, String key) {
         return type + FI_TYPE_KEY_SEP + key;
     }

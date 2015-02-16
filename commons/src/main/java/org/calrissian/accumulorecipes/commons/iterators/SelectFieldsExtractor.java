@@ -19,6 +19,10 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -66,14 +70,22 @@ public class SelectFieldsExtractor extends WrappingIterator {
 
         Collection<Map.Entry<Key,Value>> keysValues = Lists.newArrayList();
         try {
-            List<Map.Entry<Key,Value>> map = decodeRow(getTopKey(), super.getTopValue());
+            ByteArrayInputStream bais = new ByteArrayInputStream(super.getTopValue().get());
+            DataInputStream dis = new DataInputStream(bais);
+            long expiration = dis.readLong();
+            List<Map.Entry<Key,Value>> map = decodeRow(getTopKey(), bais);
             for(Map.Entry<Key,Value> entry : map) {
                 if(selectFields.contains(extractKey(entry.getKey()))) {
                     keysValues.add(Maps.immutableEntry(entry.getKey(), entry.getValue()));
                 }
             }
 
-            return encodeRow(keysValues);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeLong(expiration);
+            dos.flush();
+            encodeRow(keysValues, baos);
+            return new Value(baos.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

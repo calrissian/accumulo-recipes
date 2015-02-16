@@ -18,6 +18,8 @@ package org.calrissian.accumulorecipes.commons.iterators;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -96,7 +98,11 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
 
         List<Map.Entry<Key,Value>> entryList = Collections.emptyList();
         try {
-            entryList = decodeRow(key, value);
+            ByteArrayInputStream bais = new ByteArrayInputStream(value.get());
+            DataInputStream dis = new DataInputStream(bais);
+            dis.readLong(); // because we have expiration as the first byte
+            entryList = decodeRow(key, bais);
+            bais.close();
         } catch (Exception e) {
             /**
              * It's possible there is no content encoded into the value, if this is the case, adding no fields to the

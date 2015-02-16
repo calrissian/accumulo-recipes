@@ -20,7 +20,7 @@ import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
 
 public class TransformUtils {
-    private TransformUtils() {/**private constructor*/}
+    private TransformUtils() {/**private constructor**/}
 
     public static Function<Entity, EntityIndex> entityToEntityIndex = new Function<Entity, EntityIndex>() {
         @Override
@@ -28,6 +28,4 @@ public class TransformUtils {
             return new EntityIndex(entity.getType(), entity.getId());
         }
     };
-
-
 }

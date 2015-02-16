@@ -32,10 +32,8 @@ import org.apache.accumulo.core.data.Value;
 
 public class RowEncoderUtil {
 
-    // decode a bunch of key value pairs that have been encoded into a single value
-    public static final List<Map.Entry<Key,Value>> decodeRow(Key rowKey, Value rowValue) throws IOException {
+    public static final List<Map.Entry<Key,Value>> decodeRow(Key rowKey, ByteArrayInputStream in) throws IOException {
         List<Map.Entry<Key,Value>> map = new ArrayList<Map.Entry<Key, Value>>();
-        ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
         DataInputStream din = new DataInputStream(in);
         int numKeys = din.readInt();
 
@@ -75,10 +73,19 @@ public class RowEncoderUtil {
         return map;
     }
 
-    // take a stream of keys and values and output a value that encodes everything but their row
-    // keys and values must be paired one for one
-    public static final Value encodeRow(Collection<Map.Entry<Key,Value>> keyValueCollection) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+    // decode a bunch of key value pairs that have been encoded into a single value
+    public static final List<Map.Entry<Key,Value>> decodeRow(Key rowKey, Value rowValue) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
+        return decodeRow(rowKey, in);
+    }
+
+    /**
+     * Uses the given byte array output stream to encode row data
+     * @param keyValueCollection
+     * @param out
+     * @throws IOException
+     */
+    public static final void encodeRow(Collection<Map.Entry<Key,Value>> keyValueCollection, ByteArrayOutputStream out) throws IOException {
         DataOutputStream dout = new DataOutputStream(out);
         dout.writeInt(keyValueCollection.size());
 
@@ -110,7 +117,14 @@ public class RowEncoderUtil {
             dout.writeInt(valBytes.length);
             dout.write(valBytes);
         }
+    }
 
+
+    // take a stream of keys and values and output a value that encodes everything but their row
+    // keys and values must be paired one for one
+    public static final Value encodeRow(Collection<Map.Entry<Key,Value>> keyValueCollection) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        encodeRow(keyValueCollection, out);
         return new Value(out.toByteArray());
     }
 }
