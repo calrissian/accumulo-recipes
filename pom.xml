@@ -240,6 +240,7 @@ limitations under the License.
               <exclude>**\.travis.yml</exclude>
               <exclude>**\twitter_timeline.json</exclude>
               <exclude>**\twitter_tweets.json</exclude>
+              <exclude>**\log4j.properties</exclude>
             </excludes>
           </configuration>
         </plugin>
