@@ -15,7 +15,27 @@
 */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
-import org.apache.accumulo.core.client.*;
+import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_BUILDER;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import static org.junit.Assert.assertEquals;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -36,20 +56,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
-import static java.util.Collections.singleton;
-import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME;
-import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import static org.junit.Assert.assertEquals;
-
 public class EntityLoaderTest extends AccumuloInputFormat {
 
     Entity entity;
@@ -59,7 +65,7 @@ public class EntityLoaderTest extends AccumuloInputFormat {
 
     @Before
     public void setup() throws IOException {
-        job = new Job();
+        job = Job.getInstance();
     }
 
     @Test
@@ -149,7 +155,7 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setMockInstance(job, "instName");
         EntityInputFormat.setQueryInfo(job, Collections.singleton("myType"),
-                new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
+                new QueryBuilder().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
 
     }
 }

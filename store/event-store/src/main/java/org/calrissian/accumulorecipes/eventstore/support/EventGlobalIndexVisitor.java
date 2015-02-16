@@ -19,7 +19,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex.INDEX_SEP;
+import static org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex.INDEX_SEP;
 import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
@@ -33,9 +33,9 @@ import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
-import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.HasLeaf;
@@ -127,7 +127,7 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
         for (Map.Entry<Key, Value> entry : indexScanner) {
 
-            TupleIndexKey key = new EventCardinalityKey(entry.getKey());
+            TupleIndexKey key = new TupleIndexKey(entry.getKey());
             Long cardinality = cardinalities.get(key);
             if (cardinality == null)
                 cardinality = 0l;

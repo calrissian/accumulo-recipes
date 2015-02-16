@@ -18,11 +18,9 @@ package org.calrissian.accumulorecipes.entitystore.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.data.Range.exact;
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
@@ -31,10 +29,8 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import com.google.common.base.Function;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -43,21 +39,16 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInColumnIterator;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
-import org.calrissian.accumulorecipes.entitystore.support.EntityCardinalityKey;
 import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
-import org.calrissian.accumulorecipes.entitystore.support.EntityKeyValueIndex;
 import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -92,7 +83,7 @@ public class AccumuloEntityStore implements EntityStore {
         checkNotNull(typeRegistry);
         checkNotNull(shardBuilder);
 
-        KeyValueIndex<Entity> keyValueIndex = new EntityKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
+        KeyValueIndex<Entity> keyValueIndex = new KeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
 
         this.shardBuilder = shardBuilder;
         helper = new EntityQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
@@ -104,7 +95,7 @@ public class AccumuloEntityStore implements EntityStore {
     }
 
     @Override
-    public void save(Iterable<? extends Entity> entities) {
+    public void save(Iterable<Entity> entities) {
         helper.save(entities);
     }
 
@@ -216,18 +207,7 @@ public class AccumuloEntityStore implements EntityStore {
         checkNotNull(type);
         checkNotNull(auths);
 
-        BatchScanner scanner = helper.buildIndexScanner(auths.getAuths());
-        IteratorSetting setting = new IteratorSetting(15, FirstEntryInColumnIterator.class);
-        scanner.addScanIterator(setting);
-        scanner.setRanges(singletonList(Range.prefix(type + "_" + INDEX_K + "_")));
-
-        return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
-            @Override
-            public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
-                EntityCardinalityKey key = new EntityCardinalityKey(keyValueEntry.getKey());
-                return new Pair<String, String>(key.getKey(), key.getAlias());
-            }
-        });
+        return helper.getKeyValueIndex().uniqueKeys("", type, auths);
     }
 
 

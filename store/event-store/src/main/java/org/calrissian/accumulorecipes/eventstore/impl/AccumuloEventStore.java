@@ -44,11 +44,10 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
-import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
 import org.calrissian.accumulorecipes.eventstore.support.iterators.EventTimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
@@ -97,7 +96,7 @@ public class AccumuloEventStore implements EventStore {
 
         this.shardBuilder = shardBuilder;
 
-        KeyValueIndex<Event> keyValueIndex = new EventKeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
+        KeyValueIndex<Event> keyValueIndex = new KeyValueIndex(connector, indexTable, shardBuilder, config, typeRegistry);
 
         helper = new EventQfdHelper(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex);
     }
@@ -119,7 +118,7 @@ public class AccumuloEventStore implements EventStore {
      * @throws Exception
      */
     @Override
-    public void save(Iterable<? extends Event> events) {
+    public void save(Iterable<Event> events) {
         helper.save(events);
     }
 

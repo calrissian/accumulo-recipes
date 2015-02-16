@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.support.iterators;
-
-import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInPrefixedRowIterator;
+package org.calrissian.accumulorecipes.commons.iterators;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
@@ -23,7 +21,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE
  * This iterator will propagate through the key rows of the event global index
  * table to return all the unique keys for the given set of rows.
  */
-public class EventGlobalIndexUniqueKVIterator extends FirstEntryInPrefixedRowIterator {
+public class GlobalIndexUniqueKeyValueIterator extends FirstEntryInPrefixedRowIterator {
 
     @Override
     protected String getPrefix(String rowStr) {

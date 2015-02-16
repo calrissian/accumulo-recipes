@@ -15,6 +15,14 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex.INDEX_SEP;
+
+import org.apache.accumulo.core.data.Key;
+import org.apache.commons.lang.StringUtils;
+
 /**
  * A tuple index key represents an entry in an index table. The reason a separate object is used
  * instead of just representing this information in a {@link LeafNode} is because it's possible
@@ -42,6 +50,25 @@ public class TupleIndexKey {
       this.key = key;
       this.normalizedValue = value;
       this.alias = alias;
+    }
+
+    public TupleIndexKey(Key key) {
+
+        String row = key.getRow().toString();
+        String parts[] = StringUtils.splitByWholeSeparatorPreserveAllTokens(row, INDEX_SEP);
+        int firstNBIdx = parts[3].indexOf(NULL_BYTE);
+
+        if (row.startsWith(INDEX_V)) {
+            int lastNBIdx = parts[3].lastIndexOf(NULL_BYTE);
+            this.alias = parts[2];
+            this.key = parts[3].substring(0, firstNBIdx);
+            this.normalizedValue = parts[3].substring(firstNBIdx + 1, lastNBIdx);
+            this.shard = parts[3].substring(lastNBIdx + 1, parts[3].length());
+        } else if (row.startsWith(INDEX_K)) {
+            this.key = parts[2];
+            this.alias = parts[3].substring(0, firstNBIdx);
+            this.shard = parts[3].substring(firstNBIdx + 1, parts[3].length());
+        }
     }
 
     public String getKey() {

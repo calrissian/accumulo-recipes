@@ -25,9 +25,9 @@ import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
 import org.apache.spark.sql.sources._
 import org.calrissian.accumulorecipes.commons.domain.Auths
 import org.calrissian.accumulorecipes.commons.hadoop.{BaseQfdInputFormat, EventWritable}
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex
 import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
-import org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex
 import org.calrissian.mango.collect.CloseableIterable
 import org.calrissian.mango.criteria.domain.Node
 import org.calrissian.mango.domain.Pair
@@ -70,7 +70,7 @@ class EventStoreCatalystScan(inst: String, zk: String, user: String, pass: Strin
   type I = EventInputFormat
 
   override def uniqueKeys(connector: Connector): CloseableIterable[Pair[String, String]] =
-    EventKeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
+    KeyValueIndex.uniqueKeys(connector, AccumuloEventStore.DEFAULT_IDX_TABLE_NAME, "", eventType, 10, new Auths)
 
 
   override def buildRDD(columns: Seq[Attribute], filters: Seq[Expression], query: Node): RDD[T] = {

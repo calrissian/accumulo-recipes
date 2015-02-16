@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.entitystore.hadoop;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.apache.accumulo.core.data.Range.prefix;
@@ -88,6 +89,11 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
     public static void setQueryInfo(Job job, Set<String> entityTypes, Node query, EntityShardBuilder shardBuilder, TypeRegistry<String> typeRegistry) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
 
         validateOptions(job);
+
+        checkNotNull(shardBuilder);
+        checkNotNull(query);
+        checkNotNull(entityTypes);
+        checkNotNull(typeRegistry);
 
         Instance instance = getInstance(job);
         Connector connector = instance.getConnector(getPrincipal(job), getAuthenticationToken(job));

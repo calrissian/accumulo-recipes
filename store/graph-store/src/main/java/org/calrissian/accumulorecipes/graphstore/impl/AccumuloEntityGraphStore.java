@@ -264,7 +264,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     @Override
-    public void save(Iterable<? extends Entity> entities) {
+    public void save(Iterable<Entity> entities) {
         super.save(entities);
 
         // here is where we want to store the edge index everytime an entity is saved

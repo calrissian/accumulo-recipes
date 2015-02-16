@@ -25,10 +25,10 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_FI;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
-import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.VISIBILITY;
 import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import java.util.Collection;
@@ -67,10 +67,10 @@ import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.QueryPlanner;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
+import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
 import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerdeFactory;
 import org.calrissian.accumulorecipes.commons.support.tuple.metadata.SimpleMetadataSerdeFactory;
-import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.criteria.support.NodeUtils;
@@ -174,7 +174,7 @@ public abstract class QfdHelper<T extends Entity> {
     /**
      * Items get saved into a sharded table to parallelize queries & ingest.
      */
-    public void save(Iterable<? extends T> items) {
+    public void save(Iterable<T> items) {
         checkNotNull(items);
 
         Value shardVal = new Value();
@@ -352,6 +352,10 @@ public abstract class QfdHelper<T extends Entity> {
 
     public BatchWriter getWriter() {
         return shardWriter;
+    }
+
+    public KeyValueIndex<T> getKeyValueIndex() {
+        return keyValueIndex;
     }
 
     public TypeRegistry<String> getTypeRegistry() {

@@ -36,7 +36,7 @@ public interface EntityStore {
      * Saves entities to the underlying storage implementation
      * @param entities
      */
-    void save(Iterable<? extends Entity> entities);
+    void save(Iterable<Entity> entities);
 
     /**
      * Retrieves a list of entities by their types and ids. This method also allows for selection

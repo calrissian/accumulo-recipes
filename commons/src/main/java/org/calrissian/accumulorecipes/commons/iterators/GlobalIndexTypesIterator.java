@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.support;
+package org.calrissian.accumulorecipes.commons.iterators;
 
 import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
-import static org.calrissian.accumulorecipes.eventstore.support.EventKeyValueIndex.INDEX_SEP;
+import static org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex.INDEX_SEP;
 
-import org.calrissian.accumulorecipes.commons.iterators.FirstEntryInPrefixedRowIterator;
-
-public class EventGlobalIndexTypesIterator extends FirstEntryInPrefixedRowIterator {
-  @Override
-  protected String getPrefix(String rowStr) {
-    String[] parts = splitByWholeSeparatorPreserveAllTokens(rowStr, INDEX_SEP);
-    return parts[0] + INDEX_SEP + parts[1];
-  }
+public class GlobalIndexTypesIterator extends FirstEntryInPrefixedRowIterator {
+    @Override
+    protected String getPrefix(String rowStr) {
+        String[] parts = splitByWholeSeparatorPreserveAllTokens(rowStr, INDEX_SEP);
+        return parts[0] + INDEX_SEP + parts[1];
+    }
 }

@@ -15,7 +15,22 @@
  */
 package org.calrissian.accumulorecipes.entitystore.hadoop;
 
-import org.apache.accumulo.core.client.*;
+import static java.util.Collections.singleton;
+import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore.DEFAULT_SHARD_BUILDER;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import static org.junit.Assert.assertEquals;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
@@ -32,16 +47,6 @@ import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-
-import static java.util.Collections.singleton;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import static org.junit.Assert.assertEquals;
 
 public class EntityInputFormatTest {
 
@@ -75,7 +80,7 @@ public class EntityInputFormatTest {
         EntityInputFormat.setMockInstance(job, "entityInst");
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setQueryInfo(job, Collections.singleton("type"),
-                new QueryBuilder().eq("key1", "val1").build(), null, LEXI_TYPES);
+                new QueryBuilder().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();

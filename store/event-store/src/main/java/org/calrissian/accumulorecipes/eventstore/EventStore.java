@@ -37,7 +37,7 @@ public interface EventStore {
      * @param events
      * @throws Exception
      */
-    void save(Iterable<? extends Event> events);
+    void save(Iterable<Event> events);
 
     /**
      * Force persistence of all events currently in-memory to the backing persistence

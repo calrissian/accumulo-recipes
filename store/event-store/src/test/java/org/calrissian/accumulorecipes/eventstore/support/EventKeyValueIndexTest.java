@@ -32,9 +32,11 @@ import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
@@ -48,7 +50,7 @@ public class EventKeyValueIndexTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         EventStore eventStore = new AccumuloEventStore(connector);
 
-        EventKeyValueIndex eventKeyValueIndex = new EventKeyValueIndex(
+        KeyValueIndex eventKeyValueIndex = new KeyValueIndex(
             connector, "eventStore_index", DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG,
             LEXI_TYPES
         );
@@ -69,10 +71,10 @@ public class EventKeyValueIndexTest {
 
         assertEquals(4, Iterables.size(eventKeyValueIndex.uniqueKeys("", "", new Auths())));
 
-        assertEquals("aKey", Iterables.get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 0).getOne());
-        assertEquals("key1", Iterables.get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 1).getOne());
-        assertEquals("key2", Iterables.get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 2).getOne());
-        assertEquals("key3", Iterables.get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 3).getOne());
+        assertEquals("aKey", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 0).getOne());
+        assertEquals("key1", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 1).getOne());
+        assertEquals("key2", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 2).getOne());
+        assertEquals("key3", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 3).getOne());
     }
 
     @Test
@@ -83,7 +85,7 @@ public class EventKeyValueIndexTest {
         EventStore eventStore = new AccumuloEventStore(connector);
 
 
-        EventKeyValueIndex eventKeyValueIndex = new EventKeyValueIndex(
+        KeyValueIndex eventKeyValueIndex = new KeyValueIndex(
             connector, "eventStore_index", DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG,
             LEXI_TYPES
         );
@@ -118,7 +120,7 @@ public class EventKeyValueIndexTest {
         EventStore eventStore = new AccumuloEventStore(connector);
 
 
-        EventKeyValueIndex eventKeyValueIndex = new EventKeyValueIndex(
+        KeyValueIndex eventKeyValueIndex = new KeyValueIndex(
             connector, "eventStore_index", DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG,
             LEXI_TYPES
         );
