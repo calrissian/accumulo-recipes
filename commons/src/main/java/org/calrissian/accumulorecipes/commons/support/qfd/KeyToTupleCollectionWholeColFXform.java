@@ -67,7 +67,8 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
       for (Map.Entry<Key,Value> groupedEvent : groupedKVs) {
           ByteArrayInputStream bais = new ByteArrayInputStream(groupedEvent.getValue().get());
           DataInputStream dis = new DataInputStream(bais);
-          dis.readLong();
+          dis.readInt();    // number of keys/values
+          dis.readLong();   // minimum expiration of keys and values
 
         List<Map.Entry<Key,Value>> keyValues = decodeRow(groupedEvent.getKey(), bais);
 

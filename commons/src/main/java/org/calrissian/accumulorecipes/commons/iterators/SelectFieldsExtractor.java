@@ -72,6 +72,7 @@ public class SelectFieldsExtractor extends WrappingIterator {
         try {
             ByteArrayInputStream bais = new ByteArrayInputStream(super.getTopValue().get());
             DataInputStream dis = new DataInputStream(bais);
+            int size = dis.readInt();
             long expiration = dis.readLong();
             List<Map.Entry<Key,Value>> map = decodeRow(getTopKey(), bais);
             for(Map.Entry<Key,Value> entry : map) {
@@ -82,6 +83,7 @@ public class SelectFieldsExtractor extends WrappingIterator {
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeInt(keysValues.size());
             dos.writeLong(expiration);
             dos.flush();
             encodeRow(keysValues, baos);

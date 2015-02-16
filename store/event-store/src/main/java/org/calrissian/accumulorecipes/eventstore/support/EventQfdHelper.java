@@ -18,23 +18,28 @@ package org.calrissian.accumulorecipes.eventstore.support;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
+import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionQueryXform;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionWholeColFXform;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionQueryXform;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionWholeColFXform;
+import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.eventstore.support.iterators.EventMetadataExpirationFilter;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
@@ -91,7 +96,11 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
     @Override
     protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        Set<IteratorScope> scopes = Sets.newHashSet(IteratorScope.majc, IteratorScope.minc);
+        IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", EventMetadataExpirationFilter.class);
+        connector.tableOperations().attachIterator(tableName, expirationFilter, Sets.newEnumSet(scopes, IteratorScope.class));
     }
+
     @Override
     protected void configureIndexTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     }

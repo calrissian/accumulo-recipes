@@ -17,15 +17,18 @@ package org.calrissian.accumulorecipes.commons.iterators;
 
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.Filter;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 
 /**
  * Allows Accumulo to expire keys/values based on an expiration threshold in the value of the global index table.
  */
-public class GlobalIndexExpirationFilter extends ExpirationFilter {
+public class GlobalIndexExpirationFilter extends Filter {
 
-    protected long parseExpiration(long timestamp, Key k,  Value v) {
-        GlobalIndexValue val = new GlobalIndexValue(v);
-        return val.getExpiration();
+    @Override
+    public boolean accept(Key k, Value v) {
+        long expiration = new GlobalIndexValue(v).getExpiration();
+        return !MetadataExpirationFilter.shouldExpire(expiration, k.getTimestamp());
     }
+
 }

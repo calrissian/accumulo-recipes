@@ -31,6 +31,8 @@ public class EventEvaluatingIterator extends EvaluatingIterator {
     return new EventQueryEvaluator(expression);
   }
 
+
+
   protected static class EventQueryEvaluator extends QueryEvaluator {
 
     public EventQueryEvaluator(String query) throws ParseException {

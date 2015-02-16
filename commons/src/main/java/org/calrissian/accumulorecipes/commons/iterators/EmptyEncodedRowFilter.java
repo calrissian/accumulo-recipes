@@ -15,26 +15,35 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Filter;
-
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import org.calrissian.accumulorecipes.commons.support.Constants;
 
 /**
- * A simple filter to skip over keys where the content encoded in the value is either missing, or is not able to be decoded
- * using the {@link RowEncoderUtil#decodeRow}
+ * A simple filter to skip over keys where the content encoded in the value is either missing, or the number
+ * of encoded tuples is 0.
  */
 public class EmptyEncodedRowFilter extends Filter {
 
     @Override
     public boolean accept(Key key, Value value) {
-        try {
-            return value.get().length > 0 &&  decodeRow(key, value).size() > 0;
-        } catch (IOException e) {
-            return false;
+
+        if(key.getColumnFamily().toString().startsWith(Constants.PREFIX_E)) {
+            try {
+                ByteArrayInputStream bais = new ByteArrayInputStream(value.get());
+                DataInputStream dis = new DataInputStream(bais);
+                long size = dis.readInt();
+                return value.get().length > 0 &&  size > 0;
+            } catch (IOException e) {
+                return false;
+            }
         }
+
+        return true;
     }
 }

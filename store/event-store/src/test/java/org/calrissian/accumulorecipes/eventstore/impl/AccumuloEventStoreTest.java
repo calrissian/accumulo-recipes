@@ -190,7 +190,6 @@ public class AccumuloEventStoreTest {
   }
 
 
-  @Ignore // ignoring for now. We may not need tuples to expire
     @Test
     public void testExpirationOfTuples_get() {
 
@@ -211,7 +210,6 @@ public class AccumuloEventStoreTest {
         assertEquals(1, Iterables.get(events, 0).size());
     }
 
-    @Ignore
     @Test
     public void testExpirationOfTuples_query() {
 

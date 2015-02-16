@@ -43,6 +43,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -62,7 +63,9 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
+import org.calrissian.accumulorecipes.commons.iterators.EmptyEncodedRowFilter;
 import org.calrissian.accumulorecipes.commons.iterators.EvaluatingIterator;
+import org.calrissian.accumulorecipes.commons.iterators.FieldIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
@@ -140,8 +143,15 @@ public abstract class QfdHelper<T extends Entity> {
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
+
+            Set<IteratorScope> scopes = Sets.newHashSet(IteratorScope.majc, IteratorScope.minc);
+
             connector.tableOperations().create(this.shardTable, false);
             configureShardTable(connector, this.shardTable);
+            IteratorSetting expirationFilter = new IteratorSetting(6, "fiExpiration", FieldIndexExpirationFilter.class);
+            connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
+            IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
+            connector.tableOperations().attachIterator(this.shardTable, emptyDataFilter, Sets.newEnumSet(scopes, IteratorScope.class));
         }
 
         initializeKryo(kryo);
@@ -235,11 +245,13 @@ public abstract class QfdHelper<T extends Entity> {
                     }
 
                   for(ColumnVisibility colVis : visToKeyCache.keySet()) {
+                    Collection<Map.Entry<Key,Value>> keysValuesToEncode = visToKeyCache.get(colVis);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     DataOutputStream dout = new DataOutputStream(baos);
-                    dout.writeLong(minExpiration == Long.MAX_VALUE ? -1 : minExpiration);   // -1 means don't expire.
-                    dout.flush();
-                    encodeRow(visToKeyCache.get(colVis), baos);
+                    dout.writeInt(keysValuesToEncode.size());
+                    long expirationToWrite = minExpiration == Long.MAX_VALUE ? -1 : minExpiration;
+                    dout.writeLong(expirationToWrite);   // -1 means don't expire.
+                    encodeRow(keysValuesToEncode, baos);
                     shardMutation.put(new Text(id), new Text(), colVis, new Value(baos.toByteArray()));
                   }
                   shardWriter.addMutation(shardMutation);

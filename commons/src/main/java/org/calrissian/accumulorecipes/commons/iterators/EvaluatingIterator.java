@@ -100,6 +100,7 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         try {
             ByteArrayInputStream bais = new ByteArrayInputStream(value.get());
             DataInputStream dis = new DataInputStream(bais);
+            dis.readInt();
             dis.readLong(); // because we have expiration as the first byte
             entryList = decodeRow(key, bais);
             bais.close();
@@ -112,11 +113,15 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
 
         try {
               for(Map.Entry<Key,Value> kv : entryList) {
-                String colq = kv.getKey().getColumnQualifier().toString();
-                int idx = colq.indexOf(NULL_BYTE);
-                String fieldName = colq.substring(0, idx);
-                String fieldValue = colq.substring(idx + 1);
-                event.put(fieldName, new EventFields.FieldValue(getColumnVisibility(kv.getKey()), fieldValue.getBytes(), kv.getValue().get()));
+
+                long expiration = Long.parseLong(kv.getKey().getColumnFamily().toString());
+                if(!MetadataExpirationFilter.shouldExpire(expiration, kv.getKey().getTimestamp())) {
+                    String colq = kv.getKey().getColumnQualifier().toString();
+                    int idx = colq.indexOf(NULL_BYTE);
+                    String fieldName = colq.substring(0, idx);
+                    String fieldValue = colq.substring(idx + 1);
+                    event.put(fieldName, new EventFields.FieldValue(getColumnVisibility(kv.getKey()), fieldValue.getBytes(), kv.getValue().get()));
+                }
               }
         } catch(Exception e) {
             throw new RuntimeException(e);
