@@ -57,7 +57,6 @@ import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class AccumuloEntityStoreTest {
@@ -607,7 +606,6 @@ public class AccumuloEntityStoreTest {
         assertEquals(new Pair<String, String>("ip", "string"), get(keys, 1));
     }
 
-    @Ignore
     @Test
     public void testExpirationOfTuples_get() throws Exception {
 
@@ -630,7 +628,6 @@ public class AccumuloEntityStoreTest {
 
     }
 
-    @Ignore
     @Test
     public void testExpirationOfTuples_query() throws Exception {
 

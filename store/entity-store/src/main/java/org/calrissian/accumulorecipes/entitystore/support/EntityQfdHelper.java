@@ -18,15 +18,21 @@ package org.calrissian.accumulorecipes.entitystore.support;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 
+import java.util.Set;
+
 import com.esotericsoftware.kryo.Kryo;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.commons.lang.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -76,6 +82,9 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     @Override
     protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        Set<IteratorUtil.IteratorScope> scopes = Sets.newHashSet(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc);
+        IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
+        connector.tableOperations().attachIterator(tableName, expirationFilter, Sets.newEnumSet(scopes, IteratorUtil.IteratorScope.class));
 
     }
 

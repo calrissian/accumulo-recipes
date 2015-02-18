@@ -32,7 +32,7 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 
-public abstract class MetadataExpirationFilter extends WrappingIterator {
+public class MetadataExpirationFilter extends WrappingIterator {
 
     public Value extractExpiredTuples(Key k, Value v) {
 
@@ -73,9 +73,23 @@ public abstract class MetadataExpirationFilter extends WrappingIterator {
         return v;
     }
 
-    protected abstract long parseTimestampFromKey(Key k);
+    /**
+     * This method has been broken out for situations where logical may be used and the timestamp
+     * has been placed somewhere else in the key.
+     * @param k
+     * @return
+     */
+    protected long parseTimestampFromKey(Key k) {
+        return k.getTimestamp();
+    }
 
-
+    /**
+     * Utility method used both internally and externally to determine when a key should expire based
+     * on a dynamic expiration in the metadata of a tuple.
+     * @param expiration
+     * @param timestamp
+     * @return
+     */
     public static boolean shouldExpire(long expiration, long timestamp) {
         return (expiration > -1 && System.currentTimeMillis() - timestamp > expiration);
     }
