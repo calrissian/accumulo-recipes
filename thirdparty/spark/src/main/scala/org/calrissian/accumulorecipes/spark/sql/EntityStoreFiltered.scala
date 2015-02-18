@@ -79,5 +79,5 @@ case class EntityStoreFilteredScan(inst: String, zk: String, user: String, pass:
       .map(_._2.get())
   }
 
-  override def uniqueKeys(connector: Connector): CloseableIterable[Pair[String, String]] = new AccumuloEntityStore(connector).keys(entityType, new Auths)
+  override def uniqueKeys(connector: Connector): CloseableIterable[Pair[String, String]] = new AccumuloEntityStore(connector).uniqueKeys("", entityType, new Auths)
 }
