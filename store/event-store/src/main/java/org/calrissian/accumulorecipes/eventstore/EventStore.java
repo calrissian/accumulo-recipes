@@ -22,6 +22,7 @@ import java.util.Set;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
 
@@ -97,4 +98,9 @@ public interface EventStore {
      * @return
      */
     CloseableIterable<Event> get(Collection<EventIndex> indexes, Auths auths);
+
+
+    public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths);
+    public CloseableIterable<Object> uniqueValuesForKey(String prefix, String type, String alias, String key, Auths auths);
+    public CloseableIterable<String> getTypes(Auths auths);
 }

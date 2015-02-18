@@ -99,16 +99,10 @@ public interface EntityStore {
      */
     CloseableIterable<Entity> query(Set<String> types, Node query, Auths auths);
 
-    /**
-     * Retrieves all the keys for the specified entity type. Keys are represented by a pair. The first
-     * item in the pair is the name of the key. The second item in the pair is the datatype. It's possible
-     * that if there are multiple values for the same key with different datatypes that multiple Pairs could
-     * be returned for the same key.
-     * @param type
-     * @param auths
-     * @return
-     */
-    CloseableIterable<Pair<String, String>> keys(String type, Auths auths);
+
+    public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths);
+    public CloseableIterable<Object> uniqueValuesForKey(String prefix, String type, String alias, String key, Auths auths);
+    public CloseableIterable<String> getTypes(Auths auths);
 
     /**
      * Flushes the in-memory buffer of entities to the server. It's important to make sure method is eventually

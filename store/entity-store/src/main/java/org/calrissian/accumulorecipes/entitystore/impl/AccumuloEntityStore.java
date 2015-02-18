@@ -215,13 +215,17 @@ public class AccumuloEntityStore implements EntityStore {
         return query(types, query, null, auths);
     }
 
-    @Override
-    public CloseableIterable<Pair<String, String>> keys(String type, Auths auths) {
 
-        checkNotNull(type);
-        checkNotNull(auths);
+    public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths) {
+        return helper.getKeyValueIndex().uniqueKeys(prefix, type, auths);
+    }
 
-        return helper.getKeyValueIndex().uniqueKeys("", type, auths);
+    public CloseableIterable<Object> uniqueValuesForKey(String prefix, String type, String alias, String key, Auths auths) {
+        return helper.getKeyValueIndex().uniqueValuesForKey(prefix, type, alias, key, auths);
+    }
+
+    public CloseableIterable<String> getTypes(Auths auths) {
+        return helper.getKeyValueIndex().getTypes(auths);
     }
 
 

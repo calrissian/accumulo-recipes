@@ -56,6 +56,7 @@ import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
@@ -156,7 +157,7 @@ public class AccumuloEventStore implements EventStore {
         EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
-        CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, types, node, helper.buildQueryXform(),selectFields,  auths);
+        CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, types, node, helper.buildQueryXform(), selectFields, auths);
         indexScanner.close();
 
         return events;
@@ -247,13 +248,13 @@ public class AccumuloEventStore implements EventStore {
             IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
             scanner.addScanIterator(emptyDataFilter);
 
-
             return transform(closeableIterable(scanner), helper.buildWholeColFXform());
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }    }
+        }
+    }
 
     @Override
     public CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Auths auths) {
@@ -265,4 +266,15 @@ public class AccumuloEventStore implements EventStore {
         return get(indexes, auths);
     }
 
+    public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths) {
+        return helper.getKeyValueIndex().uniqueKeys(prefix, type, auths);
+    }
+
+    public CloseableIterable<Object> uniqueValuesForKey(String prefix, String type, String alias, String key, Auths auths) {
+        return helper.getKeyValueIndex().uniqueValuesForKey(prefix, type, alias, key, auths);
+    }
+
+    public CloseableIterable<String> getTypes(Auths auths) {
+        return helper.getKeyValueIndex().getTypes(auths);
+    }
 }

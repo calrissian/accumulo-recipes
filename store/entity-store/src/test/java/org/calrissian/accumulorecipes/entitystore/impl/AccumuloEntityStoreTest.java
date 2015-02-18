@@ -599,7 +599,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2, entity3));
 
-        CloseableIterable<Pair<String, String>> keys = store.keys("type", DEFAULT_AUTHS);
+        CloseableIterable<Pair<String, String>> keys = store.uniqueKeys("", "type", DEFAULT_AUTHS);
 
         assertEquals(2, Iterables.size(keys));
         assertEquals(new Pair<String, String>("hasIp", "string"), get(keys, 0));
