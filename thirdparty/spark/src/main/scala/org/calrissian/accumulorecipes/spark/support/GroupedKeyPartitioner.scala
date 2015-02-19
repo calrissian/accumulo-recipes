@@ -69,7 +69,7 @@ class GroupedKeyPartitioner(groupsAndSplits: SortedMap[String, SortedSet[String]
   }
 
   def bulkIngestRDD(basePath: String, rdd: RDD[(GroupedKey, Value)])(implicit sparkContext: SparkContext): Unit = {
-    rdd.repartitionAndSortWithinPartitions(this)
+    rdd.sortByKey()
       .saveAsHadoopFile(basePath, classOf[GroupedKey], classOf[Value], classOf[AccumuloMultipleOuputs])
   }
 }

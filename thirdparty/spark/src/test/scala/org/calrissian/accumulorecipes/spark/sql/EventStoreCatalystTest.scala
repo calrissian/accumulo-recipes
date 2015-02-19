@@ -98,8 +98,6 @@ class EventStoreCatalystTest {
     createTempTable
   }
 
-
-
   @After
   def teardownTest: Unit = {
     sqlContext.dropTempTable("events")
@@ -107,6 +105,9 @@ class EventStoreCatalystTest {
     AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "eventStore_index")
   }
 
+  /**
+   * A simple join of two temporarily registered tables representing different logical datasets
+   */
   @Test
   def testJoin(): Unit = {
     TableUtil.registerEventCatalystTable("root",
@@ -120,7 +121,7 @@ class EventStoreCatalystTest {
 
     AccumuloTestUtils.dumpTable(miniCluster.getConnector("root", "secret"), "eventStore_shard")
 
-    val rows = sqlContext.sql("SELECT e.key1,e.key2,t.key3 FROM events e  JOIN events2 t ON e.key1 = t.key1").collect
+    val rows = sqlContext.sql("SELECT e.key1,e.key2,t.key3 FROM events e JOIN events2 t ON e.key1 = t.key1").collect
 
     System.out.println(rows.toList)
     Assert.assertEquals(1, rows.length)
@@ -131,18 +132,9 @@ class EventStoreCatalystTest {
     sqlContext.dropTempTable("events2")
   }
 
-  val myfunc = () => {
-    1
-  }
-
-  @Test
-  def test() = {
-
-    val rdd:RDD[Int] = sqlContext.sparkContext.parallelize(0 to 500)
-    val rdd2: RDD[Seq[Int]] = rdd.mapPartitions(_.grouped(10))
-    System.out.println(rdd2.collect.toList)
-  }
-
+  /**
+   * Test selection and predicate filtering with and
+   */
   @Test
   def testSelectionAndWhereWithAndOperator() {
 
@@ -153,6 +145,9 @@ class EventStoreCatalystTest {
     Assert.assertEquals("val1", rows(0).getAs(1))
   }
 
+  /**
+   * Test selection and predicate filtering with or
+   */
   @Test
   def testSelectionAndWhereWithOrOperator() {
 
@@ -163,6 +158,9 @@ class EventStoreCatalystTest {
     Assert.assertEquals("val1", rows(0).getAs(1))
   }
 
+  /**
+   * Test selection and single equals in single predicate
+   */
   @Test
   def testSelectAndWhereSingleOperator() {
 
@@ -173,6 +171,9 @@ class EventStoreCatalystTest {
     Assert.assertEquals("val1", rows(0).getAs(0))
   }
 
+  /**
+   * Test selection but no predicates
+   */
   @Test
   def testSelectionOnlyMultipleFields() {
 
@@ -183,6 +184,9 @@ class EventStoreCatalystTest {
     Assert.assertEquals("val1", rows(0).getAs(0))
   }
 
+  /**
+   * Test that a field missing from a schema is null in the output
+   */
   @Test
   def testFieldInSchemaMissingFromEventIsNull: Unit = {
     val event = new BaseEvent("type", "id2")
@@ -203,6 +207,9 @@ class EventStoreCatalystTest {
 
   }
 
+  /**
+   * Test selecting a single field with no predicates
+   */
   @Test
   def testSelectionOnlySingleField = {
 
@@ -212,6 +219,9 @@ class EventStoreCatalystTest {
     Assert.assertEquals("val1", rows(0).getAs(0))
   }
 
+  /**
+   * Test selecting all fields with no predicates
+   */
   @Test
   def testNoSelectionAndNoWhereClause = {
 
@@ -222,9 +232,15 @@ class EventStoreCatalystTest {
     Assert.assertEquals("val1", rows(0).getAs(0))
   }
 
+  /**
+   * Selecting a field that is not in the schema should fail gracefully
+   */
   @Test(expected = classOf[TreeNodeException[_]])
   def testSelectFieldNotInSchema: Unit = sqlContext.sql("SELECT doesntExist FROM events").collect
 
+  /**
+   * Test no items get returned 
+   */
   @Test
   def testWhereClauseNoMatches: Unit = Assert.assertEquals(0, sqlContext.sql("SELECT * FROM events WHERE key2 > 5").collect.length)
 
