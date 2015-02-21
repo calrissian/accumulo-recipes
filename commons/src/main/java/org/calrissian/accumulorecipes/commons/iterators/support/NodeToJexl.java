@@ -15,6 +15,8 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
+import static org.apache.commons.lang.StringUtils.containsAny;
+import static org.apache.commons.lang.StringUtils.replaceEach;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import java.util.Collection;
@@ -23,7 +25,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
@@ -41,7 +42,6 @@ import org.calrissian.mango.criteria.domain.OrNode;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.domain.RangeLeaf;
 import org.calrissian.mango.types.TypeRegistry;
-import org.mortbay.util.StringUtil;
 
 public class NodeToJexl {
 
@@ -53,18 +53,40 @@ public class NodeToJexl {
      * @param key
      * @return
      */
-    public static Map<Character,String> jexlNormalizationMap = new HashMap<Character,String>();
     public static char[] badChars = "-!~#@~`%^&*()+=':;\"[]{}|\\/?<>,.".toCharArray();
+    public static String[] strings;
+    public static String[] chars;
 
-    static {
-        for(int i = 0; i < badChars.length; i++)
-            jexlNormalizationMap.put(badChars[i], i + "$");
-    }
-
-
-    TypeRegistry<String> registry;
 
     public static final String JEXL_NORM_PREFIX = "$__$";
+
+    static {
+
+        try {
+            Map<Character,String> jexlNormalizationMap = new HashMap<Character,String>();
+            for(int i = 0; i < badChars.length; i++)
+                jexlNormalizationMap.put(badChars[i], i + "$");
+
+            strings = new String[jexlNormalizationMap.size()];
+            chars = new String[jexlNormalizationMap.size()];
+
+            int count = 0;
+            for(Map.Entry<Character, String> entry : jexlNormalizationMap.entrySet()) {
+                strings[count] = JEXL_NORM_PREFIX + entry.getValue();
+                count++;
+            }
+
+            count = 0;
+            for(Map.Entry<Character, String> entry : jexlNormalizationMap.entrySet()) {
+                chars[count] = entry.getKey().toString();
+                count++;
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    TypeRegistry<String> registry;
 
     /**
      * Normalizes invalid chars in a key if any invalid chars are found in the key
@@ -72,18 +94,8 @@ public class NodeToJexl {
      * @return
      */
     public static String removeInvalidChars(String key) {
-        String finalString = "";
-        if(StringUtils.containsAny(key, badChars)) {
-            for(int i = 0; i < key.length(); i++) {
-                char curCharacter = key.charAt(i);
-                if(jexlNormalizationMap.containsKey(curCharacter))
-                    finalString += JEXL_NORM_PREFIX + jexlNormalizationMap.get(curCharacter);
-                else
-                    finalString += curCharacter;
-            }
-
-            return finalString;
-        }
+        if(containsAny(key, badChars))
+            return replaceEach(key, chars, strings);
 
         return key;
     }
@@ -94,14 +106,8 @@ public class NodeToJexl {
      * @return
      */
     public static String revertToOriginalkey(String fixedString) {
-        if(fixedString.contains(JEXL_NORM_PREFIX)) {
-            String newString = fixedString;
-            for(Map.Entry<Character,String> entry : jexlNormalizationMap.entrySet()) {
-                String toReplace = JEXL_NORM_PREFIX + entry.getValue().toString();
-                newString = StringUtil.replace(newString, toReplace, entry.getKey().toString());
-            }
-            return newString;
-        }
+        if(fixedString.contains(JEXL_NORM_PREFIX))
+            return replaceEach(fixedString, strings, chars);
 
         return fixedString;
     }
