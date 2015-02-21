@@ -17,6 +17,7 @@ package org.calrissian.accumulorecipes.commons.iterators;
 
 import static java.lang.Math.min;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -30,7 +31,6 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.calrissian.accumulorecipes.commons.support.Constants;
-import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 
 public class MetadataExpirationFilter extends WrappingIterator {
 
@@ -44,7 +44,6 @@ public class MetadataExpirationFilter extends WrappingIterator {
                 dis.readInt();
                 long expiration = dis.readLong();
                 if(shouldExpire(expiration, parseTimestampFromKey(k))) {
-
                     long newMinExpiration = Long.MAX_VALUE;
                     List<Map.Entry<Key,Value>> finalKeyValList = new ArrayList();
                     for(Map.Entry<Key,Value> curEntry : decodeRow(k, bais)) {
@@ -60,7 +59,7 @@ public class MetadataExpirationFilter extends WrappingIterator {
                     dos.writeInt(finalKeyValList.size());
                     dos.writeLong(newMinExpiration != Long.MAX_VALUE ? newMinExpiration : -1);
                     dos.flush();
-                    RowEncoderUtil.encodeRow(finalKeyValList, baos);
+                    encodeRow(finalKeyValList, baos);
                     baos.flush();
 
                     return new Value(baos.toByteArray());

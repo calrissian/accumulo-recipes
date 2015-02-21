@@ -17,9 +17,7 @@
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -32,7 +30,6 @@ import org.apache.commons.jexl2.MapContext;
 import org.apache.commons.jexl2.Script;
 import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.commons.jexl2.parser.ParserTreeConstants;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
 
@@ -50,9 +47,6 @@ public class QueryEvaluator {
     static {
         engine.setSilent(false);
         engine.setCache(128);
-        Map<String, Object> functions = new HashMap<String, Object>();
-        functions.put("f", QueryFunctions.class);
-        engine.setFunctions(functions);
     }
 
     private String query = null;
@@ -60,71 +54,24 @@ public class QueryEvaluator {
     private Multimap<String, QueryParser.QueryTerm> terms = null;
     private String modifiedQuery = null;
     private JexlContext ctx = new MapContext();
-    private boolean caseInsensitive = true;
 
     public QueryEvaluator(String query) throws ParseException {
-        this.caseInsensitive = false; // default case insensitive matching.
-        if (caseInsensitive) {
-            query = query.toLowerCase();
-        }
         this.query = query;
         QueryParser parser = new QueryParser();
         parser.execute(query);
         this.terms = parser.getQueryTerms();
-        if (caseInsensitive) {
-            literals = new HashSet<String>();
-            for (String lit : parser.getQueryIdentifiers()) {
-                literals.add(lit.toLowerCase());
-            }
-        } else {
-            this.literals = parser.getQueryIdentifiers();
-        }
-    }
-
-    public QueryEvaluator(String query, boolean insensitive) throws ParseException {
-        this.caseInsensitive = insensitive;
-        if (this.caseInsensitive) {
-            query = query.toLowerCase();
-        }
-        this.query = query;
-        QueryParser parser = new QueryParser();
-        parser.execute(query);
-        this.terms = parser.getQueryTerms();
-
-        if (caseInsensitive) {
-            literals = new HashSet<String>();
-            for (String lit : parser.getQueryIdentifiers()) {
-                literals.add(lit.toLowerCase());
-            }
-        } else {
-            this.literals = parser.getQueryIdentifiers();
-        }
+        this.literals = parser.getQueryIdentifiers();
     }
 
     public String getQuery() {
         return this.query;
     }
 
-    public void printLiterals() {
-        for (String s : literals) {
-            System.out.println("literal: " + s);
-        }
-    }
-
-    public void setLevel(Level lev) {
-        log.setLevel(lev);
-    }
-
     public StringBuilder rewriteQuery(StringBuilder query, String fieldName, Collection<FieldValue> fieldValues) {
         if (log.isDebugEnabled()) {
             log.debug("rewriteQuery");
         }
-        // Here we have a field that has multiple values. In this case we need to put
-        // all values into the jexl context as an array and rewrite the criteria to account for all
-        // of the fields.
-        if (caseInsensitive) {
-            fieldName = fieldName.toLowerCase();
-        }
+
         if (log.isDebugEnabled()) {
             log.debug("Modifying original criteria: " + query);
         }
@@ -132,11 +79,7 @@ public class QueryEvaluator {
         String[] values = new String[fieldValues.size()];
         int idx = 0;
         for (FieldValue fv : fieldValues) {
-            if (caseInsensitive) {
-                values[idx] = (new String(fv.getValue())).toLowerCase();
-            } else {
-                values[idx] = new String(fv.getValue());
-            }
+            values[idx] = new String(fv.getValue());
             idx++;
         }
         // Add the array to the context
@@ -213,9 +156,8 @@ public class QueryEvaluator {
         // Loop through the event fields and add them to the JexlContext.
         for (Entry<String, Collection<FieldValue>> field : eventFields.asMap().entrySet()) {
             String fName = normalizeKey(topKey, field.getKey());
-            if (caseInsensitive) {
-                fName = fName.toLowerCase();
-            }
+            fName = NodeToJexl.removeInvalidChars(fName);
+
             // If this field is not part of the expression, then skip it.
             if (!literals.contains(fName)) {
                 continue;
@@ -227,15 +169,8 @@ public class QueryEvaluator {
             if (field.getValue().size() == 0) {
                 continue;
             } else if (field.getValue().size() == 1) {
-                // We are explicitly converting these bytes to a String.
-                if (caseInsensitive) {
-                    ctx.set(fName.toLowerCase(), (new String(field.getValue().iterator().next().getValue())).toLowerCase());
-                } else {
-                    ctx.set(fName, new String(field.getValue().iterator().next().getValue()));
-                }
-
+                ctx.set(fName, new String(field.getValue().iterator().next().getValue()));
             } else {
-                // q = queryRewrite(q, field.getKey(), field.getValue());
                 q = rewriteQuery(q, fName, field.getValue());
                 rewritten = true;
             }// End of if
@@ -277,18 +212,7 @@ public class QueryEvaluator {
         }
     } // End of method
 
-    /**
-     * @return rewritten criteria that was evaluated against the most recent event
-     */
-    public String getModifiedQuery() {
-        return this.modifiedQuery;
-    }
-
-
     public String normalizeKey(Key topKey, String fieldKey) {
       return fieldKey;
     }
-
-
-
 }

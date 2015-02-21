@@ -16,6 +16,15 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -26,16 +35,6 @@ import org.apache.log4j.Logger;
 import org.calrissian.accumulorecipes.commons.iterators.AndIterator;
 import org.calrissian.accumulorecipes.commons.iterators.FieldIndexIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OrIterator;
-
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
 
 /**
@@ -62,22 +61,9 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
     private Text lowerBound;
     private boolean rangeNode;
 
-    public BooleanLogicTreeNode() {
-        super();
-        uids = new HashSet<Key>();
-    }
-
     public BooleanLogicTreeNode(int type) {
         super();
         this.type = type;
-        uids = new HashSet<Key>();
-        setOperator();
-    }
-
-    public BooleanLogicTreeNode(int type, boolean negate) {
-        super();
-        this.type = type;
-        this.negated = negate;
         uids = new HashSet<Key>();
         setOperator();
     }
@@ -89,7 +75,7 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
             this.fValue = new Text(fieldValue);
         }
         if (fieldName != null) {
-            this.fName = new Text(fieldName);
+            this.fName = new Text(NodeToJexl.revertToOriginalkey(fieldName));
         }
         uids = new HashSet<Key>();
         setOperator();
@@ -102,12 +88,14 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
             this.fValue = new Text(fieldValue);
         }
         if (fieldName != null) {
-            this.fName = new Text(fieldName);
+            this.fName = new Text(NodeToJexl.revertToOriginalkey(fieldName));
         }
         uids = new HashSet<Key>();
         this.negated = negated;
         setOperator();
     }
+
+
 
     public static Key buildKey(Key key) {
         if (key == null) {
@@ -120,10 +108,8 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
         Text uuid = new Text(cq.length > 1 ? cq[1] : cq[0]);
         Text row = key.getRow();
         log.debug("Key-> r:" + row + "  fam:" + uuid);
-        // System.out.println("Key-> r:"+row+"  fam:"+uuid);
 
         Key k = new Key(row, uuid);
-        // System.out.println("Key: "+k);
         return k;
     }
 
@@ -163,10 +149,6 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
         return negated;
     }
 
-    public void setNegated(boolean b) {
-        this.negated = b;
-    }
-
     public Key getTopKey() {
         return myTopKey;
     }
@@ -181,10 +163,6 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
 
     public void setDone(boolean done) {
         this.done = done;
-    }
-
-    public boolean isRollUp() {
-        return rollUp;
     }
 
     public void setRollUp(boolean rollUp) {
@@ -212,6 +190,8 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
     }
 
     private void setOperator() {
+
+
         this.fOperator = JexlOperatorConstants.getOperator(type);
         if (negated && this.fOperator.equals("!=")) {
             this.fOperator = JexlOperatorConstants.getOperator(JexlOperatorConstants.JJTEQNODE);
@@ -427,7 +407,7 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
             AndIterator iter = (AndIterator) this.getUserObject();
             ok = iter.jump(jumpKey);
             if (iter.hasTop()) {
-                Key key = (Key) iter.getTopKey();
+                Key key = iter.getTopKey();
                 key = buildKey(key);
 
                 this.setTopKey(key);
@@ -469,10 +449,6 @@ public class BooleanLogicTreeNode extends DefaultMutableTreeNode {
 
     public void reSet() {
         uids = new HashSet<Key>();
-    }
-
-    public boolean inSet(Key t) {
-        return uids.contains(t);
     }
 
     public Iterator<Key> getSetIterator() {

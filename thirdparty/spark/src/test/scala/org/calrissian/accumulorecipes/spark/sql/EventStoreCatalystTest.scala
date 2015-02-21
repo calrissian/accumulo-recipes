@@ -239,7 +239,7 @@ class EventStoreCatalystTest {
   def testSelectFieldNotInSchema: Unit = sqlContext.sql("SELECT doesntExist FROM events").collect
 
   /**
-   * Test no items get returned 
+   * Test no items get returned
    */
   @Test
   def testWhereClauseNoMatches: Unit = Assert.assertEquals(0, sqlContext.sql("SELECT * FROM events WHERE key2 > 5").collect.length)

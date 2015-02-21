@@ -16,12 +16,12 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
-import org.apache.accumulo.core.data.Key;
-
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 
+import org.apache.accumulo.core.data.Key;
+
 public class KeyParser extends BaseKeyParser {
-    public static final String SELECTOR_FIELD = "selector";
+    public static final String VALUE_FIELD = "selector";
     public static final String DATATYPE_FIELD = "dataType";
     public static final String FIELDNAME_FIELD = "fieldName";
     public static final String UID_FIELD = "uid";
@@ -34,7 +34,7 @@ public class KeyParser extends BaseKeyParser {
         this.keyFields.put(FIELDNAME_FIELD, colFamParts.length >= 2 ? colFamParts[1] : "");
 
         String[] colQualParts = this.keyFields.get(COLUMN_QUALIFIER_FIELD).split(NULL_BYTE);
-        this.keyFields.put(SELECTOR_FIELD, colQualParts.length >= 1 ? colQualParts[0] : "");
+        this.keyFields.put(VALUE_FIELD, colQualParts.length >= 1 ? colQualParts[0] : "");
         this.keyFields.put(DATATYPE_FIELD, colQualParts.length >= 2 ? colQualParts[1] : "");
         this.keyFields.put(UID_FIELD, colQualParts.length >= 3 ? colQualParts[2] : "");
     }
@@ -45,7 +45,7 @@ public class KeyParser extends BaseKeyParser {
     }
 
     public String getSelector() {
-        return keyFields.get(SELECTOR_FIELD);
+        return keyFields.get(VALUE_FIELD);
     }
 
     public String getDataType() {

@@ -16,6 +16,13 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl.removeInvalidChars;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -31,16 +38,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.calrissian.accumulorecipes.commons.iterators.support.FieldIndexKeyParser;
-import org.calrissian.accumulorecipes.commons.iterators.support.QueryFunctions;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
 /**
  * This iterator should only return keys from the fi\0{fieldName}:{fieldValue} part of the shard table. Expect topKey to be CF, {UID}
@@ -69,37 +66,12 @@ public class FieldIndexIterator extends WrappingIterator {
 
     static {
         engine.setCache(128);
-        Map<String, Object> functions = new HashMap<String, Object>();
-        functions.put("f", QueryFunctions.class);
-        engine.setFunctions(functions);
     }
 
-    // -------------------------------------------------------------------------
-    // ------------- Constructors
-    public FieldIndexIterator() {
-    }
-
-    public FieldIndexIterator(int type, Text rowId, Text fieldName, Text fieldValue, String operator) {
-        this.fName = fieldName;
-        this.fNameString = fName.toString().substring(3);
-        this.fValue = fieldValue;
-        this.fOperator = operator;
-        this.range = buildRange(rowId);
-        this.negated = false;
-        this.type = type;
-
-        // Create the Jexl expression, we need to add the ' around the field value
-        StringBuilder buf = new StringBuilder();
-        buf.append(fNameString).append(" ").append(this.fOperator).append(" ").append("'").append(fValue.toString()).append("'");
-        this.expr = engine.createExpression(buf.toString());
-
-        // Set a default KeyParser
-        keyParser = createDefaultKeyParser();
-    }
 
     public FieldIndexIterator(int type, Text rowId, Text fieldName, Text fieldValue, boolean neg, String operator) {
-        this.fName = fieldName;
-        this.fNameString = fName.toString().substring(3);
+        this.fName = new Text(fieldName.toString());
+        this.fNameString = removeInvalidChars(fName.toString().substring(3));
         this.fValue = fieldValue;
         this.fOperator = operator;
         this.range = buildRange(rowId);
@@ -363,17 +335,6 @@ public class FieldIndexIterator extends WrappingIterator {
         return negated;
     }
 
-    public Text getCurrentRow() {
-        return currentRow;
-    }
-
-    public Text getfName() {
-        return fName;
-    }
-
-    public Text getfValue() {
-        return fValue;
-    }
 
     // works like seek, but we need to avoid range issues.
     public boolean jump(Key jumpKey) throws IOException {

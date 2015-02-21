@@ -16,9 +16,9 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
-import org.apache.accumulo.core.data.Key;
-
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+
+import org.apache.accumulo.core.data.Key;
 
 public class FieldIndexKeyParser extends KeyParser {
 
@@ -30,7 +30,7 @@ public class FieldIndexKeyParser extends KeyParser {
         this.keyFields.put(FIELDNAME_FIELD, colFamParts.length >= 2 ? colFamParts[1] : "");
 
         String[] colQualParts = this.keyFields.get(COLUMN_QUALIFIER_FIELD).split(NULL_BYTE);
-        this.keyFields.put(SELECTOR_FIELD, colQualParts.length >= 1 ? colQualParts[0] : "");
+        this.keyFields.put(VALUE_FIELD, colQualParts.length >= 1 ? colQualParts[0] : "");
         this.keyFields.put(DATATYPE_FIELD, "");
         this.keyFields.put(UID_FIELD, colQualParts.length >= 2 ? colQualParts[1] : "");
     }
@@ -42,7 +42,7 @@ public class FieldIndexKeyParser extends KeyParser {
 
     @Override
     public String getSelector() {
-        return keyFields.get(SELECTOR_FIELD);
+        return keyFields.get(VALUE_FIELD);
     }
 
     @Override

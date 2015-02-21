@@ -16,10 +16,22 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
-import org.apache.commons.jexl2.parser.*;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.jexl2.parser.ASTAndNode;
+import org.apache.commons.jexl2.parser.ASTEQNode;
+import org.apache.commons.jexl2.parser.ASTERNode;
+import org.apache.commons.jexl2.parser.ASTFunctionNode;
+import org.apache.commons.jexl2.parser.ASTGENode;
+import org.apache.commons.jexl2.parser.ASTGTNode;
+import org.apache.commons.jexl2.parser.ASTLENode;
+import org.apache.commons.jexl2.parser.ASTLTNode;
+import org.apache.commons.jexl2.parser.ASTNENode;
+import org.apache.commons.jexl2.parser.ASTNRNode;
+import org.apache.commons.jexl2.parser.ASTOrNode;
+import org.apache.commons.jexl2.parser.JexlNode;
+import org.apache.commons.jexl2.parser.ParserTreeConstants;
 
 public class JexlOperatorConstants implements ParserTreeConstants {
 
@@ -37,7 +49,6 @@ public class JexlOperatorConstants implements ParserTreeConstants {
         operatorMap.put(ASTGENode.class, ">=");
         operatorMap.put(ASTERNode.class, "=~");
         operatorMap.put(ASTNRNode.class, "!~");
-        operatorMap.put(ASTFunctionNode.class, "f");
         operatorMap.put(ASTAndNode.class, "and");
         operatorMap.put(ASTOrNode.class, "or");
 
@@ -71,7 +82,6 @@ public class JexlOperatorConstants implements ParserTreeConstants {
         jjtTypeMap.put(">=", ParserTreeConstants.JJTGENODE);
         jjtTypeMap.put("=~", ParserTreeConstants.JJTERNODE);
         jjtTypeMap.put("!~", ParserTreeConstants.JJTNRNODE);
-        jjtTypeMap.put("f", ParserTreeConstants.JJTFUNCTIONNODE);
 
     }
 

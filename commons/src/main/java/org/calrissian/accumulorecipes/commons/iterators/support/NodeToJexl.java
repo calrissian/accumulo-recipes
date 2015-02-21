@@ -18,9 +18,13 @@ package org.calrissian.accumulorecipes.commons.iterators.support;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.EqualsLeaf;
 import org.calrissian.mango.criteria.domain.GreaterThanEqualsLeaf;
@@ -37,10 +41,70 @@ import org.calrissian.mango.criteria.domain.OrNode;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.domain.RangeLeaf;
 import org.calrissian.mango.types.TypeRegistry;
+import org.mortbay.util.StringUtil;
 
 public class NodeToJexl {
 
-    TypeRegistry<String> registry; //TODO make types configurable
+    /**
+     * The following is a temporary fix to allow any characters to be used in keys as a workaround
+     * for JEXL treating the chars as invalid (e.g. the key "key-1" is invalid because JEXL will treat
+     * it as a term "key - 1". It only allows valid variable names to be keys, which is counter to
+     * the what Accumulo allows- any arbitrary string).
+     * @param key
+     * @return
+     */
+    public static Map<Character,String> jexlNormalizationMap = new HashMap<Character,String>();
+    public static char[] badChars = "-!~#@~`%^&*()+=':;\"[]{}|\\/?<>,.".toCharArray();
+
+    static {
+        for(int i = 0; i < badChars.length; i++)
+            jexlNormalizationMap.put(badChars[i], i + "$");
+    }
+
+
+    TypeRegistry<String> registry;
+
+    public static final String JEXL_NORM_PREFIX = "$__$";
+
+    /**
+     * Normalizes invalid chars in a key if any invalid chars are found in the key
+     * @param key
+     * @return
+     */
+    public static String removeInvalidChars(String key) {
+        String finalString = "";
+        if(StringUtils.containsAny(key, badChars)) {
+            for(int i = 0; i < key.length(); i++) {
+                char curCharacter = key.charAt(i);
+                if(jexlNormalizationMap.containsKey(curCharacter))
+                    finalString += JEXL_NORM_PREFIX + jexlNormalizationMap.get(curCharacter);
+                else
+                    finalString += curCharacter;
+            }
+
+            return finalString;
+        }
+
+        return key;
+    }
+
+    /**
+     * Reverts a string that had invalid chars normalized out back into the original key
+     * @param fixedString
+     * @return
+     */
+    public static String revertToOriginalkey(String fixedString) {
+        if(fixedString.contains(JEXL_NORM_PREFIX)) {
+            String newString = fixedString;
+            for(Map.Entry<Character,String> entry : jexlNormalizationMap.entrySet()) {
+                String toReplace = JEXL_NORM_PREFIX + entry.getValue().toString();
+                newString = StringUtil.replace(newString, toReplace, entry.getKey().toString());
+            }
+            return newString;
+        }
+
+        return fixedString;
+    }
 
     public NodeToJexl(TypeRegistry<String> registry) {
         this.registry = registry;
@@ -100,68 +164,68 @@ public class NodeToJexl {
     private String processChild(String type, Node node) throws Exception {
 
         StringBuilder builder = new StringBuilder();
+        
+        String leafKey = removeInvalidChars(((AbstractKeyValueLeaf)node).getKey());
 
         if (node instanceof EqualsLeaf) {
             builder.append("(");
             EqualsLeaf leaf = (EqualsLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" == '")
+            return builder.append(buildKey(type, leafKey)).append(" == '")
                 .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getValue())).append("')")
                 .toString();
         } else if (node instanceof NotEqualsLeaf) {
             builder.append("(");
             NotEqualsLeaf leaf = (NotEqualsLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" != '")
+            return builder.append(buildKey(type, leafKey)).append(" != '")
                 .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getValue())).append("')")
                 .toString();
         } else if (node instanceof RangeLeaf) {
             builder.append("(");
             RangeLeaf leaf = (RangeLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" >= '")
+            return builder.append(buildKey(type, leafKey)).append(" >= '")
                 .append(registry.getAlias(leaf.getStart())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getStart())).append("')")
-                .append(" and (").append(buildKey(type, leaf.getKey())).append(" <= '")
+                .append(" and (").append(buildKey(type, leafKey)).append(" <= '")
                 .append(registry.getAlias(leaf.getEnd())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getEnd())).append("')")
                 .toString();
         } else if (node instanceof GreaterThanLeaf) {
             builder.append("(");
             GreaterThanLeaf leaf = (GreaterThanLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" > '")
+            return builder.append(buildKey(type, leafKey)).append(" > '")
                 .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getValue())).append("')")
                 .toString();
         } else if (node instanceof GreaterThanEqualsLeaf) {
             builder.append("(");
             GreaterThanEqualsLeaf leaf = (GreaterThanEqualsLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" >= '")
+            return builder.append(buildKey(type, leafKey)).append(" >= '")
                 .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getValue())).append("')")
                 .toString();
         } else if (node instanceof LessThanLeaf) {
             builder.append("(");
             LessThanLeaf leaf = (LessThanLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" < '")
+            return builder.append(buildKey(type, leafKey)).append(" < '")
                 .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getValue())).append("')")
                 .toString();
         } else if (node instanceof LessThanEqualsLeaf) {
             builder.append("(");
             LessThanEqualsLeaf leaf = (LessThanEqualsLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" <= '")
+            return builder.append(buildKey(type, leafKey)).append(" <= '")
                 .append(registry.getAlias(leaf.getValue())).append(ONE_BYTE)
                 .append(registry.encode(leaf.getValue())).append("')")
                 .toString();
         } else if (node instanceof HasLeaf) {
             builder.append("(");
-            HasLeaf leaf = (HasLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" >= '").append(NULL_BYTE).append("')")
+            return builder.append(buildKey(type, leafKey)).append(" >= '").append(NULL_BYTE).append("')")
                 .toString();
         } else if (node instanceof HasNotLeaf) {
             builder.append("!(");
-            HasNotLeaf leaf = (HasNotLeaf) node;
-            return builder.append(buildKey(type, leaf.getKey())).append(" >= '").append(NULL_BYTE).append("')")
+            return builder.append(buildKey(type, leafKey)).append(" >= '").append(NULL_BYTE).append("')")
                 .toString();
         } else if (node instanceof InLeaf) {
             builder.append("(");
@@ -170,7 +234,7 @@ public class NodeToJexl {
             Iterator<Object> objectIterator = objs.iterator();
             while(objectIterator.hasNext()) {
                 Object val = objectIterator.next();
-                builder.append(buildKey(type, leaf.getKey())).append(" == '")
+                builder.append(buildKey(type, leafKey)).append(" == '")
                     .append(registry.getAlias(val)).append(ONE_BYTE)
                     .append(registry.encode(val))
                     .toString();
@@ -188,7 +252,7 @@ public class NodeToJexl {
             Iterator<Object> objectIterator = objs.iterator();
             while(objectIterator.hasNext()) {
                 Object val = objectIterator.next();
-                builder.append(buildKey(type, leaf.getKey())).append(" != '")
+                builder.append(buildKey(type, leafKey)).append(" != '")
                     .append(registry.getAlias(val)).append(ONE_BYTE)
                     .append(registry.encode(val))
                     .toString();
