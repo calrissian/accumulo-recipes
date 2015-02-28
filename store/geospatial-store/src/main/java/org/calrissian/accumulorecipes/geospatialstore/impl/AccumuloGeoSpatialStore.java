@@ -75,7 +75,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                 for (Map.Entry<Key, Value> curEntry : map) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
-                    Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, Object>(1), vis));
+                    Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, String>(1), vis));
                     entry.put(tuple);
                 }
                 return entry;

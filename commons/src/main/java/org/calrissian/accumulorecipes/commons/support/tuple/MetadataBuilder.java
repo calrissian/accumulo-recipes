@@ -16,23 +16,22 @@
 package org.calrissian.accumulorecipes.commons.support.tuple;
 
 
+import static java.util.Collections.unmodifiableMap;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.base.Preconditions;
 
-import static java.util.Collections.unmodifiableMap;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity;
-
 public class MetadataBuilder {
 
-    protected final Map<String, Object> metadata;
+    protected final Map<String, String> metadata;
 
     public MetadataBuilder() {
-        this(new HashMap<String, Object>());
+        this(new HashMap<String, String>());
     }
 
-    public MetadataBuilder(Map<String, Object> metadata) {
+    public MetadataBuilder(Map<String, String> metadata) {
         this.metadata = metadata;
     }
 
@@ -51,7 +50,7 @@ public class MetadataBuilder {
         return this;
     }
 
-    public MetadataBuilder setCustom(String key, Object value) {
+    public MetadataBuilder setCustom(String key, String value) {
         Preconditions.checkNotNull(key);
         Preconditions.checkArgument(key.length() > 0, "Not allowed to use an empty Metadata key");
 
@@ -61,7 +60,7 @@ public class MetadataBuilder {
         return this;
     }
 
-    public Map<String, Object> build() {
+    public Map<String, String> build() {
         return unmodifiableMap(metadata);
     }
 }

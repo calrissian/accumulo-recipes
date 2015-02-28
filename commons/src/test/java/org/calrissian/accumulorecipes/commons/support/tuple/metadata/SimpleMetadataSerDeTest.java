@@ -15,12 +15,11 @@
 */
 package org.calrissian.accumulorecipes.commons.support.tuple.metadata;
 
+import static org.junit.Assert.assertEquals;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class SimpleMetadataSerDeTest {
 
@@ -29,16 +28,16 @@ public class SimpleMetadataSerDeTest {
     @Test
     public void testSimpleSerializationDeserialization() {
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, String> map = new HashMap<String, String>();
         map.put("key1", "val1");
-        map.put("key2", 5);
-        map.put("key3", 10l);
-        map.put("key4", 1.0);
-        map.put("key5", true);
+        map.put("key2", "5");
+        map.put("key3", "10");
+        map.put("key4", "1.0");
+        map.put("key5", "true");
 
         byte[] bytes = metadataSerDe.create().serialize(map);
 
-        Map<String,Object> actualMap = metadataSerDe.create().deserialize(bytes);
+        Map<String,String> actualMap = metadataSerDe.create().deserialize(bytes);
         assertEquals(map, actualMap);
     }
 }

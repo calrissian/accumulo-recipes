@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public interface MetadataSerDe extends Serializable {
 
-    byte[] serialize(Map<String, Object> metadata);
+    byte[] serialize(Map<String, String> metadata);
 
-    Map<String, Object> deserialize(byte[] bytes);
+    Map<String, String> deserialize(byte[] bytes);
 }

@@ -120,7 +120,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], NULL_BYTE);
 
                     String vis = entry.getKey().getColumnVisibility().toString();
-                    Tuple tuple = new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, Object>(1), vis));
+                    Tuple tuple = new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, String>(1), vis));
                     entity.put(tuple);
 
                 }

@@ -15,6 +15,20 @@
  */
 package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
+import static com.google.common.collect.Iterables.transform;
+import static java.util.Collections.singletonList;
+import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
+import static org.apache.commons.lang.StringUtils.join;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.generateTimestamp;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
+import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
@@ -38,34 +52,19 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
-import org.calrissian.accumulorecipes.temporal.lastn.support.EventMergeJoinIterable;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.FirstNEntriesInRowIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
+import org.calrissian.accumulorecipes.temporal.lastn.support.EventMergeJoinIterable;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.encoders.lexi.LongReverseEncoder;
-
-import static com.google.common.collect.Iterables.transform;
-import static java.util.Collections.singletonList;
-import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
-import static org.apache.commons.lang.StringUtils.join;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
-import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
-import static org.calrissian.mango.collect.CloseableIterables.wrap;
-import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class AccumuloTemporalLastNStore implements TemporalLastNStore {
 
@@ -90,7 +89,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 if (toReturn == null)
                     toReturn = new BaseEvent(cq.substring(idx+1,cq.length()), encoder.decode(cq.substring(0, idx)));
                 String vis = splits[3];
-                toReturn.put(new Tuple(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String, Object>(1), vis)));
+                toReturn.put(new Tuple(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String, String>(1), vis)));
             }
 
             return toReturn;

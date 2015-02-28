@@ -61,7 +61,7 @@ public class AccumuloEventStoreTest {
     private Connector connector;
     private EventStore store;
 
-    private Map<String, Object> meta = new MetadataBuilder().setVisibility("A").build();
+    private Map<String, String> meta = new MetadataBuilder().setVisibility("A").build();
     private Auths DEFAULT_AUTHS = new Auths("A");
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
@@ -112,7 +112,7 @@ public class AccumuloEventStoreTest {
     @Test
     public void testGet_withVisibilities() {
 
-        Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
+        Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
         event.put(new Tuple("key1", "val1", meta));
@@ -139,7 +139,7 @@ public class AccumuloEventStoreTest {
   @Test
   public void testVisibilityForAndQuery_noResults() {
 
-    Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
+    Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
     Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
     event.put(new Tuple("key1", "val1", meta));
@@ -163,8 +163,8 @@ public class AccumuloEventStoreTest {
   @Test
   public void testVisibilityForQuery_resultsReturned() {
 
-    Map<String, Object> canSee = new MetadataBuilder().setVisibility("A&B").build();
-    Map<String, Object> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
+    Map<String, String> canSee = new MetadataBuilder().setVisibility("A&B").build();
+    Map<String, String> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
 
     Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
     event.put(new Tuple("key1", "val1", meta));
@@ -193,7 +193,7 @@ public class AccumuloEventStoreTest {
     @Test
     public void testExpirationOfTuples_get() {
 
-        Map<String, Object> shouldntSee = new MetadataBuilder().setExpiration(1).build();
+        Map<String, String> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis()-500);
         event.put(new Tuple("key1", "val1", meta));
@@ -213,7 +213,7 @@ public class AccumuloEventStoreTest {
     @Test
     public void testExpirationOfTuples_query() {
 
-        Map<String, Object> shouldntSee = new MetadataBuilder().setExpiration(1).build();
+        Map<String, String> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
         Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis()-500);
         event.put(new Tuple("key1", "val1", meta));

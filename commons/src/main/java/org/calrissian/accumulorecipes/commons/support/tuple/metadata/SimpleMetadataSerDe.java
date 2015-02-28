@@ -38,7 +38,7 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     }
 
     @Override
-    public byte[] serialize(Map<String, Object> metadata) {
+    public byte[] serialize(Map<String, String> metadata) {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutput dataOutput = new DataOutputStream(baos);
@@ -46,17 +46,16 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
         try {
 
             int count = 0;
-            for(Map.Entry<String, Object> entry : metadata.entrySet()) {
+            for(Map.Entry<String, String> entry : metadata.entrySet()) {
                 if(entry.getValue() != null)
                     count++;
             }
 
             dataOutput.writeInt(count);
 
-            for(Map.Entry<String, Object> entry : metadata.entrySet()) {
+            for(Map.Entry<String, String> entry : metadata.entrySet()) {
                 dataOutput.writeUTF(entry.getKey());
-                dataOutput.writeUTF(typeRegistry.getAlias(entry.getValue()));
-                dataOutput.writeUTF(typeRegistry.encode(entry.getValue()));
+                dataOutput.writeUTF(entry.getValue());
             }
 
 
@@ -74,23 +73,22 @@ public class SimpleMetadataSerDe implements MetadataSerDe {
     }
 
     @Override
-    public Map<String, Object> deserialize(byte[] bytes) {
+    public Map<String, String> deserialize(byte[] bytes) {
 
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         DataInputStream dis = new DataInputStream(bais);
 
 
-        Map<String, Object> map = new HashMap<String,Object>();
+        Map<String, String> map = new HashMap<String,String>();
         try {
 
             int count = dis.readInt();
 
             for(int j = 0; j < count; j++) {
                 String key = dis.readUTF();
-                String alias = dis.readUTF();
                 String encodedVal = dis.readUTF();
 
-                map.put(key, typeRegistry.decode(alias, encodedVal));
+                map.put(key, encodedVal);
             }
 
         } catch(Exception e) {

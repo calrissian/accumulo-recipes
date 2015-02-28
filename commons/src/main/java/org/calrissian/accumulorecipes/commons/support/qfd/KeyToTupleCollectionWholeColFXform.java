@@ -79,8 +79,8 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
           String visibility = curEntry.getKey().getColumnVisibility().toString();
 
           try {
-            Map<String,Object> meta = metadataSerDe.deserialize(curEntry.getValue().get());
-            Map<String,Object> metadata = (meta == null ? new HashMap<String,Object>() : new HashMap<String,Object>(meta));
+            Map<String,String> meta = metadataSerDe.deserialize(curEntry.getValue().get());
+            Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
             setVisibility(metadata, visibility);
             Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
             entry.put(tuple);

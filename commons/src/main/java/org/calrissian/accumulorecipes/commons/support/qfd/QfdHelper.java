@@ -218,7 +218,7 @@ public abstract class QfdHelper<T extends Entity> {
 
                         ColumnVisibility columnVisibility = new ColumnVisibility(visibility);
 
-                        Map<String,Object> meta = new HashMap<String,Object>(tuple.getMetadata());
+                        Map<String,String> meta = new HashMap<String, String>(tuple.getMetadata());
                         meta.remove(Metadata.Visiblity.VISIBILITY);
 
                         Long expiration = Metadata.Expiration.getExpiration(meta, -1);

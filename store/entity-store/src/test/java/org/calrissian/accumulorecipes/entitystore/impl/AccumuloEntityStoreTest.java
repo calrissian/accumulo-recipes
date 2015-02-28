@@ -67,7 +67,7 @@ public class AccumuloEntityStoreTest {
     private Connector getConnector() throws AccumuloSecurityException, AccumuloException {
         return new MockInstance().getConnector("root", "".getBytes());
     }
-    private Map<String, Object> meta = new MetadataBuilder().setVisibility("A").build();
+    private Map<String, String> meta = new MetadataBuilder().setVisibility("A").build();
     private Auths DEFAULT_AUTHS = new Auths("A");
 
     @Before
@@ -111,7 +111,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testGet_withVisibilities() {
 
-        Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
+        Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
         Entity entity = new BaseEntity("type", "id");
         entity.put(new Tuple("key1", "val1", meta));
@@ -138,7 +138,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testVisibilityForQuery_noResults() {
 
-      Map<String, Object> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
+      Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
       Entity entity = new BaseEntity("type", "id1");
       entity.put(new Tuple("key1", "val1", meta));
@@ -162,8 +162,8 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testVisibilityForQuery_resultsReturned() {
 
-      Map<String, Object> canSee = new MetadataBuilder().setVisibility("A&B").build();
-      Map<String, Object> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
+      Map<String, String> canSee = new MetadataBuilder().setVisibility("A&B").build();
+      Map<String, String> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
 
       Entity entity = new BaseEntity("type", "id1");
       entity.put(new Tuple("key1", "val1", meta));
@@ -609,7 +609,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testExpirationOfTuples_get() throws Exception {
 
-        Map<String,Object> expireMeta = new MetadataBuilder()
+        Map<String,String> expireMeta = new MetadataBuilder()
             .setExpiration(1)
             .setTimestamp(currentTimeMillis()-50000)
             .build();
@@ -634,7 +634,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testExpirationOfTuples_query() throws Exception {
 
-        Map<String,Object> expireMeta = new MetadataBuilder()
+        Map<String,String> expireMeta = new MetadataBuilder()
             .setExpiration(1)
             .setTimestamp(currentTimeMillis()-500)
             .build();

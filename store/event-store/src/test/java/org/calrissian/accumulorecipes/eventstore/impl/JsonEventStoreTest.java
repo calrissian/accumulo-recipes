@@ -41,6 +41,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
+import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
@@ -107,6 +108,8 @@ public class JsonEventStoreTest {
         store.save(eventList);
         store.flush();
 
+        AccumuloTestUtils.dumpTable(getConnector(), "eventStore_shard");
+
         /**
          * Build our query to retrieve stored events by their flattened json
          * representation.
@@ -136,7 +139,7 @@ public class JsonEventStoreTest {
     }
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance().getConnector("root", "".getBytes());
+        return new MockInstance("jsonTest").getConnector("root", "".getBytes());
     }
 
     @Before

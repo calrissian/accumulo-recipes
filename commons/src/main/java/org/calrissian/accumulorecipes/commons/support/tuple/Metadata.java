@@ -28,8 +28,8 @@ public class Metadata {
 
         private Expiration(){}
 
-        public static Map<String, Object> setExpiration(Map<String, Object> metadata, long expiration) {
-            metadata.put(EXPIRATION, expiration);
+        public static Map<String, String> setExpiration(Map<String, String> metadata, long expiration) {
+            metadata.put(EXPIRATION, Long.toString(expiration));
             return metadata;
         }
 
@@ -37,11 +37,11 @@ public class Metadata {
             return getExpiration(tuple.getMetadata(), defaultExpiration);
         }
 
-        public static Long getExpiration(Map<String,Object> metadata, long defaultExpiration) {
+        public static Long getExpiration(Map<String,String> metadata, long defaultExpiration) {
             if(!metadata.containsKey(EXPIRATION))
                 return defaultExpiration;
             else
-                return (Long)metadata.get(EXPIRATION);
+                return Long.parseLong(metadata.get(EXPIRATION));
         }
 
     }
@@ -52,7 +52,7 @@ public class Metadata {
 
         private Visiblity(){}
 
-        public static Map<String, Object> setVisibility(Map<String, Object> metadata, String visibility) {
+        public static Map<String, String> setVisibility(Map<String, String> metadata, String visibility) {
             if (visibility != null && !visibility.isEmpty())
                 metadata.put(VISIBILITY, visibility);
 
@@ -63,15 +63,15 @@ public class Metadata {
             if(tuple.getMetadataValue(VISIBILITY) == null)
                 return defaultVisibility;
             else
-                return (String)tuple.getMetadataValue(VISIBILITY);
+                return tuple.getMetadataValue(VISIBILITY);
         }
 
 
-      public static String getVisibility(Map<String,Object> tuple, String defaultVisibility) {
+      public static String getVisibility(Map<String,String> tuple, String defaultVisibility) {
         if(!tuple.containsKey(VISIBILITY))
           return defaultVisibility;
         else
-          return (String)tuple.get(VISIBILITY);
+          return tuple.get(VISIBILITY);
       }
 
     }
@@ -82,17 +82,17 @@ public class Metadata {
 
       private Timestamp(){}
 
-      public static Map<String, Object> setTimestamp(Map<String, Object> metadata, long timestamp) {
-        metadata.put(TIMESTAMP, timestamp);
+      public static Map<String, String> setTimestamp(Map<String, String> metadata, long timestamp) {
+        metadata.put(TIMESTAMP, Long.toString(timestamp));
 
         return metadata;
       }
 
-      public static long getTimestamp(Map<String,Object> metadata, long defaultTimestamp) {
+      public static long getTimestamp(Map<String,String> metadata, long defaultTimestamp) {
         if(!metadata.containsKey(TIMESTAMP))
           return defaultTimestamp;
         else
-          return (Long)metadata.get(TIMESTAMP);
+          return Long.parseLong(metadata.get(TIMESTAMP));
       }
 
     }

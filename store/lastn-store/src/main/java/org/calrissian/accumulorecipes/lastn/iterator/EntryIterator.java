@@ -15,6 +15,18 @@
  */
 package org.calrissian.accumulorecipes.lastn.iterator;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -30,15 +42,6 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.io.Serializables;
 import org.calrissian.mango.types.TypeRegistry;
-
-import java.io.IOException;
-import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
 
 /**
  * An iterator to return StoreEntry objects serialized to JSON so that grouping can be done server side instead of
@@ -127,7 +130,7 @@ public class EntryIterator extends WrappingIterator {
                         Tuple tuple = new Tuple(
                                 keyValueDatatype[0],
                                 typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]),
-                                setVisibility(new HashMap<String, Object>(1), vis)
+                                setVisibility(new HashMap<String, String>(1), vis)
                         );
 
 

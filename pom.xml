@@ -48,7 +48,7 @@ limitations under the License.
     <jackson.version>2.2.2</jackson.version>
     <joda.time.version>2.2</joda.time.version>
     <junit.version>4.11</junit.version>
-    <mango.version>1.4.0-SNAPSHOT</mango.version>
+    <mango.version>2.0.0-SNAPSHOT</mango.version>
     <nscala.time.version>1.6.0</nscala.time.version>
     <pig.version>0.8.1</pig.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

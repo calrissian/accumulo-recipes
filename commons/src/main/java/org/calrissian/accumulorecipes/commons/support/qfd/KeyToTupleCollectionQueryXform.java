@@ -68,8 +68,8 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
             String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
 
             try {
-                Map<String,Object> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
-                Map<String,Object> metadata = (meta == null ? new HashMap<String,Object>() : new HashMap<String,Object>(meta));
+                Map<String,String> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
+                Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
                 setVisibility(metadata, vis);
                 Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
                 entry.put(tuple);
