@@ -42,6 +42,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EmptyEncodedRowFilter;
+import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
@@ -51,7 +52,6 @@ import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.Globa
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
-import org.calrissian.accumulorecipes.eventstore.support.iterators.EventMetadataExpirationFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -201,7 +201,7 @@ public class AccumuloEventStore implements EventStore {
                 eventScanner.addScanIterator(iteratorSetting);
             }
 
-            IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", EventMetadataExpirationFilter.class);
+            IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
             eventScanner.addScanIterator(expirationFilter);
             IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
             eventScanner.addScanIterator(emptyDataFilter);
@@ -248,7 +248,7 @@ public class AccumuloEventStore implements EventStore {
             IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
             scanner.addScanIterator(setting);
 
-            IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", EventMetadataExpirationFilter.class);
+            IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
             scanner.addScanIterator(expirationFilter);
             IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
             scanner.addScanIterator(emptyDataFilter);

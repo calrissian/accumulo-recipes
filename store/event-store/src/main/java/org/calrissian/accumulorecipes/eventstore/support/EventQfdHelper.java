@@ -31,6 +31,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionQueryXform;
@@ -39,7 +40,6 @@ import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
 import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
-import org.calrissian.accumulorecipes.eventstore.support.iterators.EventMetadataExpirationFilter;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
@@ -97,7 +97,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
     @Override
     protected void configureShardTable(Connector connector, String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
         Set<IteratorScope> scopes = Sets.newHashSet(IteratorScope.majc, IteratorScope.minc);
-        IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", EventMetadataExpirationFilter.class);
+        IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
         connector.tableOperations().attachIterator(tableName, expirationFilter, Sets.newEnumSet(scopes, IteratorScope.class));
     }
 
@@ -140,21 +140,11 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
         String type = cfParts[1];
         String uuid =  cfParts[2];
-        long ts = Long.parseLong(cfParts[3]);
-        return new BaseEvent(type, uuid, ts);
+        return new BaseEvent(type, uuid, key.getTimestamp());
     }
 
     public static final Long parseTimestampFromKey(Key k) {
-
-        String cf = k.getColumnFamily().toString();
-        String cq = k.getColumnQualifier().toString();
-
-        String toParse = cq;
-        if(cf.startsWith(PREFIX_E))
-            toParse = cf;
-
-        int idx = toParse.lastIndexOf(ONE_BYTE);
-        return Long.parseLong(toParse.substring(idx+1, toParse.length()));
+        return k.getTimestamp();
     }
 
 }

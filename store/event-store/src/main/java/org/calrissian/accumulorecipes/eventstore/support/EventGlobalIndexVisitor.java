@@ -143,8 +143,6 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
             shardsForKey.add(key.getShard());
         }
 
-        System.out.println(mappedShards);
-
         indexScanner.close();
     }
 

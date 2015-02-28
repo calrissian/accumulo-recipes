@@ -147,7 +147,7 @@ public abstract class QfdHelper<T extends Entity> {
 
             Set<IteratorScope> scopes = Sets.newHashSet(IteratorScope.majc, IteratorScope.minc);
 
-            connector.tableOperations().create(this.shardTable, false);
+            connector.tableOperations().create(this.shardTable, true);  // we want the shard table to be idempotent
             configureShardTable(connector, this.shardTable);
             IteratorSetting expirationFilter = new IteratorSetting(6, "fiExpiration", FieldIndexExpirationFilter.class);
             connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
