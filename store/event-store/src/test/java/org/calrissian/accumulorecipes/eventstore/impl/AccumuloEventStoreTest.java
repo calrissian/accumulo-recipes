@@ -281,25 +281,25 @@ public class AccumuloEventStoreTest {
         long time = currentTimeMillis();
         Event event = new BaseEvent(UUID.randomUUID().toString(), time);
         event.put(new Tuple("key1", "val1", meta));
-        event.put(new Tuple("key2", 1, meta));
+        event.put(new Tuple("key-@#$%^&*()1", 1, meta));
 
         Event event2 = new BaseEvent(UUID.randomUUID().toString(), time);
         event2.put(new Tuple("key1", "val1", meta));
-        event2.put(new Tuple("key2", 10, meta));
+        event2.put(new Tuple("key-@#$%^&*()1", 10, meta));
 
         store.save(asList(event, event2));
         store.flush();
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
 
-        CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), new QueryBuilder().greaterThan("key2", 9).build(), null, DEFAULT_AUTHS);
+        CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), new QueryBuilder().greaterThan("key-@#$%^&*()1", 9).build(), null, DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));
         Event actual = actualEvent.iterator().next();
         assertEquals(new HashSet(event2.getTuples()), new HashSet(actual.getTuples()));
         assertEquals(actual.getId(), event2.getId());
 
-        actualEvent = store.query(new Date(time), new Date(time), new QueryBuilder().greaterThan("key2", 0).build(), null, DEFAULT_AUTHS);
+        actualEvent = store.query(new Date(time), new Date(time), new QueryBuilder().greaterThan("key-@#$%^&*()1", 0).build(), null, DEFAULT_AUTHS);
 
 
         assertEquals(2, size(actualEvent));
@@ -491,11 +491,11 @@ public class AccumuloEventStoreTest {
     public void testQuery_multipleTypes() throws Exception {
 
         Event event = new BaseEvent("type1", UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Tuple("key-1", "val1", meta));
+        event.put(new Tuple("key-@#$%^&*()1", "val1", meta));
         event.put(new Tuple("key2", "val2", meta));
 
         Event event2 = new BaseEvent("type2", UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Tuple("key-1", "val1", meta));
+        event2.put(new Tuple("key-@#$%^&*()1", "val1", meta));
         event2.put(new Tuple("key3", "val3", meta));
 
         store.save(asList(event, event2));
@@ -503,7 +503,7 @@ public class AccumuloEventStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
 
-        Node query = new QueryBuilder().eq("key-1", "val1").build();
+        Node query = new QueryBuilder().eq("key-@#$%^&*()1", "val1").build();
 
         CloseableIterable<Event> events = store.query(new Date(currentTimeMillis() - 5000),
             new Date(), Sets.newHashSet("type1", "type2"), query, null, DEFAULT_AUTHS);

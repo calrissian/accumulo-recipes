@@ -16,6 +16,7 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,8 +65,6 @@ import org.calrissian.accumulorecipes.commons.iterators.support.QueryParser.Quer
 import org.calrissian.accumulorecipes.commons.iterators.support.RangeCalculator.RangeBounds;
 import org.calrissian.accumulorecipes.commons.iterators.support.TreeNode;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-
 public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>, OptionDescriber {
 
     public static final String QUERY_OPTION = "expr";
@@ -76,7 +75,6 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
     private static final Collection<ByteSequence> EMPTY_COL_FAMS = new ArrayList<ByteSequence>();
     // --------------------------------------------------------------------------
     private static IteratorEnvironment env = new DefaultIteratorEnvironment();
-    protected Text nullText = new Text();
     boolean initfailed = false;
     private Key topKey = null;
     private Value topValue = null;
@@ -1129,6 +1127,10 @@ public class BooleanLogicIterator implements SortedKeyValueIterator<Key, Value>,
 
     }
 
+    /**
+     * Extracts positive and negative leaves
+     * @param node
+     */
     private void splitLeaves(BooleanLogicTreeNode node) {
         if (log.isDebugEnabled()) {
             log.debug("BoolLogic: splitLeaves()");

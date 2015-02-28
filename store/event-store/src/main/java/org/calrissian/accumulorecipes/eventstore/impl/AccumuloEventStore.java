@@ -43,6 +43,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EmptyEncodedRowFilter;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
+import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
@@ -51,7 +52,6 @@ import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
 import org.calrissian.accumulorecipes.eventstore.support.iterators.EventMetadataExpirationFilter;
-import org.calrissian.accumulorecipes.eventstore.support.iterators.EventTimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -152,9 +152,9 @@ public class AccumuloEventStore implements EventStore {
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, types, indexScanner, shardBuilder);
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
-        IteratorSetting timeFilter = new IteratorSetting(5, EventTimeLimitingFilter.class);
-        EventTimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
-        EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
+        IteratorSetting timeFilter = new IteratorSetting(5, TimeLimitingFilter.class);
+        TimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
+        TimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
         CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, types, node, helper.buildQueryXform(), selectFields, auths);
@@ -239,6 +239,11 @@ public class AccumuloEventStore implements EventStore {
                 SelectFieldsExtractor.setSelectFields(iteratorSetting, selectFields);
                 scanner.addScanIterator(iteratorSetting);
             }
+
+            IteratorSetting timeFilter = new IteratorSetting(5, TimeLimitingFilter.class);
+            TimeLimitingFilter.setCurrentTime(timeFilter, stop.getTime());
+            TimeLimitingFilter.setTTL(timeFilter, stop.getTime() - start.getTime());
+            scanner.addScanIterator(timeFilter);
 
             IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
             scanner.addScanIterator(setting);

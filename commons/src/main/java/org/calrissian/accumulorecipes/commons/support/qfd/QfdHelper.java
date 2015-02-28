@@ -31,9 +31,11 @@ import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeR
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
+import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -78,7 +80,6 @@ import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSer
 import org.calrissian.accumulorecipes.commons.support.tuple.metadata.SimpleMetadataSerdeFactory;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.domain.Tuple;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
@@ -217,7 +218,8 @@ public abstract class QfdHelper<T extends Entity> {
 
                         ColumnVisibility columnVisibility = new ColumnVisibility(visibility);
 
-                        Map<String,Object> meta = tuple.getMetadata();
+                        Map<String,Object> meta = new HashMap<String,Object>(tuple.getMetadata());
+                        meta.remove(Metadata.Visiblity.VISIBILITY);
 
                         Long expiration = Metadata.Expiration.getExpiration(meta, -1);
                         shardVal.set(metadataSerDe.serialize(meta));
@@ -252,7 +254,7 @@ public abstract class QfdHelper<T extends Entity> {
                     long expirationToWrite = minExpiration == Long.MAX_VALUE ? -1 : minExpiration;
                     dout.writeLong(expirationToWrite);   // -1 means don't expire.
                     encodeRow(keysValuesToEncode, baos);
-                    shardMutation.put(new Text(id), new Text(), colVis, new Value(baos.toByteArray()));
+                    shardMutation.put(new Text(id), new Text(), colVis, buildTupleTimestampForEntity(item), new Value(baos.toByteArray()));
                   }
                   shardWriter.addMutation(shardMutation);
                 }
@@ -274,7 +276,7 @@ public abstract class QfdHelper<T extends Entity> {
 
         QueryPlanner queryPlan = new QueryPlanner(query, globalIndexVisitor, typeRegistry);
 
-        if (NodeUtils.isEmpty(queryPlan.getOptimizedQuery()))
+        if (isEmpty(queryPlan.getOptimizedQuery()))
             return wrap(EMPTY_LIST);
 
         String jexl = nodeToJexl.transform(types, queryPlan.getOptimizedQuery());

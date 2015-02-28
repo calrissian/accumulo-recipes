@@ -17,6 +17,7 @@ package org.calrissian.accumulorecipes.commons.iterators.support;
 
 import static org.apache.commons.lang.StringUtils.containsAny;
 import static org.apache.commons.lang.StringUtils.replaceEach;
+import static org.apache.commons.lang3.StringUtils.contains;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import java.util.Collection;
@@ -106,7 +107,7 @@ public class NodeToJexl {
      * @return
      */
     public static String revertToOriginalkey(String fixedString) {
-        if(fixedString.contains(JEXL_NORM_PREFIX))
+        if(contains(fixedString, JEXL_NORM_PREFIX))
             return replaceEach(fixedString, strings, chars);
 
         return fixedString;

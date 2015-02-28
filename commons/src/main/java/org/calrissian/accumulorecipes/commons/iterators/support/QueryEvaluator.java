@@ -16,6 +16,7 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
+import static org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl.removeInvalidChars;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -156,7 +157,7 @@ public class QueryEvaluator {
         // Loop through the event fields and add them to the JexlContext.
         for (Entry<String, Collection<FieldValue>> field : eventFields.asMap().entrySet()) {
             String fName = normalizeKey(topKey, field.getKey());
-            fName = NodeToJexl.removeInvalidChars(fName);
+            fName = removeInvalidChars(fName);
 
             // If this field is not part of the expression, then skip it.
             if (!literals.contains(fName)) {

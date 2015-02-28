@@ -611,7 +611,7 @@ public class AccumuloEntityStoreTest {
 
         Map<String,Object> expireMeta = new MetadataBuilder()
             .setExpiration(1)
-            .setTimestamp(currentTimeMillis()-5000)
+            .setTimestamp(currentTimeMillis()-50000)
             .build();
 
         Entity entity = new BaseEntity("type", "id");
@@ -619,6 +619,9 @@ public class AccumuloEntityStoreTest {
         entity.put(new Tuple("ip", "1.1.1.1", expireMeta));
 
         store.save(singleton(entity));
+        store.flush();
+
+        AccumuloTestUtils.dumpTable(connector, "entity_shard");
 
         List<EntityIndex> indexes = asList(new EntityIndex[] {new EntityIndex(entity.getType(), entity.getId())});
         Iterable<Entity> entities = store.get(indexes, null, DEFAULT_AUTHS);
