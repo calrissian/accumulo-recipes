@@ -76,7 +76,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
     @Override
     protected String buildId(Event item) {
-        return PREFIX_E + ONE_BYTE + item.getType() + ONE_BYTE + item.getId() + ONE_BYTE + item.getTimestamp();
+        return PREFIX_E + ONE_BYTE + item.getType() + ONE_BYTE + item.getId();
     }
 
     @Override
@@ -141,10 +141,6 @@ public class EventQfdHelper extends QfdHelper<Event> {
         String type = cfParts[1];
         String uuid =  cfParts[2];
         return new BaseEvent(type, uuid, key.getTimestamp());
-    }
-
-    public static final Long parseTimestampFromKey(Key k) {
-        return k.getTimestamp();
     }
 
 }
