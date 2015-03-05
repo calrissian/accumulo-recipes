@@ -45,14 +45,14 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
+import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
@@ -82,12 +82,12 @@ public class AccumuloEntityStoreTest {
     public void testGet() throws Exception {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", "val2", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", "val2", meta));
 
         store.save(asList(entity, entity2));
 
@@ -100,7 +100,7 @@ public class AccumuloEntityStoreTest {
 
         assertEquals(1, Iterables.size(actualEntity));
         Entity actual = actualEntity.iterator().next();
-        assertEquals(new HashSet(actual.getTuples()), new HashSet(entity.getTuples()));
+        assertEquals(new HashSet(actual.getAttributes()), new HashSet(entity.getAttributes()));
         assertEquals(actual.getId(), entity.getId());
         assertEquals(actual.getType(), entity.getType());
     }
@@ -114,12 +114,12 @@ public class AccumuloEntityStoreTest {
         Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", shouldntSee));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", shouldntSee));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", "val2", shouldntSee));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", "val2", shouldntSee));
 
         store.save(asList(entity, entity2));
 
@@ -141,12 +141,12 @@ public class AccumuloEntityStoreTest {
       Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
       Entity entity = new BaseEntity("type", "id1");
-      entity.put(new Tuple("key1", "val1", meta));
-      entity.put(new Tuple("key2", "val2", shouldntSee));
+      entity.put(new Attribute("key1", "val1", meta));
+      entity.put(new Attribute("key2", "val2", shouldntSee));
 
       Entity entity2 = new BaseEntity("type", "id2");
-      entity2.put(new Tuple("key1", "val1", meta));
-      entity2.put(new Tuple("key2", "val2", shouldntSee));
+      entity2.put(new Attribute("key1", "val1", meta));
+      entity2.put(new Attribute("key2", "val2", shouldntSee));
 
       store.save(asList(entity, entity2));
 
@@ -166,14 +166,14 @@ public class AccumuloEntityStoreTest {
       Map<String, String> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
 
       Entity entity = new BaseEntity("type", "id1");
-      entity.put(new Tuple("key1", "val1", meta));
-      entity.put(new Tuple("key2", "val2", canSee));
-      entity.put(new Tuple("key3", "val3", cantSee));
+      entity.put(new Attribute("key1", "val1", meta));
+      entity.put(new Attribute("key2", "val2", canSee));
+      entity.put(new Attribute("key3", "val3", cantSee));
 
       Entity entity2 = new BaseEntity("type", "id2");
-      entity2.put(new Tuple("key1", "val1", meta));
-      entity2.put(new Tuple("key2", "val2", canSee));
-      entity2.put(new Tuple("key3", "val3", cantSee));
+      entity2.put(new Attribute("key1", "val1", meta));
+      entity2.put(new Attribute("key2", "val2", canSee));
+      entity2.put(new Attribute("key3", "val3", cantSee));
 
       store.save(asList(entity, entity2));
 
@@ -192,12 +192,12 @@ public class AccumuloEntityStoreTest {
     public void testGreaterThan() throws Exception {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", 1, meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", 1, meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", 9, meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", 9, meta));
 
         store.save(asList(entity, entity2));
 
@@ -211,7 +211,7 @@ public class AccumuloEntityStoreTest {
 
         assertEquals(1, Iterables.size(actualEntity));
         Entity actual = actualEntity.iterator().next();
-        assertEquals(new HashSet(actual.getTuples()), new HashSet(entity2.getTuples()));
+        assertEquals(new HashSet(actual.getAttributes()), new HashSet(entity2.getAttributes()));
         assertEquals(actual.getId(), entity2.getId());
         assertEquals(actual.getType(), entity2.getType());
     }
@@ -220,12 +220,12 @@ public class AccumuloEntityStoreTest {
     public void testQueryKeyNotInIndex() {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", "val2", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", "val2", meta));
 
         store.save(asList(entity, entity2));
 
@@ -241,12 +241,12 @@ public class AccumuloEntityStoreTest {
     public void testQueryRangeNotInIndex() {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", "val2", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", "val2", meta));
 
         store.save(asList(entity, entity2));
 
@@ -263,12 +263,12 @@ public class AccumuloEntityStoreTest {
     public void testGet_withSelection() throws Exception {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", "val2", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", "val2", meta));
 
         store.save(asList(entity, entity2));
 
@@ -284,12 +284,12 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_withSelection() throws Exception {
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", "val2", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", "val2", meta));
 
         store.save(asList(entity, entity2));
 
@@ -309,12 +309,12 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_AndQuery() throws Exception {
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key2", "val2", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key2", "val2", meta));
 
         store.save(asList(entity, entity2));
 
@@ -324,26 +324,26 @@ public class AccumuloEntityStoreTest {
 
         Entity actualEvent = itr.next();
         if (actualEvent.getId().equals(entity.getId()))
-            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity.getTuples()));
+            assertEquals(new HashSet(actualEvent.getAttributes()), new HashSet(entity.getAttributes()));
         else
-            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity2.getTuples()));
+            assertEquals(new HashSet(actualEvent.getAttributes()), new HashSet(entity2.getAttributes()));
 
         actualEvent = itr.next();
         if (actualEvent.getId().equals(entity.getId()))
-            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity.getTuples()));
+            assertEquals(new HashSet(actualEvent.getAttributes()), new HashSet(entity.getAttributes()));
         else
-            assertEquals(new HashSet(actualEvent.getTuples()), new HashSet(entity2.getTuples()));
+            assertEquals(new HashSet(actualEvent.getAttributes()), new HashSet(entity2.getAttributes()));
     }
 
     @Test
     public void testQuery_OrQuery() throws Exception {
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id3");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key3", "val3", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key3", "val3", meta));
 
         store.save(asList(entity, entity2));
         store.flush();
@@ -356,26 +356,26 @@ public class AccumuloEntityStoreTest {
 
         Entity actualEvent = itr.next();
         if (actualEvent.getId().equals(entity.getId()))
-            assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity.getAttributes()), new HashSet(actualEvent.getAttributes()));
         else
-            assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity2.getAttributes()), new HashSet(actualEvent.getAttributes()));
 
         actualEvent = itr.next();
         if (actualEvent.getId().equals(entity.getId()))
-            assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity.getAttributes()), new HashSet(actualEvent.getAttributes()));
         else
-            assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity2.getAttributes()), new HashSet(actualEvent.getAttributes()));
     }
 
     @Test
     public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
-        entity.put(new Tuple("key2", "val2", meta));
+        entity.put(new Attribute("key1", "val1", meta));
+        entity.put(new Attribute("key2", "val2", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1", meta));
-        entity2.put(new Tuple("key3", "val3", meta));
+        entity2.put(new Attribute("key1", "val1", meta));
+        entity2.put(new Attribute("key3", "val3", meta));
 
         store.save(asList(entity, entity2));
 
@@ -385,23 +385,23 @@ public class AccumuloEntityStoreTest {
 
         Entity actualEvent = itr.next();
         if (actualEvent.getId().equals(entity.getId()))
-            assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity.getAttributes()), new HashSet(actualEvent.getAttributes()));
 
         else
-            assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity2.getAttributes()), new HashSet(actualEvent.getAttributes()));
 
         actualEvent = itr.next();
         if (actualEvent.getId().equals(entity.getId()))
-            assertEquals(new HashSet(entity.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity.getAttributes()), new HashSet(actualEvent.getAttributes()));
         else
-            assertEquals(new HashSet(entity2.getTuples()), new HashSet(actualEvent.getTuples()));
+            assertEquals(new HashSet(entity2.getAttributes()), new HashSet(actualEvent.getAttributes()));
     }
 
     @Test
     public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
+        entity.put(new Attribute("key1", "val1", meta));
 
         store.save(asList(entity));
 
@@ -416,7 +416,7 @@ public class AccumuloEntityStoreTest {
     public void testQuery_hasNot() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
+        entity.put(new Attribute("key1", "val1", meta));
 
         store.save(asList(entity));
 
@@ -431,7 +431,7 @@ public class AccumuloEntityStoreTest {
     public void testQuery_in_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
+        entity.put(new Attribute("key1", "val1", meta));
 
         store.save(asList(entity));
 
@@ -445,7 +445,7 @@ public class AccumuloEntityStoreTest {
     public void testQuery_in_results() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
+        entity.put(new Attribute("key1", "val1", meta));
 
         store.save(asList(entity));
 
@@ -459,7 +459,7 @@ public class AccumuloEntityStoreTest {
     public void testQuery_notIn_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1", meta));
+        entity.put(new Attribute("key1", "val1", meta));
 
         store.save(asList(entity));
 
@@ -473,10 +473,10 @@ public class AccumuloEntityStoreTest {
     public void testQuery_greaterThan() {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", 5, meta));
+        entity.put(new Attribute("key1", 5, meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", 10, meta));
+        entity2.put(new Attribute("key1", 10, meta));
 
         store.save(asList(entity, entity2));
 
@@ -501,10 +501,10 @@ public class AccumuloEntityStoreTest {
 
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", 5, meta));
+        entity.put(new Attribute("key1", 5, meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", 10, meta));
+        entity2.put(new Attribute("key1", 10, meta));
 
         store.save(asList(entity, entity2));
 
@@ -529,10 +529,10 @@ public class AccumuloEntityStoreTest {
 
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", 5, meta));
+        entity.put(new Attribute("key1", 5, meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", 10, meta));
+        entity2.put(new Attribute("key1", 10, meta));
 
         store.save(asList(entity, entity2));
 
@@ -558,10 +558,10 @@ public class AccumuloEntityStoreTest {
 
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", 5, meta));
+        entity.put(new Attribute("key1", 5, meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", 10, meta));
+        entity2.put(new Attribute("key1", 10, meta));
 
         store.save(asList(entity, entity2));
 
@@ -586,16 +586,16 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testKeys() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("hasIp", "true", meta));
-        entity.put(new Tuple("ip", "1.1.1.1", meta));
+        entity.put(new Attribute("hasIp", "true", meta));
+        entity.put(new Attribute("ip", "1.1.1.1", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("hasIp", "true", meta));
-        entity2.put(new Tuple("ip", "2.2.2.2", meta));
+        entity2.put(new Attribute("hasIp", "true", meta));
+        entity2.put(new Attribute("ip", "2.2.2.2", meta));
 
         Entity entity3 = new BaseEntity("type", "id3");
-        entity3.put(new Tuple("hasIp", "true", meta));
-        entity3.put(new Tuple("ip", "3.3.3.3", meta));
+        entity3.put(new Attribute("hasIp", "true", meta));
+        entity3.put(new Attribute("ip", "3.3.3.3", meta));
 
         store.save(asList(entity, entity2, entity3));
 
@@ -607,7 +607,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testExpirationOfTuples_get() throws Exception {
+    public void testExpirationOfAttributes_get() throws Exception {
 
         Map<String,String> expireMeta = new MetadataBuilder()
             .setExpiration(1)
@@ -615,8 +615,8 @@ public class AccumuloEntityStoreTest {
             .build();
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("hasIp", "true", meta));
-        entity.put(new Tuple("ip", "1.1.1.1", expireMeta));
+        entity.put(new Attribute("hasIp", "true", meta));
+        entity.put(new Attribute("ip", "1.1.1.1", expireMeta));
 
         store.save(singleton(entity));
         store.flush();
@@ -632,7 +632,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testExpirationOfTuples_query() throws Exception {
+    public void testExpirationOfAttributes_query() throws Exception {
 
         Map<String,String> expireMeta = new MetadataBuilder()
             .setExpiration(1)
@@ -640,8 +640,8 @@ public class AccumuloEntityStoreTest {
             .build();
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("hasIp", "true", meta));
-        entity.put(new Tuple("ip", "1.1.1.1", expireMeta));
+        entity.put(new Attribute("hasIp", "true", meta));
+        entity.put(new Attribute("ip", "1.1.1.1", expireMeta));
 
         store.save(singleton(entity));
 
@@ -656,16 +656,16 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_MultipleNotInQuery() throws Exception {
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("hasIp", "true", meta));
-        entity.put(new Tuple("ip", "1.1.1.1", meta));
+        entity.put(new Attribute("hasIp", "true", meta));
+        entity.put(new Attribute("ip", "1.1.1.1", meta));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("hasIp", "true", meta));
-        entity2.put(new Tuple("ip", "2.2.2.2", meta));
+        entity2.put(new Attribute("hasIp", "true", meta));
+        entity2.put(new Attribute("ip", "2.2.2.2", meta));
 
         Entity entity3 = new BaseEntity("type", "id3");
-        entity3.put(new Tuple("hasIp", "true", meta));
-        entity3.put(new Tuple("ip", "3.3.3.3", meta));
+        entity3.put(new Attribute("hasIp", "true", meta));
+        entity3.put(new Attribute("ip", "3.3.3.3", meta));
 
         store.save(asList(entity, entity2, entity3));
 

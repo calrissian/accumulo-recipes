@@ -34,7 +34,7 @@ import org.calrissian.accumulorecipes.commons.support.Constants;
 
 public class MetadataExpirationFilter extends WrappingIterator {
 
-    public Value extractExpiredTuples(Key k, Value v) {
+    public Value extractExpiredAttributes(Key k, Value v) {
 
         if(k.getColumnFamily().toString().startsWith(Constants.PREFIX_E)) {
 
@@ -96,7 +96,7 @@ public class MetadataExpirationFilter extends WrappingIterator {
     @Override
     public Value getTopValue() {
         // apply expiration
-        return extractExpiredTuples(getTopKey(), super.getTopValue());
+        return extractExpiredAttributes(getTopKey(), super.getTopValue());
     }
 
 }

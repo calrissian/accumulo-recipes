@@ -28,7 +28,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Before;
@@ -56,12 +56,12 @@ public class AccumuloTemporalLastNTest {
     public void testMultipleEntries_sameGroup() throws TableNotFoundException {
 
         Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1"));
-        testEntry.put(new Tuple("key2", "val2"));
+        testEntry.put(new Attribute("key1", "val1"));
+        testEntry.put(new Attribute("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
-        testEntry2.put(new Tuple("key1", "val1"));
-        testEntry2.put(new Tuple("key2", "val2"));
+        testEntry2.put(new Attribute("key1", "val1"));
+        testEntry2.put(new Attribute("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
@@ -74,13 +74,13 @@ public class AccumuloTemporalLastNTest {
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry.getAttributes()));
 
 
         actualEntry = Iterables.get(results, 1);
         assertEquals(actualEntry.getId(), testEntry2.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry2.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry2.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry2.getAttributes()));
     }
 
     @Test
@@ -88,12 +88,12 @@ public class AccumuloTemporalLastNTest {
 
         long curTime = currentTimeMillis();
         Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1"));
-        testEntry.put(new Tuple("key2", "val2"));
+        testEntry.put(new Attribute("key1", "val1"));
+        testEntry.put(new Attribute("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(randomUUID().toString(), curTime - 5000);
-        testEntry2.put(new Tuple("key1", "val1"));
-        testEntry2.put(new Tuple("key2", "val2"));
+        testEntry2.put(new Attribute("key1", "val1"));
+        testEntry2.put(new Attribute("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
@@ -104,7 +104,7 @@ public class AccumuloTemporalLastNTest {
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry.getAttributes()));
 
         assertEquals(1, Iterables.size(results));
 
@@ -119,12 +119,12 @@ public class AccumuloTemporalLastNTest {
     public void testMultipleEntries_differentGroups() throws TableNotFoundException {
 
         Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1"));
-        testEntry.put(new Tuple("key2", "val2"));
+        testEntry.put(new Attribute("key1", "val1"));
+        testEntry.put(new Attribute("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
-        testEntry2.put(new Tuple("key1", "val1"));
-        testEntry2.put(new Tuple("key2", "val2"));
+        testEntry2.put(new Attribute("key1", "val1"));
+        testEntry2.put(new Attribute("key2", "val2"));
 
         store.put("group", testEntry);
         store.put("group1", testEntry2);
@@ -139,29 +139,29 @@ public class AccumuloTemporalLastNTest {
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry.getAttributes()));
 
 
         actualEntry = Iterables.get(results, 1);
         assertEquals(actualEntry.getId(), testEntry2.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry2.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry2.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry2.getAttributes()));
     }
 
     @Test
     public void testMultipleEntries_differentGroupsSomeInSameGroup() throws Exception {
 
         Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Tuple("key1", "val1"));
-        testEntry.put(new Tuple("key2", "val2"));
+        testEntry.put(new Attribute("key1", "val1"));
+        testEntry.put(new Attribute("key2", "val2"));
 
         Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
-        testEntry2.put(new Tuple("key1", "val1"));
-        testEntry2.put(new Tuple("key2", "val2"));
+        testEntry2.put(new Attribute("key1", "val1"));
+        testEntry2.put(new Attribute("key2", "val2"));
 
         Event testEntry3 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 500);
-        testEntry3.put(new Tuple("key1", "val1"));
-        testEntry3.put(new Tuple("key2", "val2"));
+        testEntry3.put(new Attribute("key1", "val1"));
+        testEntry3.put(new Attribute("key2", "val2"));
 
 
         store.put("group", testEntry);
@@ -180,18 +180,18 @@ public class AccumuloTemporalLastNTest {
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry.getAttributes()));
 
 
         actualEntry = Iterables.get(results, 1);
         assertEquals(actualEntry.getId(), testEntry3.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry3.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry3.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry3.getAttributes()));
 
         actualEntry = Iterables.get(results, 2);
         assertEquals(actualEntry.getId(), testEntry2.getId());
         assertEquals(actualEntry.getTimestamp(), testEntry2.getTimestamp());
-        assertEquals(new HashSet(actualEntry.getTuples()), new HashSet(testEntry2.getTuples()));
+        assertEquals(new HashSet(actualEntry.getAttributes()), new HashSet(testEntry2.getAttributes()));
     }
 
 

@@ -19,7 +19,7 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -31,22 +31,22 @@ import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
-import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.TupleStore;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
+import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.AttributeStore;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> implements Function<Map.Entry<Key,Value>,V> {
+public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore> implements Function<Map.Entry<Key,Value>,V> {
 
-  public static final Logger log = LoggerFactory.getLogger(KeyToTupleCollectionWholeColFXform.class);
+  public static final Logger log = LoggerFactory.getLogger(KeyToAttributeStoreWholeColFXform.class);
 
   private Kryo kryo;
   private TypeRegistry<String> typeRegistry;
   private MetadataSerDe metadataSerDe;
 
-  public KeyToTupleCollectionWholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
+  public KeyToAttributeStoreWholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
     this.kryo = kryo;
     this.typeRegistry = typeRegistry;
     this.metadataSerDe = metadataSerDe;
@@ -82,7 +82,7 @@ public abstract class KeyToTupleCollectionWholeColFXform<V extends TupleStore> i
             Map<String,String> meta = metadataSerDe.deserialize(curEntry.getValue().get());
             Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
             setVisibility(metadata, visibility);
-            Tuple tuple = new Tuple(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
+            Attribute tuple = new Attribute(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
             entry.put(tuple);
           } catch (Exception e) {
             log.error("There was an error deserializing the metadata for a tuple", e);

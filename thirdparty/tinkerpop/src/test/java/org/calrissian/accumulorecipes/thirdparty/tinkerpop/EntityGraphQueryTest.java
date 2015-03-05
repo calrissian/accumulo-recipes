@@ -31,13 +31,13 @@ import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
+import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Assert;
@@ -66,35 +66,35 @@ public class EntityGraphQueryTest {
                 Sets.newHashSet("edgeType1", "edgeType2"),
                 new Auths("U,ADMIN"));
 
-        Tuple v1t1 = new Tuple("key1", "val1", new MetadataBuilder().setVisibility("U").build());
+        Attribute v1t1 = new Attribute("key1", "val1", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(v1t1);
 
-        Tuple v1t2 = new Tuple("key2", "val2", new MetadataBuilder().setVisibility("U").build());
+        Attribute v1t2 = new Attribute("key2", "val2", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(v1t2);
 
-        Tuple v2t1 = new Tuple("key3", "val3", new MetadataBuilder().setVisibility("U").build());
+        Attribute v2t1 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
         vertex2.put(v2t1);
 
-        Tuple v2t2 = new Tuple("key4", "val4", new MetadataBuilder().setVisibility("U").build());
+        Attribute v2t2 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
         vertex2.put(v2t2);
 
-        Tuple keyVal = new Tuple("key", "val", new MetadataBuilder().setVisibility("U").build());
+        Attribute keyVal = new Attribute("key", "val", new MetadataBuilder().setVisibility("U").build());
         vertex1.put(keyVal);
         vertex2.put(keyVal);
 
-        Tuple e1t1 = new Tuple("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
+        Attribute e1t1 = new Attribute("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
         edge.put(e1t1);
 
-        Tuple e1t2 = new Tuple("edgeProp2", "edgeVal2", new MetadataBuilder().setVisibility("U").build());
+        Attribute e1t2 = new Attribute("edgeProp2", "edgeVal2", new MetadataBuilder().setVisibility("U").build());
         edge.put(e1t2);
 
-        Tuple e2t1 = new Tuple("edgeProp3", "edgeVal3", new MetadataBuilder().setVisibility("ADMIN").build());
+        Attribute e2t1 = new Attribute("edgeProp3", "edgeVal3", new MetadataBuilder().setVisibility("ADMIN").build());
         edge2.put(e2t1);
 
-        Tuple e2t2 = new Tuple("edgeProp4", "edgeVal4", new MetadataBuilder().setVisibility("U").build());
+        Attribute e2t2 = new Attribute("edgeProp4", "edgeVal4", new MetadataBuilder().setVisibility("U").build());
         edge2.put(e2t2);
 
-        Tuple edgeKeyVal = new Tuple("edgeProp", "edgeVal", new MetadataBuilder().setVisibility("U").build());
+        Attribute edgeKeyVal = new Attribute("edgeProp", "edgeVal", new MetadataBuilder().setVisibility("U").build());
 
         edge.put(edgeKeyVal);
         edge2.put(edgeKeyVal);
@@ -220,7 +220,7 @@ public class EntityGraphQueryTest {
 
         Assert.assertEquals(expected.getType(), actual.getType());
         Assert.assertEquals(expected.getId(), actual.getId());
-        Assert.assertEquals(new HashSet(expected.getTuples()), new HashSet(actual.getTuples()));
+        Assert.assertEquals(new HashSet(expected.getAttributes()), new HashSet(actual.getAttributes()));
     }
 
 }

@@ -17,20 +17,20 @@ First we'll construct a few StoreEntry objects that we can place in the store.
 
 ```java
 Event blogUpdate = new BaseEvent(UUID.randomUUID().toString());
-blogUpdate.put(new Tuple("link", "http://blogs-r-cool.com/", ""));
-blogUpdate.put(new Tuple("owner", "John Doe", ""));
-blogUpdate.put(new Tuple("updateType", "New Content Added", ""));
-blogUpdate.put(new Tuple("contentName", "The people we know", ""));
+blogUpdate.put(new Attribute("link", "http://blogs-r-cool.com/", ""));
+blogUpdate.put(new Attribute("owner", "John Doe", ""));
+blogUpdate.put(new Attribute("updateType", "New Content Added", ""));
+blogUpdate.put(new Attribute("contentName", "The people we know", ""));
 
 Event worldNews = new BaseEvent(UUID.randomUUID().toStirng());
-worldNews.add(new Tuple("provider", "CNN", ""));
-worldNews.add(new Tuple("headline", "Burglary in the grocery store", ""));
-worldNews.add(new Tuple("reporter", "Jane Doe", ""));
+worldNews.add(new Attribute("provider", "CNN", ""));
+worldNews.add(new Attribute("headline", "Burglary in the grocery store", ""));
+worldNews.add(new Attribute("reporter", "Jane Doe", ""));
 
 Event emailUpdate = new BaseEvent(UUID.randomUUID().toString());
-emailUpdate.add(new Tuple("from", "thisguy@gmail.com", ""));
-emailUpdate.add(new Tuple("subject", "Things you should see before age 50", ""));
-emailUpdate.add(new Tuple("to", "yournamehere@gmail.com", ""));
+emailUpdate.add(new Attribute("from", "thisguy@gmail.com", ""));
+emailUpdate.add(new Attribute("subject", "Things you should see before age 50", ""));
+emailUpdate.add(new Attribute("to", "yournamehere@gmail.com", ""));
 ```
 
 Now let's create a store and add the events above to the store under the appropriate groups.

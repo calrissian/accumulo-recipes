@@ -43,7 +43,7 @@ import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Before;
@@ -66,8 +66,8 @@ public class EventInputFormatTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEventStore store = new AccumuloEventStore(connector);
         event = new BaseEvent(UUID.randomUUID().toString());
-        event.put(new Tuple("key1", "val1"));
-        event.put(new Tuple("key2", false));
+        event.put(new Attribute("key1", "val1"));
+        event.put(new Attribute("key2", false));
         store.save(singleton(event));
 
         Job job = new Job(new Configuration());
@@ -89,7 +89,7 @@ public class EventInputFormatTest {
         assertNotNull(TestMapper.entry);
         assertEquals(TestMapper.entry.getId(), event.getId());
         assertTrue(TestMapper.entry.getTimestamp() - event.getTimestamp() < 50);
-        assertEquals(new HashSet<Tuple>(TestMapper.entry.getTuples()), new HashSet<Tuple>(event.getTuples()));
+        assertEquals(new HashSet<Attribute>(TestMapper.entry.getAttributes()), new HashSet<Attribute>(event.getAttributes()));
 
     }
 
@@ -100,8 +100,8 @@ public class EventInputFormatTest {
     Connector connector = instance.getConnector("root", "".getBytes());
     AccumuloEventStore store = new AccumuloEventStore(connector);
     event = new BaseEvent(UUID.randomUUID().toString());
-    event.put(new Tuple("key1", "val1"));
-    event.put(new Tuple("key2", false));
+    event.put(new Attribute("key1", "val1"));
+    event.put(new Attribute("key2", false));
     store.save(singleton(event));
     store.flush();
       AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
@@ -124,7 +124,7 @@ public class EventInputFormatTest {
 
     assertNotNull(TestMapper.entry);
     assertEquals(TestMapper.entry.getId(), event.getId());
-    assertEquals(new HashSet<Tuple>(TestMapper.entry.getTuples()), new HashSet<Tuple>(event.getTuples()));
+    assertEquals(new HashSet<Attribute>(TestMapper.entry.getAttributes()), new HashSet<Attribute>(event.getAttributes()));
 
   }
 

@@ -15,6 +15,10 @@
  */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
+import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
+import java.io.IOException;
+import java.util.Collection;
+
 import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
@@ -34,11 +38,6 @@ import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
 import org.calrissian.mango.uri.support.UriUtils;
 import org.joda.time.DateTime;
-
-import java.io.IOException;
-import java.util.Collection;
-
-import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
 
 public class MetricFeatureLoader extends LoadFunc {
 

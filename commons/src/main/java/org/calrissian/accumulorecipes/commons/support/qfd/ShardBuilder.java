@@ -15,9 +15,9 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
-import org.calrissian.mango.domain.TupleStore;
+import org.calrissian.mango.domain.AttributeStore;
 
-public interface ShardBuilder<T extends TupleStore> {
+public interface ShardBuilder<T extends AttributeStore> {
 
     int numPartitions();
 

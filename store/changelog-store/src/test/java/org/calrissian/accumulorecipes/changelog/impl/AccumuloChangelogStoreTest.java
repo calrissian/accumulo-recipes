@@ -22,7 +22,7 @@ import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
 import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.hash.tree.MerkleTree;
@@ -198,8 +198,8 @@ public class AccumuloChangelogStoreTest {
 
     private Event createStoreEntry(String uuid, long timestamp) {
         Event entry = new BaseEvent(uuid, timestamp);
-        entry.put(new Tuple("key2", "val2"));
-        entry.put(new Tuple("key3", "val3"));
+        entry.put(new Attribute("key2", "val2"));
+        entry.put(new Attribute("key3", "val3"));
 
         return entry;
     }

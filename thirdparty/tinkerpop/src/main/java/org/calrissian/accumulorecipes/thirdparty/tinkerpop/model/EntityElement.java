@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 import com.tinkerpop.blueprints.Element;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
 
@@ -69,7 +69,7 @@ public class EntityElement implements Element {
     public void setProperty(String s, Object o) {
         checkNotNull(s);
         checkNotNull(o);
-        entity.put(new Tuple(s, o));
+        entity.put(new Attribute(s, o));
     }
 
     @Override

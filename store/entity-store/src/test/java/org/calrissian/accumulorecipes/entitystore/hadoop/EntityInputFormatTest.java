@@ -42,7 +42,7 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Before;
@@ -66,8 +66,8 @@ public class EntityInputFormatTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1"));
-        entity.put(new Tuple("key2", false));
+        entity.put(new Attribute("key1", "val1"));
+        entity.put(new Attribute("key2", false));
         store.save(singleton(entity));
 
         Job job = new Job(new Configuration());
@@ -89,7 +89,7 @@ public class EntityInputFormatTest {
         assertEquals(1, TestMapper.entities.size());
         assertEquals(TestMapper.entities.get(0).getId(), entity.getId());
         assertEquals(TestMapper.entities.get(0).getType(), entity.getType());
-        assertEquals(new HashSet<Tuple>(TestMapper.entities.get(0).getTuples()), new HashSet<Tuple>(entity.getTuples()));
+        assertEquals(new HashSet<Attribute>(TestMapper.entities.get(0).getAttributes()), new HashSet<Attribute>(entity.getAttributes()));
 
     }
 
@@ -101,18 +101,18 @@ public class EntityInputFormatTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1"));
-        entity.put(new Tuple("key2", false));
+        entity.put(new Attribute("key1", "val1"));
+        entity.put(new Attribute("key2", false));
         store.save(singleton(entity));
 
         entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1"));
-        entity2.put(new Tuple("key2", false));
+        entity2.put(new Attribute("key1", "val1"));
+        entity2.put(new Attribute("key2", false));
         store.save(singleton(entity2));
 
         entity3 = new BaseEntity("type1", "id");
-        entity3.put(new Tuple("key1", "val1"));
-        entity3.put(new Tuple("key2", false));
+        entity3.put(new Attribute("key1", "val1"));
+        entity3.put(new Attribute("key2", false));
         store.save(singleton(entity3));
 
         Job job = new Job(new Configuration());
@@ -134,10 +134,10 @@ public class EntityInputFormatTest {
         System.out.println(TestMapper.entities);
         assertEquals(TestMapper.entities.get(0).getId(), entity.getId());
         assertEquals(TestMapper.entities.get(0).getType(), entity.getType());
-        assertEquals(new HashSet<Tuple>(entity.getTuples()), new HashSet<Tuple>(TestMapper.entities.get(1).getTuples()));
+        assertEquals(new HashSet<Attribute>(entity.getAttributes()), new HashSet<Attribute>(TestMapper.entities.get(1).getAttributes()));
         assertEquals(TestMapper.entities.get(1).getId(), entity2.getId());
         assertEquals(TestMapper.entities.get(1).getType(), entity2.getType());
-        assertEquals(new HashSet<Tuple>(entity2.getTuples()), new HashSet<Tuple>(TestMapper.entities.get(1).getTuples()));
+        assertEquals(new HashSet<Attribute>(entity2.getAttributes()), new HashSet<Attribute>(TestMapper.entities.get(1).getAttributes()));
     }
 
 

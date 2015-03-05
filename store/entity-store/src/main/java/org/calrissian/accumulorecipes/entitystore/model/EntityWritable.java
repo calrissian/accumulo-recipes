@@ -18,8 +18,8 @@ package org.calrissian.accumulorecipes.entitystore.model;
 import org.apache.hadoop.io.WritableComparable;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
-import org.calrissian.accumulorecipes.commons.hadoop.TupleWritable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.accumulorecipes.commons.hadoop.AttributeWritable;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 
@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EntityWritable implements WritableComparable, Settable<Entity>, Gettable<Entity> {
 
-    private TupleWritable tupleWritable = new TupleWritable();
+    private AttributeWritable tupleWritable = new AttributeWritable();
     private Entity entity;
 
     public EntityWritable() {
@@ -43,16 +43,16 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
         this.entity = entity;
     }
 
-    public void setTupleWritable(TupleWritable sharedTupleWritable) {
-        this.tupleWritable = sharedTupleWritable;
+    public void setAttributeWritable(AttributeWritable sharedAttributeWritable) {
+        this.tupleWritable = sharedAttributeWritable;
     }
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(entity.getType());
         dataOutput.writeUTF(entity.getId());
-        dataOutput.writeInt(entity.getTuples() != null ? entity.getTuples().size() : 0);
-        for (Tuple tuple : entity.getTuples()) {
+        dataOutput.writeInt(entity.getAttributes() != null ? entity.getAttributes().size() : 0);
+        for (Attribute tuple : entity.getAttributes()) {
             tupleWritable.set(tuple);
             tupleWritable.write(dataOutput);
         }

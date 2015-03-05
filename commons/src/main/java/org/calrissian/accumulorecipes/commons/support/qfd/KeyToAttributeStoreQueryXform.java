@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.commons.support.qfd;
 
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,22 +27,22 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
-import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.TupleStore;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
+import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.AttributeStore;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> implements Function<Map.Entry<Key, Value>, V> {
+public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore> implements Function<Map.Entry<Key, Value>, V> {
 
-    public static final Logger log = LoggerFactory.getLogger(KeyToTupleCollectionQueryXform.class);
+    public static final Logger log = LoggerFactory.getLogger(KeyToAttributeStoreQueryXform.class);
 
     private Kryo kryo;
     private TypeRegistry<String> typeRegistry;
     private MetadataSerDe metadataSerDe;
 
-    public KeyToTupleCollectionQueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
+    public KeyToAttributeStoreQueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
         this.kryo = kryo;
         this.typeRegistry = typeRegistry;
         this.metadataSerDe = metadataSerDe;
@@ -60,7 +60,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
     public V apply(Map.Entry<Key, Value> keyValueEntry) {
         EventFields eventFields = new EventFields();
         eventFields.read(kryo, new Input(keyValueEntry.getValue().get()), EventFields.class);
-        V entry = buildTupleCollectionFromKey(keyValueEntry.getKey());
+        V entry = buildAttributeCollectionFromKey(keyValueEntry.getKey());
         for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
             String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), ONE_BYTE);
             Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
@@ -71,7 +71,7 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
                 Map<String,String> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
                 Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
                 setVisibility(metadata, vis);
-                Tuple tuple = new Tuple(fieldValue.getKey(), javaVal, metadata);
+                Attribute tuple = new Attribute(fieldValue.getKey(), javaVal, metadata);
                 entry.put(tuple);
             } catch(Exception e) {
                 log.error("There was an error deserializing the metadata for a tuple", e);
@@ -81,5 +81,5 @@ public abstract class KeyToTupleCollectionQueryXform<V extends TupleStore> imple
     }
 
 
-    protected abstract V buildTupleCollectionFromKey(Key k);
+    protected abstract V buildAttributeCollectionFromKey(Key k);
 }

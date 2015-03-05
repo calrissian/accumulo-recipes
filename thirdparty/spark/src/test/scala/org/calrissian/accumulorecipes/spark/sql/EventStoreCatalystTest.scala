@@ -25,7 +25,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
 import org.calrissian.accumulorecipes.spark.sql.util.TableUtil
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils
-import org.calrissian.mango.domain.Tuple
+import org.calrissian.mango.domain.Attribute
 import org.calrissian.mango.domain.event.BaseEvent
 import org.joda.time.DateTime
 import org.junit._
@@ -67,13 +67,13 @@ object EventStoreCatalystTest {
 
   private def persistEvents = {
     val event = new BaseEvent("type", "id")
-    event.put(new Tuple("key1", "val1"))
-    event.put(new Tuple("key2", 5))
+    event.put(new Attribute("key1", "val1"))
+    event.put(new Attribute("key2", 5))
 
 
     val entity2 = new BaseEvent("type2", "id")
-    entity2.put(new Tuple("key1", "val1"))
-    entity2.put(new Tuple("key3", "val3"))
+    entity2.put(new Attribute("key1", "val1"))
+    entity2.put(new Attribute("key3", "val3"))
 
     eventStore.save(Collections.singleton(event))
     eventStore.save(Collections.singleton(entity2))
@@ -190,9 +190,9 @@ class EventStoreCatalystTest {
   @Test
   def testFieldInSchemaMissingFromEventIsNull: Unit = {
     val event = new BaseEvent("type", "id2")
-    event.put(new Tuple("key1", "val2"))
-    event.put(new Tuple("key2", 10))
-    event.put(new Tuple("key3", 5))
+    event.put(new Attribute("key1", "val2"))
+    event.put(new Attribute("key2", 10))
+    event.put(new Attribute("key3", 5))
     eventStore.save(Collections.singleton(event))
     eventStore.flush
 

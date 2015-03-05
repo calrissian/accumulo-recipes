@@ -18,8 +18,8 @@ Take for a moment, an update that occurs on a system. Let's say a person's locat
 
 ```java
 Event changeEvent = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
-changeEvent.put(new Tuple("id", "person#1"));
-changeEvent.put(new Tuple("location", "Virginia"));
+changeEvent.put(new Attribute("id", "person#1"));
+changeEvent.put(new Attribute("location", "Virginia"));
 ```
 
 As it appears, a person with id 1 had their location updated to Virginia.

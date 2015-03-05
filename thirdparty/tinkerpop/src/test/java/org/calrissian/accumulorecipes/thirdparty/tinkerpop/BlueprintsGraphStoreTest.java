@@ -26,13 +26,13 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
+import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
@@ -60,18 +60,18 @@ public class BlueprintsGraphStoreTest {
                 new Auths("U,ADMIN"));
 
 
-        Tuple tuple = new Tuple("key1", "val1", new MetadataBuilder().setVisibility("U").build());
-        Tuple tuple2 = new Tuple("key2", "val2", new MetadataBuilder().setVisibility("U").build());
-        Tuple tuple3 = new Tuple("key3", "val3", new MetadataBuilder().setVisibility("U").build());
-        Tuple tuple4 = new Tuple("key4", "val4", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple = new Attribute("key1", "val1", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple2 = new Attribute("key2", "val2", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple3 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple4 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
 
         vertex1.put(tuple);
         vertex1.put(tuple2);
         vertex2.put(tuple3);
         vertex2.put(tuple4);
 
-        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
-        edge.put(edgeTuple);
+        Attribute edgeAttribute = new Attribute("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
+        edge.put(edgeAttribute);
 
         entityGraphStore.save(asList(vertex1, vertex2, edge));
 
@@ -151,7 +151,7 @@ public class BlueprintsGraphStoreTest {
 
     private void assertEntitiesEqual(Entity expected, Entity actual) {
 
-        Assert.assertEquals(new HashSet(expected.getTuples()), new HashSet(actual.getTuples()));
+        Assert.assertEquals(new HashSet(expected.getAttributes()), new HashSet(actual.getAttributes()));
         Assert.assertEquals(expected.getType(), actual.getType());
         Assert.assertEquals(expected.getId(), actual.getId());
     }

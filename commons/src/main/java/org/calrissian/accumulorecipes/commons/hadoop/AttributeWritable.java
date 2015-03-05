@@ -26,20 +26,20 @@ import java.util.Set;
 import org.apache.hadoop.io.Writable;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.types.TypeRegistry;
 
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
-public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>{
+public class AttributeWritable implements Writable, Gettable<Attribute>, Settable<Attribute>{
 
-    private Tuple tuple;
+    private Attribute tuple;
     private TypeRegistry<String> typeRegistry = LEXI_TYPES;
 
-    public TupleWritable() {
+    public AttributeWritable() {
     }
 
-    public TupleWritable(Tuple tuple) {
+    public AttributeWritable(Attribute tuple) {
         this.tuple = tuple;
     }
 
@@ -91,16 +91,16 @@ public class TupleWritable implements Writable, Gettable<Tuple>, Settable<Tuple>
             metadata.put(metaKey, typeRegistry.decode(metaType, metaVal));
         }
 
-        tuple = new Tuple(key, typeRegistry.decode(type, val), metadata);
+        tuple = new Attribute(key, typeRegistry.decode(type, val), metadata);
     }
 
     @Override
-    public Tuple get() {
+    public Attribute get() {
         return tuple;
     }
 
     @Override
-    public void set(Tuple item) {
+    public void set(Attribute item) {
         this.tuple = item;
     }
 }

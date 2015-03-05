@@ -10,9 +10,9 @@ You can specify mutliple entires to be added at a single location. That location
 
 ```java
 Event entry = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
-entry.put(new Tuple("name", "John Doe", ""));
-entry.put(new Tuple("age", 35, ""));
-entry.put(new Tuple("affiliation", "republican", ""));
+entry.put(new Attribute("name", "John Doe", ""));
+entry.put(new Attribute("age", 35, ""));
+entry.put(new Attribute("affiliation", "republican", ""));
 
 Instance instance = new MockInstance();
 Connector connector = instance.getConnector("root", "".getBytes());

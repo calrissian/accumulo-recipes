@@ -25,8 +25,8 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_FI;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.VISIBILITY;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.VISIBILITY;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
@@ -74,13 +74,13 @@ import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.QueryPlanner;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
-import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerdeFactory;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.SimpleMetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.attribute.Metadata;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.SimpleMetadataSerdeFactory;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -201,7 +201,7 @@ public abstract class QfdHelper<T extends Entity> {
 
             for (T item : items) {
 
-                //If there are no getTuples then don't write anything to the data store.
+                //If there are no getAttributes then don't write anything to the data store.
                 if (item.size() > 0) {
                     String id = buildId(item);
 
@@ -211,7 +211,7 @@ public abstract class QfdHelper<T extends Entity> {
                     Mutation shardMutation = new Mutation(shardId);
 
                     long minExpiration = Long.MAX_VALUE;
-                    for (Tuple tuple : item.getTuples()) {
+                    for (Attribute tuple : item.getAttributes()) {
                         String visibility = getVisibility(tuple.getMetadata(), "");
                         String aliasValue = typeRegistry.getAlias(tuple.getValue()) + ONE_BYTE +
                             typeRegistry.encode(tuple.getValue());
@@ -230,10 +230,10 @@ public abstract class QfdHelper<T extends Entity> {
 
                         forwardCF.set(expiration.toString());  // no need to copy the id when this is going to be rolled up anyways
                         forwardCQ.set(tuple.getKey() + NULL_BYTE + aliasValue);
-                        fieldIndexCF.set(PREFIX_FI + NULL_BYTE + buildTupleKey(item, tuple.getKey()));
+                        fieldIndexCF.set(PREFIX_FI + NULL_BYTE + buildAttributeKey(item, tuple.getKey()));
                         fieldIndexCQ.set(aliasValue + NULL_BYTE + id);
 
-                        long timestamp  = buildTupleTimestampForEntity(item);
+                        long timestamp  = buildAttributeTimestampForEntity(item);
 
                         Key key = new Key(new Text(shardId), forwardCF, forwardCQ, columnVisibility, timestamp);
                         Value valuePart = new Value(shardVal);
@@ -254,7 +254,7 @@ public abstract class QfdHelper<T extends Entity> {
                     long expirationToWrite = minExpiration == Long.MAX_VALUE ? -1 : minExpiration;
                     dout.writeLong(expirationToWrite);   // -1 means don't expire.
                     encodeRow(keysValuesToEncode, baos);
-                    shardMutation.put(new Text(id), new Text(), colVis, buildTupleTimestampForEntity(item), new Value(baos.toByteArray()));
+                    shardMutation.put(new Text(id), new Text(), colVis, buildAttributeTimestampForEntity(item), new Value(baos.toByteArray()));
                   }
                   shardWriter.addMutation(shardMutation);
                 }
@@ -340,7 +340,7 @@ public abstract class QfdHelper<T extends Entity> {
 
     protected abstract String buildId(T item);
 
-    protected abstract String buildTupleKey(T item, String key);
+    protected abstract String buildAttributeKey(T item, String key);
 
     public BatchScanner buildIndexScanner(Authorizations auths) {
         return buildScanner(indexTable, auths);
@@ -387,7 +387,7 @@ public abstract class QfdHelper<T extends Entity> {
         return keyValueIndex;
     }
 
-    protected abstract long buildTupleTimestampForEntity(T e);
+    protected abstract long buildAttributeTimestampForEntity(T e);
     public TypeRegistry<String> getTypeRegistry() {
         return typeRegistry;
     }

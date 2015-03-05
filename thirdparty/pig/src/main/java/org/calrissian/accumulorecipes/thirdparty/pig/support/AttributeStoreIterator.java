@@ -18,29 +18,29 @@ package org.calrissian.accumulorecipes.thirdparty.pig.support;
 import java.util.Iterator;
 
 import com.google.common.collect.AbstractIterator;
-import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.TupleStore;
+import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.AttributeStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class TupleStoreIterator<T extends TupleStore> extends AbstractIterator<Tuple> {
+public class AttributeStoreIterator<T extends AttributeStore> extends AbstractIterator<Attribute> {
 
     Iterator<T> tupleCollections;
-    T curTupleCollection;
-    Iterator<Tuple> tuples;
+    T curAttributeCollection;
+    Iterator<Attribute> tuples;
 
-    public TupleStoreIterator(Iterator<T> tupleCollections) {
+    public AttributeStoreIterator(Iterator<T> tupleCollections) {
         checkNotNull(tupleCollections);
         this.tupleCollections = tupleCollections;
     }
 
     @Override
-    protected Tuple computeNext() {
+    protected Attribute computeNext() {
 
         while((tuples == null || !tuples.hasNext()) &&
             tupleCollections.hasNext()) {
-            curTupleCollection = tupleCollections.next();
-            tuples = curTupleCollection.getTuples().iterator();
+            curAttributeCollection = tupleCollections.next();
+            tuples = curAttributeCollection.getAttributes().iterator();
         }
 
         if(tuples != null && tuples.hasNext())
@@ -51,6 +51,6 @@ public class TupleStoreIterator<T extends TupleStore> extends AbstractIterator<T
 
 
     public T getTopStore() {
-        return curTupleCollection;
+        return curAttributeCollection;
     }
 }

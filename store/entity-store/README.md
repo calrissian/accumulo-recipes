@@ -16,10 +16,10 @@ EntityStore entityStore = new AccumuloEntityStore(connector);
 Entities can be modeled using the following:
 ```java
 Entity entity = new BaseEntity("Person", "1");
-entity.put(new Tuple("name", "John Smith"));
-entity.put(new Tuple("age", 36));
-entity.put(new Tuple("location", "Maryland"));
-entity.put(new Tuple("brother", new EntityRelationship("Person", "2"));
+entity.put(new Attribute("name", "John Smith"));
+entity.put(new Attribute("age", 36));
+entity.put(new Attribute("location", "Maryland"));
+entity.put(new Attribute("brother", new EntityRelationship("Person", "2"));
 ```
 
 Saving an entity to the store is pretty simple:
@@ -59,7 +59,7 @@ First thing you'll want to do is probably to turn your json into an entity. You'
 ObjectMapper objectMapper = new ObjectMapper();
 String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
 Entity entity = new BaseEntity("Person", "1");
-entity.putAll(JsonTupleStore.fromJson(json, objectMapper));
+entity.putAll(JsonAttributeStore.fromJson(json, objectMapper));
 ```
 
 Now you can persist the entity, as it's just a bunch of key/value tuples.
@@ -70,7 +70,7 @@ entityStore.flush();
 
 When you've performed a query from the store and gotten results back, you can re-expand them into JSON:
 ```java
-String resultJson = JsonTupleStore.toJsonString(event.getTuples(), objectMapper);
+String resultJson = JsonAttributeStore.toJsonString(event.getAttributes(), objectMapper);
 ```
 
 ## Concepts

@@ -21,7 +21,6 @@ import static com.google.common.io.Resources.getResource;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.sort;
-import static org.calrissian.mango.json.util.store.JsonTupleStore.FlattenedLevelsComparator;
 import static org.calrissian.mango.json.util.store.JsonTupleStore.fromJson;
 import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
@@ -45,9 +44,10 @@ import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.json.util.store.JsonTupleStore.FlattenedLevelsComparator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -130,12 +130,12 @@ public class JsonEventStoreTest {
 
         assertEquals(1, size(results));
 
-        List<Tuple> expectedTuples = new ArrayList(tweetEvent.getTuples());
-        List<Tuple> actualTuples = new ArrayList<Tuple>(get(results, 0).getTuples());
-        sort(expectedTuples, comparator);
-        sort(actualTuples, comparator);
+        List<Attribute> expectedAttributes = new ArrayList(tweetEvent.getAttributes());
+        List<Attribute> actualAttributes = new ArrayList<Attribute>(get(results, 0).getAttributes());
+        sort(expectedAttributes, comparator);
+        sort(actualAttributes, comparator);
 
-        assertEquals(expectedTuples, actualTuples);
+        assertEquals(expectedAttributes, actualAttributes);
     }
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {

@@ -36,23 +36,23 @@ import org.apache.commons.lang.StringUtils;
  * the implementers of this interface so that we wouldn't need to fetch/store cardinality and other
  * index information more times than is necessary.
  */
-public class TupleIndexKey {
+public class AttributeIndexKey {
 
     protected String key;
     protected String normalizedValue;
     protected String alias;
     protected String shard;
 
-    protected TupleIndexKey() {
+    protected AttributeIndexKey() {
     }
 
-    public TupleIndexKey(String key, String value, String alias) {
+    public AttributeIndexKey(String key, String value, String alias) {
       this.key = key;
       this.normalizedValue = value;
       this.alias = alias;
     }
 
-    public TupleIndexKey(Key key) {
+    public AttributeIndexKey(Key key) {
 
         String row = key.getRow().toString();
         String parts[] = StringUtils.splitByWholeSeparatorPreserveAllTokens(row, INDEX_SEP);
@@ -100,7 +100,7 @@ public class TupleIndexKey {
       } else if(o == null)
         return false;
 
-      TupleIndexKey that = (TupleIndexKey) o;
+      AttributeIndexKey that = (AttributeIndexKey) o;
 
       if (alias != null ? !alias.equals(that.alias) : that.alias != null) {
         return false;

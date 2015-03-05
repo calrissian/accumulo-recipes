@@ -23,8 +23,8 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.generateTimestamp;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -60,7 +60,7 @@ import org.calrissian.accumulorecipes.commons.support.TimeUnit;
 import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
 import org.calrissian.accumulorecipes.temporal.lastn.support.EventMergeJoinIterable;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
@@ -89,7 +89,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 if (toReturn == null)
                     toReturn = new BaseEvent(cq.substring(idx+1,cq.length()), encoder.decode(cq.substring(0, idx)));
                 String vis = splits[3];
-                toReturn.put(new Tuple(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String, String>(1), vis)));
+                toReturn.put(new Attribute(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String, String>(1), vis)));
             }
 
             return toReturn;
@@ -129,7 +129,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     @Override
     public void put(String group, Event entry) {
         try {
-            for (Tuple tuple : entry.getTuples()) {
+            for (Attribute tuple : entry.getAttributes()) {
                 Mutation m = new Mutation(group + GROUP_DELIM + generateTimestamp(entry.getTimestamp(), TimeUnit.DAYS));
                 m.put(
                     new Text(generateTimestamp(entry.getTimestamp(), TimeUnit.MINUTES)),
@@ -150,7 +150,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         writer.flush();
     }
 
-    private String buildEventValue(Tuple tuple) {
+    private String buildEventValue(Attribute tuple) {
 
         String[] fields = new String[]{
             tuple.getKey(),

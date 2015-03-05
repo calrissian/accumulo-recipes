@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.AndNode;
 import org.calrissian.mango.criteria.domain.HasLeaf;
@@ -44,21 +44,21 @@ import org.calrissian.mango.types.TypeRegistry;
  */
 public class CalculateShardsVisitor implements NodeVisitor {
 
-    private final Map<TupleIndexKey,Set<String>> keysToShards;
-    private Map<String, Set<TupleIndexKey>> accumuloKeyToTupleIndexKey = new HashMap<String, Set<TupleIndexKey>>();
+    private final Map<AttributeIndexKey,Set<String>> keysToShards;
+    private Map<String, Set<AttributeIndexKey>> accumuloKeyToAttributeIndexKey = new HashMap<String, Set<AttributeIndexKey>>();
     private TypeRegistry<String> registry;
 
     private Set<String> finalShards;
 
-    public CalculateShardsVisitor(Map<TupleIndexKey,Set<String>> shards, TypeRegistry<String> registry) {
+    public CalculateShardsVisitor(Map<AttributeIndexKey,Set<String>> shards, TypeRegistry<String> registry) {
         this.keysToShards = shards;
         this.registry = registry;
 
-        for (TupleIndexKey key : shards.keySet()) {
-            Set<TupleIndexKey> tupleIndexKey = accumuloKeyToTupleIndexKey.get(key.getKey());
+        for (AttributeIndexKey key : shards.keySet()) {
+            Set<AttributeIndexKey> tupleIndexKey = accumuloKeyToAttributeIndexKey.get(key.getKey());
             if (tupleIndexKey == null) {
-                tupleIndexKey = new HashSet<TupleIndexKey>();
-                accumuloKeyToTupleIndexKey.put(key.getKey(), tupleIndexKey);
+                tupleIndexKey = new HashSet<AttributeIndexKey>();
+                accumuloKeyToAttributeIndexKey.put(key.getKey(), tupleIndexKey);
             }
             tupleIndexKey.add(key);
         }
@@ -144,13 +144,13 @@ public class CalculateShardsVisitor implements NodeVisitor {
          */
         // hasKey and hasNotKey need special treatment since we don't know the aliases
         if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf) || leaf instanceof NotEqualsLeaf) {
-            Set<TupleIndexKey> tupleIndexKeys = accumuloKeyToTupleIndexKey.get(kvLeaf.getKey());
+            Set<AttributeIndexKey> tupleIndexKeys = accumuloKeyToAttributeIndexKey.get(kvLeaf.getKey());
             Set<String> unionedShards = new HashSet<String>();
             if (tupleIndexKeys == null) {
                 if (leaf instanceof NegationLeaf)
                     return unionedShards;
             } else {
-                for (TupleIndexKey key : tupleIndexKeys) {
+                for (AttributeIndexKey key : tupleIndexKeys) {
                     unionedShards.addAll(this.keysToShards.get(key));
                 }
             }
@@ -167,7 +167,7 @@ public class CalculateShardsVisitor implements NodeVisitor {
             String normalizedVal;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
-            TupleIndexKey tupleIndexKey = new TupleIndexKey(kvLeaf.getKey(), normalizedVal, alias);
+            AttributeIndexKey tupleIndexKey = new AttributeIndexKey(kvLeaf.getKey(), normalizedVal, alias);
             Set<String> leafShards = keysToShards.get(tupleIndexKey);
 
             if (leafShards == null)

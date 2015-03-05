@@ -15,21 +15,20 @@
  */
 package org.calrissian.accumulorecipes.lastn.iterator;
 
+import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Filter;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-
 /**
- * A cleanup filtering iterator to get rid of getTuples that should not exist after the versioning iterator evicts an
+ * A cleanup filtering iterator to get rid of getAttributes that should not exist after the versioning iterator evicts an
  * index. NOTE: This iterator needs to run after the versioning iterator and should run on all scopes (majc,minc,scan).
  */
 public class IndexEntryFilteringIterator extends Filter {

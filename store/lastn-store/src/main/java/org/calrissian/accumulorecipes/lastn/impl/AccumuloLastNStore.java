@@ -29,7 +29,7 @@ import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.lastn.LastNStore;
 import org.calrissian.accumulorecipes.lastn.iterator.EntryIterator;
 import org.calrissian.accumulorecipes.lastn.iterator.IndexEntryFilteringIterator;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -43,7 +43,7 @@ import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 /**
@@ -158,7 +158,7 @@ public class AccumuloLastNStore implements LastNStore {
         Mutation indexMutation = new Mutation(group);
         indexMutation.put(NULL_BYTE + "INDEX", "", new ColumnVisibility(), entry.getTimestamp(), new Value(entry.getId().getBytes()));
 
-        for (Tuple tuple : entry.getTuples()) {
+        for (Attribute tuple : entry.getAttributes()) {
             String fam = String.format("%s%s", END_BYTE, entry.getId());
             Object value = tuple.getValue();
             try {
@@ -185,7 +185,7 @@ public class AccumuloLastNStore implements LastNStore {
     }
 
     /**
-     * Pull back the last N entries. EntryIterator will group entry getTuples into a single object on the server side.
+     * Pull back the last N entries. EntryIterator will group entry getAttributes into a single object on the server side.
      *
      * @param index
      * @param auths

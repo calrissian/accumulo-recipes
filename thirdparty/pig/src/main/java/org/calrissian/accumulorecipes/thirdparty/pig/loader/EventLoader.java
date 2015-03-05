@@ -42,11 +42,11 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.calrissian.accumulorecipes.thirdparty.pig.support.TupleStoreIterator;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterator;
 import org.calrissian.accumulorecipes.commons.support.GettableTransform;
 import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat;
+import org.calrissian.accumulorecipes.thirdparty.pig.support.AttributeStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.SimpleTypeEncoders;
@@ -63,7 +63,7 @@ public class EventLoader extends LoadFunc implements Serializable {
 
     public static final String USAGE = "Usage: event://indexTable/shardTable?user=&pass=&inst=&zk=&start=&end=&auths=[&fields=]";
 
-    protected transient TupleStoreIterator<Event> itr;
+    protected transient AttributeStoreIterator<Event> itr;
     protected final TypeRegistry<String> registry = SimpleTypeEncoders.SIMPLE_TYPES;
 
     protected final QueryBuilder qb;
@@ -158,7 +158,7 @@ public class EventLoader extends LoadFunc implements Serializable {
     public void prepareToRead(RecordReader recordReader, PigSplit pigSplit) throws IOException {
         RecordReaderValueIterator<Key, EventWritable> rri = new RecordReaderValueIterator<Key, EventWritable>(recordReader);
         Iterator<Event> xformed = Iterators.transform(rri, new GettableTransform<Event>());
-        itr = new TupleStoreIterator<Event>(xformed);
+        itr = new AttributeStoreIterator<Event>(xformed);
     }
 
 
@@ -168,7 +168,7 @@ public class EventLoader extends LoadFunc implements Serializable {
         if(!itr.hasNext())
             return null;
 
-        org.calrissian.mango.domain.Tuple eventTuple = itr.next();
+        org.calrissian.mango.domain.Attribute eventAttribute = itr.next();
 
         /**
          * Create the pig tuple and hydrate with event details. The format of the tuple is as follows:
@@ -177,9 +177,9 @@ public class EventLoader extends LoadFunc implements Serializable {
         Tuple t = TupleFactory.getInstance().newTuple();
         t.append(itr.getTopStore().getId());
         t.append(itr.getTopStore().getTimestamp());
-        t.append(eventTuple.getKey());
-        t.append(registry.getAlias(eventTuple.getValue()));
-        t.append(registry.encode(eventTuple.getValue()));
+        t.append(eventAttribute.getKey());
+        t.append(registry.getAlias(eventAttribute.getValue()));
+        t.append(registry.encode(eventAttribute.getValue()));
 
         return t;
     }

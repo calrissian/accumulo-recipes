@@ -24,7 +24,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import java.util.HashMap;
@@ -52,10 +52,10 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexTypesIterator;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexUniqueKeyValueIterator;
 import org.calrissian.accumulorecipes.commons.support.Constants;
-import org.calrissian.accumulorecipes.commons.support.tuple.Metadata;
+import org.calrissian.accumulorecipes.commons.support.attribute.Metadata;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -94,7 +94,7 @@ public class KeyValueIndex<T extends Entity> {
 
         for (T item : items) {
             String shardId = shardBuilder.buildShard(item);
-            for (Tuple tuple : item.getTuples()) {
+            for (Attribute tuple : item.getAttributes()) {
                 String[] strings = new String[]{
                     shardId,
                     tuple.getKey(),
@@ -182,7 +182,7 @@ public class KeyValueIndex<T extends Entity> {
             return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Pair<String, String>>() {
                 @Override
                 public Pair<String, String> apply(Map.Entry<Key, Value> keyValueEntry) {
-                    TupleIndexKey key = new TupleIndexKey(keyValueEntry.getKey());
+                    AttributeIndexKey key = new AttributeIndexKey(keyValueEntry.getKey());
                     return new Pair(key.getKey(), key.getAlias());
                 }
             });
@@ -222,7 +222,7 @@ public class KeyValueIndex<T extends Entity> {
             return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, Object>() {
                 @Override
                 public Object apply(Map.Entry<Key, Value> keyValueEntry) {
-                    TupleIndexKey key = new TupleIndexKey(keyValueEntry.getKey());
+                    AttributeIndexKey key = new AttributeIndexKey(keyValueEntry.getKey());
                     return typeRegistry.decode(key.getAlias(), key.getNormalizedValue());
                 }
             });

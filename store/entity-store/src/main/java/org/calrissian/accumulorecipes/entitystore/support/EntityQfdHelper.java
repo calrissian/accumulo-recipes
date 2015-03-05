@@ -34,12 +34,12 @@ import org.apache.commons.lang.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionQueryXform;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionWholeColFXform;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreQueryXform;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreWholeColFXform;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
@@ -63,12 +63,12 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
     }
 
     @Override
-    protected String buildTupleKey(Entity item, String key) {
+    protected String buildAttributeKey(Entity item, String key) {
         return key;
     }
 
     @Override
-    protected long buildTupleTimestampForEntity(Entity e) {
+    protected long buildAttributeTimestampForEntity(Entity e) {
         return System.currentTimeMillis();
     }
 
@@ -88,20 +88,20 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     }
 
-    public static class QueryXform extends KeyToTupleCollectionQueryXform<Entity> {
+    public static class QueryXform extends KeyToAttributeStoreQueryXform<Entity> {
 
         public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
-        protected Entity buildTupleCollectionFromKey(Key k) {
+        protected Entity buildAttributeCollectionFromKey(Key k) {
             String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
             return new BaseEntity(typeId[1], typeId[2]);
         }
     }
 
-    public static class WholeColFXform extends KeyToTupleCollectionWholeColFXform<Entity> {
+    public static class WholeColFXform extends KeyToAttributeStoreWholeColFXform<Entity> {
 
         public WholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);

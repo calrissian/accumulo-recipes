@@ -37,7 +37,7 @@ import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Test;
@@ -56,14 +56,14 @@ public class EventKeyValueIndexTest {
         );
 
         Event event = new BaseEvent("id");
-        event.put(new Tuple("key1", "val1"));
-        event.put(new Tuple("key2", "val2"));
+        event.put(new Attribute("key1", "val1"));
+        event.put(new Attribute("key2", "val2"));
 
         Event event2 = new BaseEvent("id2");
-        event2.put(new Tuple("key1", "val1"));
-        event2.put(new Tuple("key2", "val2"));
-        event2.put(new Tuple("key3", true));
-        event2.put(new Tuple("aKey", 1));
+        event2.put(new Attribute("key1", "val1"));
+        event2.put(new Attribute("key2", "val2"));
+        event2.put(new Attribute("key3", true));
+        event2.put(new Attribute("aKey", 1));
 
         eventStore.save(Arrays.asList(new Event[] {event, event2}));
 
@@ -91,14 +91,14 @@ public class EventKeyValueIndexTest {
         );
 
         Event event = new BaseEvent("type1", "id");
-        event.put(new Tuple("key1", "val1"));
-        event.put(new Tuple("key2", "val2"));
+        event.put(new Attribute("key1", "val1"));
+        event.put(new Attribute("key2", "val2"));
 
         Event event2 = new BaseEvent("type2", "id2");
-        event2.put(new Tuple("key1", "val1"));
-        event2.put(new Tuple("key2", "val2"));
-        event2.put(new Tuple("key3", true));
-        event2.put(new Tuple("aKey", 1));
+        event2.put(new Attribute("key1", "val1"));
+        event2.put(new Attribute("key2", "val2"));
+        event2.put(new Attribute("key3", true));
+        event2.put(new Attribute("aKey", 1));
 
         eventStore.save(Arrays.asList(new Event[] {event, event2}));
 
@@ -126,18 +126,18 @@ public class EventKeyValueIndexTest {
         );
 
         Event event = new BaseEvent("type1", "id");
-        event.put(new Tuple("key1", "val1"));
-        event.put(new Tuple("key2", "val2"));
+        event.put(new Attribute("key1", "val1"));
+        event.put(new Attribute("key2", "val2"));
 
         Event event1 = new BaseEvent("type1", "id");
-        event.put(new Tuple("key1", "theVal1"));
-        event.put(new Tuple("key2", "aVal"));
+        event.put(new Attribute("key1", "theVal1"));
+        event.put(new Attribute("key2", "aVal"));
 
         Event event2 = new BaseEvent("type2", "id2");
-        event2.put(new Tuple("key1", "val1"));
-        event2.put(new Tuple("key2", "val2"));
-        event2.put(new Tuple("key3", true));
-        event2.put(new Tuple("aKey", 1));
+        event2.put(new Attribute("key1", "val1"));
+        event2.put(new Attribute("key2", "val2"));
+        event2.put(new Attribute("key3", true));
+        event2.put(new Attribute("aKey", 1));
 
         eventStore.save(Arrays.asList(new Event[] {event, event1, event2}));
 

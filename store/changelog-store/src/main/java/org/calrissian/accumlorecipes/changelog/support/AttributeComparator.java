@@ -16,21 +16,21 @@
 package org.calrissian.accumlorecipes.changelog.support;
 
 import com.google.common.collect.ComparisonChain;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.Comparator;
 
-public class TupleComparator implements Comparator<Tuple> {
+public class AttributeComparator implements Comparator<Attribute> {
 
     private final TypeRegistry<String> typeRegistry;
 
-    public TupleComparator(TypeRegistry<String> typeRegistry) {
+    public AttributeComparator(TypeRegistry<String> typeRegistry) {
         this.typeRegistry = typeRegistry;
     }
 
     @Override
-    public int compare(Tuple tuple, Tuple tuple1) {
+    public int compare(Attribute tuple, Attribute tuple1) {
         return ComparisonChain.start()
                 .compare(tuple.getKey(), tuple1.getKey())
                 .compare(typeRegistry.encode(tuple.getValue()), typeRegistry.encode(tuple.getValue()))

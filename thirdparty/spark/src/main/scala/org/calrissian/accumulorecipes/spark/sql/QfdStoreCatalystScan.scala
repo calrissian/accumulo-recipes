@@ -29,7 +29,7 @@ import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat
 import org.calrissian.mango.collect.CloseableIterable
 import org.calrissian.mango.criteria.builder.QueryBuilder
 import org.calrissian.mango.criteria.domain.Node
-import org.calrissian.mango.domain.TupleStore
+import org.calrissian.mango.domain.AttributeStore
 import org.calrissian.mango.types.encoders.AliasConstants._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -43,7 +43,7 @@ abstract class QfdStoreCatalystScan(inst: String, zk: String, user: String, pass
 
   private val log = LoggerFactory.getLogger(classOf[QfdFilteredScan])
 
-  type T <: TupleStore
+  type T <: AttributeStore
   type V <: Gettable[T]
   type I <: BaseQfdInputFormat[T,_]
 

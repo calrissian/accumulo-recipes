@@ -11,10 +11,10 @@ Many of the stores in the Calrissian stack deal with objects modeled like events
 Event event = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
 
 // add the state to the event
-event.put(new Tuple("systemName", "system1", "USER|ADMIN"));
-event.put(new Tuple("eventType", "status", "USER|ADMIN"));
-event.put(new Tuple("healthOK", true, "USER|ADMIN"));
-event.put(new Tuple("location", "Maryland", "ADMIN"));
+event.put(new Attribute("systemName", "system1", "USER|ADMIN"));
+event.put(new Attribute("eventType", "status", "USER|ADMIN"));
+event.put(new Attribute("healthOK", true, "USER|ADMIN"));
+event.put(new Attribute("location", "Maryland", "ADMIN"));
 ```
 
 Here we've constructed an event to model the health status of a system. In this scenario, assume we have systems at several locations throughout an enterprise fabric. Perhaps we have a couple clouds located throughout the country but only users with ADMIN privileges can see those locations. 
@@ -94,7 +94,7 @@ First thing you'll want to do is probably to turn your json into an event. You'l
 ObjectMapper objectMapper = new ObjectMapper();
 String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
 Event event = new BaseEvent();
-event.putAll(JsonTupleStore.fromJson(json, objectMapper));
+event.putAll(JsonAttributeStore.fromJson(json, objectMapper));
 ```
 
 Now you can persist the event, as it's just a bunch of key/value tuples.
@@ -105,6 +105,6 @@ store.flush();
 
 When you've performed a query from the store and gotten results back, you can re-expand them into JSON:
 ```java
-String resultJson = JsonTupleStore.toJsonString(event.getTuples(), objectMapper);
+String resultJson = JsonAttributeStore.toJsonString(event.getAttributes(), objectMapper);
 ```
 

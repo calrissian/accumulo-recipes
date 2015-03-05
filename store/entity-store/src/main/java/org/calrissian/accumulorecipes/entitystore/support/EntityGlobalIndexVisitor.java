@@ -33,7 +33,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
-import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.HasLeaf;
@@ -51,8 +51,8 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
     private BatchScanner indexScanner;
     private EntityShardBuilder shardBuilder;
 
-    private Map<TupleIndexKey, Long> cardinalities = new HashMap<TupleIndexKey, Long>();
-    private Map<TupleIndexKey, Set<String>> mappedShards = new HashMap<TupleIndexKey, Set<String>>();
+    private Map<AttributeIndexKey, Long> cardinalities = new HashMap<AttributeIndexKey, Long>();
+    private Map<AttributeIndexKey, Set<String>> mappedShards = new HashMap<AttributeIndexKey, Set<String>>();
 
     private Set<String> types;
 
@@ -65,12 +65,12 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     @Override
-    public Map<TupleIndexKey, Long> getCardinalities() {
+    public Map<AttributeIndexKey, Long> getCardinalities() {
         return cardinalities;
     }
 
     @Override
-    public Map<TupleIndexKey, Set<String>> getShards() {
+    public Map<AttributeIndexKey, Set<String>> getShards() {
         return mappedShards;
     }
 
@@ -135,7 +135,7 @@ public class EntityGlobalIndexVisitor implements GlobalIndexVisitor {
 
         for (Map.Entry<Key,Value> entry : indexScanner) {
 
-            TupleIndexKey key = new TupleIndexKey(entry.getKey());
+            AttributeIndexKey key = new AttributeIndexKey(entry.getKey());
             Long cardinality = cardinalities.get(key);
             if (cardinality == null)
                 cardinality = 0l;

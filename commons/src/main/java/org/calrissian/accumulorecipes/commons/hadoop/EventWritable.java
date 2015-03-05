@@ -22,14 +22,14 @@ import java.io.IOException;
 import org.apache.hadoop.io.Writable;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 
 
 public class EventWritable implements Writable, Settable<Event>, Gettable<Event> {
 
-    private TupleWritable tupleWritable = new TupleWritable();
+    private AttributeWritable tupleWritable = new AttributeWritable();
 
     Event entry;
 
@@ -40,8 +40,8 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
         this.entry = entry;
     }
 
-    public void setTupleWritable(TupleWritable sharedTupleWritable) {
-        this.tupleWritable = sharedTupleWritable;
+    public void setAttributeWritable(AttributeWritable sharedAttributeWritable) {
+        this.tupleWritable = sharedAttributeWritable;
     }
 
     @Override
@@ -51,8 +51,8 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
         dataOutput.writeUTF(entry.getId());
         dataOutput.writeLong(entry.getTimestamp());
 
-        dataOutput.writeInt(entry.getTuples() != null ? entry.getTuples().size() : 0);
-        for (Tuple tuple : entry.getTuples()) {
+        dataOutput.writeInt(entry.getAttributes() != null ? entry.getAttributes().size() : 0);
+        for (Attribute tuple : entry.getAttributes()) {
             tupleWritable.set(tuple);
             tupleWritable.write(dataOutput);
         }

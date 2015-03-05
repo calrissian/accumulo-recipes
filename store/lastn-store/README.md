@@ -27,12 +27,12 @@ Connector connector = instance.getConnector("root", "secret".getBytes());
 AccumuloLastNStore lastNStore = new AccumuloLastNStore(connector, 100);
 
 Event entry1 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
-entry1.put(new Tuple("key1", "val1", ""));
-entry1.put(new Tuple("key3", "val3", ""));
+entry1.put(new Attribute("key1", "val1", ""));
+entry1.put(new Attribute("key3", "val3", ""));
 
 Event entry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
-entry2.put(new Tuple("key1", "val1", ""));
-entry2.put(new Tuple("key3", "val3", ""));
+entry2.put(new Attribute("key1", "val1", ""));
+entry2.put(new Attribute("key3", "val3", ""));
 
 lastNStore.put("index1", entry1);
 lastNStore.put("index1", entry2);

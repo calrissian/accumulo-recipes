@@ -19,8 +19,8 @@ import static java.lang.Math.abs;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.awt.geom.Point2D;
@@ -56,7 +56,7 @@ import org.calrissian.accumulorecipes.geospatialstore.support.BoundingBoxFilter;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeHelper;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeScanRange;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
@@ -75,7 +75,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                 for (Map.Entry<Key, Value> curEntry : map) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
-                    Tuple tuple = new Tuple(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, String>(1), vis));
+                    Attribute tuple = new Attribute(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, String>(1), vis));
                     entry.put(tuple);
                 }
                 return entry;
@@ -136,7 +136,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
         return String.format("%s%s%s%s%s%s%s", id, NULL_BYTE, timestamp, NULL_BYTE, location.getX(), NULL_BYTE, location.getY());
     }
 
-    protected String buildKeyValue(Tuple tuple) {
+    protected String buildKeyValue(Attribute tuple) {
         return tuple.getKey() + NULL_BYTE + registry.getAlias(tuple.getValue()) + NULL_BYTE + registry.encode(tuple.getValue());
     }
 
@@ -148,7 +148,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
             Mutation m = new Mutation(buildRow(partition, location));
 
-            for (Tuple tuple : entry.getTuples()) {
+            for (Attribute tuple : entry.getAttributes()) {
                 try {
                     // put in the forward mutation
                     m.put(new Text(buildId(entry.getId(), entry.getTimestamp(), location)),

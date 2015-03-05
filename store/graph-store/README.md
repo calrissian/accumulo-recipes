@@ -20,17 +20,17 @@ As described above, modelling isn't too complicated at all. Any entity can be a 
 
 ```java
 Entity vertex1 = new BaseEntity("Person", "1");
-vertex1.put(new Tuple("name", "John Smith"));
-vertex1.put(new Tuple("age", 34));
-vertex1.put(new Tuple("location", "Maryland"));
+vertex1.put(new Attribute("name", "John Smith"));
+vertex1.put(new Attribute("age", 34));
+vertex1.put(new Attribute("location", "Maryland"));
 
 Entity vertex2 = new BaseEntity("Person", "2");
-vertex2.put(new Tuple("name", "James Smith"));
-vertex2.put(new Tuple("age", 30));
-vertex2.put(new Tuple("location", "Virginia"));
+vertex2.put(new Attribute("name", "James Smith"));
+vertex2.put(new Attribute("age", 30));
+vertex2.put(new Attribute("location", "Virginia"));
 
 EdgeEntity edge = new EdgeEntity("Relative", "1:2", vertex1, "", vertex2, "", "brother");
-edge.put(new Tuple("biological", true));
+edge.put(new Attribute("biological", true));
 ```
 What's convenient about this way of modelling entities is that the vertices are only associated with each other through an edge. This means when an edge is added or removed, the vertices do not need to be updated. This allows edges to be "enriched" at later times via system-level analytics and user enrichment.
 
@@ -117,15 +117,15 @@ Or, let's say we had a parent relationship as a relative:
 
 ``` java
 Entity vertex3 = new BaseEntity("Person", "3");
-vertex2.put(new Tuple("name", "James Smith Sr."));
-vertex2.put(new Tuple("age", 65));
-vertex2.put(new Tuple("location", "Maryland"));
+vertex2.put(new Attribute("name", "James Smith Sr."));
+vertex2.put(new Attribute("age", 65));
+vertex2.put(new Attribute("location", "Maryland"));
 
 EdgeEntity edge2 = new EdgeEntity("Relative", "2:3", vertex2, "", vertex3, "", "child");
-edge2.put(new Tuple("biological", true));
+edge2.put(new Attribute("biological", true));
 
 EdgeEntity edge3 = new EdgeEntity("Relative", "1:3", vertex1, "", vertex3, "", "child");
-edge3.put(new Tuple("biological", false));
+edge3.put(new Attribute("biological", false));
 
 graphStore.save(Arrays.asList(new Entity[] { edge2, vertex3, edge3 }));
 ```

@@ -16,26 +16,25 @@
 package org.calrissian.accumulorecipes.commons.hadoop;
 
 
-import com.google.common.collect.ImmutableMap;
-import org.calrissian.mango.domain.Tuple;
-import org.junit.Test;
-
-import java.io.IOException;
-
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import static org.junit.Assert.assertEquals;
+import java.io.IOException;
 
-public class TupleWritableTest {
+import com.google.common.collect.ImmutableMap;
+import org.calrissian.mango.domain.Attribute;
+import org.junit.Test;
+
+public class AttributeWritableTest {
 
     @Test
     public void testSerializesAndDeserializes() throws IOException {
 
-        Tuple tuple = new Tuple("key", "val", ImmutableMap.of("metaKey", "metaVal"));
+        Attribute tuple = new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal"));
 
-        byte[] serialized = serialize(new TupleWritable(tuple));
+        byte[] serialized = serialize(new AttributeWritable(tuple));
 
-        Tuple actual = asWritable(serialized, TupleWritable.class).get();
+        Attribute actual = asWritable(serialized, AttributeWritable.class).get();
         assertEquals(tuple, actual);
     }
 

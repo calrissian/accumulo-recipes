@@ -33,13 +33,13 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Test;
@@ -54,13 +54,13 @@ public class EntityGlobalIndexVisitorTest {
         EntityStore entityStore = new AccumuloEntityStore(connector);
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key1", "val1"));
-        entity.put(new Tuple("key2", "val2"));
+        entity.put(new Attribute("key1", "val1"));
+        entity.put(new Attribute("key2", "val2"));
 
         Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Tuple("key1", "val1"));
-        entity2.put(new Tuple("key2", "val2"));
-        entity2.put(new Tuple("key3", true));
+        entity2.put(new Attribute("key1", "val1"));
+        entity2.put(new Attribute("key2", "val2"));
+        entity2.put(new Attribute("key3", true));
 
         entityStore.save(asList(new Entity[]{entity, entity2}));
 
@@ -78,7 +78,7 @@ public class EntityGlobalIndexVisitorTest {
 
 
         assertEquals(3, visitor.getCardinalities().size());
-        for (Map.Entry<TupleIndexKey, Long> entry : visitor.getCardinalities().entrySet()) {
+        for (Map.Entry<AttributeIndexKey, Long> entry : visitor.getCardinalities().entrySet()) {
             if (entry.getKey().getKey().equals("key1"))
                 assertEquals(2l, (long) entry.getValue());
             else if (entry.getKey().getKey().equals("key2"))

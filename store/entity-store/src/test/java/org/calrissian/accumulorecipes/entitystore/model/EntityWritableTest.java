@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.entitystore.model;
 
 
 import com.google.common.collect.ImmutableMap;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Test;
@@ -34,7 +34,7 @@ public class EntityWritableTest {
     public void testSerializesAndDeserializes() throws IOException {
 
         Entity entity = new BaseEntity("type", "id");
-        entity.put(new Tuple("key", "val", ImmutableMap.of("metaKey", "metaVal")));
+        entity.put(new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal")));
 
         byte[] serialized = serialize(new EntityWritable(entity));
 

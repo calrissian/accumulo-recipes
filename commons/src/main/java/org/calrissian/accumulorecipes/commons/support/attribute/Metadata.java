@@ -13,12 +13,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.calrissian.accumulorecipes.commons.support.tuple;
+package org.calrissian.accumulorecipes.commons.support.attribute;
 
 
 import java.util.Map;
 
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 
 public class Metadata {
 
@@ -33,7 +33,7 @@ public class Metadata {
             return metadata;
         }
 
-        public static Long getExpiration(Tuple tuple, long defaultExpiration) {
+        public static Long getExpiration(Attribute tuple, long defaultExpiration) {
             return getExpiration(tuple.getMetadata(), defaultExpiration);
         }
 
@@ -59,7 +59,7 @@ public class Metadata {
             return metadata;
         }
 
-        public static String getVisibility(Tuple tuple, String defaultVisibility) {
+        public static String getVisibility(Attribute tuple, String defaultVisibility) {
             if(tuple.getMetadataValue(VISIBILITY) == null)
                 return defaultVisibility;
             else

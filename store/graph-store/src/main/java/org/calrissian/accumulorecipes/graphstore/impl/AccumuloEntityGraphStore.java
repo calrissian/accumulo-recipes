@@ -23,8 +23,8 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VAL
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.HEAD;
@@ -72,10 +72,10 @@ import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.accumulorecipes.graphstore.support.EdgeGroupingIterator;
 import org.calrissian.accumulorecipes.graphstore.support.EdgeToVertexIndexXform;
-import org.calrissian.accumulorecipes.graphstore.support.TupleStoreCriteriaPredicate;
+import org.calrissian.accumulorecipes.graphstore.support.AttributeStoreCriteriaPredicate;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
@@ -120,7 +120,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], NULL_BYTE);
 
                     String vis = entry.getKey().getColumnVisibility().toString();
-                    Tuple tuple = new Tuple(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, String>(1), vis));
+                    Attribute tuple = new Attribute(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, String>(1), vis));
                     entity.put(tuple);
 
                 }
@@ -222,8 +222,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         checkNotNull(fromVertices);
         checkNotNull(auths);
 
-        TupleStoreCriteriaPredicate filter =
-                query != null ? new TupleStoreCriteriaPredicate(criteriaFromNode(query)) : null;
+        AttributeStoreCriteriaPredicate filter =
+                query != null ? new AttributeStoreCriteriaPredicate(criteriaFromNode(query)) : null;
 
         // this one is fairly easy- return the adjacent edges that match the given query
         try {
@@ -293,7 +293,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     reverse.put(new Text(IN.toString() + NULL_BYTE + label), new Text(edgeEncoded + NULL_BYTE + fromEncoded),
                             new ColumnVisibility(fromVertexVis), EMPTY_VALUE);
 
-                    for (Tuple tuple : entity.getTuples()) {
+                    for (Attribute tuple : entity.getAttributes()) {
                         String key = tuple.getKey();
                         String alias = typeRegistry.getAlias(tuple.getValue());
                         String value = typeRegistry.encode(tuple.getValue());

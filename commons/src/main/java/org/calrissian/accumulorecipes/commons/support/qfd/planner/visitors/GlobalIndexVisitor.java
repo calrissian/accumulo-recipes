@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 import java.util.Map;
 import java.util.Set;
 
-import org.calrissian.accumulorecipes.commons.support.qfd.TupleIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
 
 /**
@@ -29,9 +29,9 @@ import org.calrissian.mango.criteria.visitor.NodeVisitor;
  */
 public interface GlobalIndexVisitor extends NodeVisitor {
 
-    Map<TupleIndexKey, Long> getCardinalities();
+    Map<AttributeIndexKey, Long> getCardinalities();
 
-    Map<TupleIndexKey, Set<String>> getShards();
+    Map<AttributeIndexKey, Set<String>> getShards();
 
     void exec();
 }

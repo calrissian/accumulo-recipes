@@ -16,10 +16,10 @@
 package org.calrissian.accumulorecipes.graphstore.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import java.util.HashMap;
 
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityRelationship;
@@ -40,12 +40,12 @@ public class EdgeEntity extends BaseEntity {
         checkNotNull(label);
 
 
-        Tuple headTuple = new Tuple(HEAD, new EntityRelationship(head), setVisibility(new HashMap<String, String>(1), headVis));
-        Tuple tailTuple = new Tuple(TAIL, new EntityRelationship(tail), setVisibility(new HashMap<String, String>(1), tailVis));
+        Attribute headAttribute = new Attribute(HEAD, new EntityRelationship(head), setVisibility(new HashMap<String, String>(1), headVis));
+        Attribute tailAttribute = new Attribute(TAIL, new EntityRelationship(tail), setVisibility(new HashMap<String, String>(1), tailVis));
 
-        put(headTuple);
-        put(tailTuple);
-        put(new Tuple(LABEL, label));
+        put(headAttribute);
+        put(tailAttribute);
+        put(new Attribute(LABEL, label));
     }
 
     public EdgeEntity(String type, String id, Entity head, Entity tail, String label) {
@@ -54,7 +54,7 @@ public class EdgeEntity extends BaseEntity {
 
     public EdgeEntity(Entity entity) {
         super(entity.getType(), entity.getId());
-        putAll(entity.getTuples());
+        putAll(entity.getAttributes());
     }
 
     public EntityRelationship getHead() {

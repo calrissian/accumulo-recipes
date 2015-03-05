@@ -15,33 +15,38 @@
  */
 package org.calrissian.accumulorecipes.graphstore.impl;
 
-import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
-import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.support.tuple.MetadataBuilder;
-import org.calrissian.accumulorecipes.graphstore.model.Direction;
-import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
-import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.Tuple;
-import org.calrissian.mango.domain.entity.BaseEntity;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
+import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
+import org.calrissian.accumulorecipes.graphstore.model.Direction;
+import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
+import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityIndex;
+import org.junit.Before;
+import org.junit.Test;
 
 public class AccumuloGraphStoreTest {
 
@@ -56,18 +61,18 @@ public class AccumuloGraphStoreTest {
     public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
 
-        Tuple tuple = new Tuple("key1", "val1", new MetadataBuilder().setVisibility("U").build());
-        Tuple tuple2 = new Tuple("key2", "val2", new MetadataBuilder().setVisibility("U").build());
-        Tuple tuple3 = new Tuple("key3", "val3", new MetadataBuilder().setVisibility("U").build());
-        Tuple tuple4 = new Tuple("key4", "val4", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple = new Attribute("key1", "val1", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple2 = new Attribute("key2", "val2", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple3 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
+        Attribute tuple4 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
 
         vertex1.put(tuple);
         vertex1.put(tuple2);
         vertex2.put(tuple3);
         vertex2.put(tuple4);
 
-        Tuple edgeTuple = new Tuple("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
-        edge.put(edgeTuple);
+        Attribute edgeAttribute = new Attribute("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
+        edge.put(edgeAttribute);
         Instance instance = new MockInstance();
         connector = instance.getConnector("root", "".getBytes());
         graphStore = new AccumuloEntityGraphStore(connector);
@@ -103,7 +108,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualEdge = get(results, 0);
-        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(new HashSet(edge.getAttributes()), new HashSet(actualEdge.getAttributes()));
         assertEquals(edge.getType(), actualEdge.getType());
         assertEquals(edge.getId(), actualEdge.getId());
 
@@ -125,7 +130,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualEdge = get(results, 0);
-        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(new HashSet(edge.getAttributes()), new HashSet(actualEdge.getAttributes()));
         assertEquals(edge.getType(), actualEdge.getType());
         assertEquals(edge.getId(), actualEdge.getId());
 
@@ -146,7 +151,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualEdge = get(results, 0);
-        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(new HashSet(edge.getAttributes()), new HashSet(actualEdge.getAttributes()));
         assertEquals(edge.getType(), actualEdge.getType());
         assertEquals(edge.getId(), actualEdge.getId());
 
@@ -167,7 +172,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualEdge = get(results, 0);
-        assertEquals(new HashSet(edge.getTuples()), new HashSet(actualEdge.getTuples()));
+        assertEquals(new HashSet(edge.getAttributes()), new HashSet(actualEdge.getAttributes()));
         assertEquals(edge.getType(), actualEdge.getType());
         assertEquals(edge.getId(), actualEdge.getId());
 
@@ -188,7 +193,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualVertex2 = get(results, 0);
-        assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
+        assertEquals(new HashSet(vertex2.getAttributes()), new HashSet(actualVertex2.getAttributes()));
         assertEquals(vertex2.getType(), actualVertex2.getType());
         assertEquals(vertex2.getId(), actualVertex2.getId());
 
@@ -209,7 +214,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualVertex1 = get(results, 0);
-        assertEquals(new HashSet(vertex1.getTuples()), new HashSet(actualVertex1.getTuples()));
+        assertEquals(new HashSet(vertex1.getAttributes()), new HashSet(actualVertex1.getAttributes()));
         assertEquals(vertex1.getType(), actualVertex1.getType());
         assertEquals(vertex1.getId(), actualVertex1.getId());
 
@@ -230,7 +235,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualVertex2 = get(results, 0);
-        assertEquals(new HashSet(vertex2.getTuples()), new HashSet(actualVertex2.getTuples()));
+        assertEquals(new HashSet(vertex2.getAttributes()), new HashSet(actualVertex2.getAttributes()));
         assertEquals(vertex2.getType(), actualVertex2.getType());
         assertEquals(vertex2.getId(), actualVertex2.getId());
 
@@ -250,7 +255,7 @@ public class AccumuloGraphStoreTest {
         assertEquals(1, size(results));
 
         Entity actualVertex1 = get(results, 0);
-        assertEquals(new HashSet(vertex1.getTuples()), new HashSet(actualVertex1.getTuples()));
+        assertEquals(new HashSet(vertex1.getAttributes()), new HashSet(actualVertex1.getAttributes()));
         assertEquals(vertex1.getType(), actualVertex1.getType());
         assertEquals(vertex1.getId(), actualVertex1.getId());
 

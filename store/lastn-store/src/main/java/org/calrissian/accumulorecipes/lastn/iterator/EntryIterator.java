@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.lastn.iterator;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.tuple.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.io.Serializables;
@@ -87,7 +87,7 @@ public class EntryIterator extends WrappingIterator {
     }
 
     /**
-     * For each index row in the lastN store, grab the associated getTuples (further down in the tablet) and construct
+     * For each index row in the lastN store, grab the associated getAttributes (further down in the tablet) and construct
      * the entry to be returned.
      *
      * @return
@@ -111,7 +111,7 @@ public class EntryIterator extends WrappingIterator {
             try {
                 sourceItr.seek(range, Collections.<ByteSequence>emptyList(), false);
 
-                Collection<Tuple> tuples = new ArrayList<Tuple>();
+                Collection<Attribute> tuples = new ArrayList<Attribute>();
                 while (sourceItr.hasTop()) {
 
                     Key nextKey = sourceItr.getTopKey();
@@ -127,7 +127,7 @@ public class EntryIterator extends WrappingIterator {
 
                         String vis = nextKey.getColumnVisibility().toString();
 
-                        Tuple tuple = new Tuple(
+                        Attribute tuple = new Attribute(
                                 keyValueDatatype[0],
                                 typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]),
                                 setVisibility(new HashMap<String, String>(1), vis)

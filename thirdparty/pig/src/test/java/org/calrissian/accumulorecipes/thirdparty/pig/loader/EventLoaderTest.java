@@ -47,7 +47,7 @@ import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.accumulorecipes.test.MockRecordReader;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Before;
@@ -79,9 +79,9 @@ public class EventLoaderTest extends AccumuloInputFormat {
         org.apache.pig.data.Tuple t;
         int count = 0;
 
-        Iterator<org.calrissian.mango.domain.Tuple> tuples = event.getTuples().iterator();
+        Iterator<org.calrissian.mango.domain.Attribute> tuples = event.getAttributes().iterator();
         while((t = loader.getNext()) != null) {
-            org.calrissian.mango.domain.Tuple tuple = tuples.next();
+            org.calrissian.mango.domain.Attribute tuple = tuples.next();
             count++;
             if(count == 1) {
                 assertEquals(event.getId(), t.get(0));
@@ -144,8 +144,8 @@ public class EventLoaderTest extends AccumuloInputFormat {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEventStore store = new AccumuloEventStore(connector);
         event = new BaseEvent(UUID.randomUUID().toString());
-        event.put(new Tuple("key1", "val1"));
-        event.put(new Tuple("key2", false));
+        event.put(new Attribute("key1", "val1"));
+        event.put(new Attribute("key2", false));
         store.save(singleton(event));
 
         EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());

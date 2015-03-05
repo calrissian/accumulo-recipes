@@ -15,6 +15,19 @@
 */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Arrays.asList;
+import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
@@ -32,35 +45,21 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.calrissian.accumulorecipes.thirdparty.pig.support.TupleStoreIterator;
 import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterator;
 import org.calrissian.accumulorecipes.commons.support.GettableTransform;
 import org.calrissian.accumulorecipes.entitystore.hadoop.EntityInputFormat;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
+import org.calrissian.accumulorecipes.thirdparty.pig.support.AttributeStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.uri.support.UriUtils;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Sets.newHashSet;
-import static java.util.Arrays.asList;
-import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
-
 public class EntityLoader extends LoadFunc implements Serializable {
 
     public static final String USAGE = "Usage: entity://indexTable/shardTable?user=&pass=&inst=&zk=&types=&auths=[&fields=]";
 
-    protected transient TupleStoreIterator<Entity> itr;
+    protected transient AttributeStoreIterator<Entity> itr;
     protected final TypeRegistry<String> registry = SIMPLE_TYPES;
     protected final QueryBuilder qb;
 
@@ -159,7 +158,7 @@ public class EntityLoader extends LoadFunc implements Serializable {
     public void prepareToRead(RecordReader recordReader, PigSplit pigSplit) throws IOException {
         RecordReaderValueIterator<Key, EntityWritable> rri = new RecordReaderValueIterator<Key, EntityWritable>(recordReader);
         Iterator<Entity> xformed = Iterators.transform(rri, new GettableTransform<Entity>());
-        itr = new TupleStoreIterator<Entity>(xformed);
+        itr = new AttributeStoreIterator<Entity>(xformed);
     }
 
 
@@ -169,7 +168,7 @@ public class EntityLoader extends LoadFunc implements Serializable {
         if(!itr.hasNext())
             return null;
 
-        org.calrissian.mango.domain.Tuple entityTuple = itr.next();
+        org.calrissian.mango.domain.Attribute entityAttribute = itr.next();
 
         /**
          * Create the pig tuple and hydrate with entity details. The format of the tuple is as follows:
@@ -178,9 +177,9 @@ public class EntityLoader extends LoadFunc implements Serializable {
         Tuple t = TupleFactory.getInstance().newTuple();
         t.append(itr.getTopStore().getType());
         t.append(itr.getTopStore().getId());
-        t.append(entityTuple.getKey());
-        t.append(registry.getAlias(entityTuple.getValue()));
-        t.append(registry.encode(entityTuple.getValue()));
+        t.append(entityAttribute.getKey());
+        t.append(registry.getAlias(entityAttribute.getValue()));
+        t.append(registry.encode(entityAttribute.getValue()));
 
 
         return t;

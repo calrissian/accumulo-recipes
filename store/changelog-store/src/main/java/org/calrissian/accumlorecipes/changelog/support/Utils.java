@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumlorecipes.changelog.support;
 
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -36,19 +36,19 @@ public class Utils {
     public static final String DATE_FORMAT = "yyyyMMddHHmmssSSS";
 
     /**
-     * Tuples are hashed by sorting them by their keys, normalized values, and visibilities.
+     * Attributes are hashed by sorting them by their keys, normalized values, and visibilities.
      *
      * @param entry
      * @return
      */
     public static byte[] hashEntry(Event entry, TypeRegistry<String> typeRegistry) {
 
-        List<Tuple> tuples = new ArrayList(entry.getTuples());
+        List<Attribute> tuples = new ArrayList(entry.getAttributes());
 
-        sort(tuples, new TupleComparator(typeRegistry));
+        sort(tuples, new AttributeComparator(typeRegistry));
 
         String tupleString = entry.getId();
-        for (Tuple tuple : tuples)
+        for (Attribute tuple : tuples)
             tupleString += tupleToString(tuple, typeRegistry) + ",";
 
         try {
@@ -89,7 +89,7 @@ public class Utils {
         return revTs;
     }
 
-    public static String tupleToString(Tuple tuple, TypeRegistry<String> typeRegistry) {
+    public static String tupleToString(Attribute tuple, TypeRegistry<String> typeRegistry) {
         return tuple.getKey() + NULL_BYTE + typeRegistry.encode(tuple.getValue()) + NULL_BYTE + tuple.getMetadata();
     }
 }

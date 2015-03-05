@@ -20,7 +20,7 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Before;
@@ -50,8 +50,8 @@ public class AccumuloGeoSpatialStoreTest {
     public void test_singleEntryReturns() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event entry = new BaseEvent();
-        entry.put(new Tuple("Key1", "Val1"));
-        entry.put(new Tuple("key2", "val2"));
+        entry.put(new Attribute("Key1", "Val1"));
+        entry.put(new Attribute("key2", "val2"));
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
 
@@ -64,12 +64,12 @@ public class AccumuloGeoSpatialStoreTest {
     public void test_singleEntryReturns_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event entry = new BaseEvent();
-        entry.put(new Tuple("Key1", "Val1"));
-        entry.put(new Tuple("key2", "val2"));
+        entry.put(new Attribute("Key1", "Val1"));
+        entry.put(new Attribute("key2", "val2"));
 
         Event entry2 = new BaseEvent();
-        entry2.put(new Tuple("Key1", "Val1"));
-        entry2.put(new Tuple("key2", "val2"));
+        entry2.put(new Attribute("Key1", "Val1"));
+        entry2.put(new Attribute("key2", "val2"));
 
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
@@ -84,16 +84,16 @@ public class AccumuloGeoSpatialStoreTest {
     public void test_multipleEntriesReturn_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event entry = new BaseEvent();
-        entry.put(new Tuple("Key1", "Val1"));
-        entry.put(new Tuple("key2", "val2"));
+        entry.put(new Attribute("Key1", "Val1"));
+        entry.put(new Attribute("key2", "val2"));
 
         Event entry2 = new BaseEvent();
-        entry2.put(new Tuple("Key1", "Val1"));
-        entry2.put(new Tuple("key2", "val2"));
+        entry2.put(new Attribute("Key1", "Val1"));
+        entry2.put(new Attribute("key2", "val2"));
 
         Event entry3 = new BaseEvent();
-        entry3.put(new Tuple("Key1", "Val1"));
-        entry3.put(new Tuple("key2", "val2"));
+        entry3.put(new Attribute("Key1", "Val1"));
+        entry3.put(new Attribute("key2", "val2"));
 
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));

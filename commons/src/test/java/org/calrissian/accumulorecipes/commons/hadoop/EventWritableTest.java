@@ -17,7 +17,7 @@ package org.calrissian.accumulorecipes.commons.hadoop;
 
 
 import com.google.common.collect.ImmutableMap;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Test;
@@ -34,7 +34,7 @@ public class EventWritableTest {
     public void testSerializesAndDeserializes() throws IOException {
 
         Event event = new BaseEvent("id");
-        event.put(new Tuple("key", "val", ImmutableMap.of("metaKey", "metaVal")));
+        event.put(new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal")));
 
         byte[] serialized = serialize(new EventWritable(event));
 

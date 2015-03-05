@@ -49,12 +49,12 @@ import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.QueryPlanner;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.domain.TupleStore;
+import org.calrissian.mango.domain.AttributeStore;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BaseQfdInputFormat<T extends TupleStore, W extends Settable> extends InputFormatBase<Key, W> {
+public abstract class BaseQfdInputFormat<T extends AttributeStore, W extends Settable> extends InputFormatBase<Key, W> {
 
     public static final Logger log = LoggerFactory.getLogger(BaseQfdInputFormat.class);
 

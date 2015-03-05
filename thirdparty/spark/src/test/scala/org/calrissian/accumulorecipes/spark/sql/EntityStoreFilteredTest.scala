@@ -23,7 +23,7 @@ import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.{SparkConf, SparkContext}
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils
-import org.calrissian.mango.domain.Tuple
+import org.calrissian.mango.domain.Attribute
 import org.calrissian.mango.domain.entity.BaseEntity
 import org.junit._
 import org.junit.rules.TemporaryFolder
@@ -68,8 +68,8 @@ object EntityStoreFilteredTest {
 
   private def persistEntities = {
     val entity = new BaseEntity("type", "id")
-    entity.put(new Tuple("key1", "val1"))
-    entity.put(new Tuple("key2", 5))
+    entity.put(new Attribute("key1", "val1"))
+    entity.put(new Attribute("key2", 5))
 
     entityStore.save(Collections.singleton(entity))
     entityStore.flush()
@@ -133,9 +133,9 @@ class EntityStoreFilteredTest {
   @Test
   def testFieldInSchemaMissingFromEventIsNull: Unit = {
     val entity = new BaseEntity("type", "id2")
-    entity.put(new Tuple("key1", "val2"))
-    entity.put(new Tuple("key2", 10))
-    entity.put(new Tuple("key3", 5))
+    entity.put(new Attribute("key1", "val2"))
+    entity.put(new Attribute("key2", 10))
+    entity.put(new Attribute("key3", 5))
     entityStore.save(Collections.singleton(entity))
     entityStore.flush
 

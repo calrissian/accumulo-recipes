@@ -49,7 +49,7 @@ import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.accumulorecipes.test.MockRecordReader;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.domain.Tuple;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.junit.Before;
@@ -83,9 +83,9 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         org.apache.pig.data.Tuple t;
         int count = 0;
 
-        Iterator<org.calrissian.mango.domain.Tuple> tuples = entity.getTuples().iterator();
+        Iterator<org.calrissian.mango.domain.Attribute> tuples = entity.getAttributes().iterator();
         while((t = loader.getNext()) != null) {
-            org.calrissian.mango.domain.Tuple tuple = tuples.next();
+            org.calrissian.mango.domain.Attribute tuple = tuples.next();
             count++;
             if(count == 1) {
                 assertEquals(entity.getType(), t.get(0));
@@ -148,8 +148,8 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = new BaseEntity("myType");
-        entity.put(new Tuple("key1", "val1"));
-        entity.put(new Tuple("key2", false));
+        entity.put(new Attribute("key1", "val1"));
+        entity.put(new Attribute("key2", false));
         store.save(singleton(entity));
 
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());

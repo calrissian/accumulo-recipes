@@ -34,12 +34,12 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionQueryXform;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToTupleCollectionWholeColFXform;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreQueryXform;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreWholeColFXform;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.accumulorecipes.commons.support.tuple.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.TypeRegistry;
@@ -62,7 +62,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
         @Override
         protected String buildKey(String type, String key) {
-            return buildTupleKey(type, key);
+            return buildAttributeKey(type, key);
         }
     }
 
@@ -80,16 +80,16 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
 
     @Override
-    protected String buildTupleKey(Event item, String key) {
-        return buildTupleKey(item.getType(), key);
+    protected String buildAttributeKey(Event item, String key) {
+        return buildAttributeKey(item.getType(), key);
     }
 
     @Override
-    protected long buildTupleTimestampForEntity(Event e) {
+    protected long buildAttributeTimestampForEntity(Event e) {
         return e.getTimestamp();
     }
 
-    private static final String buildTupleKey(String type, String key) {
+    private static final String buildAttributeKey(String type, String key) {
         return type + FI_TYPE_KEY_SEP + key;
     }
 
@@ -106,19 +106,19 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
 
 
-    public static class QueryXform extends KeyToTupleCollectionQueryXform<Event> {
+    public static class QueryXform extends KeyToAttributeStoreQueryXform<Event> {
 
         public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
-        protected Event buildTupleCollectionFromKey(Key k) {
+        protected Event buildAttributeCollectionFromKey(Key k) {
             return createEventFromkey(k);
         }
     }
 
-    public static class WholeColFXForm extends KeyToTupleCollectionWholeColFXform<Event> {
+    public static class WholeColFXForm extends KeyToAttributeStoreWholeColFXform<Event> {
         public WholeColFXForm(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);
         }

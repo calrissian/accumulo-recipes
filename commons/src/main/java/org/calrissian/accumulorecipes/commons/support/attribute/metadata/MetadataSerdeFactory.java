@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.commons.support.tuple.metadata;
+package org.calrissian.accumulorecipes.commons.support.attribute.metadata;
 
-import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
+import java.io.Serializable;
 
-public class SimpleMetadataSerdeFactory implements MetadataSerdeFactory {
+/**
+ * It's important that this class work with a default constructor as it will be getting newed up
+ * through reflection.
+ */
+public interface MetadataSerdeFactory extends Serializable {
 
-    @Override
-    public MetadataSerDe create() {
-        return new SimpleMetadataSerDe(SIMPLE_TYPES);
-    }
+    MetadataSerDe create();
 }
