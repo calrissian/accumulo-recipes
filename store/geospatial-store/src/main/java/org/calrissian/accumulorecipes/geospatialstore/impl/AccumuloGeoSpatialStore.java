@@ -18,9 +18,9 @@ package org.calrissian.accumulorecipes.geospatialstore.impl;
 import static java.lang.Math.abs;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.awt.geom.Point2D;
@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.AccumuloException;
@@ -49,36 +50,38 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 import org.calrissian.accumulorecipes.geospatialstore.GeoSpatialStore;
 import org.calrissian.accumulorecipes.geospatialstore.support.BoundingBoxFilter;
+import org.calrissian.accumulorecipes.geospatialstore.support.PrefixedColumnQualifierIterator;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeHelper;
 import org.calrissian.accumulorecipes.geospatialstore.support.QuadTreeScanRange;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
-import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 
 public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
     private static final String DEFAULT_TABLE_NAME = "geoStore";
-    private static Function<Map.Entry<Key, Value>, Event> xform = new Function<Map.Entry<Key, Value>, Event>() {
+    private static Function<Map.Entry<Key, Value>, Entity> xform = new Function<Map.Entry<Key, Value>, Entity>() {
         @Override
-        public Event apply(Map.Entry<Key, Value> keyValueEntry) {
+        public Entity apply(Map.Entry<Key, Value> keyValueEntry) {
 
-            String[] cfParts = splitPreserveAllTokens(keyValueEntry.getKey().getColumnFamily().toString(), NULL_BYTE);
-            Event entry = new BaseEvent(cfParts[0], Long.parseLong(cfParts[1]));
+            String cf = keyValueEntry.getKey().getColumnFamily().toString();
+            EntityBuilder entry = null;
             try {
                 List<Map.Entry<Key, Value>> map = RowEncoderUtil.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
                 for (Map.Entry<Key, Value> curEntry : map) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
+                    if(entry == null)
+                        entry =new EntityBuilder(cf, cqParts[0]);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
-                    Attribute attribute = new Attribute(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, String>(1), vis));
-                    entry.put(attribute);
+                    Attribute attribute = new Attribute(cqParts[3], registry.decode(cqParts[4], cqParts[5]), setVisibility(new HashMap<String, String>(1), vis));
+                    entry.attr(attribute);
                 }
-                return entry;
+                return entry.build();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -132,17 +135,17 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
         return String.format("%0" + getPartitionWidth() + "d%s%s", partition, PARTITION_DELIM, hash);
     }
 
-    protected String buildId(String id, long timestamp, Point2D.Double location) {
-        return String.format("%s%s%s%s%s%s%s", id, NULL_BYTE, timestamp, NULL_BYTE, location.getX(), NULL_BYTE, location.getY());
+    protected String buildId(String type) {
+        return type;
     }
 
-    protected String buildKeyValue(Attribute attribute) {
-        return attribute.getKey() + NULL_BYTE + registry.getAlias(attribute.getValue()) + NULL_BYTE + registry.encode(attribute.getValue());
+    protected String buildKeyValue(String id, Attribute attribute, Point2D.Double location) {
+        return id + NULL_BYTE + location.getX() + NULL_BYTE + location.getY() + NULL_BYTE + attribute.getKey() + NULL_BYTE + registry.getAlias(attribute.getValue()) + NULL_BYTE + registry.encode(attribute.getValue());
     }
 
     @Override
-    public void put(Iterable<Event> entries, Point2D.Double location) {
-        for (Event entry : entries) {
+    public void put(Iterable<Entity> entries, Point2D.Double location) {
+        for (Entity entry : entries) {
 
             int partition = abs(entry.getId().hashCode() % numPartitions);
 
@@ -151,10 +154,9 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
             for (Attribute attribute : entry.getAttributes()) {
                 try {
                     // put in the forward mutation
-                    m.put(new Text(buildId(entry.getId(), entry.getTimestamp(), location)),
-                            new Text(buildKeyValue(attribute)),
+                    m.put(new Text(buildId(entry.getType())),
+                            new Text(buildKeyValue(entry.getId(), attribute, location)),
                             new ColumnVisibility(getVisibility(attribute, "")),
-                            entry.getTimestamp(),
                             new Value("".getBytes()));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -179,7 +181,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
     }
 
     @Override
-    public CloseableIterable<Event> get(Rectangle2D.Double location, Auths auths) {
+    public CloseableIterable<Entity> get(Rectangle2D.Double location, Set<String> types, Auths auths) {
         Collection<QuadTreeScanRange> ranges =
                 helper.buildQueryRangesForBoundingBox(location, maxPrecision);
 
@@ -193,7 +195,10 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
             }
 
             scanner.setRanges(theRanges);
-            IteratorSetting setting = new IteratorSetting(7, WholeColumnFamilyIterator.class);
+            for(String type : types)
+                scanner.fetchColumnFamily(new Text(type));
+
+            IteratorSetting setting = new IteratorSetting(7, PrefixedColumnQualifierIterator.class);
             scanner.addScanIterator(setting);
 
             setting = new IteratorSetting(6, BoundingBoxFilter.class);

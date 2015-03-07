@@ -15,8 +15,8 @@
  */
 package org.calrissian.accumulorecipes.temporal.lastn;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -42,5 +42,5 @@ public interface TemporalLastNStore {
      * Gets the last-n events from the store in a holistic view of the specified groups
      * for the specified time range.
      */
-    CloseableIterable<Event> get(Date start, Date stop, Collection<String> groups, int n, Auths auths);
+    CloseableIterable<Event> get(Date start, Date stop, Set<String> groups, int n, Auths auths);
 }

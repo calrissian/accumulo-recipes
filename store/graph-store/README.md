@@ -9,10 +9,9 @@ Specifically, the Calrissian graph store implementation allows the modelling of 
 First, create a graph store:
 ```java
 Instance instance = new MockInstance();
-Connector connector = instance.getConnector("root", "".getBytes());
+Connector connector = instance.getConnector("root", new PasswordToken(""));
 GraphStore graphStore = new AccumuloEntityGraphStore(connector);
 ```
-
 
 ###Modelling and saving vertices and edges
 
@@ -20,19 +19,20 @@ As described above, modelling isn't too complicated at all. Any entity can be a 
 
 ```java
 Entity vertex1 = new EntityBuilder("Person", "1")
-    .attr(new Attribute("name", "John Smith"));
-    .attr(new Attribute("age", 34));
-    .attr(new Attribute("location", "Maryland"))
+    .attr("name", "John Smith")
+    .attr("age", 34)
+    .attr("location", "Maryland")
     .build();
 
-Entity vertex2 = new EntityBuilder("Person", "2");
-    .attr(new Attribute("name", "James Smith"));
-    .attr(new Attribute("age", 30));
-    .attr(new Attribute("location", "Virginia"))
+Entity vertex2 = new EntityBuilder("Person", "2")
+    .attr("name", "James Smith")
+    .attr("age", 30)
+    .attr("location", "Virginia")
     .build();
 
-EdgeEntity edge = new EdgeEntity("Relative", "1:2", vertex1, "", vertex2, "", "brother");
-edge.put(new Attribute("biological", true));
+EdgeEntity edge = new EdgeEntityBuilder("Relative", "1:2", vertex1, "", vertex2, "", "brother")
+    .attr("biological", true)
+    .build();
 ```
 What's convenient about this way of modelling entities is that the vertices are only associated with each other through an edge. This means when an edge is added or removed, the vertices do not need to be updated. This allows edges to be "enriched" at later times via system-level analytics and user enrichment.
 

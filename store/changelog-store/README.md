@@ -17,9 +17,10 @@ The Changelog effectively allows state to be summarized quickly so that the stat
 Take for a moment, an update that occurs on a system. Let's say a person's location was updated. We won't get into the specifics about how a person is modeled because that's outside of the scope of this recipe. Instead, let's dive into how I may model a person's location being changed:
 
 ```java
-Event changeEvent = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
-changeEvent.put(new Attribute("id", "person#1"));
-changeEvent.put(new Attribute("location", "Virginia"));
+Event changeEvent = new EventBuilder("eventType")
+    .attr("id", new EntityIndex("person", "1")
+    .attr("location", "Virginia")
+    .build();
 ```
 
 As it appears, a person with id 1 had their location updated to Virginia.

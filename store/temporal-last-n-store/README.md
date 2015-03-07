@@ -16,21 +16,24 @@ Now let's say we have a system where we are monitoring possible malicious activi
 First we'll construct a few StoreEntry objects that we can place in the store.
 
 ```java
-Event blogUpdate = new BaseEvent(UUID.randomUUID().toString());
-blogUpdate.put(new Attribute("link", "http://blogs-r-cool.com/", ""));
-blogUpdate.put(new Attribute("owner", "John Doe", ""));
-blogUpdate.put(new Attribute("updateType", "New Content Added", ""));
-blogUpdate.put(new Attribute("contentName", "The people we know", ""));
+Event blogUpdate = new EventBuilder("blogUpdate")
+    .attr("link", "http://blogs-r-cool.com/")
+    .attr("owner", "John Doe")
+    .attr("updateType", "New Content Added")
+    .attr("contentName", "The people we know")
+    .build();
 
-Event worldNews = new BaseEvent(UUID.randomUUID().toStirng());
-worldNews.add(new Attribute("provider", "CNN", ""));
-worldNews.add(new Attribute("headline", "Burglary in the grocery store", ""));
-worldNews.add(new Attribute("reporter", "Jane Doe", ""));
+Event worldNews = new EventBuilder("worldNews")
+    .attr("provider", "CNN")
+    .attr("headline", "Burglary in the grocery store")
+    .attr("reporter", "Jane Doe")
+    .build()
 
-Event emailUpdate = new BaseEvent(UUID.randomUUID().toString());
-emailUpdate.add(new Attribute("from", "thisguy@gmail.com", ""));
-emailUpdate.add(new Attribute("subject", "Things you should see before age 50", ""));
-emailUpdate.add(new Attribute("to", "yournamehere@gmail.com", ""));
+Event emailUpdate = new EventBuilder("emailUpdate")
+    .attr("from", "thisguy@gmail.com")
+    .attr("subject", "Things you should see before age 50")
+    .attr("to", "yournamehere@gmail.com")
+    .build()
 ```
 
 Now let's create a store and add the events above to the store under the appropriate groups.
@@ -57,7 +60,7 @@ String[] groups = new new String[] { "userName|blogUpdates", "userName|worldNews
 // set our time range to the last hour
 Date start = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
 Date stop = new Date();
-Iterable<Event> lastNEntries = store.get(start, stop, Arrays.asList(groups), 100, new Auths());
+Iterable<Event> lastNEntries = store.get(start, stop, Sets.newHashSet(groups), 100, new Auths());
 ```
 
 In the example above, we are querying the last 100 events across the groups 'userName|blogUpdates', 'userName|worldNews', and 'userName|emailUpdates'. This will merge the last n feeds together and provide a holistic view.

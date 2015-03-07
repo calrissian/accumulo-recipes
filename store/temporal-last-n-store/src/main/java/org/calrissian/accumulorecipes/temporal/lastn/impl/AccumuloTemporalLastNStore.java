@@ -30,12 +30,12 @@ import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.generate
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
 import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Function;
 import org.apache.accumulo.core.client.AccumuloException;
@@ -51,6 +51,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
@@ -61,8 +62,8 @@ import org.calrissian.accumulorecipes.temporal.lastn.TemporalLastNStore;
 import org.calrissian.accumulorecipes.temporal.lastn.support.EventMergeJoinIterable;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 import org.calrissian.mango.types.encoders.lexi.LongReverseEncoder;
 
@@ -80,19 +81,20 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     private final Function<List<Map.Entry<Key, Value>>, Event> entryXform = new Function<List<Map.Entry<Key, Value>>, Event>() {
         @Override
         public Event apply(List<Map.Entry<Key, Value>> entries) {
-            Event toReturn = null;
+            EventBuilder toReturn = null;
 
             for (Map.Entry<Key, Value> attributeCol : entries) {
                 String[] splits = splitPreserveAllTokens(new String(attributeCol.getValue().get()), NULL_BYTE);
                 String cq = attributeCol.getKey().getColumnQualifier().toString();
+                String[] cqParts = StringUtils.splitPreserveAllTokens(cq, ONE_BYTE);
                 int idx = cq.lastIndexOf(ONE_BYTE);
                 if (toReturn == null)
-                    toReturn = new BaseEvent(cq.substring(idx+1,cq.length()), encoder.decode(cq.substring(0, idx)));
+                    toReturn = new EventBuilder(cqParts[1], cqParts[2], encoder.decode(cqParts[0]));
                 String vis = splits[3];
-                toReturn.put(new Attribute(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String, String>(1), vis)));
+                toReturn.attr(new Attribute(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String,String>(1), vis)));
             }
 
-            return toReturn;
+            return toReturn.build();
         }
     };
 
@@ -133,7 +135,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 Mutation m = new Mutation(group + GROUP_DELIM + generateTimestamp(entry.getTimestamp(), TimeUnit.DAYS));
                 m.put(
                     new Text(generateTimestamp(entry.getTimestamp(), TimeUnit.MINUTES)),
-                    new Text(encoder.encode(entry.getTimestamp()) + ONE_BYTE + entry.getId()),
+                    new Text(encoder.encode(entry.getTimestamp()) + ONE_BYTE + entry.getType() + ONE_BYTE + entry.getId()),
                     new ColumnVisibility(getVisibility(attribute, "")),
                     new Value(buildEventValue(attribute).getBytes())
                 );
@@ -163,7 +165,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     }
 
     @Override
-    public CloseableIterable<Event> get(Date start, Date stop, Collection<String> groups, int n, Auths auths) {
+    public CloseableIterable<Event> get(Date start, Date stop, Set<String> groups, int n, Auths auths) {
 
         List<Iterable<Event>> cursors = new LinkedList<Iterable<Event>>();
         String stopDay = generateTimestamp(start.getTime(), TimeUnit.DAYS);

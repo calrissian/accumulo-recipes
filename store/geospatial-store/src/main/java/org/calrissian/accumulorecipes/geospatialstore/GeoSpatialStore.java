@@ -15,13 +15,14 @@
  */
 package org.calrissian.accumulorecipes.geospatialstore;
 
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
+import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.event.Event;
-
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 
 /**
  * A store that allows {@link Event} objects to be indexed at a given geo location and
@@ -32,12 +33,12 @@ public interface GeoSpatialStore {
     /**
      * Index store entries at the given point.
      */
-    void put(Iterable<Event> entry, Point2D.Double location);
+    void put(Iterable<Entity> entry, Point2D.Double location);
 
     void flush() throws Exception;
 
     /**
      * Return all {@link Event} objects that lie within the given bounding box
      */
-    CloseableIterable<Event> get(Rectangle2D.Double location, Auths auths);
+    CloseableIterable<Entity> get(Rectangle2D.Double location, Set<String> types,  Auths auths);
 }

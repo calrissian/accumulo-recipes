@@ -7,14 +7,20 @@ We tend to define events today in enterprise systems as an immutable object that
 Many of the stores in the Calrissian stack deal with objects modeled like events. A "StoreEntry" object is provided for such a purpose. Each store entry object must have an id, a timestamp, and at least one attribute to define it.
 
 ```java
+
+// create our attribute metadata (in this case different visibilities)
+Map<String,String> userAdmin = new MetadataBuilder().setVisibility("USER|ADMIN");
+Map<String,String> adminOnly = new MetadataBuilder().setVisibility("ADMIN");
+
 // create our event to contain the keys/values we plan to add to give it state
-Event event = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
+Event event = new EventBuilder("systemHealthUpdate")
 
 // add the state to the event
-event.put(new Attribute("systemName", "system1", "USER|ADMIN"));
-event.put(new Attribute("eventType", "status", "USER|ADMIN"));
-event.put(new Attribute("healthOK", true, "USER|ADMIN"));
-event.put(new Attribute("location", "Maryland", "ADMIN"));
+    .attr("systemName", "system1", userAdminMeta)
+    .attr("eventType", "status", userAdminMeta)
+    .attr("healthOK", true, userAdminMeta)
+    .attr("location", "Maryland", adminOnly)
+    .build();
 ```
 
 Here we've constructed an event to model the health status of a system. In this scenario, assume we have systems at several locations throughout an enterprise fabric. Perhaps we have a couple clouds located throughout the country but only users with ADMIN privileges can see those locations. 
@@ -93,8 +99,9 @@ First thing you'll want to do is probably to turn your json into an event. You'l
 ```java
 ObjectMapper objectMapper = new ObjectMapper();
 String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
-Event event = new BaseEvent();
-event.putAll(JsonAttributeStore.fromJson(json, objectMapper));
+Event event = new EventBuilder("locationChanged")
+    .attrs(JsonAttributeStore.fromJson(json, objectMapper))
+    .build()
 ```
 
 Now you can persist the event, as it's just a bunch of key/value attributes.

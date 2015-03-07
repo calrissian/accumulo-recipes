@@ -20,19 +20,21 @@ Let's set up a store that will keep only the last 100 entries for some index. We
 
 ```java
 Instance instance = new MockInstance();
-Connector connector = instance.getConnector("root", "secret".getBytes());
+Connector connector = instance.getConnector("root", new PasswordToken("secret"));
 
 // create a last-n store that only keeps the last 100 events for each index.
 // The only time the last n value is set is the first time the store is configured in Accumulo
 AccumuloLastNStore lastNStore = new AccumuloLastNStore(connector, 100);
 
-Event entry1 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
-entry1.put(new Attribute("key1", "val1", ""));
-entry1.put(new Attribute("key3", "val3", ""));
+Event entry1 = new EventBuilder("eventType")
+    .attr("key1", "val1")
+    .attr("key3", "val3")
+    .build()
 
-Event entry2 = new BaseEvent(UUID.randomUUID().toString(), System.currentTimeMillis());
-entry2.put(new Attribute("key1", "val1", ""));
-entry2.put(new Attribute("key3", "val3", ""));
+Event entry2 = new EventBuilder("eventType")
+    .attr("key1", "val1")
+    .attr("key3", "val3")
+    .build()
 
 lastNStore.put("index1", entry1);
 lastNStore.put("index1", entry2);

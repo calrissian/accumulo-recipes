@@ -15,23 +15,29 @@
  */
 package org.calrissian.accumulorecipes.geospatialstore.impl;
 
+import static java.util.Collections.singleton;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.UUID;
+
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.*;
+import com.google.common.collect.Sets;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
-import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-
-import static java.util.Collections.singleton;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class AccumuloGeoSpatialStoreTest {
 
@@ -49,13 +55,14 @@ public class AccumuloGeoSpatialStoreTest {
     @Test
     public void test_singleEntryReturns() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Event entry = new BaseEvent();
-        entry.put(new Attribute("Key1", "Val1"));
-        entry.put(new Attribute("key2", "val2"));
+        Entity entry = new EntityBuilder("type1", UUID.randomUUID().toString())
+            .attr(new Attribute("Key1", "Val1"))
+            .attr(new Attribute("key2", "val2"))
+            .build();
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
 
-        CloseableIterable<Event> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), new Auths());
+        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), new Auths());
         assertEquals(1, Iterables.size(entries));
         assertEquals(entry, Iterables.get(entries, 0));
     }
@@ -63,19 +70,21 @@ public class AccumuloGeoSpatialStoreTest {
     @Test
     public void test_singleEntryReturns_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Event entry = new BaseEvent();
-        entry.put(new Attribute("Key1", "Val1"));
-        entry.put(new Attribute("key2", "val2"));
+        Entity entry = new EntityBuilder("type1", UUID.randomUUID().toString())
+            .attr(new Attribute("Key1", "Val1"))
+            .attr(new Attribute("key2", "val2"))
+            .build();
 
-        Event entry2 = new BaseEvent();
-        entry2.put(new Attribute("Key1", "Val1"));
-        entry2.put(new Attribute("key2", "val2"));
+        Entity entry2 = new EntityBuilder("type1", UUID.randomUUID().toString())
+            .attr(new Attribute("Key1", "Val1"))
+            .attr(new Attribute("key2", "val2"))
+            .build();
 
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
         store.put(singleton(entry2), new Point2D.Double(-5, 1));
 
-        CloseableIterable<Event> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), new Auths());
+        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), new Auths());
         assertEquals(1, Iterables.size(entries));
         assertEquals(entry, Iterables.get(entries, 0));
     }
@@ -83,33 +92,37 @@ public class AccumuloGeoSpatialStoreTest {
     @Test
     public void test_multipleEntriesReturn_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Event entry = new BaseEvent();
-        entry.put(new Attribute("Key1", "Val1"));
-        entry.put(new Attribute("key2", "val2"));
+        Entity entry = new EntityBuilder("type1", UUID.randomUUID().toString())
+            .attr(new Attribute("Key1", "Val1"))
+            .attr(new Attribute("key2", "val2"))
+            .build();
 
-        Event entry2 = new BaseEvent();
-        entry2.put(new Attribute("Key1", "Val1"));
-        entry2.put(new Attribute("key2", "val2"));
+        Entity entry2 = new EntityBuilder("type1", UUID.randomUUID().toString())
+            .attr(new Attribute("Key1", "Val1"))
+            .attr(new Attribute("key2", "val2"))
+            .build();
 
-        Event entry3 = new BaseEvent();
-        entry3.put(new Attribute("Key1", "Val1"));
-        entry3.put(new Attribute("key2", "val2"));
+        Entity entry3 = new EntityBuilder("type1", UUID.randomUUID().toString())
+            .attr(new Attribute("Key1", "Val1"))
+            .attr(new Attribute("key2", "val2"))
+            .build();
+
 
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
         store.put(singleton(entry2), new Point2D.Double(1, 1));
         store.put(singleton(entry3), new Point2D.Double(1, -1));
 
-        CloseableIterable<Event> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), new Auths());
+        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), new Auths());
         assertEquals(3, Iterables.size(entries));
 
-        Event actualEntry1 = Iterables.get(entries, 0);
+        Entity actualEntry1 = Iterables.get(entries, 0);
         assertTrue(actualEntry1.equals(entry) || actualEntry1.equals(entry2) || actualEntry1.equals(entry3));
 
-        Event actualEntry2 = Iterables.get(entries, 0);
+        Entity actualEntry2 = Iterables.get(entries, 0);
         assertTrue(actualEntry2.equals(entry) || actualEntry2.equals(entry2) || actualEntry2.equals(entry3));
 
-        Event actualEntry3 = Iterables.get(entries, 0);
+        Entity actualEntry3 = Iterables.get(entries, 0);
         assertTrue(actualEntry3.equals(entry) || actualEntry3.equals(entry2) || actualEntry3.equals(entry3));
     }
 

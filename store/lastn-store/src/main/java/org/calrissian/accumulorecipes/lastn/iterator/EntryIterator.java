@@ -18,6 +18,7 @@ package org.calrissian.accumulorecipes.lastn.iterator;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import java.io.IOException;
@@ -38,8 +39,7 @@ import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
-import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.io.Serializables;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -139,12 +139,16 @@ public class EntryIterator extends WrappingIterator {
                     }
                 }
 
-                Event entry = new BaseEvent(entryId, timestamp);
-                writable.set(entry);
+                int oneByte = entryId.indexOf(ONE_BYTE);
+                String finalType = entryId.substring(0, oneByte);
+                String finalId = entryId.substring(oneByte+1, entryId.length());
+
+                EventBuilder entry = new EventBuilder(finalType, finalId, timestamp);
 
                 if (attributes.size() > 0)
-                    entry.putAll(attributes);
+                    entry.attrs(attributes);
 
+                writable.set(entry.build());
                 return new Value(serialize(writable));
 
             } catch (Exception e) {

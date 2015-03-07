@@ -15,10 +15,15 @@
  */
 package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
+import static org.junit.Assert.assertEquals;
 import java.util.Date;
 import java.util.HashSet;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -33,12 +38,6 @@ import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.junit.Before;
 import org.junit.Test;
-
-import static java.lang.System.currentTimeMillis;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertEquals;
 
 public class AccumuloTemporalLastNTest {
 
@@ -134,7 +133,7 @@ public class AccumuloTemporalLastNTest {
 
 
         Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
-            asList(new String[] {"group", "group1"}), 2, new Auths());
+            Sets.newHashSet("group", "group1"), 2, new Auths());
 
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
@@ -174,7 +173,7 @@ public class AccumuloTemporalLastNTest {
 
 
         Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
-            asList(new String[] {"group", "group1"}), 3, new Auths());
+            Sets.newHashSet("group", "group1"), 3, new Auths());
 
 
         Event actualEntry = Iterables.get(results, 0);

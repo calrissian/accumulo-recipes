@@ -22,6 +22,7 @@ import static org.calrissian.accumlorecipes.changelog.support.BucketSize.FIVE_MI
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestamp;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.reverseTimestampToNormalTime;
 import static org.calrissian.accumlorecipes.changelog.support.Utils.truncatedReverseTimestamp;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
@@ -143,7 +144,7 @@ public class AccumuloChangelogStore implements ChangelogStore {
                 Mutation m = new Mutation(Long.toString(truncatedReverseTimestamp(change.getTimestamp(), bucketSize)));
                 try {
                     Text reverseTimestamp = new Text(Long.toString(reverseTimestamp(change.getTimestamp())));
-                    m.put(reverseTimestamp, new Text(change.getId()), change.getTimestamp(),
+                    m.put(reverseTimestamp, new Text(change.getType() + NULL_BYTE + change.getId()), change.getTimestamp(),
                             new Value(serialize(shared)));
                     writer.addMutation(m);
                 } catch (Exception e) {
