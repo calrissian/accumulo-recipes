@@ -21,7 +21,7 @@ import static com.google.common.io.Resources.getResource;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.sort;
-import static org.calrissian.mango.json.util.store.JsonTupleStore.fromJson;
+import static org.calrissian.mango.json.util.store.JsonAttributeStore.fromJson;
 import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,6 +38,7 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
@@ -47,7 +48,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.json.util.store.JsonTupleStore.FlattenedLevelsComparator;
+import org.calrissian.mango.json.util.store.JsonAttributeStore.FlattenedLevelsComparator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -139,7 +140,7 @@ public class JsonEventStoreTest {
     }
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance("jsonTest").getConnector("root", "".getBytes());
+        return new MockInstance("jsonTest").getConnector("root", new PasswordToken(""));
     }
 
     @Before
