@@ -15,13 +15,21 @@
  */
 package org.calrissian.accumulorecipes.graphstore.support;
 
-import org.apache.accumulo.core.data.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+
+import com.google.common.collect.Maps;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.hadoop.io.Text;
-
-import java.io.*;
-import java.util.*;
+import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 
 
 /**
@@ -31,8 +39,7 @@ import java.util.*;
 public class EdgeGroupingIterator implements SortedKeyValueIterator<Key, Value> {
 
 
-    List<Key> keys = new ArrayList<Key>();
-    List<Value> values = new ArrayList<Value>();
+    Collection<Map.Entry<Key,Value>> keysValues = new ArrayList<Map.Entry<Key,Value>>();
     private SortedKeyValueIterator<Key, Value> sourceIter;
     private Key topKey = null;
     private Value topValue = null;
@@ -45,85 +52,6 @@ public class EdgeGroupingIterator implements SortedKeyValueIterator<Key, Value> 
         this.sourceIter = source;
     }
 
-    // decode a bunch of key value pairs that have been encoded into a single value
-    public static SortedMap<Key, Value> decodeRow(Key rowKey, Value rowValue) throws IOException {
-        SortedMap<Key, Value> map = new TreeMap<Key, Value>();
-        ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
-        DataInputStream din = new DataInputStream(in);
-        int numKeys = din.readInt();
-        for (int i = 0; i < numKeys; i++) {
-            byte[] cf;
-            byte[] cq;
-            byte[] cv;
-            byte[] valBytes;
-            // read the col fam
-            {
-                int len = din.readInt();
-                cf = new byte[len];
-                din.read(cf);
-            }
-            // read the col qual
-            {
-                int len = din.readInt();
-                cq = new byte[len];
-                din.read(cq);
-            }
-            // read the col visibility
-            {
-                int len = din.readInt();
-                cv = new byte[len];
-                din.read(cv);
-            }
-            // read the timestamp
-            long timestamp = din.readLong();
-            // read the value
-            {
-                int len = din.readInt();
-                valBytes = new byte[len];
-                din.read(valBytes);
-            }
-            map.put(new Key(rowKey.getRowData().toArray(), cf, cq, cv, timestamp, false, false), new Value(valBytes, false));
-        }
-        return map;
-    }
-
-    // take a stream of keys and values and output a value that encodes everything but their row
-    // keys and values must be paired one for one
-    public static Value encodeRow(List<Key> keys, List<Value> values) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        DataOutputStream dout = new DataOutputStream(out);
-        dout.writeInt(keys.size());
-        for (int i = 0; i < keys.size(); i++) {
-            Key k = keys.get(i);
-            Value v = values.get(i);
-            // write the colfam
-            {
-                ByteSequence bs = k.getColumnFamilyData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the colqual
-            {
-                ByteSequence bs = k.getColumnQualifierData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the column visibility
-            {
-                ByteSequence bs = k.getColumnVisibilityData();
-                dout.writeInt(bs.length());
-                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
-            }
-            // write the timestamp
-            dout.writeLong(k.getTimestamp());
-            // write the value
-            byte[] valBytes = v.get();
-            dout.writeInt(valBytes.length);
-            dout.write(valBytes);
-        }
-
-        return new Value(out.toByteArray());
-    }
 
     private void prepKeys() throws IOException {
         if (topKey != null)
@@ -139,30 +67,28 @@ public class EdgeGroupingIterator implements SortedKeyValueIterator<Key, Value> 
             currentCF = new Text(sourceIter.getTopKey().getColumnFamily());
             currentCQ = new Text(sourceIter.getTopKey().getColumnQualifier());
 
-            keys.clear();
-            values.clear();
+            keysValues.clear();
             while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
                     sourceIter.getTopKey().getColumnFamily().equals(currentCF) &&
                     sourceIter.getTopKey().getColumnQualifier().toString().startsWith(currentCQ.toString())) {
 
-                keys.add(new Key(sourceIter.getTopKey()));
-                values.add(new Value(sourceIter.getTopValue()));
+                keysValues.add(Maps.immutableEntry(sourceIter.getTopKey(), sourceIter.getTopValue()));
                 sourceIter.next();
             }
-        } while (!filter(currentRow, keys, values));
+        } while (!filter(currentRow, keysValues));
 
         topKey = new Key(currentRow, currentCF, new Text(currentCQ));
-        topValue = encodeRow(keys, values);
+        topValue = RowEncoderUtil.encodeRow(keysValues);
 
     }
 
     /**
-     * @param currentRow All keys have this in their row portion (do not modify!).
+     * @param currentRow All keysValues have this in their row portion (do not modify!).
      * @param keys       One key for each key in the row, ordered as they are given by the source iterator (do not modify!).
-     * @param values     One value for each key in keys, ordered to correspond to the ordering in keys (do not modify!).
+     * @param values     One value for each key in keysValues, ordered to correspond to the ordering in keysValues (do not modify!).
      * @return true if we want to keep the row, false if we want to skip it
      */
-    protected boolean filter(Text currentRow, List<Key> keys, List<Value> values) {
+    protected boolean filter(Text currentRow, Collection<Map.Entry<Key,Value>> keysValues) {
         return true;
     }
 

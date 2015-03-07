@@ -44,7 +44,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -65,6 +64,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
+import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
@@ -109,9 +109,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             try {
                 EntityIndex edgeRel = (EntityIndex) typeRegistry.decode(ENTITY_INDEX_ALIAS, edge);
                 EntityBuilder entity = new EntityBuilder(edgeRel.getType(), edgeRel.getId());
-                SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
+                List<Map.Entry<Key, Value>> entries = RowEncoderUtil.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
-                for (Map.Entry<Key, Value> entry : entries.entrySet()) {
+                for (Map.Entry<Key, Value> entry : entries) {
                     if (entry.getKey().getColumnQualifier().toString().indexOf(ONE_BYTE) == -1)
                         continue;
 
