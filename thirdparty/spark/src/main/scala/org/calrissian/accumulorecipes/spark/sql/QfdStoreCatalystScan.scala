@@ -106,7 +106,7 @@ abstract class QfdStoreCatalystScan(inst: String, zk: String, user: String, pass
      * The framework depends on the values being placed into the row in the same order in which they appear in the requiredColumns array.
      * Making a note here in case this is changed in the future- because it took a while to figure out.
      */
-    val row = new GenericMutableRow(schema.fields.length) // Still want to keep the raw event so that we can re-explode any possibly flattened tuples later
+    val row = new GenericMutableRow(schema.fields.length) // Still want to keep the raw event so that we can re-explode any possibly flattened attributes later
     columns.zipWithIndex.foreach(it => {
       val schemaField = schema.apply(it._1)
       schemaField match {

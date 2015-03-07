@@ -1,6 +1,6 @@
 #Entity Store Accumulo Recipe
 
-Entities are objects that can be modeled like things in the real world. They have a type, an id, and some number of tuples (key/value/visiblity) that describe their state. A person can be an entity. A system can be an entity. Entities can reference each other by creating first-class relationships to other entities (or, through the pluggable type system, to anything- events, metrics, etc...). The unique thing about the entity store vs. the event store is that, unlike events, entities are not assumed to have occurred at some discrete point in time. That is, where an Event is defined by its timestamp, an Entity is defined by its type. 
+Entities are objects that can be modeled like things in the real world. They have a type, an id, and some number of attributes (key/value/visiblity) that describe their state. A person can be an entity. A system can be an entity. Entities can reference each other by creating first-class relationships to other entities (or, through the pluggable type system, to anything- events, metrics, etc...). The unique thing about the entity store vs. the event store is that, unlike events, entities are not assumed to have occurred at some discrete point in time. That is, where an Event is defined by its timestamp, an Entity is defined by its type.
 
 ##Using the Entity Store
 
@@ -52,7 +52,7 @@ CloseableIterable<Entity> entities = entityStore.query(Collections.singleton("Pe
 
 ## Persisting and querying JSON
 
-Mango provides a utility for flattening json into a collection of tuples that can be used to hydrate entity objects. The same utility can also be used to re-expand the flattened tuples back into json. This allows users to quickly get their data into the entity store without spending too much time worrying about object parsing and translation.
+Mango provides a utility for flattening json into a collection of attributes that can be used to hydrate entity objects. The same utility can also be used to re-expand the flattened attributes back into json. This allows users to quickly get their data into the entity store without spending too much time worrying about object parsing and translation.
 
 First thing you'll want to do is probably to turn your json into an entity. You'll need a Jackson ```ObjectMapper```:
 ```java
@@ -62,7 +62,7 @@ Entity entity = new BaseEntity("Person", "1");
 entity.putAll(JsonAttributeStore.fromJson(json, objectMapper));
 ```
 
-Now you can persist the entity, as it's just a bunch of key/value tuples.
+Now you can persist the entity, as it's just a bunch of key/value attributes.
 ```java
 entityStore.save(Collections.singleton(entity));
 entityStore.flush();
@@ -88,5 +88,5 @@ Another defining factor for events vs. entities is that events tend to be immuta
 
 The referential integrity bit is quite important to what makes this store useful. Many graph databases tend to want to control the identifier creation layer to guarantee referential integrity. This often forces users to make very bad design decisions as they need to query 2 vertices before they can link an edge to them. Further, if they know they may need those vertices further, they end up writing caching mechanisms to stick as many of the vertices in memory as possible. This breaks down with large graphs and eliminates the possiblity for bulk ingest in most cases (in fact, many graph databases like Titan and Neo4j allow you to turn off referential integrity so you can bulk ingest but you are still stuck using their identification scheme).
 
-What if an id was just a string and it was up to the user to determine what it meant, how unique it should be, and even more importantly, how it was created? When we model data in a SQL database, the first thing we ask ourselves is "what makes each row unique?". We tend to model entities the same way. Where the tuples that make the entity unique from other entities are used to construct that entity's id. When an entity's id can be based on some natural key of properties that make it unique, it also becomes deterministic. Further, links to other entities also become deterministic. In this way, entities can point to other entities by knowing simple things about the entities in which they point. The nice part of this scheme is that it doesn't forbid you from still querying an entity to link to it when the id is not so straightforward, it just gives you the ability to link to ids without querying when it's possible.
+What if an id was just a string and it was up to the user to determine what it meant, how unique it should be, and even more importantly, how it was created? When we model data in a SQL database, the first thing we ask ourselves is "what makes each row unique?". We tend to model entities the same way. Where the attributes that make the entity unique from other entities are used to construct that entity's id. When an entity's id can be based on some natural key of properties that make it unique, it also becomes deterministic. Further, links to other entities also become deterministic. In this way, entities can point to other entities by knowing simple things about the entities in which they point. The nice part of this scheme is that it doesn't forbid you from still querying an entity to link to it when the id is not so straightforward, it just gives you the ability to link to ids without querying when it's possible.
 

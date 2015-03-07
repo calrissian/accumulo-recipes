@@ -158,14 +158,14 @@ public class AccumuloLastNStore implements LastNStore {
         Mutation indexMutation = new Mutation(group);
         indexMutation.put(NULL_BYTE + "INDEX", "", new ColumnVisibility(), entry.getTimestamp(), new Value(entry.getId().getBytes()));
 
-        for (Attribute tuple : entry.getAttributes()) {
+        for (Attribute attribute : entry.getAttributes()) {
             String fam = String.format("%s%s", END_BYTE, entry.getId());
-            Object value = tuple.getValue();
+            Object value = attribute.getValue();
             try {
                 String serialize = typeRegistry.encode(value);
                 String aliasForType = typeRegistry.getAlias(value);
-                String qual = String.format("%s%s%s%s%s", tuple.getKey(), NULL_BYTE, serialize, NULL_BYTE, aliasForType);
-                indexMutation.put(fam, qual, new ColumnVisibility(getVisibility(tuple, "")), entry.getTimestamp(),
+                String qual = String.format("%s%s%s%s%s", attribute.getKey(), NULL_BYTE, serialize, NULL_BYTE, aliasForType);
+                indexMutation.put(fam, qual, new ColumnVisibility(getVisibility(attribute, "")), entry.getTimestamp(),
                         new Value("".getBytes()));
             } catch (Exception e) {
                 throw new RuntimeException(e);

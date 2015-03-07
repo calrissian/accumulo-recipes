@@ -111,7 +111,7 @@ public class EntryIterator extends WrappingIterator {
             try {
                 sourceItr.seek(range, Collections.<ByteSequence>emptyList(), false);
 
-                Collection<Attribute> tuples = new ArrayList<Attribute>();
+                Collection<Attribute> attributes = new ArrayList<Attribute>();
                 while (sourceItr.hasTop()) {
 
                     Key nextKey = sourceItr.getTopKey();
@@ -127,14 +127,14 @@ public class EntryIterator extends WrappingIterator {
 
                         String vis = nextKey.getColumnVisibility().toString();
 
-                        Attribute tuple = new Attribute(
+                        Attribute attribute = new Attribute(
                                 keyValueDatatype[0],
                                 typeRegistry.decode(keyValueDatatype[2], keyValueDatatype[1]),
                                 setVisibility(new HashMap<String, String>(1), vis)
                         );
 
 
-                        tuples.add(tuple);
+                        attributes.add(attribute);
                         timestamp = nextKey.getTimestamp();
                     }
                 }
@@ -142,8 +142,8 @@ public class EntryIterator extends WrappingIterator {
                 Event entry = new BaseEvent(entryId, timestamp);
                 writable.set(entry);
 
-                if (tuples.size() > 0)
-                    entry.putAll(tuples);
+                if (attributes.size() > 0)
+                    entry.putAll(attributes);
 
                 return new Value(serialize(writable));
 

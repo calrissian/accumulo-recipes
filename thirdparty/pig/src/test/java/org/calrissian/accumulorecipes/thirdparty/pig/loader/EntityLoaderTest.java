@@ -83,22 +83,22 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         org.apache.pig.data.Tuple t;
         int count = 0;
 
-        Iterator<org.calrissian.mango.domain.Attribute> tuples = entity.getAttributes().iterator();
+        Iterator<org.calrissian.mango.domain.Attribute> attributes = entity.getAttributes().iterator();
         while((t = loader.getNext()) != null) {
-            org.calrissian.mango.domain.Attribute tuple = tuples.next();
+            org.calrissian.mango.domain.Attribute attribute = attributes.next();
             count++;
             if(count == 1) {
                 assertEquals(entity.getType(), t.get(0));
                 assertEquals(entity.getId(), t.get(1));
-                assertEquals(tuple.getKey(), t.get(2));
-                assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
-                assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
+                assertEquals(attribute.getKey(), t.get(2));
+                assertEquals(loader.registry.getAlias(attribute.getValue()), t.get(3));
+                assertEquals(loader.registry.encode(attribute.getValue()), t.get(4));
             } else if(count == 2) {
                 assertEquals(entity.getType(), t.get(0));
                 assertEquals(entity.getId(), t.get(1));
-                assertEquals(tuple.getKey(), t.get(2));
-                assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
-                assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
+                assertEquals(attribute.getKey(), t.get(2));
+                assertEquals(loader.registry.getAlias(attribute.getValue()), t.get(3));
+                assertEquals(loader.registry.encode(attribute.getValue()), t.get(4));
             }
         }
 

@@ -30,12 +30,12 @@ public class AttributeWritableTest {
     @Test
     public void testSerializesAndDeserializes() throws IOException {
 
-        Attribute tuple = new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal"));
+        Attribute attribute = new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal"));
 
-        byte[] serialized = serialize(new AttributeWritable(tuple));
+        byte[] serialized = serialize(new AttributeWritable(attribute));
 
         Attribute actual = asWritable(serialized, AttributeWritable.class).get();
-        assertEquals(tuple, actual);
+        assertEquals(attribute, actual);
     }
 
 

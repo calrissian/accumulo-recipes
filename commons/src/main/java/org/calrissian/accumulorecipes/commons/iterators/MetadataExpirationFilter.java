@@ -84,7 +84,7 @@ public class MetadataExpirationFilter extends WrappingIterator {
 
     /**
      * Utility method used both internally and externally to determine when a key should expire based
-     * on a dynamic expiration in the metadata of a tuple.
+     * on a dynamic expiration in the metadata of a attribute.
      * @param expiration
      * @param timestamp
      * @return

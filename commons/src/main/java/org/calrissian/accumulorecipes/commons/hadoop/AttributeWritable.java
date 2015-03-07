@@ -16,6 +16,7 @@
 package org.calrissian.accumulorecipes.commons.hadoop;
 
 
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -29,18 +30,16 @@ import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.types.TypeRegistry;
 
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-
 public class AttributeWritable implements Writable, Gettable<Attribute>, Settable<Attribute>{
 
-    private Attribute tuple;
+    private Attribute attribute;
     private TypeRegistry<String> typeRegistry = LEXI_TYPES;
 
     public AttributeWritable() {
     }
 
-    public AttributeWritable(Attribute tuple) {
-        this.tuple = tuple;
+    public AttributeWritable(Attribute attribute) {
+        this.attribute = attribute;
     }
 
 
@@ -51,12 +50,12 @@ public class AttributeWritable implements Writable, Gettable<Attribute>, Settabl
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
-        dataOutput.writeUTF(tuple.getKey());
-        dataOutput.writeUTF(typeRegistry.getAlias(tuple.getValue()));
-        dataOutput.writeUTF(typeRegistry.encode(tuple.getValue()));
+        dataOutput.writeUTF(attribute.getKey());
+        dataOutput.writeUTF(typeRegistry.getAlias(attribute.getValue()));
+        dataOutput.writeUTF(typeRegistry.encode(attribute.getValue()));
 
 
-        Set<Map.Entry<String, Object>> metaMap = tuple.getMetadata().entrySet();
+        Set<Map.Entry<String, Object>> metaMap = attribute.getMetadata().entrySet();
         int finalMeta = 0;
         for(Map.Entry<String,Object> meta : metaMap) {
             if(meta.getValue() != null)
@@ -71,9 +70,6 @@ public class AttributeWritable implements Writable, Gettable<Attribute>, Settabl
                 dataOutput.writeUTF(typeRegistry.encode(meta.getValue()));
             }
         }
-
-
-
     }
 
     @Override
@@ -91,16 +87,16 @@ public class AttributeWritable implements Writable, Gettable<Attribute>, Settabl
             metadata.put(metaKey, typeRegistry.decode(metaType, metaVal));
         }
 
-        tuple = new Attribute(key, typeRegistry.decode(type, val), metadata);
+        attribute = new Attribute(key, typeRegistry.decode(type, val), metadata);
     }
 
     @Override
     public Attribute get() {
-        return tuple;
+        return attribute;
     }
 
     @Override
     public void set(Attribute item) {
-        this.tuple = item;
+        this.attribute = item;
     }
 }

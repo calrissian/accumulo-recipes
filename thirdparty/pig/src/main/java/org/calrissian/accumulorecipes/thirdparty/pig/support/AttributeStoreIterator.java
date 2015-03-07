@@ -25,26 +25,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class AttributeStoreIterator<T extends AttributeStore> extends AbstractIterator<Attribute> {
 
-    Iterator<T> tupleCollections;
+    Iterator<T> attributeCollections;
     T curAttributeCollection;
-    Iterator<Attribute> tuples;
+    Iterator<Attribute> attributes;
 
-    public AttributeStoreIterator(Iterator<T> tupleCollections) {
-        checkNotNull(tupleCollections);
-        this.tupleCollections = tupleCollections;
+    public AttributeStoreIterator(Iterator<T> attributeCollections) {
+        checkNotNull(attributeCollections);
+        this.attributeCollections = attributeCollections;
     }
 
     @Override
     protected Attribute computeNext() {
 
-        while((tuples == null || !tuples.hasNext()) &&
-            tupleCollections.hasNext()) {
-            curAttributeCollection = tupleCollections.next();
-            tuples = curAttributeCollection.getAttributes().iterator();
+        while((attributes == null || !attributes.hasNext()) &&
+            attributeCollections.hasNext()) {
+            curAttributeCollection = attributeCollections.next();
+            attributes = curAttributeCollection.getAttributes().iterator();
         }
 
-        if(tuples != null && tuples.hasNext())
-            return tuples.next();
+        if(attributes != null && attributes.hasNext())
+            return attributes.next();
 
         return endOfData();
     }

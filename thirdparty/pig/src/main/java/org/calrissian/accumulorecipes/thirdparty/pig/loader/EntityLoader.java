@@ -171,7 +171,7 @@ public class EntityLoader extends LoadFunc implements Serializable {
         org.calrissian.mango.domain.Attribute entityAttribute = itr.next();
 
         /**
-         * Create the pig tuple and hydrate with entity details. The format of the tuple is as follows:
+         * Create the pig attribute and hydrate with entity details. The format of the attribute is as follows:
          * (type, id, key, datatype, value, visiblity)
          */
         Tuple t = TupleFactory.getInstance().newTuple();

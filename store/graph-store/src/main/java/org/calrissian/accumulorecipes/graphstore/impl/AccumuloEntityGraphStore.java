@@ -120,8 +120,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     String[] keyALiasValue = splitPreserveAllTokens(qualParts[1], NULL_BYTE);
 
                     String vis = entry.getKey().getColumnVisibility().toString();
-                    Attribute tuple = new Attribute(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, String>(1), vis));
-                    entity.put(tuple);
+                    Attribute attribute = new Attribute(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, String>(1), vis));
+                    entity.put(attribute);
 
                 }
 
@@ -293,20 +293,20 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                     reverse.put(new Text(IN.toString() + NULL_BYTE + label), new Text(edgeEncoded + NULL_BYTE + fromEncoded),
                             new ColumnVisibility(fromVertexVis), EMPTY_VALUE);
 
-                    for (Attribute tuple : entity.getAttributes()) {
-                        String key = tuple.getKey();
-                        String alias = typeRegistry.getAlias(tuple.getValue());
-                        String value = typeRegistry.encode(tuple.getValue());
+                    for (Attribute attribute : entity.getAttributes()) {
+                        String key = attribute.getKey();
+                        String alias = typeRegistry.getAlias(attribute.getValue());
+                        String value = typeRegistry.encode(attribute.getValue());
 
                         String keyAliasValue = key + NULL_BYTE + alias + NULL_BYTE + value;
 
                         forward.put(new Text(OUT.toString() + NULL_BYTE + label),
                                 new Text(edgeEncoded + NULL_BYTE + toEncoded + ONE_BYTE + keyAliasValue),
-                                new ColumnVisibility(getVisibility(tuple, "")), EMPTY_VALUE);
+                                new ColumnVisibility(getVisibility(attribute, "")), EMPTY_VALUE);
 
                         reverse.put(new Text(IN.toString() + NULL_BYTE + label),
                                 new Text(edgeEncoded + NULL_BYTE + fromEncoded + ONE_BYTE + keyAliasValue),
-                                new ColumnVisibility(getVisibility(tuple, "")), EMPTY_VALUE);
+                                new ColumnVisibility(getVisibility(attribute, "")), EMPTY_VALUE);
                     }
 
                     writer.addMutation(forward);

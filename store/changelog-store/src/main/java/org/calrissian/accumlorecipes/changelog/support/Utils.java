@@ -43,16 +43,16 @@ public class Utils {
      */
     public static byte[] hashEntry(Event entry, TypeRegistry<String> typeRegistry) {
 
-        List<Attribute> tuples = new ArrayList(entry.getAttributes());
+        List<Attribute> attributes = new ArrayList(entry.getAttributes());
 
-        sort(tuples, new AttributeComparator(typeRegistry));
+        sort(attributes, new AttributeComparator(typeRegistry));
 
-        String tupleString = entry.getId();
-        for (Attribute tuple : tuples)
-            tupleString += tupleToString(tuple, typeRegistry) + ",";
+        String attributeString = entry.getId();
+        for (Attribute attribute : attributes)
+            attributeString += attributeToString(attribute, typeRegistry) + ",";
 
         try {
-            return md5Hex(tupleString).getBytes();
+            return md5Hex(attributeString).getBytes();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -89,7 +89,7 @@ public class Utils {
         return revTs;
     }
 
-    public static String tupleToString(Attribute tuple, TypeRegistry<String> typeRegistry) {
-        return tuple.getKey() + NULL_BYTE + typeRegistry.encode(tuple.getValue()) + NULL_BYTE + tuple.getMetadata();
+    public static String attributeToString(Attribute attribute, TypeRegistry<String> typeRegistry) {
+        return attribute.getKey() + NULL_BYTE + typeRegistry.encode(attribute.getValue()) + NULL_BYTE + attribute.getMetadata();
     }
 }

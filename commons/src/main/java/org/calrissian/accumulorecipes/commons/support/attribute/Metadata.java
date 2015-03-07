@@ -33,8 +33,8 @@ public class Metadata {
             return metadata;
         }
 
-        public static Long getExpiration(Attribute tuple, long defaultExpiration) {
-            return getExpiration(tuple.getMetadata(), defaultExpiration);
+        public static Long getExpiration(Attribute attribute, long defaultExpiration) {
+            return getExpiration(attribute.getMetadata(), defaultExpiration);
         }
 
         public static Long getExpiration(Map<String,String> metadata, long defaultExpiration) {
@@ -59,19 +59,19 @@ public class Metadata {
             return metadata;
         }
 
-        public static String getVisibility(Attribute tuple, String defaultVisibility) {
-            if(tuple.getMetadataValue(VISIBILITY) == null)
+        public static String getVisibility(Attribute attribute, String defaultVisibility) {
+            if(attribute.getMetadataValue(VISIBILITY) == null)
                 return defaultVisibility;
             else
-                return tuple.getMetadataValue(VISIBILITY);
+                return attribute.getMetadataValue(VISIBILITY);
         }
 
 
-      public static String getVisibility(Map<String,String> tuple, String defaultVisibility) {
-        if(!tuple.containsKey(VISIBILITY))
+      public static String getVisibility(Map<String,String> attribute, String defaultVisibility) {
+        if(!attribute.containsKey(VISIBILITY))
           return defaultVisibility;
         else
-          return tuple.get(VISIBILITY);
+          return attribute.get(VISIBILITY);
       }
 
     }

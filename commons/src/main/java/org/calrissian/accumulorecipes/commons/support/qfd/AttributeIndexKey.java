@@ -24,7 +24,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.commons.lang.StringUtils;
 
 /**
- * A tuple index key represents an entry in an index table. The reason a separate object is used
+ * A attribute index key represents an entry in an index table. The reason a separate object is used
  * instead of just representing this information in a {@link LeafNode} is because it's possible
  * several different leaf nodes could benefit from sharing state of the same index key in a
  * query. A good example could be this:

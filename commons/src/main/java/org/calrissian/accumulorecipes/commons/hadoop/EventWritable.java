@@ -29,7 +29,7 @@ import org.calrissian.mango.domain.event.Event;
 
 public class EventWritable implements Writable, Settable<Event>, Gettable<Event> {
 
-    private AttributeWritable tupleWritable = new AttributeWritable();
+    private AttributeWritable attributeWritable = new AttributeWritable();
 
     Event entry;
 
@@ -41,7 +41,7 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
     }
 
     public void setAttributeWritable(AttributeWritable sharedAttributeWritable) {
-        this.tupleWritable = sharedAttributeWritable;
+        this.attributeWritable = sharedAttributeWritable;
     }
 
     @Override
@@ -52,9 +52,9 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
         dataOutput.writeLong(entry.getTimestamp());
 
         dataOutput.writeInt(entry.getAttributes() != null ? entry.getAttributes().size() : 0);
-        for (Attribute tuple : entry.getAttributes()) {
-            tupleWritable.set(tuple);
-            tupleWritable.write(dataOutput);
+        for (Attribute attribute : entry.getAttributes()) {
+            attributeWritable.set(attribute);
+            attributeWritable.write(dataOutput);
         }
     }
 
@@ -67,8 +67,8 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
 
         int count = dataInput.readInt();
         for (int i = 0; i < count; i++) {
-            tupleWritable.readFields(dataInput);
-            entry.put(tupleWritable.get());
+            attributeWritable.readFields(dataInput);
+            entry.put(attributeWritable.get());
         }
     }
 

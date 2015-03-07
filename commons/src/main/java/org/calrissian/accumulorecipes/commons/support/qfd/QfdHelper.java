@@ -211,14 +211,14 @@ public abstract class QfdHelper<T extends Entity> {
                     Mutation shardMutation = new Mutation(shardId);
 
                     long minExpiration = Long.MAX_VALUE;
-                    for (Attribute tuple : item.getAttributes()) {
-                        String visibility = getVisibility(tuple.getMetadata(), "");
-                        String aliasValue = typeRegistry.getAlias(tuple.getValue()) + ONE_BYTE +
-                            typeRegistry.encode(tuple.getValue());
+                    for (Attribute attribute : item.getAttributes()) {
+                        String visibility = getVisibility(attribute.getMetadata(), "");
+                        String aliasValue = typeRegistry.getAlias(attribute.getValue()) + ONE_BYTE +
+                            typeRegistry.encode(attribute.getValue());
 
                         ColumnVisibility columnVisibility = new ColumnVisibility(visibility);
 
-                        Map<String,String> meta = new HashMap<String, String>(tuple.getMetadata());
+                        Map<String,String> meta = new HashMap<String, String>(attribute.getMetadata());
                         meta.remove(Metadata.Visiblity.VISIBILITY);
 
                         Long expiration = Metadata.Expiration.getExpiration(meta, -1);
@@ -229,8 +229,8 @@ public abstract class QfdHelper<T extends Entity> {
                             minExpiration = Math.min(minExpiration, expiration);
 
                         forwardCF.set(expiration.toString());  // no need to copy the id when this is going to be rolled up anyways
-                        forwardCQ.set(tuple.getKey() + NULL_BYTE + aliasValue);
-                        fieldIndexCF.set(PREFIX_FI + NULL_BYTE + buildAttributeKey(item, tuple.getKey()));
+                        forwardCQ.set(attribute.getKey() + NULL_BYTE + aliasValue);
+                        fieldIndexCF.set(PREFIX_FI + NULL_BYTE + buildAttributeKey(item, attribute.getKey()));
                         fieldIndexCQ.set(aliasValue + NULL_BYTE + id);
 
                         long timestamp  = buildAttributeTimestampForEntity(item);

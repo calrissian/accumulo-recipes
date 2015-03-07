@@ -71,10 +71,10 @@ public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore> im
                 Map<String,String> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
                 Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
                 setVisibility(metadata, vis);
-                Attribute tuple = new Attribute(fieldValue.getKey(), javaVal, metadata);
-                entry.put(tuple);
+                Attribute attribute = new Attribute(fieldValue.getKey(), javaVal, metadata);
+                entry.put(attribute);
             } catch(Exception e) {
-                log.error("There was an error deserializing the metadata for a tuple", e);
+                log.error("There was an error deserializing the metadata for a attribute", e);
             }
         }
         return entry;

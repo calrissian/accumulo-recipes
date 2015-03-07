@@ -55,12 +55,12 @@ public class CalculateShardsVisitor implements NodeVisitor {
         this.registry = registry;
 
         for (AttributeIndexKey key : shards.keySet()) {
-            Set<AttributeIndexKey> tupleIndexKey = accumuloKeyToAttributeIndexKey.get(key.getKey());
-            if (tupleIndexKey == null) {
-                tupleIndexKey = new HashSet<AttributeIndexKey>();
-                accumuloKeyToAttributeIndexKey.put(key.getKey(), tupleIndexKey);
+            Set<AttributeIndexKey> attributeIndexKey = accumuloKeyToAttributeIndexKey.get(key.getKey());
+            if (attributeIndexKey == null) {
+                attributeIndexKey = new HashSet<AttributeIndexKey>();
+                accumuloKeyToAttributeIndexKey.put(key.getKey(), attributeIndexKey);
             }
-            tupleIndexKey.add(key);
+            attributeIndexKey.add(key);
         }
     }
 
@@ -144,13 +144,13 @@ public class CalculateShardsVisitor implements NodeVisitor {
          */
         // hasKey and hasNotKey need special treatment since we don't know the aliases
         if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf) || leaf instanceof NotEqualsLeaf) {
-            Set<AttributeIndexKey> tupleIndexKeys = accumuloKeyToAttributeIndexKey.get(kvLeaf.getKey());
+            Set<AttributeIndexKey> attributeIndexKeys = accumuloKeyToAttributeIndexKey.get(kvLeaf.getKey());
             Set<String> unionedShards = new HashSet<String>();
-            if (tupleIndexKeys == null) {
+            if (attributeIndexKeys == null) {
                 if (leaf instanceof NegationLeaf)
                     return unionedShards;
             } else {
-                for (AttributeIndexKey key : tupleIndexKeys) {
+                for (AttributeIndexKey key : attributeIndexKeys) {
                     unionedShards.addAll(this.keysToShards.get(key));
                 }
             }
@@ -167,8 +167,8 @@ public class CalculateShardsVisitor implements NodeVisitor {
             String normalizedVal;
             normalizedVal = registry.encode(kvLeaf.getValue());
 
-            AttributeIndexKey tupleIndexKey = new AttributeIndexKey(kvLeaf.getKey(), normalizedVal, alias);
-            Set<String> leafShards = keysToShards.get(tupleIndexKey);
+            AttributeIndexKey attributeIndexKey = new AttributeIndexKey(kvLeaf.getKey(), normalizedVal, alias);
+            Set<String> leafShards = keysToShards.get(attributeIndexKey);
 
             if (leafShards == null)
                 return Sets.newHashSet();

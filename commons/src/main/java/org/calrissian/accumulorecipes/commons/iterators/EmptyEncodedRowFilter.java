@@ -26,7 +26,7 @@ import org.calrissian.accumulorecipes.commons.support.Constants;
 
 /**
  * A simple filter to skip over keys where the content encoded in the value is either missing, or the number
- * of encoded tuples is 0.
+ * of encoded attributes is 0.
  */
 public class EmptyEncodedRowFilter extends Filter {
 

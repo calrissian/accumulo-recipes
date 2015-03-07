@@ -55,12 +55,12 @@ public class CardinalityReorderVisitor implements NodeVisitor {
         this.cardinalities = cardinalities;
         this.registry = typeRegistry;
         for (AttributeIndexKey key : cardinalities.keySet()) {
-            Set<AttributeIndexKey> tupleIndexKey = accumuloKeyToAttributeIndexKey.get(key.getKey());
-            if (tupleIndexKey == null) {
-                tupleIndexKey = new HashSet<AttributeIndexKey>();
-                accumuloKeyToAttributeIndexKey.put(key.getKey(), tupleIndexKey);
+            Set<AttributeIndexKey> attributeIndexKey = accumuloKeyToAttributeIndexKey.get(key.getKey());
+            if (attributeIndexKey == null) {
+                attributeIndexKey = new HashSet<AttributeIndexKey>();
+                accumuloKeyToAttributeIndexKey.put(key.getKey(), attributeIndexKey);
             }
-            tupleIndexKey.add(key);
+            attributeIndexKey.add(key);
         }
     }
 

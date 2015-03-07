@@ -138,7 +138,7 @@ public class MetricFeatureLoader extends LoadFunc {
         try {
             MetricFeature metric = (MetricFeature) reader.getCurrentValue();
             /**
-             * Create the pig tuple and hydrate with metric details. The format of the tuple is as follows:
+             * Create the pig attribute and hydrate with metric details. The format of the attribute is as follows:
              * (timestamp, timeUnit, group, type, name, visibility, value)
              */
             Tuple t = TupleFactory.getInstance().newTuple();

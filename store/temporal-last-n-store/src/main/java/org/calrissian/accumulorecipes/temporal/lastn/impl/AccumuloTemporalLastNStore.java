@@ -82,9 +82,9 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         public Event apply(List<Map.Entry<Key, Value>> entries) {
             Event toReturn = null;
 
-            for (Map.Entry<Key, Value> tupleCol : entries) {
-                String[] splits = splitPreserveAllTokens(new String(tupleCol.getValue().get()), NULL_BYTE);
-                String cq = tupleCol.getKey().getColumnQualifier().toString();
+            for (Map.Entry<Key, Value> attributeCol : entries) {
+                String[] splits = splitPreserveAllTokens(new String(attributeCol.getValue().get()), NULL_BYTE);
+                String cq = attributeCol.getKey().getColumnQualifier().toString();
                 int idx = cq.lastIndexOf(ONE_BYTE);
                 if (toReturn == null)
                     toReturn = new BaseEvent(cq.substring(idx+1,cq.length()), encoder.decode(cq.substring(0, idx)));
@@ -129,13 +129,13 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
     @Override
     public void put(String group, Event entry) {
         try {
-            for (Attribute tuple : entry.getAttributes()) {
+            for (Attribute attribute : entry.getAttributes()) {
                 Mutation m = new Mutation(group + GROUP_DELIM + generateTimestamp(entry.getTimestamp(), TimeUnit.DAYS));
                 m.put(
                     new Text(generateTimestamp(entry.getTimestamp(), TimeUnit.MINUTES)),
                     new Text(encoder.encode(entry.getTimestamp()) + ONE_BYTE + entry.getId()),
-                    new ColumnVisibility(getVisibility(tuple, "")),
-                    new Value(buildEventValue(tuple).getBytes())
+                    new ColumnVisibility(getVisibility(attribute, "")),
+                    new Value(buildEventValue(attribute).getBytes())
                 );
                 writer.addMutation(m);
             }
@@ -150,13 +150,13 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
         writer.flush();
     }
 
-    private String buildEventValue(Attribute tuple) {
+    private String buildEventValue(Attribute attribute) {
 
         String[] fields = new String[]{
-            tuple.getKey(),
-            typeRegistry.getAlias(tuple.getValue()),
-            typeRegistry.encode(tuple.getValue()),
-            getVisibility(tuple, "")
+            attribute.getKey(),
+            typeRegistry.getAlias(attribute.getValue()),
+            typeRegistry.encode(attribute.getValue()),
+            getVisibility(attribute, "")
         };
 
         return join(fields, NULL_BYTE);

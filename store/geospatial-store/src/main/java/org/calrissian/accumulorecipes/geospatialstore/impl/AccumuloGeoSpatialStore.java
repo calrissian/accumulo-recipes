@@ -75,8 +75,8 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                 for (Map.Entry<Key, Value> curEntry : map) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
-                    Attribute tuple = new Attribute(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, String>(1), vis));
-                    entry.put(tuple);
+                    Attribute attribute = new Attribute(cqParts[0], registry.decode(cqParts[1], cqParts[2]), setVisibility(new HashMap<String, String>(1), vis));
+                    entry.put(attribute);
                 }
                 return entry;
             } catch (Exception e) {
@@ -136,8 +136,8 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
         return String.format("%s%s%s%s%s%s%s", id, NULL_BYTE, timestamp, NULL_BYTE, location.getX(), NULL_BYTE, location.getY());
     }
 
-    protected String buildKeyValue(Attribute tuple) {
-        return tuple.getKey() + NULL_BYTE + registry.getAlias(tuple.getValue()) + NULL_BYTE + registry.encode(tuple.getValue());
+    protected String buildKeyValue(Attribute attribute) {
+        return attribute.getKey() + NULL_BYTE + registry.getAlias(attribute.getValue()) + NULL_BYTE + registry.encode(attribute.getValue());
     }
 
     @Override
@@ -148,12 +148,12 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
             Mutation m = new Mutation(buildRow(partition, location));
 
-            for (Attribute tuple : entry.getAttributes()) {
+            for (Attribute attribute : entry.getAttributes()) {
                 try {
                     // put in the forward mutation
                     m.put(new Text(buildId(entry.getId(), entry.getTimestamp(), location)),
-                            new Text(buildKeyValue(tuple)),
-                            new ColumnVisibility(getVisibility(tuple, "")),
+                            new Text(buildKeyValue(attribute)),
+                            new ColumnVisibility(getVisibility(attribute, "")),
                             entry.getTimestamp(),
                             new Value("".getBytes()));
                 } catch (Exception e) {

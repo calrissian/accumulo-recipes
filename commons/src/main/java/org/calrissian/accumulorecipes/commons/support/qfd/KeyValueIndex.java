@@ -94,13 +94,13 @@ public class KeyValueIndex<T extends Entity> {
 
         for (T item : items) {
             String shardId = shardBuilder.buildShard(item);
-            for (Attribute tuple : item.getAttributes()) {
+            for (Attribute attribute : item.getAttributes()) {
                 String[] strings = new String[]{
                     shardId,
-                    tuple.getKey(),
-                    typeRegistry.getAlias(tuple.getValue()),
-                    typeRegistry.encode(tuple.getValue()),
-                    getVisibility(tuple, ""),
+                    attribute.getKey(),
+                    typeRegistry.getAlias(attribute.getValue()),
+                    typeRegistry.encode(attribute.getValue()),
+                    getVisibility(attribute, ""),
                     item.getType()
                 };
 
@@ -113,7 +113,7 @@ public class KeyValueIndex<T extends Entity> {
                 if(expiration == null)
                     expiration = 0l;
 
-                Long curExpiration = Metadata.Expiration.getExpiration(tuple.getMetadata(), -1);
+                Long curExpiration = Metadata.Expiration.getExpiration(attribute.getMetadata(), -1);
                 if(curExpiration == -1)
                     expiration = -1l;
                 else

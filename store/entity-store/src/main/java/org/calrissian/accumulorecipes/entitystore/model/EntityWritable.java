@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EntityWritable implements WritableComparable, Settable<Entity>, Gettable<Entity> {
 
-    private AttributeWritable tupleWritable = new AttributeWritable();
+    private AttributeWritable attributeWritable = new AttributeWritable();
     private Entity entity;
 
     public EntityWritable() {
@@ -44,7 +44,7 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
     }
 
     public void setAttributeWritable(AttributeWritable sharedAttributeWritable) {
-        this.tupleWritable = sharedAttributeWritable;
+        this.attributeWritable = sharedAttributeWritable;
     }
 
     @Override
@@ -52,9 +52,9 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
         dataOutput.writeUTF(entity.getType());
         dataOutput.writeUTF(entity.getId());
         dataOutput.writeInt(entity.getAttributes() != null ? entity.getAttributes().size() : 0);
-        for (Attribute tuple : entity.getAttributes()) {
-            tupleWritable.set(tuple);
-            tupleWritable.write(dataOutput);
+        for (Attribute attribute : entity.getAttributes()) {
+            attributeWritable.set(attribute);
+            attributeWritable.write(dataOutput);
         }
     }
 
@@ -64,10 +64,10 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
         String id = dataInput.readUTF();
 
         entity = new BaseEntity(entityType, id);
-        int tupleSize = dataInput.readInt();
-        for (int i = 0; i < tupleSize; i++) {
-            tupleWritable.readFields(dataInput);
-            entity.put(tupleWritable.get());
+        int attributeSize = dataInput.readInt();
+        for (int i = 0; i < attributeSize; i++) {
+            attributeWritable.readFields(dataInput);
+            entity.put(attributeWritable.get());
         }
     }
 

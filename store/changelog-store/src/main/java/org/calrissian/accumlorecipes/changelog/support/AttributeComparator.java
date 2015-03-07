@@ -30,10 +30,10 @@ public class AttributeComparator implements Comparator<Attribute> {
     }
 
     @Override
-    public int compare(Attribute tuple, Attribute tuple1) {
+    public int compare(Attribute attribute, Attribute attribute1) {
         return ComparisonChain.start()
-                .compare(tuple.getKey(), tuple1.getKey())
-                .compare(typeRegistry.encode(tuple.getValue()), typeRegistry.encode(tuple.getValue()))
+                .compare(attribute.getKey(), attribute1.getKey())
+                .compare(typeRegistry.encode(attribute.getValue()), typeRegistry.encode(attribute.getValue()))
                 .result();
     }
 }

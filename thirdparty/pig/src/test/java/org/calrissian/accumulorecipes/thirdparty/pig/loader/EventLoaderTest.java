@@ -79,22 +79,22 @@ public class EventLoaderTest extends AccumuloInputFormat {
         org.apache.pig.data.Tuple t;
         int count = 0;
 
-        Iterator<org.calrissian.mango.domain.Attribute> tuples = event.getAttributes().iterator();
+        Iterator<org.calrissian.mango.domain.Attribute> attributes = event.getAttributes().iterator();
         while((t = loader.getNext()) != null) {
-            org.calrissian.mango.domain.Attribute tuple = tuples.next();
+            org.calrissian.mango.domain.Attribute attribute = attributes.next();
             count++;
             if(count == 1) {
                 assertEquals(event.getId(), t.get(0));
                 assertEquals(event.getTimestamp(), t.get(1));
-                assertEquals(tuple.getKey(), t.get(2));
-                assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
-                assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
+                assertEquals(attribute.getKey(), t.get(2));
+                assertEquals(loader.registry.getAlias(attribute.getValue()), t.get(3));
+                assertEquals(loader.registry.encode(attribute.getValue()), t.get(4));
             } else if(count == 2) {
                 assertEquals(event.getId(), t.get(0));
                 assertEquals(event.getTimestamp(), t.get(1));
-                assertEquals(tuple.getKey(), t.get(2));
-                assertEquals(loader.registry.getAlias(tuple.getValue()), t.get(3));
-                assertEquals(loader.registry.encode(tuple.getValue()), t.get(4));
+                assertEquals(attribute.getKey(), t.get(2));
+                assertEquals(loader.registry.getAlias(attribute.getValue()), t.get(3));
+                assertEquals(loader.registry.encode(attribute.getValue()), t.get(4));
             }
         }
 

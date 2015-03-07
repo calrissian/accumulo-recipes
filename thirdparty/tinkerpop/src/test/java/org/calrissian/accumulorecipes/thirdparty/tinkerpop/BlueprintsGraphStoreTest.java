@@ -60,15 +60,15 @@ public class BlueprintsGraphStoreTest {
                 new Auths("U,ADMIN"));
 
 
-        Attribute tuple = new Attribute("key1", "val1", new MetadataBuilder().setVisibility("U").build());
-        Attribute tuple2 = new Attribute("key2", "val2", new MetadataBuilder().setVisibility("U").build());
-        Attribute tuple3 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
-        Attribute tuple4 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
+        Attribute attribute = new Attribute("key1", "val1", new MetadataBuilder().setVisibility("U").build());
+        Attribute attribute2 = new Attribute("key2", "val2", new MetadataBuilder().setVisibility("U").build());
+        Attribute attribute3 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
+        Attribute attribute4 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
 
-        vertex1.put(tuple);
-        vertex1.put(tuple2);
-        vertex2.put(tuple3);
-        vertex2.put(tuple4);
+        vertex1.put(attribute);
+        vertex1.put(attribute2);
+        vertex2.put(attribute3);
+        vertex2.put(attribute4);
 
         Attribute edgeAttribute = new Attribute("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
         edge.put(edgeAttribute);

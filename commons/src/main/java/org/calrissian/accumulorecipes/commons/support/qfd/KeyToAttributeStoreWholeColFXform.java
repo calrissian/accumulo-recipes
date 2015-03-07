@@ -82,10 +82,10 @@ public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore
             Map<String,String> meta = metadataSerDe.deserialize(curEntry.getValue().get());
             Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
             setVisibility(metadata, visibility);
-            Attribute tuple = new Attribute(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
-            entry.put(tuple);
+            Attribute attribute = new Attribute(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
+            entry.put(attribute);
           } catch (Exception e) {
-            log.error("There was an error deserializing the metadata for a tuple", e);
+            log.error("There was an error deserializing the metadata for a attribute", e);
           }
         }
       }

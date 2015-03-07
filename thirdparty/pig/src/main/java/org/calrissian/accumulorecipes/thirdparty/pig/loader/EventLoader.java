@@ -55,7 +55,7 @@ import org.calrissian.mango.uri.support.UriUtils;
 import org.joda.time.DateTime;
 
 /**
- * Allows events to be streamed from the event store into Pig tuples. This class is really a proxy
+ * Allows events to be streamed from the event store into Pig attributes. This class is really a proxy
  * for the {@link EventInputFormat} which also decomposes the attributes of an event into quads
  * (id, timestamp, key, value) which can be manipulated easily through pig statements.
  */
@@ -171,7 +171,7 @@ public class EventLoader extends LoadFunc implements Serializable {
         org.calrissian.mango.domain.Attribute eventAttribute = itr.next();
 
         /**
-         * Create the pig tuple and hydrate with event details. The format of the tuple is as follows:
+         * Create the pig attribute and hydrate with event details. The format of the attribute is as follows:
          * (id, timestamp, key, datatype, value, visiblity)
          */
         Tuple t = TupleFactory.getInstance().newTuple();
