@@ -30,7 +30,7 @@ Entity vertex2 = new EntityBuilder("Person", "2")
     .attr("location", "Virginia")
     .build();
 
-EdgeEntity edge = new EdgeEntityBuilder("Relative", "1:2", vertex1, "", vertex2, "", "brother")
+EdgeEntity edge = new EdgeEntityBuilder("Relative", "1:2", vertex1, vertex2, "brother")
     .attr("biological", true)
     .build();
 ```
@@ -119,17 +119,17 @@ Or, let's say we had a parent relationship as a relative:
 
 ``` java
 Entity vertex3 = new EntityBuilder("Person", "3")
-    .attr(new Attribute("name", "James Smith Sr."));
-    .attr(new Attribute("age", 65));
-    .attr(new Attribute("location", "Maryland"))
+    .attr("name", "James Smith Sr.")
+    .attr("age", 65)
+    .attr("location", "Maryland")
     .build();
 
-EdgeEntity edge2 = new EdgeEntityBuilder("Relative", "2:3", vertex2, "", vertex3, "", "child")
-    .attr(new Attribute("biological", true))
+EdgeEntity edge2 = new EdgeEntityBuilder("Relative", "2:3", vertex2, vertex3, "child")
+    .attr("biological", true)
     .build();
 
-EdgeEntity edge3 = new EdgeEntityBuilder("Relative", "1:3", vertex1, "", vertex3, "", "child")
-    .attr(new Attribute("biological", false))
+EdgeEntity edge3 = new EdgeEntityBuilder("Relative", "1:3", vertex1, vertex3, "child")
+    .attr("biological", false)
     .build();
 
 graphStore.save(Arrays.asList(new Entity[] { edge2, vertex3, edge3 }));
