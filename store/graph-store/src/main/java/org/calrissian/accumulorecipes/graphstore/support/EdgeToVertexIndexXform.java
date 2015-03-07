@@ -20,7 +20,7 @@ import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
-import org.calrissian.mango.domain.entity.EntityRelationship;
+import org.calrissian.mango.domain.entity.EntityIndex;
 
 /**
  * This config function will pull the vertex index from the correct side of given the edge based on the given
@@ -43,7 +43,7 @@ public class EdgeToVertexIndexXform implements Function<Entity, EntityIndex> {
     else
       headOrTail = EdgeEntity.TAIL;
 
-    EntityRelationship rel = element.<EntityRelationship>get(headOrTail).getValue();
+    EntityIndex rel = element.<EntityIndex>get(headOrTail).getValue();
     return new EntityIndex(rel.getType(), rel.getId());
   }
 }

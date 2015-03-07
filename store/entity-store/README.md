@@ -15,11 +15,12 @@ EntityStore entityStore = new AccumuloEntityStore(connector);
 
 Entities can be modeled using the following:
 ```java
-Entity entity = new BaseEntity("Person", "1");
-entity.put(new Attribute("name", "John Smith"));
-entity.put(new Attribute("age", 36));
-entity.put(new Attribute("location", "Maryland"));
-entity.put(new Attribute("brother", new EntityRelationship("Person", "2"));
+Entity entity = new EntityBuilder("Person", "1")
+    .attr(new Attribute("name", "John Smith"))
+    .attr(new Attribute("age", 36))
+    .attr(new Attribute("location", "Maryland"))
+    .attr(new Attribute("brother", new EntityIndex("Person", "2"))
+    .build();
 ```
 
 Saving an entity to the store is pretty simple:
@@ -58,8 +59,9 @@ First thing you'll want to do is probably to turn your json into an entity. You'
 ```java
 ObjectMapper objectMapper = new ObjectMapper();
 String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
-Entity entity = new BaseEntity("Person", "1");
-entity.putAll(JsonAttributeStore.fromJson(json, objectMapper));
+Entity entity = new EntityBuilder("Person", "1")
+    .attrs(JsonAttributeStore.fromJson(json, objectMapper))
+    .build();
 ```
 
 Now you can persist the entity, as it's just a bunch of key/value attributes.

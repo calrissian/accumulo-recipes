@@ -22,7 +22,9 @@ import java.util.HashMap;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityRelationship;
+import org.calrissian.mango.domain.entity.EntityBuilder;
+import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIndex;
 
 public class EdgeEntity extends BaseEntity {
 
@@ -30,6 +32,7 @@ public class EdgeEntity extends BaseEntity {
     public static final String TAIL = "tail";
     public static final String LABEL = "edgeLabel";
 
+    @Deprecated
     public EdgeEntity(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
         super(type, id);
 
@@ -40,32 +43,32 @@ public class EdgeEntity extends BaseEntity {
         checkNotNull(label);
 
 
-        Attribute headAttribute = new Attribute(HEAD, new EntityRelationship(head), setVisibility(new HashMap<String, String>(1), headVis));
-        Attribute tailAttribute = new Attribute(TAIL, new EntityRelationship(tail), setVisibility(new HashMap<String, String>(1), tailVis));
+        Attribute headAttribute = new Attribute(HEAD, new EntityIndex(head), setVisibility(new HashMap<String, String>(1), headVis));
+        Attribute tailAttribute = new Attribute(TAIL, new EntityIndex(tail), setVisibility(new HashMap<String, String>(1), tailVis));
 
         put(headAttribute);
         put(tailAttribute);
         put(new Attribute(LABEL, label));
     }
 
+    @Deprecated
     public EdgeEntity(String type, String id, Entity head, Entity tail, String label) {
         this(type, id, head, "", tail, "", label);
     }
 
     public EdgeEntity(Entity entity) {
-        super(entity.getType(), entity.getId());
-        putAll(entity.getAttributes());
+        super(entity);
     }
 
-    public EntityRelationship getHead() {
+    public EntityIndex getHead() {
         if (this.get(HEAD) != null)
-            return this.<EntityRelationship>get(HEAD).getValue();
+            return this.<EntityIndex>get(HEAD).getValue();
         return null;
     }
 
-    public EntityRelationship getTail() {
+    public EntityIndex getTail() {
         if (this.get(TAIL) != null)
-            return this.<EntityRelationship>get(TAIL).getValue();
+            return this.<EntityIndex>get(TAIL).getValue();
         return null;
     }
 
@@ -73,5 +76,35 @@ public class EdgeEntity extends BaseEntity {
         if (this.get(LABEL) != null)
             return this.<String>get(LABEL).getValue();
         return null;
+    }
+
+    public static final class EdgeEntityBuilder extends EntityBuilder {
+
+        public EdgeEntityBuilder(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
+            super(type, id);
+
+            checkNotNull(head);
+            checkNotNull(headVis);
+            checkNotNull(tail);
+            checkNotNull(tailVis);
+            checkNotNull(label);
+
+            Attribute headAttribute = new Attribute(HEAD, new EntityIndex(head), setVisibility(new HashMap<String, String>(1), headVis));
+            Attribute tailAttribute = new Attribute(TAIL, new EntityIndex(tail), setVisibility(new HashMap<String, String>(1), tailVis));
+
+            attr(headAttribute);
+            attr(tailAttribute);
+            attr(new Attribute(LABEL, label));
+        }
+
+        public EdgeEntityBuilder(String type, String id, Entity head, Entity tail, String label) {
+            this(type, id, head, "", tail, "", label);
+        }
+
+        @Override
+        public EdgeEntity build() {
+            return new EdgeEntity(super.build());
+        }
+
     }
 }

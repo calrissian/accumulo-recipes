@@ -19,15 +19,17 @@ GraphStore graphStore = new AccumuloEntityGraphStore(connector);
 As described above, modelling isn't too complicated at all. Any entity can be a vertex. Edges are just a specialized entity with a few required properties describing the vertices they are connecting and the nature of the connection (these properties are HEAD, TAIL, and LABEL). I will elaborate on the example model from the Calrissian entity store documentation and show how the same brother relationship would be modelled using the graph store.
 
 ```java
-Entity vertex1 = new BaseEntity("Person", "1");
-vertex1.put(new Attribute("name", "John Smith"));
-vertex1.put(new Attribute("age", 34));
-vertex1.put(new Attribute("location", "Maryland"));
+Entity vertex1 = new EntityBuilder("Person", "1")
+    .attr(new Attribute("name", "John Smith"));
+    .attr(new Attribute("age", 34));
+    .attr(new Attribute("location", "Maryland"))
+    .build();
 
-Entity vertex2 = new BaseEntity("Person", "2");
-vertex2.put(new Attribute("name", "James Smith"));
-vertex2.put(new Attribute("age", 30));
-vertex2.put(new Attribute("location", "Virginia"));
+Entity vertex2 = new EntityBuilder("Person", "2");
+    .attr(new Attribute("name", "James Smith"));
+    .attr(new Attribute("age", 30));
+    .attr(new Attribute("location", "Virginia"))
+    .build();
 
 EdgeEntity edge = new EdgeEntity("Relative", "1:2", vertex1, "", vertex2, "", "brother");
 edge.put(new Attribute("biological", true));
@@ -116,16 +118,19 @@ engine.eval("v.out('brother').fill(results)", bindings);
 Or, let's say we had a parent relationship as a relative: 
 
 ``` java
-Entity vertex3 = new BaseEntity("Person", "3");
-vertex2.put(new Attribute("name", "James Smith Sr."));
-vertex2.put(new Attribute("age", 65));
-vertex2.put(new Attribute("location", "Maryland"));
+Entity vertex3 = new EntityBuilder("Person", "3")
+    .attr(new Attribute("name", "James Smith Sr."));
+    .attr(new Attribute("age", 65));
+    .attr(new Attribute("location", "Maryland"))
+    .build();
 
-EdgeEntity edge2 = new EdgeEntity("Relative", "2:3", vertex2, "", vertex3, "", "child");
-edge2.put(new Attribute("biological", true));
+EdgeEntity edge2 = new EdgeEntityBuilder("Relative", "2:3", vertex2, "", vertex3, "", "child")
+    .attr(new Attribute("biological", true))
+    .build();
 
-EdgeEntity edge3 = new EdgeEntity("Relative", "1:3", vertex1, "", vertex3, "", "child");
-edge3.put(new Attribute("biological", false));
+EdgeEntity edge3 = new EdgeEntityBuilder("Relative", "1:3", vertex1, "", vertex3, "", "child")
+    .attr(new Attribute("biological", false))
+    .build();
 
 graphStore.save(Arrays.asList(new Entity[] { edge2, vertex3, edge3 }));
 ```

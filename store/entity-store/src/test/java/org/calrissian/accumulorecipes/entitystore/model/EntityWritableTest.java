@@ -16,25 +16,25 @@
 package org.calrissian.accumulorecipes.entitystore.model;
 
 
-import com.google.common.collect.ImmutableMap;
-import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
-import org.calrissian.mango.domain.entity.Entity;
-import org.junit.Test;
-
-import java.io.IOException;
-
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import static org.junit.Assert.assertEquals;
+import java.io.IOException;
+
+import com.google.common.collect.ImmutableMap;
+import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
+import org.junit.Test;
 
 public class EntityWritableTest {
 
     @Test
     public void testSerializesAndDeserializes() throws IOException {
 
-        Entity entity = new BaseEntity("type", "id");
-        entity.put(new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal")));
+        Entity entity = new EntityBuilder("type", "id")
+            .attr(new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal")))
+            .build();
 
         byte[] serialized = serialize(new EntityWritable(entity));
 

@@ -28,7 +28,7 @@ import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityIndex;
-import org.calrissian.mango.domain.entity.EntityRelationship;
+import org.calrissian.mango.domain.entity.EntityIndex;
 
 public class EntityEdge extends EntityElement implements Edge {
 
@@ -40,7 +40,7 @@ public class EntityEdge extends EntityElement implements Edge {
     public Vertex getVertex(Direction direction) throws IllegalArgumentException {
 
         EdgeEntity edgeEntity = (EdgeEntity) entity;
-        EntityRelationship rel;
+        EntityIndex rel;
         if (direction == Direction.IN)
             rel = edgeEntity.getHead();
         else if (direction == Direction.OUT)

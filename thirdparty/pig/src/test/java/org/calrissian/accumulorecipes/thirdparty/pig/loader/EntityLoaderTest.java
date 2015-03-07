@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -48,10 +49,10 @@ import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.accumulorecipes.test.MockRecordReader;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -147,9 +148,10 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         Instance instance = new MockInstance("instName");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
-        entity = new BaseEntity("myType");
-        entity.put(new Attribute("key1", "val1"));
-        entity.put(new Attribute("key2", false));
+        entity = new EntityBuilder("myType", UUID.randomUUID().toString())
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", false))
+            .build();
         store.save(singleton(entity));
 
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());

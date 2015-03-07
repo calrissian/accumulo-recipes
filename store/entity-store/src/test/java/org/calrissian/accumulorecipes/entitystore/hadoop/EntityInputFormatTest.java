@@ -43,8 +43,8 @@ import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,12 +65,10 @@ public class EntityInputFormatTest {
         Instance instance = new MockInstance("entityInst");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
-        entity = new BaseEntity("type", "id");
-        entity.put(new Attribute("key1", "val1"));
-        entity.put(new Attribute("key2", false));
+        entity = new EntityBuilder("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity));
 
-        Job job = new Job(new Configuration());
+        Job job = Job.getInstance();
         job.setJarByClass(getClass());
         job.setMapperClass(TestMapper.class);
         job.setNumReduceTasks(0);
@@ -100,19 +98,13 @@ public class EntityInputFormatTest {
         Instance instance = new MockInstance("entityInst1");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
-        entity = new BaseEntity("type", "id");
-        entity.put(new Attribute("key1", "val1"));
-        entity.put(new Attribute("key2", false));
+        entity = new EntityBuilder("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity));
 
-        entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Attribute("key1", "val1"));
-        entity2.put(new Attribute("key2", false));
+        entity2 = new EntityBuilder("type", "id2").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity2));
 
-        entity3 = new BaseEntity("type1", "id");
-        entity3.put(new Attribute("key1", "val1"));
-        entity3.put(new Attribute("key2", false));
+        entity3 = new EntityBuilder("type1", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity3));
 
         Job job = new Job(new Configuration());

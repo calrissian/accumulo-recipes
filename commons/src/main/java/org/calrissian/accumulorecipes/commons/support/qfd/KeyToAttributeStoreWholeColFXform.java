@@ -34,11 +34,12 @@ import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.AttributeStore;
+import org.calrissian.mango.domain.BaseAttributeStoreBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore> implements Function<Map.Entry<Key,Value>,V> {
+public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore, B extends BaseAttributeStoreBuilder<V,B>> implements Function<Map.Entry<Key,Value>,V> {
 
   public static final Logger log = LoggerFactory.getLogger(KeyToAttributeStoreWholeColFXform.class);
 
@@ -60,7 +61,7 @@ public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore
   public V apply(Map.Entry<Key,Value> keyValueEntry) {
     try {
 
-      V entry = buildEntryFromKey(keyValueEntry.getKey());
+      B entry = buildEntryFromKey(keyValueEntry.getKey());
 
       List<Map.Entry<Key,Value>> groupedKVs = decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
@@ -83,19 +84,19 @@ public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore
             Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
             setVisibility(metadata, visibility);
             Attribute attribute = new Attribute(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
-            entry.put(attribute);
+            entry.attr(attribute);
           } catch (Exception e) {
             log.error("There was an error deserializing the metadata for a attribute", e);
           }
         }
       }
 
-      return entry;
+      return entry.build();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected abstract V buildEntryFromKey(Key k);
+  protected abstract B buildEntryFromKey(Key k);
 
 };

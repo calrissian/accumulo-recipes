@@ -40,8 +40,8 @@ import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Test;
 
 public class EntityGlobalIndexVisitorTest {
@@ -53,14 +53,17 @@ public class EntityGlobalIndexVisitorTest {
         Connector connector = instance.getConnector("root", new PasswordToken("".getBytes()));
         EntityStore entityStore = new AccumuloEntityStore(connector);
 
-        Entity entity = new BaseEntity("type", "id");
-        entity.put(new Attribute("key1", "val1"));
-        entity.put(new Attribute("key2", "val2"));
+        Entity entity = new EntityBuilder("type", "id")
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", "val2"))
+            .build();
 
-        Entity entity2 = new BaseEntity("type", "id2");
-        entity2.put(new Attribute("key1", "val1"));
-        entity2.put(new Attribute("key2", "val2"));
-        entity2.put(new Attribute("key3", true));
+        Entity entity2 = new EntityBuilder("type", "id2")
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", "val2"))
+            .attr(new Attribute("key3", true))
+            .build();
+
 
         entityStore.save(asList(new Entity[]{entity, entity2}));
 

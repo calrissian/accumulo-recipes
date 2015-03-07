@@ -48,7 +48,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventIndex;
 import org.junit.Before;
@@ -79,14 +79,15 @@ public class AccumuloEventStoreTest {
     public void testGet() throws Exception {
 
         long time = currentTimeMillis();
-        Event event = new BaseEvent("", UUID.randomUUID().toString(), time);
-        event.put(new Attribute("key1", "val1", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), time)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        event.put(new Attribute("key2", "val2", meta));
-
-        Event event2 = new BaseEvent("", UUID.randomUUID().toString(), time);
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key2", "val2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), time)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -114,13 +115,15 @@ public class AccumuloEventStoreTest {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", shouldntSee));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", shouldntSee))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key2", "val2", shouldntSee));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", shouldntSee))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -141,13 +144,15 @@ public class AccumuloEventStoreTest {
 
     Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
-    Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-    event.put(new Attribute("key1", "val1", meta));
-    event.put(new Attribute("key2", "val2", shouldntSee));
+    Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+        .attr(new Attribute("key1", "val1", meta))
+        .attr(new Attribute("key2", "val2", shouldntSee))
+        .build();
 
-    Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-    event2.put(new Attribute("key1", "val1", meta));
-    event2.put(new Attribute("key2", "val2", shouldntSee));
+    Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+        .attr(new Attribute("key1", "val1", meta))
+        .attr(new Attribute("key2", "val2", shouldntSee))
+        .build();
 
     store.save(asList(event, event2));
 
@@ -166,15 +171,17 @@ public class AccumuloEventStoreTest {
     Map<String, String> canSee = new MetadataBuilder().setVisibility("A&B").build();
     Map<String, String> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
 
-    Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-    event.put(new Attribute("key1", "val1", meta));
-    event.put(new Attribute("key2", "val2", canSee));
-    event.put(new Attribute("key3", "val3", cantSee));
+    Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+        .attr(new Attribute("key1", "val1", meta))
+        .attr(new Attribute("key2", "val2", canSee))
+        .attr(new Attribute("key3", "val3", cantSee))
+        .build();
 
-    Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-    event2.put(new Attribute("key1", "val1", meta));
-    event2.put(new Attribute("key2", "val2", canSee));
-    event2.put(new Attribute("key3", "val3", cantSee));
+    Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+        .attr(new Attribute("key1", "val1", meta))
+        .attr(new Attribute("key2", "val2", canSee))
+        .attr(new Attribute("key3", "val3", cantSee))
+        .build();
 
     store.save(asList(event, event2));
 
@@ -195,9 +202,10 @@ public class AccumuloEventStoreTest {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis()-500);
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", shouldntSee));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis()-500)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", shouldntSee))
+            .build();
 
 
         store.save(asList(event));
@@ -215,9 +223,10 @@ public class AccumuloEventStoreTest {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis()-500);
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", shouldntSee));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis()-500)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", shouldntSee))
+            .build();
 
         store.save(asList(event));
 
@@ -233,13 +242,15 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQueryKeyNotInIndex() {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key2", "val2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -255,13 +266,15 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQueryRangeNotInIndex() {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key2", "val2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -279,13 +292,15 @@ public class AccumuloEventStoreTest {
     public void testGreaterThan() throws Exception {
 
         long time = currentTimeMillis();
-        Event event = new BaseEvent(UUID.randomUUID().toString(), time);
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key-@#$%^&*()1", 1, meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), time)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key-@#$%^&*()1", 1, meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), time);
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key-@#$%^&*()1", 10, meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), time)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key-@#$%^&*()1", 10, meta))
+            .build();
 
         store.save(asList(event, event2));
         store.flush();
@@ -311,13 +326,15 @@ public class AccumuloEventStoreTest {
 
         long currentTime = System.currentTimeMillis();
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTime);
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTime)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTime - 5000);
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key2", "val2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTime - 5000)
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -333,13 +350,15 @@ public class AccumuloEventStoreTest {
     @Test
     public void testGet_withSelection() throws Exception {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key2", "val2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -355,13 +374,15 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_withSelection() throws Exception {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key2", "val2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -382,13 +403,15 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_AndQuery() throws Exception {
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("`key`.`1`", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("`key`.`1`", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("`key`.`1`", "val1", meta));
-        event2.put(new Attribute("key2", "val2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("`key`.`1`", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -416,13 +439,15 @@ public class AccumuloEventStoreTest {
     public void testQuery_OrQuery() throws Exception {
 
 
-        Event event = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key1", "val1", meta));
-        event.put(new Attribute("`key2`", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("`key2`", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key1", "val1", meta));
-        event2.put(new Attribute("key3", "val3", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .attr(new Attribute("key3", "val3", meta))
+            .build();
 
         store.save(asList(event, event2));
 
@@ -453,13 +478,15 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
 
-        Event event = new BaseEvent("", UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key-1", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key-1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent("", UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key-1", "val1", meta));
-        event2.put(new Attribute("key3", "val3", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key-1", "val1", meta))
+            .attr(new Attribute("key3", "val3", meta))
+            .build();
 
         store.save(asList(event, event2));
         store.flush();
@@ -490,13 +517,15 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_multipleTypes() throws Exception {
 
-        Event event = new BaseEvent("type1", UUID.randomUUID().toString(), currentTimeMillis());
-        event.put(new Attribute("key-@#$%^&*()1", "val1", meta));
-        event.put(new Attribute("key2", "val2", meta));
+        Event event = new EventBuilder("type1", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key-@#$%^&*()1", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
 
-        Event event2 = new BaseEvent("type2", UUID.randomUUID().toString(), currentTimeMillis());
-        event2.put(new Attribute("key-@#$%^&*()1", "val1", meta));
-        event2.put(new Attribute("key3", "val3", meta));
+        Event event2 = new EventBuilder("type2", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key-@#$%^&*()1", "val1", meta))
+            .attr(new Attribute("key3", "val3", meta))
+            .build();
 
         store.save(asList(event, event2));
         store.flush();
@@ -532,20 +561,21 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_MultipleNotInQuery() throws Exception {
 
-        Event event = new BaseEvent("", UUID.randomUUID().toString(),
-                currentTimeMillis());
-        event.put(new Attribute("hasIp", "true", meta));
-        event.put(new Attribute("ip", "1.1.1.1", meta));
+        Event event = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("hasIp", "true", meta))
+            .attr(new Attribute("ip", "1.1.1.1", meta))
+            .build();
 
-        Event event2 = new BaseEvent(UUID.randomUUID().toString(),
-                currentTimeMillis());
-        event2.put(new Attribute("hasIp", "true", meta));
-        event2.put(new Attribute("ip", "2.2.2.2", meta));
+        Event event2 = new EventBuilder("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("hasIp", "true", meta))
+            .attr(new Attribute("ip", "2.2.2.2", meta))
+            .build();
 
-        Event event3 = new BaseEvent(UUID.randomUUID().toString(),
-                currentTimeMillis());
-        event3.put(new Attribute("hasIp", "true", meta));
-        event3.put(new Attribute("ip", "3.3.3.3", meta));
+        Event event3 = new EventBuilder("", UUID.randomUUID().toString(),
+                currentTimeMillis())
+            .attr(new Attribute("hasIp", "true", meta))
+            .attr(new Attribute("ip", "3.3.3.3", meta))
+            .build();
 
         store.save(asList(event, event2, event3));
         store.flush();
@@ -579,8 +609,9 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Event event = new BaseEvent("id");
-        event.put(new Attribute("key1", "val1", meta));
+        Event event = new EventBuilder("", "id", System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .build();
 
         store.save(asList(event));
 
@@ -595,8 +626,9 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_hasNot() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Event event = new BaseEvent("id");
-        event.put(new Attribute("key1", "val1", meta));
+        Event event = new EventBuilder("", "id", System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .build();
 
         store.save(asList(event));
 

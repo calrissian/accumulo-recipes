@@ -30,11 +30,12 @@ import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.AttributeStore;
+import org.calrissian.mango.domain.BaseAttributeStoreBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore> implements Function<Map.Entry<Key, Value>, V> {
+public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore, B extends BaseAttributeStoreBuilder<V, B>> implements Function<Map.Entry<Key, Value>, V> {
 
     public static final Logger log = LoggerFactory.getLogger(KeyToAttributeStoreQueryXform.class);
 
@@ -60,7 +61,7 @@ public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore> im
     public V apply(Map.Entry<Key, Value> keyValueEntry) {
         EventFields eventFields = new EventFields();
         eventFields.read(kryo, new Input(keyValueEntry.getValue().get()), EventFields.class);
-        V entry = buildAttributeCollectionFromKey(keyValueEntry.getKey());
+        B entry = buildAttributeCollectionFromKey(keyValueEntry.getKey());
         for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
             String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), ONE_BYTE);
             Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
@@ -72,14 +73,14 @@ public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore> im
                 Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
                 setVisibility(metadata, vis);
                 Attribute attribute = new Attribute(fieldValue.getKey(), javaVal, metadata);
-                entry.put(attribute);
+                entry.attr(attribute);
             } catch(Exception e) {
                 log.error("There was an error deserializing the metadata for a attribute", e);
             }
         }
-        return entry;
+        return entry.build();
     }
 
 
-    protected abstract V buildAttributeCollectionFromKey(Key k);
+    protected abstract B buildAttributeCollectionFromKey(Key k);
 }

@@ -22,9 +22,9 @@ import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.IN;
 import static org.calrissian.accumulorecipes.graphstore.model.Direction.OUT;
 import static org.calrissian.accumulorecipes.graphstore.model.EdgeEntity.HEAD;
@@ -36,7 +36,7 @@ import static org.calrissian.mango.collect.CloseableIterables.partition;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_RELATIONSHIP_ALIAS;
+import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_INDEX_ALIAS;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,16 +70,15 @@ import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
+import org.calrissian.accumulorecipes.graphstore.support.AttributeStoreCriteriaPredicate;
 import org.calrissian.accumulorecipes.graphstore.support.EdgeGroupingIterator;
 import org.calrissian.accumulorecipes.graphstore.support.EdgeToVertexIndexXform;
-import org.calrissian.accumulorecipes.graphstore.support.AttributeStoreCriteriaPredicate;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIndex;
-import org.calrissian.mango.domain.entity.EntityRelationship;
 import org.calrissian.mango.types.TypeRegistry;
 
 /**
@@ -108,8 +107,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             String edge = cq.substring(0, idx);
 
             try {
-                EntityRelationship edgeRel = (EntityRelationship) typeRegistry.decode(ENTITY_RELATIONSHIP_ALIAS, edge);
-                Entity entity = new BaseEntity(edgeRel.getType(), edgeRel.getId());
+                EntityIndex edgeRel = (EntityIndex) typeRegistry.decode(ENTITY_INDEX_ALIAS, edge);
+                EntityBuilder entity = new EntityBuilder(edgeRel.getType(), edgeRel.getId());
                 SortedMap<Key, Value> entries = EdgeGroupingIterator.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
                 for (Map.Entry<Key, Value> entry : entries.entrySet()) {
@@ -121,11 +120,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
                     String vis = entry.getKey().getColumnVisibility().toString();
                     Attribute attribute = new Attribute(keyALiasValue[0], typeRegistry.decode(keyALiasValue[1], keyALiasValue[2]), setVisibility(new HashMap<String, String>(1), vis));
-                    entity.put(attribute);
+                    entity.attr(attribute);
 
                 }
 
-                return entity;
+                return entity.build();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -233,7 +232,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
             Collection<Range> ranges = new ArrayList<Range>();
             for (EntityIndex entity : fromVertices) {
-                String row = typeRegistry.encode(new EntityRelationship(entity.getType(), entity.getId()));
+                String row = typeRegistry.encode(new EntityIndex(entity.getType(), entity.getId()));
                 if (labels != null) {
                     for (String label : labels)
                         populateRange(ranges, row, direction, label);
@@ -271,9 +270,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         for (Entity entity : entities) {
             if (isEdge(entity)) {
 
-                EntityRelationship edgeRelationship = new EntityRelationship(entity);
-                EntityRelationship toVertex = entity.<EntityRelationship>get(TAIL).getValue();
-                EntityRelationship fromVertex = entity.<EntityRelationship>get(HEAD).getValue();
+                EntityIndex edgeRelationship = new EntityIndex(entity);
+                EntityIndex toVertex = entity.<EntityIndex>get(TAIL).getValue();
+                EntityIndex fromVertex = entity.<EntityIndex>get(HEAD).getValue();
 
                 String toVertexVis = getVisibility(entity.get(TAIL), "");
                 String fromVertexVis = getVisibility(entity.get(HEAD), "");

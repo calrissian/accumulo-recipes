@@ -25,6 +25,7 @@ import com.tinkerpop.blueprints.Vertex;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
@@ -53,7 +54,7 @@ public class BlueprintsGraphStoreTest {
     @Before
     public void start() throws Exception {
         Instance instance = new MockInstance();
-        connector = instance.getConnector("root", "".getBytes());
+        connector = instance.getConnector("root", new PasswordToken(""));
         entityGraphStore = new AccumuloEntityGraphStore(connector);
         graph = new EntityGraph(entityGraphStore, Sets.newHashSet("vertexType1", "vertexType2"),
                 Sets.newHashSet("edgeType1", "edgeType2"),

@@ -15,19 +15,18 @@
  */
 package org.calrissian.accumulorecipes.entitystore.model;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import org.apache.hadoop.io.WritableComparable;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.accumulorecipes.commons.hadoop.AttributeWritable;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 
 
 public class EntityWritable implements WritableComparable, Settable<Entity>, Gettable<Entity> {
@@ -63,12 +62,14 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
         String entityType = dataInput.readUTF();
         String id = dataInput.readUTF();
 
-        entity = new BaseEntity(entityType, id);
+        EntityBuilder entityBuilder = new EntityBuilder(entityType, id);
         int attributeSize = dataInput.readInt();
         for (int i = 0; i < attributeSize; i++) {
             attributeWritable.readFields(dataInput);
-            entity.put(attributeWritable.get());
+            entityBuilder.attr(attributeWritable.get());
         }
+
+        entity = entityBuilder.build();
     }
 
     public void set(Entity entity) {

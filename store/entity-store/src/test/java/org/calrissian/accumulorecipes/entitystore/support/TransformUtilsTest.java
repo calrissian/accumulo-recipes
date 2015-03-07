@@ -15,20 +15,19 @@
  */
 package org.calrissian.accumulorecipes.entitystore.support;
 
+import static org.junit.Assert.assertEquals;
 
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIndex;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class TransformUtilsTest {
 
     @Test
     public void test() {
 
-        Entity entity = new BaseEntity("type", "id");
+        Entity entity = new EntityBuilder("type", "id").build();
 
         EntityIndex index = TransformUtils.entityToEntityIndex.apply(entity);
         assertEquals(entity.getType(), index.getType());

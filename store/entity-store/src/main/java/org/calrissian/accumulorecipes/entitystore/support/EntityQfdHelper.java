@@ -17,7 +17,6 @@ package org.calrissian.accumulorecipes.entitystore.support;
 
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
-
 import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -35,13 +34,13 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreQueryXform;
+import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreWholeColFXform;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreQueryXform;
-import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreWholeColFXform;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 
 
@@ -88,29 +87,29 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
 
     }
 
-    public static class QueryXform extends KeyToAttributeStoreQueryXform<Entity> {
+    public static class QueryXform extends KeyToAttributeStoreQueryXform<Entity,EntityBuilder> {
 
         public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
-        protected Entity buildAttributeCollectionFromKey(Key k) {
+        protected EntityBuilder buildAttributeCollectionFromKey(Key k) {
             String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
-            return new BaseEntity(typeId[1], typeId[2]);
+            return new EntityBuilder(typeId[1], typeId[2]);
         }
     }
 
-    public static class WholeColFXform extends KeyToAttributeStoreWholeColFXform<Entity> {
+    public static class WholeColFXform extends KeyToAttributeStoreWholeColFXform<Entity, EntityBuilder> {
 
         public WholeColFXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
-        protected Entity buildEntryFromKey(Key k) {
+        protected EntityBuilder buildEntryFromKey(Key k) {
             String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
-            return new BaseEntity(typeId[1], typeId[2]);
+            return new EntityBuilder(typeId[1], typeId[2]);
         }
 
     }

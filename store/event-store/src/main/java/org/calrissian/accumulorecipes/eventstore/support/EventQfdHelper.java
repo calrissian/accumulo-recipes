@@ -34,14 +34,14 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreQueryXform;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyToAttributeStoreWholeColFXform;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.QfdHelper;
 import org.calrissian.accumulorecipes.commons.support.qfd.ShardBuilder;
-import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 
 public class EventQfdHelper extends QfdHelper<Event> {
@@ -106,25 +106,25 @@ public class EventQfdHelper extends QfdHelper<Event> {
     }
 
 
-    public static class QueryXform extends KeyToAttributeStoreQueryXform<Event> {
+    public static class QueryXform extends KeyToAttributeStoreQueryXform<Event,EventBuilder> {
 
         public QueryXform(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
-        protected Event buildAttributeCollectionFromKey(Key k) {
+        protected EventBuilder buildAttributeCollectionFromKey(Key k) {
             return createEventFromkey(k);
         }
     }
 
-    public static class WholeColFXForm extends KeyToAttributeStoreWholeColFXform<Event> {
+    public static class WholeColFXForm extends KeyToAttributeStoreWholeColFXform<Event, EventBuilder> {
         public WholeColFXForm(Kryo kryo, TypeRegistry<String> typeRegistry, MetadataSerDe metadataSerDe) {
             super(kryo, typeRegistry, metadataSerDe);
         }
 
         @Override
-        protected Event buildEntryFromKey(Key k) {
+        protected EventBuilder buildEntryFromKey(Key k) {
             return createEventFromkey(k);
         }
     }
@@ -134,13 +134,13 @@ public class EventQfdHelper extends QfdHelper<Event> {
         return EventOptimizedQueryIterator.class;
     }
 
-    private static final Event createEventFromkey(Key key) {
+    private static final EventBuilder createEventFromkey(Key key) {
         String cf = key.getColumnFamily().toString();
         String cfParts[] = splitPreserveAllTokens(cf, ONE_BYTE);
 
         String type = cfParts[1];
         String uuid =  cfParts[2];
-        return new BaseEvent(type, uuid, key.getTimestamp());
+        return new EventBuilder(type, uuid, key.getTimestamp());
     }
 
 }
