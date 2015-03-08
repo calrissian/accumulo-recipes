@@ -26,6 +26,6 @@ store.put(Collections.singleton(entry), new Point2D.Double(76.7000, 39.0000));
 So now that we've indexed our entry, let's fetch it back out
 
 ```java
-CloseableIterable<Event> entries = store.get(new Rectangle2D.Double(74.0, 37, 5, 9), Sets.newHashSet("person"), new Auths());
+CloseableIterable<Event> entries = store.get(new Rectangle2D.Double(74.0, 37, 5, 9), Sets.newHashSet("person"), Auths.EMPTY);
 ```
 

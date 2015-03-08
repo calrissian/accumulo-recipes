@@ -62,7 +62,7 @@ public class AccumuloBlobStoreTest {
 
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
+        InputStream retrievalStream = blobStore.get("test", "1", Auths.EMPTY);
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -80,7 +80,7 @@ public class AccumuloBlobStoreTest {
         storageStream.close();
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
+        InputStream retrievalStream = blobStore.get("test", "1", Auths.EMPTY);
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -100,7 +100,7 @@ public class AccumuloBlobStoreTest {
         mapper.writeValue(new GZIPOutputStream(storageStream), testValues);
 
         //reassemble the json after unzipping the stream.
-        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
+        InputStream retrievalStream = blobStore.get("test", "1", Auths.EMPTY);
         Collection<String> actualValues = mapper.readValue(new GZIPInputStream(retrievalStream), strColRef);
 
         //if there were no errors, then verify that the two collections are equal.

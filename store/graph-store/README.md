@@ -47,19 +47,19 @@ Graph traversals start at some number of vertices and propagate through edges to
 
 ```java
 Node query = new QueryBuilder().eq("name", "John Smith").build();
-CloseableIterable<Entity> vertices = graphStore.query(Collections.singleton("Person"), query, null, new Auths());
+CloseableIterable<Entity> vertices = graphStore.query(Collections.singleton("Person"), query, Auths.EMPTY);
 ```
 
 After we've found the vertices of interest, we can find the adjacent out edges connected to those vertices with the following:
 ```java
 Collection<EntityIdentifier> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIdentifier);
-CloseableIterable<EdgeEntity> edges = graphStore.adjacentEdges(indexes, null, Direction.OUT, new Auths());
+CloseableIterable<EdgeEntity> edges = graphStore.adjacentEdges(indexes, Direction.OUT, Auths.EMPTY);
 ```
 
 Or we can propagate right to the set of vertices on the other side of the edges:
 ```java
 Collection<EntityIdentifier> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIdentifier);
-CloseableIterable<Entity> newVertices = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
+CloseableIterable<Entity> newVertices = graphStore.adjacencies(indexes, Direction.OUT, Auths.EMPTY);
 ```
 
 With this, it's possible to perform a breadth-first traversal through the graph. Let's calculate the 3-hop of a graph:
@@ -68,7 +68,7 @@ With this, it's possible to perform a breadth-first traversal through the graph.
 for(int i = 0; i < 3; i++) {
   Collection<EntityIdentifier> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIdentifier);
   vertices.close()  // don't forget to close!
-  vertices = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
+  vertices = graphStore.adjacencies(indexes, Direction.OUT, Auths.EMPTY);
 }
 ```
 
@@ -90,7 +90,7 @@ Let's use the same model from above to traverse our graph. Since we are modellin
 Instance instance = new MockInstance();
 Connector connector = instance.getConnector("root", "".getBytes());
 GraphStore graphStore = new AccumuloEntityGraphStore(connector);
-Graph g = new EntityGraph(graphStore, Sets.newHashSet("Person"), Sets.newHashSet("Relative"), new Auths());
+Graph g = new EntityGraph(graphStore, Sets.newHashSet("Person"), Sets.newHashSet("Relative"), Auths.EMPTY);
 ```
 
 That is, we only want to traverse over the vertices that include Person entities and we only want to traverse through edges that are Relative types. This typing makes it possible to traverse through the subgraphs we care about for a specific question.

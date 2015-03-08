@@ -105,7 +105,7 @@ public class AccumuloFeatureStoreTest {
 
         metricStore.save(testData);
 
-        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
+        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, Auths.EMPTY);
 
         checkMetrics(actual, 60, 1);
     }
@@ -119,16 +119,16 @@ public class AccumuloFeatureStoreTest {
         Iterable<MetricFeature> testData = generateTestData(TimeUnit.MINUTES, 60);
         metricStore.save(testData, singleton(TimeUnit.MINUTES));
 
-        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
+        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, Auths.EMPTY);
         checkMetrics(actual, 60, 1);
 
-        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.HOURS, MetricFeature.class, new Auths());
+        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.HOURS, MetricFeature.class, Auths.EMPTY);
         assertEquals(0, Iterables.size(actual));
 
-        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.DAYS, MetricFeature.class, new Auths());
+        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.DAYS, MetricFeature.class, Auths.EMPTY);
         assertEquals(0, Iterables.size(actual));
 
-        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MONTHS, MetricFeature.class, new Auths());
+        actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MONTHS, MetricFeature.class, Auths.EMPTY);
         assertEquals(0, Iterables.size(actual));
 
     }
@@ -147,7 +147,7 @@ public class AccumuloFeatureStoreTest {
         AccumuloTestUtils.dumpTable(connector, "features_reverse");
 
 
-        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, new Auths());
+        CloseableIterable<MetricFeature> actual = metricStore.query(new Date(0), new Date(), "group", "type", "name", TimeUnit.MINUTES, MetricFeature.class, Auths.EMPTY);
 
         checkMetrics(actual, 60, 3);
     }
@@ -165,7 +165,7 @@ public class AccumuloFeatureStoreTest {
         } catch(Exception e) {}
 
         try {
-            metricStore.query(new Date(), new Date(), "group", "type", "name", TimeUnit.DAYS, MetricFeature.class, new Auths());
+            metricStore.query(new Date(), new Date(), "group", "type", "name", TimeUnit.DAYS, MetricFeature.class, Auths.EMPTY);
             fail("Should have failed while store wasn't initialized()");
         } catch(Exception e) {}
     }

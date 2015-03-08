@@ -43,7 +43,7 @@ lastNStore.put("index1", entry2);
 ###Retrieve the last n objects from the store
 
 ```java
-Iterable<Event> lastN = lastNStore.get("index1", new Auths());
+Iterable<Event> lastN = lastNStore.get("index1", Auths.EMPTY);
 ```
 
 There you have it. Seem simple?

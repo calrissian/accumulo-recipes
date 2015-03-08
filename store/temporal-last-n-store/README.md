@@ -60,7 +60,7 @@ String[] groups = new new String[] { "userName|blogUpdates", "userName|worldNews
 // set our time range to the last hour
 Date start = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
 Date stop = new Date();
-Iterable<Event> lastNEntries = store.get(start, stop, Sets.newHashSet(groups), 100, new Auths());
+Iterable<Event> lastNEntries = store.get(start, stop, Sets.newHashSet(groups), 100, Auths.EMPTY);
 ```
 
 In the example above, we are querying the last 100 events across the groups 'userName|blogUpdates', 'userName|worldNews', and 'userName|emailUpdates'. This will merge the last n feeds together and provide a holistic view.

@@ -15,14 +15,13 @@
  */
 package org.calrissian.accumulorecipes.commons.domain;
 
-import org.apache.accumulo.core.security.Authorizations;
-
-import java.util.Collection;
-import java.util.LinkedHashSet;
-
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.split;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+
+import org.apache.accumulo.core.security.Authorizations;
 
 /**
  * Wrapper class for Authorizations used by Accumulo
@@ -30,6 +29,8 @@ import static org.apache.commons.lang.StringUtils.split;
 public class Auths extends LinkedHashSet<String> {
 
     public static final String DELIM = ",";
+
+    public static final Auths EMPTY = new Auths();
 
     public Auths() {
     }

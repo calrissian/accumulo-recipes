@@ -62,7 +62,7 @@ public class AccumuloGeoSpatialStoreTest {
 
         store.put(singleton(entry), new Point2D.Double(-1, 1));
 
-        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), new Auths());
+        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), Auths.EMPTY);
         assertEquals(1, Iterables.size(entries));
         assertEquals(entry, Iterables.get(entries, 0));
     }
@@ -84,7 +84,7 @@ public class AccumuloGeoSpatialStoreTest {
         store.put(singleton(entry), new Point2D.Double(-1, 1));
         store.put(singleton(entry2), new Point2D.Double(-5, 1));
 
-        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), new Auths());
+        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), Auths.EMPTY);
         assertEquals(1, Iterables.size(entries));
         assertEquals(entry, Iterables.get(entries, 0));
     }
@@ -113,7 +113,7 @@ public class AccumuloGeoSpatialStoreTest {
         store.put(singleton(entry2), new Point2D.Double(1, 1));
         store.put(singleton(entry3), new Point2D.Double(1, -1));
 
-        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), new Auths());
+        CloseableIterable<Entity> entries = store.get(new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0), Sets.newHashSet("type1"), Auths.EMPTY);
         assertEquals(3, Iterables.size(entries));
 
         Entity actualEntry1 = Iterables.get(entries, 0);

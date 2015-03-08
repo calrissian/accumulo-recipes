@@ -126,7 +126,7 @@ public class JsonEventStoreTest {
             new Date(0),
             new Date(currentTimeMillis()),
             query,
-            new Auths()
+            Auths.EMPTY
         );
 
         assertEquals(1, size(results));

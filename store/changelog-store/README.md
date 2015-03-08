@@ -73,7 +73,7 @@ To get the changes, we just need to request them from the store with the dates o
 for(BucketHashLeaf leaf : diffLeaves)
  dates.add(new Date(leaf.getTimestamp()));
 
-Iterable<Event> entries = store.getChanges(dates, new Auths());
+Iterable<Event> entries = store.getChanges(dates, Auths.EMPTY);
 ```
 
 There you have it, in most scenarios, this should severely have limited the amount of data that would have been sent across the systems had they needed to share everything in order to determine what differed.

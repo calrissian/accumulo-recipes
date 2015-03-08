@@ -178,6 +178,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     @Override
+    public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIdentifier> fromVertices, Direction direction, Set<String> labels, Auths auths) {
+        return adjacentEdges(fromVertices, null, direction, labels, auths);
+    }
+
+    @Override
     public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIdentifier> fromVertices, Node query, Direction direction, final Auths auths) {
         final CloseableIterable<Entity> entities = findAdjacentEdges(fromVertices, query, direction, null, auths);
         return transform(entities, new Function<Entity, EdgeEntity>() {
@@ -186,6 +191,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                 return new EdgeEntity(entity);
             }
         });
+    }
+
+    @Override
+    public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIdentifier> fromVertices, Direction direction, Auths auths) {
+        return adjacentEdges(fromVertices, null, direction, auths);
     }
 
     @Override
@@ -210,8 +220,18 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     @Override
+    public CloseableIterable<Entity> adjacencies(List<EntityIdentifier> fromVertices, Direction direction, Set<String> labels, Auths auths) {
+        return adjacencies(fromVertices, null, direction, labels, auths);
+    }
+
+    @Override
     public CloseableIterable<Entity> adjacencies(List<EntityIdentifier> fromVertices, Node query, Direction direction, final Auths auths) {
         return adjacencies(fromVertices, query, direction, null, auths);
+    }
+
+    @Override
+    public CloseableIterable<Entity> adjacencies(List<EntityIdentifier> fromVertices, Direction direction, Auths auths) {
+        return adjacencies(fromVertices, null, direction, auths);
     }
 
     private CloseableIterable<Entity> findAdjacentEdges(List<EntityIdentifier> fromVertices,

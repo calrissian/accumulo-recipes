@@ -69,12 +69,12 @@ public class EventKeyValueIndexTest {
 
         dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
-        assertEquals(4, Iterables.size(eventKeyValueIndex.uniqueKeys("", "", new Auths())));
+        assertEquals(4, Iterables.size(eventKeyValueIndex.uniqueKeys("", "", Auths.EMPTY)));
 
-        assertEquals("aKey", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 0).getOne());
-        assertEquals("key1", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 1).getOne());
-        assertEquals("key2", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 2).getOne());
-        assertEquals("key3", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", new Auths()), 3).getOne());
+        assertEquals("aKey", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", Auths.EMPTY), 0).getOne());
+        assertEquals("key1", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", Auths.EMPTY), 1).getOne());
+        assertEquals("key2", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", Auths.EMPTY), 2).getOne());
+        assertEquals("key3", Iterables.<Pair<String,String>>get(eventKeyValueIndex.uniqueKeys("", "", Auths.EMPTY), 3).getOne());
     }
 
     @Test
@@ -104,7 +104,7 @@ public class EventKeyValueIndexTest {
 
         dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
-        CloseableIterable<String> types = eventKeyValueIndex.getTypes(new Auths());
+        CloseableIterable<String> types = eventKeyValueIndex.getTypes(Auths.EMPTY);
 
         assertEquals(2, Iterables.size(types));
 
@@ -146,20 +146,20 @@ public class EventKeyValueIndexTest {
         /**
          * Test with prefix which contains value
          */
-        CloseableIterable<Object> types = eventKeyValueIndex.uniqueValuesForKey("v", "type1", "string", "key1", new Auths());
+        CloseableIterable<Object> types = eventKeyValueIndex.uniqueValuesForKey("v", "type1", "string", "key1", Auths.EMPTY);
         assertEquals(1, Iterables.size(types));
         assertEquals("val1", Iterables.get(types, 0));
 
         /**
          * Test with prefix that does not contain value
          */
-        types = eventKeyValueIndex.uniqueValuesForKey("a", "type1", "string", "key1", new Auths());
+        types = eventKeyValueIndex.uniqueValuesForKey("a", "type1", "string", "key1", Auths.EMPTY);
         assertEquals(0, Iterables.size(types));
 
         /**
          * Test with no prefix
          */
-        types = eventKeyValueIndex.uniqueValuesForKey("", "type1", "string", "key2", new Auths());
+        types = eventKeyValueIndex.uniqueValuesForKey("", "type1", "string", "key2", Auths.EMPTY);
         assertEquals(2, Iterables.size(types));
         assertEquals("aVal", Iterables.get(types, 0));
         assertEquals("val2", Iterables.get(types, 1));

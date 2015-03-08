@@ -62,10 +62,10 @@ public class ExtendedAccumuloBlobStoreTest {
         storageStream.write(testBlob);
         storageStream.close();
 
-        assertEquals(CHUNK_SIZE, blobStore.blobSize("test", "1", new Auths()));
+        assertEquals(CHUNK_SIZE, blobStore.blobSize("test", "1", Auths.EMPTY));
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
+        InputStream retrievalStream = blobStore.get("test", "1", Auths.EMPTY);
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -82,10 +82,10 @@ public class ExtendedAccumuloBlobStoreTest {
         storageStream.write(testBlob);
         storageStream.close();
 
-        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Auths()));
+        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", Auths.EMPTY));
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
+        InputStream retrievalStream = blobStore.get("test", "1", Auths.EMPTY);
         retrievalStream.read(actual);
         retrievalStream.close();
 
@@ -105,7 +105,7 @@ public class ExtendedAccumuloBlobStoreTest {
         mapper.writeValue(new GZIPOutputStream(storageStream), testValues);
 
         //reassemble the json after unzipping the stream.
-        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
+        InputStream retrievalStream = blobStore.get("test", "1", Auths.EMPTY);
         Collection<String> actualValues = mapper.readValue(new GZIPInputStream(retrievalStream), strColRef);
 
         //if there were no errors, then verify that the two collections are equal.
@@ -125,17 +125,17 @@ public class ExtendedAccumuloBlobStoreTest {
         storageStream.write(testBlob);
         storageStream.close();
 
-        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", new Auths()));
+        assertEquals(CHUNK_SIZE * 2, blobStore.blobSize("test", "1", Auths.EMPTY));
 
         byte[] actual = new byte[testBlob.length];
-        InputStream retrievalStream = blobStore.get("test", "1", new Auths());
+        InputStream retrievalStream = blobStore.get("test", "1", Auths.EMPTY);
         retrievalStream.read(actual);
         retrievalStream.close();
 
         assertArrayEquals(testBlob, actual);
 
         //now test props
-        Map<String, String> retrievedProps = blobStore.getProperties("test", "1", new Auths());
+        Map<String, String> retrievedProps = blobStore.getProperties("test", "1", Auths.EMPTY);
         assertEquals(testProps.size(), retrievedProps.size());
 
         assertThat(retrievedProps, is(equalTo(testProps)));

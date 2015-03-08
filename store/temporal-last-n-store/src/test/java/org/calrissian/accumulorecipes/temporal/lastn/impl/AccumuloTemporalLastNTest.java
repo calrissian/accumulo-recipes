@@ -68,7 +68,7 @@ public class AccumuloTemporalLastNTest {
         AccumuloTestUtils.dumpTable(connector, "temporalLastN");
 
         Iterable<Event> results = store.get(new Date(currentTimeMillis() - 500000), new Date(currentTimeMillis() + 500000),
-            singleton("group"), 2, new Auths());
+            singleton("group"), 2, Auths.EMPTY);
 
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
@@ -98,7 +98,7 @@ public class AccumuloTemporalLastNTest {
         store.put("group", testEntry2);
 
         Iterable<Event> results = store.get(new Date(curTime - 4999), new Date(curTime + 50000),
-            singleton("group"), 2, new Auths());
+            singleton("group"), 2, Auths.EMPTY);
 
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
@@ -109,7 +109,7 @@ public class AccumuloTemporalLastNTest {
 
 
         results = store.get(new Date(curTime - 5001), new Date(curTime + 50000),
-            singleton("group"), 2, new Auths());
+            singleton("group"), 2, Auths.EMPTY);
 
         assertEquals(2, Iterables.size(results));
     }
@@ -133,7 +133,7 @@ public class AccumuloTemporalLastNTest {
 
 
         Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
-            Sets.newHashSet("group", "group1"), 2, new Auths());
+            Sets.newHashSet("group", "group1"), 2, Auths.EMPTY);
 
         Event actualEntry = Iterables.get(results, 0);
         assertEquals(actualEntry.getId(), testEntry.getId());
@@ -173,7 +173,7 @@ public class AccumuloTemporalLastNTest {
 
 
         Iterable<Event> results = store.get(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis() + 50000),
-            Sets.newHashSet("group", "group1"), 3, new Auths());
+            Sets.newHashSet("group", "group1"), 3, Auths.EMPTY);
 
 
         Event actualEntry = Iterables.get(results, 0);

@@ -34,6 +34,6 @@ rangeStore.save(singleton(new ValueRange<Long>(20L, 80L)));
 Overlapping intervals are returned by calling the query method on the store and specifying the lower and upper bound of interest. 
 
 ```java
-Iterable<ValueRange<Long>> results = rangeStore.query(new ValueRange<Long>(49L, 51L), new Auths());
+Iterable<ValueRange<Long>> results = rangeStore.query(new ValueRange<Long>(49L, 51L), Auths.EMPTY);
 ```
 

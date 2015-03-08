@@ -36,18 +36,18 @@ There are a few different get and query options for entities.
 - You can stream a single or a bunch of entities in a batch by their types and ids:
 ```java
 EntityIdentifier index = new EntityIdentifier("Person", "1");
-CloseableIterable<Entity> entities = entityStore.get(Collections.singleton(index), null, new Auths());
+CloseableIterable<Entity> entities = entityStore.get(Collections.singleton(index), Auths.EMPTY);
 ```
 
 - You can stream all the entities of a collection of types:
 ```java
-CloseableIterable<Entity> entities = entityStore.getAllByType(Collections.singleton("Person"), null, new Auths());
+CloseableIterable<Entity> entities = entityStore.getAllByType(Collections.singleton("Person"), Auths.EMPTY);
 ```
 
 - Or you can query for the entities of interest for a collection of types:
 ```java
 Node query = new QueryBuilder().and().eq("age", 36).eq("name", "John Smith").end().build();
-CloseableIterable<Entity> entities = entityStore.query(Collections.singleton("Person"), query, null, new Auths());
+CloseableIterable<Entity> entities = entityStore.query(Collections.singleton("Person"), query, Auths.EMPTY);
 ```
 
 

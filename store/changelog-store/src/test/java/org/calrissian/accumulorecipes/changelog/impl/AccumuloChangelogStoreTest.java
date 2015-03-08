@@ -147,7 +147,7 @@ public class AccumuloChangelogStoreTest {
         for (BucketHashLeaf leaf : diffLeaves)
             dates.add(new Date(leaf.getTimestamp()));
 
-        Iterable<Event> entries = store.getChanges(dates, new Auths());
+        Iterable<Event> entries = store.getChanges(dates, Auths.EMPTY);
         assertEquals(entry, Iterables.get(entries, 0));
     }
 
@@ -181,7 +181,7 @@ public class AccumuloChangelogStoreTest {
 
         System.out.println(dates);
 
-        Iterable<Event> entries = store.getChanges(dates, new Auths());
+        Iterable<Event> entries = store.getChanges(dates, Auths.EMPTY);
         assertEquals(5, Iterables.size(entries));
 
         for (Event actualEntry : entries) {
@@ -193,7 +193,7 @@ public class AccumuloChangelogStoreTest {
     private MerkleTree buildTree() {
         return store.getChangeTree(
                 new Date(currentTimeMillis() - 50000000),
-                new Date(currentTimeMillis() + 50000000), new Auths());
+                new Date(currentTimeMillis() + 50000000), Auths.EMPTY);
     }
 
     private Event createStoreEntry(String uuid, long timestamp) {

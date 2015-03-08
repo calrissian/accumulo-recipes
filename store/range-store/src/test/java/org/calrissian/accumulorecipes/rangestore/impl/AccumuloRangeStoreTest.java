@@ -50,7 +50,7 @@ public class AccumuloRangeStoreTest {
         ValueRange<Long> testData = new ValueRange<Long>(0L, 10L);
         rangeStore.save(singleton(testData));
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, Long.MAX_VALUE), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, Long.MAX_VALUE), Auths.EMPTY));
 
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
@@ -64,7 +64,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(3L, 7L)));
         rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 2L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 2L), Auths.EMPTY));
 
         assertEquals(1, results.size());
         compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
@@ -78,7 +78,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(3L, 7L)));
         rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 4L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 4L), Auths.EMPTY));
 
         assertEquals(2, results.size());
         compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
@@ -94,7 +94,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(62L, 70L)));
         rangeStore.save(singleton(new ValueRange<Long>(0L, 500L)));
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 500L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 500L), Auths.EMPTY));
 
         assertEquals(3, results.size());
         compareRanges(new ValueRange<Long>(0L, 500L), results.get(0));
@@ -113,7 +113,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(81L, 89L)));
         rangeStore.save(singleton(new ValueRange<Long>(-4000L, 4000L)));
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(75L, 75L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(75L, 75L), Auths.EMPTY));
 
         assertEquals(1, results.size());
         compareRanges(new ValueRange<Long>(-4000L, 4000L), results.get(0));
@@ -131,7 +131,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(-4000L, 4000L)));
         rangeStore.save(singleton(new ValueRange<Long>(-100000L, 500000L)));
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(75L, 75L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(75L, 75L), Auths.EMPTY));
 
         assertEquals(2, results.size());
         compareRanges(new ValueRange<Long>(-100000L, 500000L), results.get(0));
@@ -148,7 +148,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
 
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(8L, 9L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(8L, 9L), Auths.EMPTY));
 
         assertEquals(1, results.size());
         compareRanges(new ValueRange<Long>(8L, 9L), results.get(0));
@@ -163,7 +163,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
 
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(5L, 6L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(5L, 6L), Auths.EMPTY));
 
         assertEquals(1, results.size());
         compareRanges(new ValueRange<Long>(3L, 7L), results.get(0));
@@ -178,12 +178,12 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(8L, 9L)));
 
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 1L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(1L, 1L), Auths.EMPTY));
 
         assertEquals(1, results.size());
         compareRanges(new ValueRange<Long>(1L, 4L), results.get(0));
 
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(9L, 9L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(9L, 9L), Auths.EMPTY));
 
         assertEquals(1, results.size());
         compareRanges(new ValueRange<Long>(8L, 9L), results.get(0));
@@ -199,7 +199,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(20L, 27L)));
 
 
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(4L, 4L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(4L, 4L), Auths.EMPTY));
 
         assertEquals(0, results.size());
     }
@@ -211,46 +211,46 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(testData));
 
         //testExact
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(50L, 150L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(50L, 150L), Auths.EMPTY));
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
 
         //testSurrounding
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 151L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 151L), Auths.EMPTY));
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
 
         //test within
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(90L, 110L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(90L, 110L), Auths.EMPTY));
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
 
         //test high intersect
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(140L, 160L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(140L, 160L), Auths.EMPTY));
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
 
         //test high touch
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(150L, 160L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(150L, 160L), Auths.EMPTY));
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
 
         //test low intersect
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(40L, 60L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(40L, 60L), Auths.EMPTY));
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
 
         //test low touch
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(40L, 60L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(40L, 60L), Auths.EMPTY));
         assertEquals(1, results.size());
         compareRanges(testData, results.get(0));
 
         //test outside low
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 49L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 49L), Auths.EMPTY));
         assertEquals(0, results.size());
 
         //test outside high
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(151L, 200L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(151L, 200L), Auths.EMPTY));
         assertEquals(0, results.size());
     }
 
@@ -260,41 +260,41 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(asList(new ValueRange<Long>(50L, 100L), new ValueRange<Long>(150L, 200L)));
 
         //test surrounding
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, Long.MAX_VALUE), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, Long.MAX_VALUE), Auths.EMPTY));
         assertEquals(2, results.size());
 
         //test both intersect
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(99L, 151L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(99L, 151L), Auths.EMPTY));
         assertEquals(2, results.size());
 
         //test both touch
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(100L, 150L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(100L, 150L), Auths.EMPTY));
         assertEquals(2, results.size());
 
         //test first intersect
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(99L, 101L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(99L, 101L), Auths.EMPTY));
         assertEquals(1, results.size());
 
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 51L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 51L), Auths.EMPTY));
         assertEquals(1, results.size());
 
         //test second intersect
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(149L, 151L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(149L, 151L), Auths.EMPTY));
         assertEquals(1, results.size());
 
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(199L, Long.MAX_VALUE), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(199L, Long.MAX_VALUE), Auths.EMPTY));
         assertEquals(1, results.size());
 
         //test within
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(101L, 149L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(101L, 149L), Auths.EMPTY));
         assertEquals(0, results.size());
 
         //test low
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 10L), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(0L, 10L), Auths.EMPTY));
         assertEquals(0, results.size());
 
         //test high
-        results = newArrayList(rangeStore.query(new ValueRange<Long>(250L, Long.MAX_VALUE), new Auths()));
+        results = newArrayList(rangeStore.query(new ValueRange<Long>(250L, Long.MAX_VALUE), Auths.EMPTY));
         assertEquals(0, results.size());
     }
 
@@ -312,7 +312,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(50L, 75L)));
 
         //should return [50-100], [50-75]
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), Auths.EMPTY));
 
         assertEquals(2, results.size());
         compareRanges(new ValueRange<Long>(50L, 75L), results.get(0));
@@ -329,7 +329,7 @@ public class AccumuloRangeStoreTest {
         rangeStore.save(singleton(new ValueRange<Long>(20L, 80L)));
 
         //should return [2-98] and [20-80]
-        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), new Auths()));
+        List<ValueRange<Long>> results = newArrayList(rangeStore.query(new ValueRange<Long>(49L, 51L), Auths.EMPTY));
 
         assertEquals(2, results.size());
         compareRanges(new ValueRange<Long>(2L, 98L), results.get(0));

@@ -62,7 +62,7 @@ public class AccumuloLastNStoreTest {
         lastNStore.put("index1", entry3);
         lastNStore.put("index1", entry4);
 
-        List<Event> results = Lists.newArrayList(lastNStore.get("index1", new Auths()));
+        List<Event> results = Lists.newArrayList(lastNStore.get("index1", Auths.EMPTY));
         assertEquals(3, results.size());
         assertEquals(entry4, results.get(0));
         assertEquals(entry3, results.get(1));
