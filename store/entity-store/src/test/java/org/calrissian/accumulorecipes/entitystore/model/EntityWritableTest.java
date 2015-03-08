@@ -32,7 +32,7 @@ public class EntityWritableTest {
     @Test
     public void testSerializesAndDeserializes() throws IOException {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal")))
             .build();
 

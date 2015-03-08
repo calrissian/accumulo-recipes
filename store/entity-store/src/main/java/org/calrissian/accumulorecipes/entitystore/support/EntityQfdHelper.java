@@ -96,7 +96,7 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
         @Override
         protected EntityBuilder buildAttributeCollectionFromKey(Key k) {
             String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
-            return new EntityBuilder(typeId[1], typeId[2]);
+            return EntityBuilder.create(typeId[1], typeId[2]);
         }
     }
 
@@ -109,7 +109,7 @@ public class EntityQfdHelper extends QfdHelper<Entity> {
         @Override
         protected EntityBuilder buildEntryFromKey(Key k) {
             String[] typeId = StringUtils.splitPreserveAllTokens(k.getColumnFamily().toString(), ONE_BYTE);
-            return new EntityBuilder(typeId[1], typeId[2]);
+            return EntityBuilder.create(typeId[1], typeId[2]);
         }
 
     }

@@ -55,7 +55,7 @@ public class AccumuloGeoSpatialStoreTest {
     @Test
     public void test_singleEntryReturns() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entry = new EntityBuilder("type1", UUID.randomUUID().toString())
+        Entity entry = EntityBuilder.create("type1", UUID.randomUUID().toString())
             .attr(new Attribute("Key1", "Val1"))
             .attr(new Attribute("key2", "val2"))
             .build();
@@ -70,12 +70,12 @@ public class AccumuloGeoSpatialStoreTest {
     @Test
     public void test_singleEntryReturns_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entry = new EntityBuilder("type1", UUID.randomUUID().toString())
+        Entity entry = EntityBuilder.create("type1", UUID.randomUUID().toString())
             .attr(new Attribute("Key1", "Val1"))
             .attr(new Attribute("key2", "val2"))
             .build();
 
-        Entity entry2 = new EntityBuilder("type1", UUID.randomUUID().toString())
+        Entity entry2 = EntityBuilder.create("type1", UUID.randomUUID().toString())
             .attr(new Attribute("Key1", "Val1"))
             .attr(new Attribute("key2", "val2"))
             .build();
@@ -92,17 +92,17 @@ public class AccumuloGeoSpatialStoreTest {
     @Test
     public void test_multipleEntriesReturn_withMultipleEntriesInStore() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entry = new EntityBuilder("type1", UUID.randomUUID().toString())
+        Entity entry = EntityBuilder.create("type1", UUID.randomUUID().toString())
             .attr(new Attribute("Key1", "Val1"))
             .attr(new Attribute("key2", "val2"))
             .build();
 
-        Entity entry2 = new EntityBuilder("type1", UUID.randomUUID().toString())
+        Entity entry2 = EntityBuilder.create("type1", UUID.randomUUID().toString())
             .attr(new Attribute("Key1", "Val1"))
             .attr(new Attribute("key2", "val2"))
             .build();
 
-        Entity entry3 = new EntityBuilder("type1", UUID.randomUUID().toString())
+        Entity entry3 = EntityBuilder.create("type1", UUID.randomUUID().toString())
             .attr(new Attribute("Key1", "Val1"))
             .attr(new Attribute("key2", "val2"))
             .build();

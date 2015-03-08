@@ -108,7 +108,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
 
             try {
                 EntityIdentifier edgeRel = (EntityIdentifier) typeRegistry.decode(ENTITY_IDENTIFIER_ALIAS, edge);
-                EntityBuilder entity = new EntityBuilder(edgeRel.getType(), edgeRel.getId());
+                EntityBuilder entity = EntityBuilder.create(edgeRel.getType(), edgeRel.getId());
                 List<Map.Entry<Key, Value>> entries = RowEncoderUtil.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
                 for (Map.Entry<Key, Value> entry : entries) {

@@ -62,7 +62,7 @@ public class EntityWritable implements WritableComparable, Settable<Entity>, Get
         String entityType = dataInput.readUTF();
         String id = dataInput.readUTF();
 
-        EntityBuilder entityBuilder = new EntityBuilder(entityType, id);
+        EntityBuilder entityBuilder = EntityBuilder.create(entityType, id);
         int attributeSize = dataInput.readInt();
         for (int i = 0; i < attributeSize; i++) {
             attributeWritable.readFields(dataInput);

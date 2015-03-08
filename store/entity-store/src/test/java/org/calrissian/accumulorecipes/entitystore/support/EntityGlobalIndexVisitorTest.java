@@ -53,12 +53,12 @@ public class EntityGlobalIndexVisitorTest {
         Connector connector = instance.getConnector("root", new PasswordToken("".getBytes()));
         EntityStore entityStore = new AccumuloEntityStore(connector);
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1"))
             .attr(new Attribute("key2", "val2"))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1"))
             .attr(new Attribute("key2", "val2"))
             .attr(new Attribute("key3", true))

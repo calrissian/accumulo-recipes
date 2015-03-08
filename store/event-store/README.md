@@ -13,7 +13,7 @@ Map<String,String> userAdmin = new MetadataBuilder().setVisibility("USER|ADMIN")
 Map<String,String> adminOnly = new MetadataBuilder().setVisibility("ADMIN");
 
 // create our event to contain the keys/values we plan to add to give it state
-Event event = new EventBuilder("systemHealthUpdate")
+Event event = EventBuilder.create("systemHealthUpdate")
 
 // add the state to the event
     .attr("systemName", "system1", userAdminMeta)
@@ -99,7 +99,7 @@ First thing you'll want to do is probably to turn your json into an event. You'l
 ```java
 ObjectMapper objectMapper = new ObjectMapper();
 String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
-Event event = new EventBuilder("locationChanged")
+Event event = EventBuilder.create("locationChanged")
     .attrs(JsonAttributeStore.fromJson(json, objectMapper))
     .build()
 ```

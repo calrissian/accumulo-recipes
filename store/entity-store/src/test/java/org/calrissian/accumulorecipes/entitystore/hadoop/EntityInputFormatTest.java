@@ -65,7 +65,7 @@ public class EntityInputFormatTest {
         Instance instance = new MockInstance("entityInst");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
-        entity = new EntityBuilder("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
+        entity = EntityBuilder.create("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity));
 
         Job job = Job.getInstance();
@@ -98,13 +98,13 @@ public class EntityInputFormatTest {
         Instance instance = new MockInstance("entityInst1");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
-        entity = new EntityBuilder("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
+        entity = EntityBuilder.create("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity));
 
-        entity2 = new EntityBuilder("type", "id2").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
+        entity2 = EntityBuilder.create("type", "id2").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity2));
 
-        entity3 = new EntityBuilder("type1", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
+        entity3 = EntityBuilder.create("type1", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity3));
 
         Job job = new Job(new Configuration());

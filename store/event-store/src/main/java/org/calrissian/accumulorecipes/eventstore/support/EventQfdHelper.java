@@ -140,7 +140,7 @@ public class EventQfdHelper extends QfdHelper<Event> {
 
         String type = cfParts[1];
         String uuid =  cfParts[2];
-        return new EventBuilder(type, uuid, key.getTimestamp());
+        return EventBuilder.create(type, uuid, key.getTimestamp());
     }
 
 }

@@ -148,7 +148,7 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         Instance instance = new MockInstance("instName");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
-        entity = new EntityBuilder("myType", UUID.randomUUID().toString())
+        entity = EntityBuilder.create("myType", UUID.randomUUID().toString())
             .attr(new Attribute("key1", "val1"))
             .attr(new Attribute("key2", false))
             .build();

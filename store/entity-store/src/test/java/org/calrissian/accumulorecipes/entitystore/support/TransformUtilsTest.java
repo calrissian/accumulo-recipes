@@ -27,7 +27,7 @@ public class TransformUtilsTest {
     @Test
     public void test() {
 
-        Entity entity = new EntityBuilder("type", "id").build();
+        Entity entity = EntityBuilder.create("type", "id").build();
 
         EntityIdentifier index = TransformUtils.entityToEntityIdentifier.apply(entity);
         assertEquals(entity.getType(), index.getType());

@@ -18,19 +18,19 @@ GraphStore graphStore = new AccumuloEntityGraphStore(connector);
 As described above, modelling isn't too complicated at all. Any entity can be a vertex. Edges are just a specialized entity with a few required properties describing the vertices they are connecting and the nature of the connection (these properties are HEAD, TAIL, and LABEL). I will elaborate on the example model from the Calrissian entity store documentation and show how the same brother relationship would be modelled using the graph store.
 
 ```java
-Entity vertex1 = new EntityBuilder("Person", "1")
+Entity vertex1 = EntityBuilder.create("Person", "1")
     .attr("name", "John Smith")
     .attr("age", 34)
     .attr("location", "Maryland")
     .build();
 
-Entity vertex2 = new EntityBuilder("Person", "2")
+Entity vertex2 = EntityBuilder.create("Person", "2")
     .attr("name", "James Smith")
     .attr("age", 30)
     .attr("location", "Virginia")
     .build();
 
-EdgeEntity edge = new EdgeEntityBuilder("Relative", "1:2", vertex1, vertex2, "brother")
+EdgeEntity edge = EdgeEntityBuilder.create("Relative", "1:2", vertex1, vertex2, "brother")
     .attr("biological", true)
     .build();
 ```
@@ -118,17 +118,17 @@ engine.eval("v.out('brother').fill(results)", bindings);
 Or, let's say we had a parent relationship as a relative: 
 
 ``` java
-Entity vertex3 = new EntityBuilder("Person", "3")
+Entity vertex3 = EntityBuilder.create("Person", "3")
     .attr("name", "James Smith Sr.")
     .attr("age", 65)
     .attr("location", "Maryland")
     .build();
 
-EdgeEntity edge2 = new EdgeEntityBuilder("Relative", "2:3", vertex2, vertex3, "child")
+EdgeEntity edge2 = EdgeEntityBuilder.create("Relative", "2:3", vertex2, vertex3, "child")
     .attr("biological", true)
     .build();
 
-EdgeEntity edge3 = new EdgeEntityBuilder("Relative", "1:3", vertex1, vertex3, "child")
+EdgeEntity edge3 = EdgeEntityBuilder.create("Relative", "1:3", vertex1, vertex3, "child")
     .attr("biological", false)
     .build();
 

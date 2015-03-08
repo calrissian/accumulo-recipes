@@ -81,12 +81,12 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testGet() throws Exception {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
@@ -115,12 +115,12 @@ public class AccumuloEntityStoreTest {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", shouldntSee))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", shouldntSee))
             .build();
@@ -144,12 +144,12 @@ public class AccumuloEntityStoreTest {
 
       Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
-      Entity entity = new EntityBuilder("type", "id1")
+      Entity entity = EntityBuilder.create("type", "id1")
           .attr(new Attribute("key1", "val1", meta))
           .attr(new Attribute("key2", "val2", shouldntSee))
           .build();
 
-      Entity entity2 = new EntityBuilder("type", "id2")
+      Entity entity2 = EntityBuilder.create("type", "id2")
           .attr(new Attribute("key1", "val1", meta))
           .attr(new Attribute("key2", "val2", shouldntSee))
           .build();
@@ -171,13 +171,13 @@ public class AccumuloEntityStoreTest {
       Map<String, String> canSee = new MetadataBuilder().setVisibility("A&B").build();
       Map<String, String> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
 
-      Entity entity = new EntityBuilder("type", "id1")
+      Entity entity = EntityBuilder.create("type", "id1")
           .attr(new Attribute("key1", "val1", meta))
           .attr(new Attribute("key2", "val2", canSee))
           .attr(new Attribute("key3", "val3", cantSee))
           .build();
 
-      Entity entity2 = new EntityBuilder("type", "id2")
+      Entity entity2 = EntityBuilder.create("type", "id2")
           .attr(new Attribute("key1", "val1", meta))
           .attr(new Attribute("key2", "val2", canSee))
           .attr(new Attribute("key3", "val3", cantSee))
@@ -199,12 +199,12 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testGreaterThan() throws Exception {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", 1, meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", 9, meta))
             .build();
@@ -229,12 +229,12 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQueryKeyNotInIndex() {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
@@ -252,12 +252,12 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQueryRangeNotInIndex() {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
@@ -276,12 +276,12 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testGet_withSelection() throws Exception {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
@@ -299,12 +299,12 @@ public class AccumuloEntityStoreTest {
 
     @Test
     public void testQuery_withSelection() throws Exception {
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
@@ -326,12 +326,12 @@ public class AccumuloEntityStoreTest {
 
     @Test
     public void testQuery_AndQuery() throws Exception {
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
@@ -357,12 +357,12 @@ public class AccumuloEntityStoreTest {
 
     @Test
     public void testQuery_OrQuery() throws Exception {
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id3")
+        Entity entity2 = EntityBuilder.create("type", "id3")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key3", "val3", meta))
             .build();
@@ -391,12 +391,12 @@ public class AccumuloEntityStoreTest {
 
     @Test
     public void testQuery_SingleEqualsQuery() throws Exception, AccumuloException, AccumuloSecurityException {
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key2", "val2", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", "val1", meta))
             .attr(new Attribute("key3", "val3", meta))
             .build();
@@ -424,7 +424,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
@@ -440,7 +440,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_hasNot() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
@@ -456,7 +456,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_in_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
@@ -471,7 +471,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_in_results() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
@@ -486,7 +486,7 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_notIn_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
@@ -501,11 +501,11 @@ public class AccumuloEntityStoreTest {
     @Test
     public void testQuery_greaterThan() {
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", 5, meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", 10, meta))
             .build();
 
@@ -531,11 +531,11 @@ public class AccumuloEntityStoreTest {
     public void testQuery_greaterThanEq() {
 
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", 5, meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", 10, meta))
             .build();
 
@@ -561,11 +561,11 @@ public class AccumuloEntityStoreTest {
     public void testQuery_lessThan() {
 
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", 5, meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", 10, meta))
             .build();
 
@@ -592,11 +592,11 @@ public class AccumuloEntityStoreTest {
     public void testQuery_lessThanEq() throws TableNotFoundException {
 
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", 5, meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("key1", 10, meta))
             .build();
 
@@ -622,17 +622,17 @@ public class AccumuloEntityStoreTest {
 
     @Test
     public void testKeys() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "1.1.1.1", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "2.2.2.2", meta))
             .build();
 
-        Entity entity3 = new EntityBuilder("type", "id3")
+        Entity entity3 = EntityBuilder.create("type", "id3")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "3.3.3.3", meta))
             .build();
@@ -654,7 +654,7 @@ public class AccumuloEntityStoreTest {
             .setTimestamp(currentTimeMillis()-50000)
             .build();
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "1.1.1.1", expireMeta))
             .build();
@@ -680,7 +680,7 @@ public class AccumuloEntityStoreTest {
             .setTimestamp(currentTimeMillis()-500)
             .build();
 
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "1.1.1.1", expireMeta))
             .build();
@@ -697,17 +697,17 @@ public class AccumuloEntityStoreTest {
 
     @Test
     public void testQuery_MultipleNotInQuery() throws Exception {
-        Entity entity = new EntityBuilder("type", "id")
+        Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "1.1.1.1", meta))
             .build();
 
-        Entity entity2 = new EntityBuilder("type", "id2")
+        Entity entity2 = EntityBuilder.create("type", "id2")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "2.2.2.2", meta))
             .build();
 
-        Entity entity3 = new EntityBuilder("type", "id3")
+        Entity entity3 = EntityBuilder.create("type", "id3")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "3.3.3.3", meta))
             .build();

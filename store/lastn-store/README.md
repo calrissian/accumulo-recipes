@@ -26,12 +26,12 @@ Connector connector = instance.getConnector("root", new PasswordToken("secret"))
 // The only time the last n value is set is the first time the store is configured in Accumulo
 AccumuloLastNStore lastNStore = new AccumuloLastNStore(connector, 100);
 
-Event entry1 = new EventBuilder("eventType")
+Event entry1 = EventBuilder.create("eventType")
     .attr("key1", "val1")
     .attr("key3", "val3")
     .build()
 
-Event entry2 = new EventBuilder("eventType")
+Event entry2 = EventBuilder.create("eventType")
     .attr("key1", "val1")
     .attr("key3", "val3")
     .build()

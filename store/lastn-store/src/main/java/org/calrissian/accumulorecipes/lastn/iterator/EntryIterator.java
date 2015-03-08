@@ -143,7 +143,7 @@ public class EntryIterator extends WrappingIterator {
                 String finalType = entryId.substring(0, oneByte);
                 String finalId = entryId.substring(oneByte+1, entryId.length());
 
-                EventBuilder entry = new EventBuilder(finalType, finalId, timestamp);
+                EventBuilder entry = EventBuilder.create(finalType, finalId, timestamp);
 
                 if (attributes.size() > 0)
                     entry.attrs(attributes);

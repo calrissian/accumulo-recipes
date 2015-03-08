@@ -24,7 +24,6 @@ import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
-import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 public class EdgeEntity extends BaseEntity {
 
@@ -80,7 +79,15 @@ public class EdgeEntity extends BaseEntity {
 
     public static final class EdgeEntityBuilder extends EntityBuilder {
 
-        public EdgeEntityBuilder(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
+        public static final EdgeEntityBuilder create(String type, String id, Entity head, Entity tail, String label) {
+            return EdgeEntityBuilder.create(type, id, head, tail, label);
+        }
+
+        public static final EdgeEntityBuilder create(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
+            return EdgeEntityBuilder.create(type, id, head, headVis, tail, tailVis, label);
+        }
+
+        protected EdgeEntityBuilder(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
             super(type, id);
 
             checkNotNull(head);
@@ -97,7 +104,7 @@ public class EdgeEntity extends BaseEntity {
             attr(new Attribute(LABEL, label));
         }
 
-        public EdgeEntityBuilder(String type, String id, Entity head, Entity tail, String label) {
+        protected EdgeEntityBuilder(String type, String id, Entity head, Entity tail, String label) {
             this(type, id, head, "", tail, "", label);
         }
 

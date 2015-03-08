@@ -89,7 +89,7 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
                 String[] cqParts = StringUtils.splitPreserveAllTokens(cq, ONE_BYTE);
                 int idx = cq.lastIndexOf(ONE_BYTE);
                 if (toReturn == null)
-                    toReturn = new EventBuilder(cqParts[1], cqParts[2], encoder.decode(cqParts[0]));
+                    toReturn = EventBuilder.create(cqParts[1], cqParts[2], encoder.decode(cqParts[0]));
                 String vis = splits[3];
                 toReturn.attr(new Attribute(splits[0], typeRegistry.decode(splits[1], splits[2]), setVisibility(new HashMap<String,String>(1), vis)));
             }

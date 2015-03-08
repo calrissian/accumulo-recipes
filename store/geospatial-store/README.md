@@ -9,7 +9,7 @@ The purpose of the store is to find all of the possible entries that are associa
 You can specify mutliple entries to be added at a single location. That location is a 2-dimensional geo-coordinate represented with an x and a y value (longitude and latitude respectively). Let's make an example store entry and add it.
 
 ```java
-Entity entry = new EntityBuilder("person")
+Entity entry = EntityBuilder.create("person")
     .attr("name", "John Doe")
     .attr("age", 35)
     .attr("affiliation", "republican")

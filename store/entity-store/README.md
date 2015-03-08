@@ -15,7 +15,7 @@ EntityStore entityStore = new AccumuloEntityStore(connector);
 
 Entities can be modeled using the following:
 ```java
-Entity entity = new EntityBuilder("Person", "1")
+Entity entity = EntityBuilder.create("Person", "1")
     .attr("name", "John Smith")
     .attr("age", 36)
     .attr("location", "Maryland")
@@ -59,7 +59,7 @@ First thing you'll want to do is probably to turn your json into an entity. You'
 ```java
 ObjectMapper objectMapper = new ObjectMapper();
 String json = "{ \"locations\":[{\"name\":\"Office\", \"addresses\":[{\"number\":1234,\"street\":{\"name\":\"BlahBlah Lane\"}}]}]}}";
-Entity entity = new EntityBuilder("Person", "1")
+Entity entity = EntityBuilder.create("Person", "1")
     .attrs(JsonAttributeStore.fromJson(json, objectMapper))
     .build();
 ```

@@ -76,7 +76,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
                 for (Map.Entry<Key, Value> curEntry : map) {
                     String[] cqParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
                     if(entry == null)
-                        entry =new EntityBuilder(cf, cqParts[0]);
+                        entry =EntityBuilder.create(cf, cqParts[0]);
                     String vis = curEntry.getKey().getColumnVisibility().toString();
                     Attribute attribute = new Attribute(cqParts[3], registry.decode(cqParts[4], cqParts[5]), setVisibility(new HashMap<String, String>(1), vis));
                     entry.attr(attribute);

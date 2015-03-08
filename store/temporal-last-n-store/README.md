@@ -16,20 +16,20 @@ Now let's say we have a system where we are monitoring possible malicious activi
 First we'll construct a few StoreEntry objects that we can place in the store.
 
 ```java
-Event blogUpdate = new EventBuilder("blogUpdate")
+Event blogUpdate = EventBuilder.create("blogUpdate")
     .attr("link", "http://blogs-r-cool.com/")
     .attr("owner", "John Doe")
     .attr("updateType", "New Content Added")
     .attr("contentName", "The people we know")
     .build();
 
-Event worldNews = new EventBuilder("worldNews")
+Event worldNews = EventBuilder.create("worldNews")
     .attr("provider", "CNN")
     .attr("headline", "Burglary in the grocery store")
     .attr("reporter", "Jane Doe")
     .build()
 
-Event emailUpdate = new EventBuilder("emailUpdate")
+Event emailUpdate = EventBuilder.create("emailUpdate")
     .attr("from", "thisguy@gmail.com")
     .attr("subject", "Things you should see before age 50")
     .attr("to", "yournamehere@gmail.com")
