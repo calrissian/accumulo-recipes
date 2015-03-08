@@ -23,8 +23,8 @@ import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
-import org.calrissian.mango.domain.entity.EntityIndex;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 public class EdgeEntity extends BaseEntity {
 
@@ -43,8 +43,8 @@ public class EdgeEntity extends BaseEntity {
         checkNotNull(label);
 
 
-        Attribute headAttribute = new Attribute(HEAD, new EntityIndex(head), setVisibility(new HashMap<String, String>(1), headVis));
-        Attribute tailAttribute = new Attribute(TAIL, new EntityIndex(tail), setVisibility(new HashMap<String, String>(1), tailVis));
+        Attribute headAttribute = new Attribute(HEAD, new EntityIdentifier(head), setVisibility(new HashMap<String, String>(1), headVis));
+        Attribute tailAttribute = new Attribute(TAIL, new EntityIdentifier(tail), setVisibility(new HashMap<String, String>(1), tailVis));
 
         put(headAttribute);
         put(tailAttribute);
@@ -60,15 +60,15 @@ public class EdgeEntity extends BaseEntity {
         super(entity);
     }
 
-    public EntityIndex getHead() {
+    public EntityIdentifier getHead() {
         if (this.get(HEAD) != null)
-            return this.<EntityIndex>get(HEAD).getValue();
+            return this.<EntityIdentifier>get(HEAD).getValue();
         return null;
     }
 
-    public EntityIndex getTail() {
+    public EntityIdentifier getTail() {
         if (this.get(TAIL) != null)
-            return this.<EntityIndex>get(TAIL).getValue();
+            return this.<EntityIdentifier>get(TAIL).getValue();
         return null;
     }
 
@@ -89,8 +89,8 @@ public class EdgeEntity extends BaseEntity {
             checkNotNull(tailVis);
             checkNotNull(label);
 
-            Attribute headAttribute = new Attribute(HEAD, new EntityIndex(head), setVisibility(new HashMap<String, String>(1), headVis));
-            Attribute tailAttribute = new Attribute(TAIL, new EntityIndex(tail), setVisibility(new HashMap<String, String>(1), tailVis));
+            Attribute headAttribute = new Attribute(HEAD, new EntityIdentifier(head), setVisibility(new HashMap<String, String>(1), headVis));
+            Attribute tailAttribute = new Attribute(TAIL, new EntityIdentifier(tail), setVisibility(new HashMap<String, String>(1), tailVis));
 
             attr(headAttribute);
             attr(tailAttribute);

@@ -16,10 +16,10 @@ EntityStore entityStore = new AccumuloEntityStore(connector);
 Entities can be modeled using the following:
 ```java
 Entity entity = new EntityBuilder("Person", "1")
-    .attr(new Attribute("name", "John Smith"))
-    .attr(new Attribute("age", 36))
-    .attr(new Attribute("location", "Maryland"))
-    .attr(new Attribute("brother", new EntityIndex("Person", "2"))
+    .attr("name", "John Smith")
+    .attr("age", 36)
+    .attr("location", "Maryland")
+    .attr("brother", new EntityIdentifier("Person", "2")
     .build();
 ```
 
@@ -35,7 +35,7 @@ There are a few different get and query options for entities.
 
 - You can stream a single or a bunch of entities in a batch by their types and ids:
 ```java
-EntityIndex index = new EntityIndex("Person", "1");
+EntityIdentifier index = new EntityIdentifier("Person", "1");
 CloseableIterable<Entity> entities = entityStore.get(Collections.singleton(index), null, new Auths());
 ```
 

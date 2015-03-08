@@ -22,7 +22,7 @@ import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 import java.util.List;
 import java.util.Set;
@@ -35,25 +35,25 @@ public interface GraphStore extends EntityStore {
     /**
      * Returns the adjacent edges where the edges match some given query. Edges returned will match the given labels
      */
-    CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices, Node query, Direction direction,
+    CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIdentifier> fromVertices, Node query, Direction direction,
                                                 Set<String> labels, Auths auths);
 
     /**
      * Returns edges adjacent to the given vertices that match the given query in the given direction.
      */
-    CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices, Node query, Direction direction, Auths auths);
+    CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIdentifier> fromVertices, Node query, Direction direction, Auths auths);
 
     /**
      * Returns vertices adjacent to the given vertices where the edges connecting the vertices match the given query
      * with the given direction. Adjacent vertices will have an edge connection to the input vertices which match
      * the labels given.
      */
-    CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices, Node query, Direction direction,
+    CloseableIterable<Entity> adjacencies(List<EntityIdentifier> fromVertices, Node query, Direction direction,
                                           Set<String> labels, Auths auths);
 
     /**
      * Returns vertices adjacent to the given verties where the edges connecting the vertices match the given query
      * with the given direction.
      */
-    CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices, Node query, Direction direction, Auths auths);
+    CloseableIterable<Entity> adjacencies(List<EntityIdentifier> fromVertices, Node query, Direction direction, Auths auths);
 }

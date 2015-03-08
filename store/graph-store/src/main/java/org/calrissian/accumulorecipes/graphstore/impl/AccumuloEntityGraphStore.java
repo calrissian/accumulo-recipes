@@ -36,7 +36,7 @@ import static org.calrissian.mango.collect.CloseableIterables.partition;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.criteria.support.NodeUtils.criteriaFromNode;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_INDEX_ALIAS;
+import static org.calrissian.mango.types.encoders.AliasConstants.ENTITY_IDENTIFIER_ALIAS;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -78,7 +78,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.calrissian.mango.types.TypeRegistry;
 
 /**
@@ -107,7 +107,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             String edge = cq.substring(0, idx);
 
             try {
-                EntityIndex edgeRel = (EntityIndex) typeRegistry.decode(ENTITY_INDEX_ALIAS, edge);
+                EntityIdentifier edgeRel = (EntityIdentifier) typeRegistry.decode(ENTITY_IDENTIFIER_ALIAS, edge);
                 EntityBuilder entity = new EntityBuilder(edgeRel.getType(), edgeRel.getId());
                 List<Map.Entry<Key, Value>> entries = RowEncoderUtil.decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
@@ -162,7 +162,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     @Override
-    public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices,
+    public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIdentifier> fromVertices,
                                                        Node query,
                                                        Direction direction,
                                                        Set<String> labels,
@@ -178,7 +178,7 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     @Override
-    public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
+    public CloseableIterable<EdgeEntity> adjacentEdges(List<EntityIdentifier> fromVertices, Node query, Direction direction, final Auths auths) {
         final CloseableIterable<Entity> entities = findAdjacentEdges(fromVertices, query, direction, null, auths);
         return transform(entities, new Function<Entity, EdgeEntity>() {
             @Override
@@ -189,16 +189,16 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     @Override
-    public CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices,
+    public CloseableIterable<Entity> adjacencies(List<EntityIdentifier> fromVertices,
                                                  Node query, Direction direction,
                                                  Set<String> labels,
                                                  final Auths auths) {
         CloseableIterable<Entity> edges = findAdjacentEdges(fromVertices, query, direction, labels, auths);
-        CloseableIterable<EntityIndex> indexes = transform(edges, new EdgeToVertexIndexXform(direction));
+        CloseableIterable<EntityIdentifier> indexes = transform(edges, new EdgeToVertexIndexXform(direction));
         return concat(transform(partition(indexes, bufferSize),
-                new Function<List<EntityIndex>, Iterable<Entity>>() {
+                new Function<List<EntityIdentifier>, Iterable<Entity>>() {
                     @Override
-                    public Iterable<Entity> apply(List<EntityIndex> entityIndexes) {
+                    public Iterable<Entity> apply(List<EntityIdentifier> entityIndexes) {
                         List<Entity> entityCollection = new LinkedList<Entity>();
                         CloseableIterable<Entity> entities = get(entityIndexes, null, auths);
                         Iterables.addAll(entityCollection, entities);
@@ -210,11 +210,11 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
     }
 
     @Override
-    public CloseableIterable<Entity> adjacencies(List<EntityIndex> fromVertices, Node query, Direction direction, final Auths auths) {
+    public CloseableIterable<Entity> adjacencies(List<EntityIdentifier> fromVertices, Node query, Direction direction, final Auths auths) {
         return adjacencies(fromVertices, query, direction, null, auths);
     }
 
-    private CloseableIterable<Entity> findAdjacentEdges(List<EntityIndex> fromVertices,
+    private CloseableIterable<Entity> findAdjacentEdges(List<EntityIdentifier> fromVertices,
                                                         Node query, Direction direction,
                                                         Set<String> labels,
                                                         final Auths auths) {
@@ -231,8 +231,8 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
             scanner.addScanIterator(setting);
 
             Collection<Range> ranges = new ArrayList<Range>();
-            for (EntityIndex entity : fromVertices) {
-                String row = typeRegistry.encode(new EntityIndex(entity.getType(), entity.getId()));
+            for (EntityIdentifier entity : fromVertices) {
+                String row = typeRegistry.encode(new EntityIdentifier(entity.getType(), entity.getId()));
                 if (labels != null) {
                     for (String label : labels)
                         populateRange(ranges, row, direction, label);
@@ -270,9 +270,9 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
         for (Entity entity : entities) {
             if (isEdge(entity)) {
 
-                EntityIndex edgeRelationship = new EntityIndex(entity);
-                EntityIndex toVertex = entity.<EntityIndex>get(TAIL).getValue();
-                EntityIndex fromVertex = entity.<EntityIndex>get(HEAD).getValue();
+                EntityIdentifier edgeRelationship = new EntityIdentifier(entity);
+                EntityIdentifier toVertex = entity.<EntityIdentifier>get(TAIL).getValue();
+                EntityIdentifier fromVertex = entity.<EntityIdentifier>get(HEAD).getValue();
 
                 String toVertexVis = getVisibility(entity.get(TAIL), "");
                 String fromVertexVis = getVisibility(entity.get(HEAD), "");

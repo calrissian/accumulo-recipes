@@ -55,7 +55,7 @@ import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -98,7 +98,7 @@ public class AccumuloEntityStoreTest {
             System.out.println("ENTRY: " + entry);
         }
 
-        CloseableIterable<Entity> actualEntity = store.get(singletonList(new EntityIndex("type", "id")), null, DEFAULT_AUTHS);
+        CloseableIterable<Entity> actualEntity = store.get(singletonList(new EntityIdentifier("type", "id")), null, DEFAULT_AUTHS);
 
         assertEquals(1, Iterables.size(actualEntity));
         Entity actual = actualEntity.iterator().next();
@@ -127,9 +127,9 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        List<EntityIndex> indexes = asList(new EntityIndex[] {
-            new EntityIndex(entity.getType(), entity.getId()),
-            new EntityIndex(entity2.getType(),entity2.getId())
+        List<EntityIdentifier> indexes = asList(new EntityIdentifier[] {
+            new EntityIdentifier(entity.getType(), entity.getId()),
+            new EntityIdentifier(entity2.getType(),entity2.getId())
         });
 
         Iterable<Entity> actualEntities = store.get(indexes, null, new Auths("A"));
@@ -288,7 +288,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        CloseableIterable<Entity> actualEvent = store.get(singletonList(new EntityIndex("type", entity.getId())),
+        CloseableIterable<Entity> actualEvent = store.get(singletonList(new EntityIdentifier("type", entity.getId())),
                 singleton("key1"), DEFAULT_AUTHS);
 
         assertEquals(1, Iterables.size(actualEvent));
@@ -664,7 +664,7 @@ public class AccumuloEntityStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "entity_shard");
 
-        List<EntityIndex> indexes = asList(new EntityIndex[] {new EntityIndex(entity.getType(), entity.getId())});
+        List<EntityIdentifier> indexes = asList(new EntityIdentifier[] {new EntityIdentifier(entity.getType(), entity.getId())});
         Iterable<Entity> entities = store.get(indexes, null, DEFAULT_AUTHS);
 
         assertEquals(1, size(entities));

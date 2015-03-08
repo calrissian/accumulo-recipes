@@ -39,7 +39,7 @@ import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.criteria.Criteria;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 /**
  * This is a read-only implementation of the Tinkerpop Blueprints graph model.
@@ -111,13 +111,13 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * Retrieves the vertex with the given {@link EntityIndex}
+     * Retrieves the vertex with the given {@link EntityIdentifier}
      */
     @Override
     public Vertex getVertex(Object entityIndex) {
-        Preconditions.checkArgument(entityIndex instanceof EntityIndex);
-        if (vertexTypes.contains(((EntityIndex) entityIndex).getType())) ;
-        CloseableIterable<Entity> entities = graphStore.get(singletonList((EntityIndex) entityIndex), null, auths);
+        Preconditions.checkArgument(entityIndex instanceof EntityIdentifier);
+        if (vertexTypes.contains(((EntityIdentifier) entityIndex).getType())) ;
+        CloseableIterable<Entity> entities = graphStore.get(singletonList((EntityIdentifier) entityIndex), null, auths);
         Iterator<Entity> itr = entities.iterator();
         if (itr.hasNext()) {
             EntityVertex toReturn = new EntityVertex(itr.next(), graphStore, auths);
@@ -163,15 +163,15 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * Retrieves the edge at the specified {@link EntityIndex}.
+     * Retrieves the edge at the specified {@link EntityIdentifier}.
      *
      * @param entityIndex The entity index object (type and id) for which to find the edge
      */
     @Override
     public Edge getEdge(Object entityIndex) {
-        Preconditions.checkArgument(entityIndex instanceof EntityIndex);
-        if (edgeTypes.contains(((EntityIndex) entityIndex).getType())) ;
-        CloseableIterable<Entity> entities = graphStore.get(singletonList((EntityIndex) entityIndex), null, auths);
+        Preconditions.checkArgument(entityIndex instanceof EntityIdentifier);
+        if (edgeTypes.contains(((EntityIdentifier) entityIndex).getType())) ;
+        CloseableIterable<Entity> entities = graphStore.get(singletonList((EntityIdentifier) entityIndex), null, auths);
         Iterator<Entity> itr = entities.iterator();
         if (itr.hasNext()) {
             EntityEdge toReturn = new EntityEdge(itr.next(), graphStore, auths);
@@ -269,14 +269,14 @@ public class EntityGraph implements Graph {
     }
 
     /**
-     * A config function to turn an {@link EntityElement} into an {@link EntityIndex} so that it can be directly
+     * A config function to turn an {@link EntityElement} into an {@link EntityIdentifier} so that it can be directly
      * applied to the {@link EntityStore}.
      */
-    public static class EntityIndexXform implements Function<Element, EntityIndex> {
+    public static class EntityIdentifierXform implements Function<Element, EntityIdentifier> {
         @Override
-        public EntityIndex apply(Element element) {
+        public EntityIdentifier apply(Element element) {
             Entity entity = ((EntityElement) element).getEntity();
-            return new EntityIndex(entity.getType(), entity.getId());
+            return new EntityIdentifier(entity.getType(), entity.getId());
         }
     }
 

@@ -57,7 +57,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.calrissian.mango.types.TypeRegistry;
 
 public class AccumuloEntityStore implements EntityStore {
@@ -102,7 +102,7 @@ public class AccumuloEntityStore implements EntityStore {
     }
 
     @Override
-    public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths) {
+    public CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Set<String> selectFields, Auths auths) {
         checkNotNull(typesAndIds);
         checkNotNull(auths);
         try {
@@ -110,7 +110,7 @@ public class AccumuloEntityStore implements EntityStore {
             BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
             Collection<Range> ranges = new LinkedList<Range>();
-            for (EntityIndex curIndex : typesAndIds) {
+            for (EntityIdentifier curIndex : typesAndIds) {
                 String shardId = shardBuilder.buildShard(curIndex.getType(), curIndex.getId());
                 ranges.add(exact(shardId, PREFIX_E + ONE_BYTE + curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
@@ -141,7 +141,7 @@ public class AccumuloEntityStore implements EntityStore {
     }
 
     @Override
-    public CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Auths auths) {
+    public CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Auths auths) {
         return get(typesAndIds, null, auths);
     }
 

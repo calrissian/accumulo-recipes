@@ -24,7 +24,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.event.EventIndex;
+import org.calrissian.mango.domain.event.EventIdentifier;
 
 /**
  * An event store generally holds temporal events each with some number of
@@ -85,7 +85,7 @@ public interface EventStore {
      * @param auths
      * @return
      */
-    CloseableIterable<Event> get(Collection<EventIndex> indexes, Set<String> selectFields, Auths auths);
+    CloseableIterable<Event> get(Collection<EventIdentifier> indexes, Set<String> selectFields, Auths auths);
 
     CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Set<String> selectFields, Auths auths);
 
@@ -97,7 +97,7 @@ public interface EventStore {
      * @param auths
      * @return
      */
-    CloseableIterable<Event> get(Collection<EventIndex> indexes, Auths auths);
+    CloseableIterable<Event> get(Collection<EventIdentifier> indexes, Auths auths);
 
 
     public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths);

@@ -50,7 +50,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.event.EventIndex;
+import org.calrissian.mango.domain.event.EventIdentifier;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -93,7 +93,7 @@ public class AccumuloEventStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", new Authorizations("A"));
 
-        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex("", event.getId(), event.getTimestamp())), null, DEFAULT_AUTHS);
+        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIdentifier("", event.getId(), event.getTimestamp())), null, DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));
         Event actual = actualEvent.iterator().next();
@@ -101,7 +101,7 @@ public class AccumuloEventStoreTest {
         assertEquals(actual.getId(), event.getId());
         System.out.println(actual);
 
-        actualEvent = store.get(singletonList(new EventIndex("", event.getId(), time)), null, DEFAULT_AUTHS);
+        actualEvent = store.get(singletonList(new EventIdentifier("", event.getId(), time)), null, DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));
         actual = actualEvent.iterator().next();
@@ -127,9 +127,9 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        List<EventIndex> indexes = asList(new EventIndex[] {
-            new EventIndex(event.getId(), event.getTimestamp()),
-            new EventIndex(event2.getId(), event2.getTimestamp())
+        List<EventIdentifier> indexes = asList(new EventIdentifier[] {
+            new EventIdentifier(event.getId(), event.getTimestamp()),
+            new EventIdentifier(event2.getId(), event2.getTimestamp())
         });
 
         Iterable<Event> actualEvent1 = store.get(indexes, null, new Auths("A"));
@@ -210,7 +210,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event));
 
-        List<EventIndex> eventIndexes = Arrays.asList(new EventIndex(event.getId(), event.getTimestamp()));
+        List<EventIdentifier> eventIndexes = Arrays.asList(new EventIdentifier(event.getId(), event.getTimestamp()));
 
         Iterable<Event> events = store.get(eventIndexes, null, DEFAULT_AUTHS);
 
@@ -362,7 +362,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIndex(event.getId(), event.getTimestamp())),
+        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIdentifier(event.getId(), event.getTimestamp())),
                 Collections.singleton("key1"), DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));

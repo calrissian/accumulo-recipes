@@ -59,7 +59,7 @@ import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.event.EventIndex;
+import org.calrissian.mango.domain.event.EventIdentifier;
 import org.calrissian.mango.types.TypeRegistry;
 
 /**
@@ -180,7 +180,7 @@ public class AccumuloEventStore implements EventStore {
      * about an event is the uuid, this method will do the extra fetch of the timestamp from the index table.
      */
     @Override
-    public CloseableIterable<Event> get(Collection<EventIndex> uuids, Set<String> selectFields, Auths auths) {
+    public CloseableIterable<Event> get(Collection<EventIdentifier> uuids, Set<String> selectFields, Auths auths) {
         checkNotNull(uuids);
         checkNotNull(auths);
         try {
@@ -188,7 +188,7 @@ public class AccumuloEventStore implements EventStore {
             BatchScanner eventScanner = helper.buildShardScanner(auths.getAuths());
             Collection<Range> eventRanges = new LinkedList<Range>();
 
-            for (EventIndex curIndex : uuids) {
+            for (EventIdentifier curIndex : uuids) {
                 String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getType(), curIndex.getId(), curIndex.getTimestamp()));
                 eventRanges.add(prefix(shardId, PREFIX_E + ONE_BYTE + curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
@@ -267,7 +267,7 @@ public class AccumuloEventStore implements EventStore {
     }
 
     @Override
-    public CloseableIterable<Event> get(Collection<EventIndex> indexes, Auths auths) {
+    public CloseableIterable<Event> get(Collection<EventIdentifier> indexes, Auths auths) {
         return get(indexes, auths);
     }
 

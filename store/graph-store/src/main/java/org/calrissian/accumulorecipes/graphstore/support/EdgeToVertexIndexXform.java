@@ -19,14 +19,14 @@ import com.google.common.base.Function;
 import org.calrissian.accumulorecipes.graphstore.model.Direction;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 /**
  * This config function will pull the vertex index from the correct side of given the edge based on the given
  * direction and will structure the result as an index to be used to query the entity store.
  */
-public class EdgeToVertexIndexXform implements Function<Entity, EntityIndex> {
+public class EdgeToVertexIndexXform implements Function<Entity, EntityIdentifier> {
 
   private org.calrissian.accumulorecipes.graphstore.model.Direction direction;
 
@@ -35,7 +35,7 @@ public class EdgeToVertexIndexXform implements Function<Entity, EntityIndex> {
   }
 
   @Override
-  public EntityIndex apply(Entity element) {
+  public EntityIdentifier apply(Entity element) {
 
     String headOrTail;
     if (direction == Direction.IN)
@@ -43,7 +43,7 @@ public class EdgeToVertexIndexXform implements Function<Entity, EntityIndex> {
     else
       headOrTail = EdgeEntity.TAIL;
 
-    EntityIndex rel = element.<EntityIndex>get(headOrTail).getValue();
-    return new EntityIndex(rel.getType(), rel.getId());
+    EntityIdentifier rel = element.<EntityIdentifier>get(headOrTail).getValue();
+    return new EntityIdentifier(rel.getType(), rel.getId());
   }
 }

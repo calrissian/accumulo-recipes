@@ -17,15 +17,15 @@ package org.calrissian.accumulorecipes.entitystore.support;
 
 import com.google.common.base.Function;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 public class TransformUtils {
     private TransformUtils() {/**private constructor**/}
 
-    public static Function<Entity, EntityIndex> entityToEntityIndex = new Function<Entity, EntityIndex>() {
+    public static Function<Entity, EntityIdentifier> entityToEntityIdentifier = new Function<Entity, EntityIdentifier>() {
         @Override
-        public EntityIndex apply(Entity entity) {
-            return new EntityIndex(entity.getType(), entity.getId());
+        public EntityIdentifier apply(Entity entity) {
+            return new EntityIdentifier(entity.getType(), entity.getId());
         }
     };
 }

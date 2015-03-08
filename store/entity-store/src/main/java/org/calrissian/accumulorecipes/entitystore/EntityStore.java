@@ -24,7 +24,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 /**
  * An entity store is for objects that represent elements of the real world. Entities can have
@@ -46,7 +46,7 @@ public interface EntityStore {
      * @param auths
      * @return
      */
-    CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Set<String> selectFields, Auths auths);
+    CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Set<String> selectFields, Auths auths);
 
     /**
      * Retrives a list of entities by their types and ids. Only attributes with the given auths will
@@ -55,7 +55,7 @@ public interface EntityStore {
      * @param auths
      * @return
      */
-    CloseableIterable<Entity> get(List<EntityIndex> typesAndIds, Auths auths);
+    CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Auths auths);
 
     /**
      * Retrieves all entities for a specified type. Only fields in the given set of select fields will

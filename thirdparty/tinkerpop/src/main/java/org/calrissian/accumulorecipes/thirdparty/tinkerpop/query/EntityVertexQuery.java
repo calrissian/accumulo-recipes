@@ -18,7 +18,7 @@ package org.calrissian.accumulorecipes.thirdparty.tinkerpop.query;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Collections.singletonList;
 import static org.calrissian.accumulorecipes.thirdparty.tinkerpop.EntityGraph.EdgeEntityXform;
-import static org.calrissian.accumulorecipes.thirdparty.tinkerpop.EntityGraph.EntityIndexXform;
+import static org.calrissian.accumulorecipes.thirdparty.tinkerpop.EntityGraph.EntityIdentifierXform;
 import static org.calrissian.accumulorecipes.thirdparty.tinkerpop.EntityGraph.VertexEntityXform;
 import static org.calrissian.mango.collect.CloseableIterables.chain;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
@@ -40,7 +40,7 @@ import org.calrissian.mango.collect.CloseableIterables;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 /**
  * This builder class allows a set of vertices and/or edges to be queried matching the given criteria. This class
@@ -86,8 +86,8 @@ public class EntityVertexQuery implements VertexQuery {
     }
 
     @Override
-    public CloseableIterable<EntityIndex> vertexIds() {
-        return transform(vertices(), new EntityIndexXform());
+    public CloseableIterable<EntityIdentifier> vertexIds() {
+        return transform(vertices(), new EntityIdentifierXform());
     }
 
     @Override
@@ -160,7 +160,7 @@ public class EntityVertexQuery implements VertexQuery {
 
         Node query = queryBuilder.end().build();
 
-        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity().getType(), vertex.getEntity().getId()));
+        List<EntityIdentifier> vertexIndex = singletonList(new EntityIdentifier(vertex.getEntity().getType(), vertex.getEntity().getId()));
 
         List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
                 new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();
@@ -195,7 +195,7 @@ public class EntityVertexQuery implements VertexQuery {
     public CloseableIterable<Vertex> vertices() {
         Node query = queryBuilder.end().build();
 
-        List<EntityIndex> vertexIndex = singletonList(new EntityIndex(vertex.getEntity().getType(), vertex.getEntity().getId()));
+        List<EntityIdentifier> vertexIndex = singletonList(new EntityIdentifier(vertex.getEntity().getType(), vertex.getEntity().getId()));
 
         List<org.calrissian.accumulorecipes.graphstore.model.Direction> dirs =
                 new ArrayList<org.calrissian.accumulorecipes.graphstore.model.Direction>();

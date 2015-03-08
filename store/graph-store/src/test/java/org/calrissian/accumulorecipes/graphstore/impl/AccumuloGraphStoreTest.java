@@ -44,7 +44,7 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -98,7 +98,7 @@ public class AccumuloGraphStoreTest {
         }
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
+                asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 singleton("label1"),
@@ -120,7 +120,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacentEdges_withLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
+                asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 singleton("label1"),
@@ -142,7 +142,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacentEdges_noLabels_outDirection() throws TableNotFoundException {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
+                asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 new Auths("U,ADMIN")
@@ -163,7 +163,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacentEdges_noLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
-                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
+                asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 new Auths("U,ADMIN")
@@ -183,7 +183,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_withLabels_outDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
+                asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 Collections.singleton("label1"),
@@ -204,7 +204,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_withLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
+                asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 Collections.singleton("label1"),
@@ -226,7 +226,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_noLabels_outDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex(vertex1.getType(), vertex1.getId())),
+                asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 new Auths("U,ADMIN")
@@ -246,7 +246,7 @@ public class AccumuloGraphStoreTest {
     public void testAdjacencies_noLabels_inDirection() throws TableNotFoundException {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
-                asList(new EntityIndex(vertex2.getType(), vertex2.getId())),
+                asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
                 new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 new Auths("U,ADMIN")

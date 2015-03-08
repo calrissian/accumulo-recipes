@@ -24,7 +24,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 
 public class EntityElement implements Element {
 
@@ -86,6 +86,6 @@ public class EntityElement implements Element {
 
     @Override
     public Object getId() {
-        return new EntityIndex(entity.getType(), entity.getId());
+        return new EntityIdentifier(entity.getType(), entity.getId());
     }
 }

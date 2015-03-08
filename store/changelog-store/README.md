@@ -18,7 +18,7 @@ Take for a moment, an update that occurs on a system. Let's say a person's locat
 
 ```java
 Event changeEvent = new EventBuilder("eventType")
-    .attr("id", new EntityIndex("person", "1")
+    .attr("id", new EntityIdentifier("person", "1")
     .attr("location", "Virginia")
     .build();
 ```

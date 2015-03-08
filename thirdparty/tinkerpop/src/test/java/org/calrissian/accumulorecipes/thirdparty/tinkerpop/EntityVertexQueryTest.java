@@ -46,7 +46,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,8 +64,8 @@ public class EntityVertexQueryTest {
     Entity vertex3 = new BaseEntity("vertexType2", "id3");
     Entity edge3 = new EdgeEntity("edgeType2", "edgeId3", vertex3, "", vertex1, "", "label1");
 
-    private static EntityIndex entityIndex(Entity entity) {
-        return new EntityIndex(entity.getType(), entity.getId());
+    private static EntityIdentifier entityIndex(Entity entity) {
+        return new EntityIdentifier(entity.getType(), entity.getId());
     }
 
     @Before
@@ -162,7 +162,7 @@ public class EntityVertexQueryTest {
     @Test
     public void testVertexIds_noQuery_noLabels() {
         EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
-        CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().vertexIds();
+        CloseableIterable<EntityIdentifier> vertexIds = (CloseableIterable<EntityIdentifier>) v1.query().vertexIds();
         System.out.println(vertexIds);
         Assert.assertEquals(3, Iterables.size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
@@ -178,7 +178,7 @@ public class EntityVertexQueryTest {
             System.out.println(entry);
         }
         EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
-        CloseableIterable<EntityIndex> vertexIds = (CloseableIterable<EntityIndex>) v1.query().labels("label1").vertexIds();
+        CloseableIterable<EntityIdentifier> vertexIds = (CloseableIterable<EntityIdentifier>) v1.query().labels("label1").vertexIds();
         Assert.assertEquals(2, Iterables.size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         Assert.assertEquals(entityIndex(vertex3), Iterables.get(vertexIds, 0));
@@ -193,8 +193,8 @@ public class EntityVertexQueryTest {
             System.out.println(entry);
         }
         EntityVertex v1 = (EntityVertex) graph.getVertex(entityIndex(vertex1));
-        CloseableIterable<EntityIndex> vertexIds =
-                (CloseableIterable<EntityIndex>) v1.query().has("edgeProp1").labels("label1").vertexIds();
+        CloseableIterable<EntityIdentifier> vertexIds =
+                (CloseableIterable<EntityIdentifier>) v1.query().has("edgeProp1").labels("label1").vertexIds();
         Assert.assertEquals(1, Iterables.size(vertexIds));
         // two edges point out from vertex1 to vertex2. This should mean vertex2 shows up twice
         Assert.assertEquals(entityIndex(vertex2), Iterables.get(vertexIds, 0));

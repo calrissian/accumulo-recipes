@@ -36,7 +36,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityIndex;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,18 +81,18 @@ public class BlueprintsGraphStoreTest {
     @Test
     public void testGetVertex() {
         // get first vertex
-        EntityVertex v = (EntityVertex) graph.getVertex(new EntityIndex(vertex1.getType(), vertex1.getId()));
+        EntityVertex v = (EntityVertex) graph.getVertex(new EntityIdentifier(vertex1.getType(), vertex1.getId()));
         assertEntitiesEqual(vertex1, v.getEntity());
 
         // get second vertex
-        v = (EntityVertex) graph.getVertex(new EntityIndex(vertex2.getType(), vertex2.getId()));
+        v = (EntityVertex) graph.getVertex(new EntityIdentifier(vertex2.getType(), vertex2.getId()));
         assertEntitiesEqual(vertex2, v.getEntity());
 
     }
 
     @Test
     public void testGetEdge() {
-        EntityEdge e = (EntityEdge) graph.getEdge(new EntityIndex(edge.getType(), edge.getId()));
+        EntityEdge e = (EntityEdge) graph.getEdge(new EntityIdentifier(edge.getType(), edge.getId()));
         assertEntitiesEqual(edge, e.getEntity());
     }
 

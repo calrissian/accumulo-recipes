@@ -52,13 +52,13 @@ CloseableIterable<Entity> vertices = graphStore.query(Collections.singleton("Per
 
 After we've found the vertices of interest, we can find the adjacent out edges connected to those vertices with the following:
 ```java
-Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
+Collection<EntityIdentifier> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIdentifier);
 CloseableIterable<EdgeEntity> edges = graphStore.adjacentEdges(indexes, null, Direction.OUT, new Auths());
 ```
 
 Or we can propagate right to the set of vertices on the other side of the edges:
 ```java
-Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
+Collection<EntityIdentifier> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIdentifier);
 CloseableIterable<Entity> newVertices = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
 ```
 
@@ -66,7 +66,7 @@ With this, it's possible to perform a breadth-first traversal through the graph.
 ```java
 
 for(int i = 0; i < 3; i++) {
-  Collection<EntityIndex> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIndex);
+  Collection<EntityIdentifier> indexes = CloseableIterables.transform(vertices, TransformUtils.entityToEntityIdentifier);
   vertices.close()  // don't forget to close!
   vertices = graphStore.adjacencies(indexes, null, Direction.OUT, new Auths());
 }
@@ -99,7 +99,7 @@ That is, we only want to traverse over the vertices that include Person entities
 
 Now, let's demonstrate using Tinkerpop's Gremlin to traverse the graph above. Gremlin is nice in that it can be written in both native Java and Groovy formats. Let's query for the vertex like we did in the ```AccumuloEntityGraphStore``` example above:
 ```java
-Vertex v = g.getVertex(new EntityIndex("Person", "1"));
+Vertex v = g.getVertex(new EntityIdentifier("Person", "1"));
 ```
 
 Now, let's set up a Gremlin query using Groovy to find the brothers of the vertex:
