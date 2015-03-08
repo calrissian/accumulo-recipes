@@ -29,7 +29,7 @@ public class QueryOptimizerTest {
     @Test
     public void test() {
 
-        Node query = new QueryBuilder().and().and().or().end().end().end().build();
+        Node query = QueryBuilder.create().and().and().or().end().end().end().build();
 
         QueryPlanner optimizer = new QueryPlanner(query, LEXI_TYPES);
 

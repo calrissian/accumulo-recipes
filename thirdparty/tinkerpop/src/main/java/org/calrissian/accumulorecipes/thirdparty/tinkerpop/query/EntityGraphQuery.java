@@ -45,8 +45,8 @@ public class EntityGraphQuery implements GraphQuery {
 
     private int limit = -1;
 
-    private QueryBuilder queryBuilder = new QueryBuilder().and();
-    private QueryBuilder filters = new QueryBuilder().and();
+    private QueryBuilder queryBuilder = QueryBuilder.create().and();
+    private QueryBuilder filters = QueryBuilder.create().and();
 
     public EntityGraphQuery(GraphStore graphStore, Set<String> vertexTypes, Set<String> edgeTypes, Auths auths) {
         this.graphStore = graphStore;

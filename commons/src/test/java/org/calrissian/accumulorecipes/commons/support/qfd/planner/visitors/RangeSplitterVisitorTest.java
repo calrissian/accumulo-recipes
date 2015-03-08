@@ -27,7 +27,7 @@ public class RangeSplitterVisitorTest {
     @Test
     public void test() {
 
-        Node query = new QueryBuilder().and().eq("key1", "val1").range("key2", 0, 5).end().build();
+        Node query = QueryBuilder.create().and().eq("key1", "val1").range("key2", 0, 5).end().build();
         query.accept(new RangeSplitterVisitor());
 
         assertTrue(query instanceof AndNode);
@@ -36,7 +36,7 @@ public class RangeSplitterVisitorTest {
         assertTrue(query.children().get(1) instanceof GreaterThanEqualsLeaf);
         assertTrue(query.children().get(2) instanceof LessThanEqualsLeaf);
 
-        query = new QueryBuilder().or().eq("key1", "val1").range("key2", 0, 5).end().build();
+        query = QueryBuilder.create().or().eq("key1", "val1").range("key2", 0, 5).end().build();
         query.accept(new RangeSplitterVisitor());
 
         assertTrue(query instanceof OrNode);

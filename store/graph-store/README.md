@@ -46,7 +46,7 @@ graphStore.save(Arrays.asList(new Entity[] { vertex1, edge, vertex2 }));
 Graph traversals start at some number of vertices and propagate through edges to the vertices on the opposite sides. Sometimes it's important to make several jumps through the graph and sometimes it's just important to know which edges sit directly adjacent. Either way, we generally start a traversal by querying for vertices of interest.
 
 ```java
-Node query = new QueryBuilder().eq("name", "John Smith").build();
+Node query = QueryBuilder.create().eq("name", "John Smith").build();
 CloseableIterable<Entity> vertices = graphStore.query(Collections.singleton("Person"), query, Auths.EMPTY);
 ```
 

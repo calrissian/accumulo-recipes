@@ -115,7 +115,7 @@ public class JsonEventStoreTest {
          * Build our query to retrieve stored events by their flattened json
          * representation.
          */
-        Node query = new QueryBuilder()
+        Node query = QueryBuilder.create()
             .and()
                 .eq("statuses_$entities_$hashtags_$indices", 29)     // the json tree has been flattened
                 .eq("statuses_$user_$name", "Sean Cummings")        // into key/value objects

@@ -78,7 +78,7 @@ public class EntityInputFormatTest {
         EntityInputFormat.setMockInstance(job, "entityInst");
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setQueryInfo(job, Collections.singleton("type"),
-                new QueryBuilder().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+                QueryBuilder.create().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
         job.setOutputFormatClass(NullOutputFormat.class);
 
         job.submit();

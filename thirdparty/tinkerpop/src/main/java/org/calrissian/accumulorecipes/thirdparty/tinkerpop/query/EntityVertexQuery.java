@@ -57,7 +57,7 @@ public class EntityVertexQuery implements VertexQuery {
     private String[] labels = null;
     private int limit = -1;
 
-    private QueryBuilder queryBuilder = new QueryBuilder().and();
+    private QueryBuilder queryBuilder = QueryBuilder.create().and();
 
     public EntityVertexQuery(EntityVertex vertex, GraphStore graphStore, Auths auths) {
         this.vertex = vertex;

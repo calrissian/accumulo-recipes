@@ -29,7 +29,7 @@ public class ExtractRangesVisitorTest {
     @Test
     public void testExtract_onlyRanges() {
 
-        Node node = new QueryBuilder().and().greaterThan("key", "val").lessThan("key", "val").end().build();
+        Node node = QueryBuilder.create().and().greaterThan("key", "val").lessThan("key", "val").end().build();
 
 
         ExtractRangesVisitor rangesVisitor = new ExtractRangesVisitor();
@@ -44,7 +44,7 @@ public class ExtractRangesVisitorTest {
     @Test
     public void testExtract_rangesAndNonRanges() {
 
-        Node node = new QueryBuilder().and().greaterThan("key", "val").lessThan("key", "val").eq("key", "val").end().build();
+        Node node = QueryBuilder.create().and().greaterThan("key", "val").lessThan("key", "val").eq("key", "val").end().build();
 
         ExtractRangesVisitor rangesVisitor = new ExtractRangesVisitor();
         node.accept(rangesVisitor);

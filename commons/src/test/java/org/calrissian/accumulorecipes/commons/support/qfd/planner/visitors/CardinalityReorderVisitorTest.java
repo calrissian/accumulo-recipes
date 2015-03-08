@@ -42,7 +42,7 @@ public class CardinalityReorderVisitorTest {
         cardinalities.put(new AttributeIndexKey("key2", "val2", "string"), 50l);
         cardinalities.put(new AttributeIndexKey("key3", "val3", "string"), 1000l);
 
-        Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
@@ -64,7 +64,7 @@ public class CardinalityReorderVisitorTest {
         cardinalities.put(new AttributeIndexKey("key2", "val2", "string"), 0l);
         cardinalities.put(new AttributeIndexKey("key3", "val3", "string"), 1000l);
 
-        Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
@@ -85,7 +85,7 @@ public class CardinalityReorderVisitorTest {
         cardinalities.put(new AttributeIndexKey("key2", "val2", "string"), 0l);
         cardinalities.put(new AttributeIndexKey("key3", "val3", "string"), 1000l);
 
-        Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));
@@ -106,7 +106,7 @@ public class CardinalityReorderVisitorTest {
         cardinalities.put(new AttributeIndexKey("key2", "val2", "string"), 0l);
         cardinalities.put(new AttributeIndexKey("key3", "val3", "string"), 0l);
 
-        Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
                 .end().end().build();
 
         node.accept(new CardinalityReorderVisitor(cardinalities, LEXI_TYPES));

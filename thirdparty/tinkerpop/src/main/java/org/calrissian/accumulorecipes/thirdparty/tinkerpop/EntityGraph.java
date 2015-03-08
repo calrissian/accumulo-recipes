@@ -150,7 +150,7 @@ public class EntityGraph implements Graph {
      */
     @Override
     public CloseableIterable<Vertex> getVertices(String key, Object value) {
-        CloseableIterable<Entity> entities = graphStore.query(vertexTypes, new QueryBuilder().eq(key, value).build(), null, auths);
+        CloseableIterable<Entity> entities = graphStore.query(vertexTypes, QueryBuilder.create().eq(key, value).build(), null, auths);
         return CloseableIterables.transform(entities, new VertexEntityXform(graphStore, auths));
     }
 
@@ -203,7 +203,7 @@ public class EntityGraph implements Graph {
      */
     @Override
     public CloseableIterable<Edge> getEdges(String key, Object value) {
-        CloseableIterable<Entity> entities = graphStore.query(edgeTypes, new QueryBuilder().eq(key, value).build(), null, auths);
+        CloseableIterable<Entity> entities = graphStore.query(edgeTypes, QueryBuilder.create().eq(key, value).build(), null, auths);
         return CloseableIterables.transform(entities, new EdgeEntityXform(graphStore, auths));
     }
 

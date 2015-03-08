@@ -99,7 +99,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
                 asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 singleton("label1"),
                 new Auths("ADMIN,U")
@@ -121,7 +121,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
                 asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 singleton("label1"),
                 new Auths("U,ADMIN")
@@ -143,7 +143,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
                 asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 new Auths("U,ADMIN")
         );
@@ -164,7 +164,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<EdgeEntity> results = graphStore.adjacentEdges(
                 asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 new Auths("U,ADMIN")
         );
@@ -184,7 +184,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
                 asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 Collections.singleton("label1"),
                 new Auths("U,ADMIN")
@@ -205,7 +205,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
                 asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 Collections.singleton("label1"),
                 new Auths("U,ADMIN")
@@ -227,7 +227,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
                 asList(new EntityIdentifier(vertex1.getType(), vertex1.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.OUT,
                 new Auths("U,ADMIN")
         );
@@ -247,7 +247,7 @@ public class AccumuloGraphStoreTest {
 
         CloseableIterable<Entity> results = graphStore.adjacencies(
                 asList(new EntityIdentifier(vertex2.getType(), vertex2.getId())),
-                new QueryBuilder().eq("edgeProp1", "edgeVal1").build(),
+                QueryBuilder.create().eq("edgeProp1", "edgeVal1").build(),
                 Direction.IN,
                 new Auths("U,ADMIN")
         );

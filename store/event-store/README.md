@@ -61,7 +61,7 @@ A store isn't any good if we can't get data back out. Because of the nature of t
 Let's say we want to query back the event we constructure earlier. Let's first query for the events that are located in Maryland:
 
 ```java
-Node query = new QueryBuilder().eq("location", "Maryland").build();
+Node query = QueryBuilder.create().eq("location", "Maryland").build();
 Date startTime = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
 Date endTime = new Date(System.currentTimeMillis() + (60 * 60 * 1000));
 CloseableIterable<Event> events = store.query(startTime, endTime, query, new Auths("ADMIN"));
@@ -85,10 +85,10 @@ A query wouldn't be extremely useful, however, if all you could ever query are s
 
 ```java
 // find all the status update events that have healthOK equal to false
-Node query = new QueryBuilder().and().eq("eventType", "status").eq("healthOK", false).end().build();
+Node query = QueryBuilder.create().and().eq("eventType", "status").eq("healthOK", false).end().build();
 
 // find all the event object from Maryland or Virginia
-Node query = new QueryBuilder().or().eq("location", "Maryland").eq("location", "Virginia").end().build());
+Node query = QueryBuilder.create().or().eq("location", "Maryland").eq("location", "Virginia").end().build());
 ```
 
 ## Persisting and querying JSON

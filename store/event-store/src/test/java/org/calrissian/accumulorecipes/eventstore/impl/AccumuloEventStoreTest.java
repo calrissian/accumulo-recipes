@@ -156,7 +156,7 @@ public class AccumuloEventStoreTest {
 
     store.save(asList(event, event2));
 
-    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+    Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
     Iterable<Event> actualEvent1 = store.query(new Date(event.getTimestamp() - 500),
         new Date(event.getTimestamp() + 500), query, null, new Auths("A"));
@@ -185,7 +185,7 @@ public class AccumuloEventStoreTest {
 
     store.save(asList(event, event2));
 
-    Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+    Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
     Iterable<Event> actualEvent1 = store.query(new Date(event.getTimestamp() - 500),
         new Date(event.getTimestamp() + 500), query, null, new Auths("A,B"));
@@ -230,7 +230,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event));
 
-        Node node = new QueryBuilder().eq("key1", "val1").build();
+        Node node = QueryBuilder.create().eq("key1", "val1").build();
 
         Iterable<Event> events = store.query(
             new Date(currentTimeMillis()-5000), new Date(currentTimeMillis()), node, null, DEFAULT_AUTHS);
@@ -254,7 +254,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        Node query = new QueryBuilder().and().eq("key4", "val5").end().build();
+        Node query = QueryBuilder.create().and().eq("key4", "val5").end().build();
 
         Iterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS);
@@ -278,7 +278,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        Node query = new QueryBuilder().and().range("key4", 0, 5).end().build();
+        Node query = QueryBuilder.create().and().range("key4", 0, 5).end().build();
 
         Iterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS);
@@ -307,14 +307,14 @@ public class AccumuloEventStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
 
-        CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), new QueryBuilder().greaterThan("key-@#$%^&*()1", 9).build(), null, DEFAULT_AUTHS);
+        CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), QueryBuilder.create().greaterThan("key-@#$%^&*()1", 9).build(), null, DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));
         Event actual = actualEvent.iterator().next();
         assertEquals(new HashSet(event2.getAttributes()), new HashSet(actual.getAttributes()));
         assertEquals(actual.getId(), event2.getId());
 
-        actualEvent = store.query(new Date(time), new Date(time), new QueryBuilder().greaterThan("key-@#$%^&*()1", 0).build(), null, DEFAULT_AUTHS);
+        actualEvent = store.query(new Date(time), new Date(time), QueryBuilder.create().greaterThan("key-@#$%^&*()1", 0).build(), null, DEFAULT_AUTHS);
 
 
         assertEquals(2, size(actualEvent));
@@ -338,7 +338,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        Node node = new QueryBuilder().eq("key1", "val1").build();
+        Node node = QueryBuilder.create().eq("key1", "val1").build();
 
         CloseableIterable<Event> actualEvent = store.query(new Date(currentTime - 5001), new Date(currentTime + 500), node, null, DEFAULT_AUTHS);
         assertEquals(2, size(actualEvent));
@@ -386,7 +386,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+        Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
         Iterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, Collections.singleton("key1"), DEFAULT_AUTHS);
@@ -415,7 +415,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        Node query = new QueryBuilder().and().eq("`key`.`1`", "val1").eq("key2", "val2").end().build();
+        Node query = QueryBuilder.create().and().eq("`key`.`1`", "val1").eq("key2", "val2").end().build();
 
         Iterator<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS).iterator();
@@ -455,7 +455,7 @@ public class AccumuloEventStoreTest {
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
 
 
-        Node query = new QueryBuilder().or().eq("key3", "val3").eq("`key2`", "val2").end().build();
+        Node query = QueryBuilder.create().or().eq("key3", "val3").eq("`key2`", "val2").end().build();
 
         Iterator<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS).iterator();
@@ -493,7 +493,7 @@ public class AccumuloEventStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
 
-        Node query = new QueryBuilder().eq("key-1", "val1").build();
+        Node query = QueryBuilder.create().eq("key-1", "val1").build();
 
         Iterator<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
             new Date(), query, null, DEFAULT_AUTHS).iterator();
@@ -532,7 +532,7 @@ public class AccumuloEventStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
 
-        Node query = new QueryBuilder().eq("key-@#$%^&*()1", "val1").build();
+        Node query = QueryBuilder.create().eq("key-@#$%^&*()1", "val1").build();
 
         CloseableIterable<Event> events = store.query(new Date(currentTimeMillis() - 5000),
             new Date(), Sets.newHashSet("type1", "type2"), query, null, DEFAULT_AUTHS);
@@ -550,7 +550,7 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_emptyNodeReturnsNoResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Node query = new QueryBuilder().and().end().build();
+        Node query = QueryBuilder.create().and().end().build();
 
         CloseableIterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS);
@@ -583,7 +583,7 @@ public class AccumuloEventStoreTest {
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
         AccumuloTestUtils.dumpTable(connector, "eventStore_index");
 
-        Node query = new QueryBuilder()
+        Node query = QueryBuilder.create()
                 .and()
                 .notEq("ip", "1.1.1.1")
                 .notEq("ip", "2.2.2.2")
@@ -615,7 +615,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event));
 
-        Node node = new QueryBuilder().has("key1").build();
+        Node node = QueryBuilder.create().has("key1").build();
 
         Iterable<Event> itr = store.query(new Date(0), new Date(), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
@@ -632,7 +632,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event));
 
-        Node node = new QueryBuilder().hasNot("key2").build();
+        Node node = QueryBuilder.create().hasNot("key2").build();
 
         Iterable<Event> itr = store.query(new Date(0), new Date(), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));

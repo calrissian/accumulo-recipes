@@ -157,7 +157,7 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EntityInputFormat.setMockInstance(job, "instName");
         EntityInputFormat.setQueryInfo(job, Collections.singleton("myType"),
-                new QueryBuilder().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
+                QueryBuilder.create().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
 
     }
 }

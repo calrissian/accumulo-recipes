@@ -151,7 +151,7 @@ public class EventLoaderTest extends AccumuloInputFormat {
         EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EventInputFormat.setMockInstance(job, "instName");
         EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), Collections.singleton(""),
-                new QueryBuilder().eq("key1", "val1").build());
+                QueryBuilder.create().eq("key1", "val1").build());
 
     }
 }

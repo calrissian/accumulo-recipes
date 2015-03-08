@@ -156,7 +156,7 @@ public class AccumuloEntityStoreTest {
 
       store.save(asList(entity, entity2));
 
-      Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+      Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
       Iterable<Entity> actualEntity1 = store.query(Collections.singleton("type"), query, null, new Auths("A"));
 
@@ -185,7 +185,7 @@ public class AccumuloEntityStoreTest {
 
       store.save(asList(entity, entity2));
 
-      Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+      Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
       Iterable<Entity> actualEntity1 = store.query(Collections.singleton("type"), query, null, new Auths("A,B"));
 
@@ -217,7 +217,7 @@ public class AccumuloEntityStoreTest {
         }
 
         CloseableIterable<Entity> actualEntity = store.query(singleton("type"),
-            new QueryBuilder().greaterThan("key2", 8).build(), null, DEFAULT_AUTHS);
+            QueryBuilder.create().greaterThan("key2", 8).build(), null, DEFAULT_AUTHS);
 
         assertEquals(1, Iterables.size(actualEntity));
         Entity actual = actualEntity.iterator().next();
@@ -241,7 +241,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node query = new QueryBuilder().and().eq("key5", "val5").end().build();
+        Node query = QueryBuilder.create().and().eq("key5", "val5").end().build();
 
         Iterable<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS);
 
@@ -264,7 +264,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node query = new QueryBuilder().and().range("key5", 0, 5).end().build();
+        Node query = QueryBuilder.create().and().range("key5", 0, 5).end().build();
 
         Iterable<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS);
 
@@ -311,7 +311,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+        Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
         Iterable<Entity> itr = store.query(singleton("type"), query, singleton("key1"), DEFAULT_AUTHS);
 
@@ -338,7 +338,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node query = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").end().build();
+        Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
         Iterator<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS).iterator();
 
@@ -372,7 +372,7 @@ public class AccumuloEntityStoreTest {
 
         AccumuloTestUtils.dumpTable(connector, "entity_shard", DEFAULT_AUTHS.getAuths());
 
-        Node query = new QueryBuilder().or().eq("key3", "val3").eq("key2", "val2").end().build();
+        Node query = QueryBuilder.create().or().eq("key3", "val3").eq("key2", "val2").end().build();
 
         Iterator<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS).iterator();
 
@@ -403,7 +403,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node query = new QueryBuilder().eq("key1", "val1").build();
+        Node query = QueryBuilder.create().eq("key1", "val1").build();
 
         Iterator<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS).iterator();
 
@@ -430,7 +430,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity));
 
-        Node node = new QueryBuilder().has("key1").build();
+        Node node = QueryBuilder.create().has("key1").build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
@@ -446,7 +446,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity));
 
-        Node node = new QueryBuilder().has("key2").build();
+        Node node = QueryBuilder.create().has("key2").build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(0, Iterables.size(itr));
@@ -462,7 +462,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity));
 
-        Node node = new QueryBuilder().in("key1", "val2", "val3", "val4").build();
+        Node node = QueryBuilder.create().in("key1", "val2", "val3", "val4").build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(0, Iterables.size(itr));
@@ -477,7 +477,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity));
 
-        Node node = new QueryBuilder().and().in("key1", "val1", "val2", "val3").eq("key1", "val1").end().build();
+        Node node = QueryBuilder.create().and().in("key1", "val1", "val2", "val3").eq("key1", "val1").end().build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
@@ -492,7 +492,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity));
 
-        Node node = new QueryBuilder().notIn("key1", "val1", "val2", "val3").build();
+        Node node = QueryBuilder.create().notIn("key1", "val1", "val2", "val3").build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(0, Iterables.size(itr));
@@ -511,17 +511,17 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node node = new QueryBuilder().greaterThan("key1", 4).build();
+        Node node = QueryBuilder.create().greaterThan("key1", 4).build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null,DEFAULT_AUTHS);
         assertEquals(2, Iterables.size(itr));
 
-        node = new QueryBuilder().greaterThan("key1", 9).build();
+        node = QueryBuilder.create().greaterThan("key1", 9).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
 
-        node = new QueryBuilder().greaterThan("key1", 10).build();
+        node = QueryBuilder.create().greaterThan("key1", 10).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(0, Iterables.size(itr));
@@ -541,17 +541,17 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node node = new QueryBuilder().greaterThanEq("key1", 4).build();
+        Node node = QueryBuilder.create().greaterThanEq("key1", 4).build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(2, Iterables.size(itr));
 
-        node = new QueryBuilder().greaterThanEq("key1", 9).build();
+        node = QueryBuilder.create().greaterThanEq("key1", 9).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
 
-        node = new QueryBuilder().greaterThanEq("key1", 10).build();
+        node = QueryBuilder.create().greaterThanEq("key1", 10).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
@@ -571,17 +571,17 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node node = new QueryBuilder().lessThan("key1", 11).build();
+        Node node = QueryBuilder.create().lessThan("key1", 11).build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(2, Iterables.size(itr));
 
-        node = new QueryBuilder().lessThan("key1", 10).build();
+        node = QueryBuilder.create().lessThan("key1", 10).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
 
-        node = new QueryBuilder().lessThan("key1", 5).build();
+        node = QueryBuilder.create().lessThan("key1", 5).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(0, Iterables.size(itr));
@@ -602,19 +602,19 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2));
 
-        Node node = new QueryBuilder().lessThanEq("key1", 11).build();
+        Node node = QueryBuilder.create().lessThanEq("key1", 11).build();
 
         Iterable<Entity> itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(2, Iterables.size(itr));
 
-        node = new QueryBuilder().lessThanEq("key1", 10).build();
+        node = QueryBuilder.create().lessThanEq("key1", 10).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(2, Iterables.size(itr));
 
         AccumuloTestUtils.dumpTable(connector, "entity_shard", new Authorizations());
 
-        node = new QueryBuilder().lessThanEq("key1", 5).build();
+        node = QueryBuilder.create().lessThanEq("key1", 5).build();
 
         itr = store.query(singleton("type"), node, null, DEFAULT_AUTHS);
         assertEquals(1, Iterables.size(itr));
@@ -687,7 +687,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(singleton(entity));
 
-        Node query = new QueryBuilder().and().eq("hasIp", "true").end().build();
+        Node query = QueryBuilder.create().and().eq("hasIp", "true").end().build();
         Iterable<Entity> entities = store.query(newHashSet(new String[] {"type"}), query, null, DEFAULT_AUTHS);
 
         assertEquals(1, size(entities));
@@ -714,7 +714,7 @@ public class AccumuloEntityStoreTest {
 
         store.save(asList(entity, entity2, entity3));
 
-        Node query = new QueryBuilder()
+        Node query = QueryBuilder.create()
                 .and()
                 .notEq("ip", "1.1.1.1")
                 .notEq("ip", "2.2.2.2")
@@ -737,7 +737,7 @@ public class AccumuloEntityStoreTest {
 
     @Test
     public void testQuery_emptyNodeReturnsNoResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        Node query = new QueryBuilder().and().end().build();
+        Node query = QueryBuilder.create().and().end().build();
 
         CloseableIterable<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS);
 

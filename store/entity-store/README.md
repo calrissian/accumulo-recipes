@@ -46,7 +46,7 @@ CloseableIterable<Entity> entities = entityStore.getAllByType(Collections.single
 
 - Or you can query for the entities of interest for a collection of types:
 ```java
-Node query = new QueryBuilder().and().eq("age", 36).eq("name", "John Smith").end().build();
+Node query = QueryBuilder.create().and().eq("age", 36).eq("name", "John Smith").end().build();
 CloseableIterable<Entity> entities = entityStore.query(Collections.singleton("Person"), query, Auths.EMPTY);
 ```
 

@@ -75,7 +75,7 @@ public class EventLoader extends LoadFunc implements Serializable {
         try {
             // call groovy expressions from Java code
             Binding binding = new Binding();
-            binding.setVariable("q", new QueryBuilder());
+            binding.setVariable("q", QueryBuilder.create());
             GroovyShell shell = new GroovyShell(binding);
             qb = (QueryBuilder) shell.evaluate(query);
         } catch(Exception e) {

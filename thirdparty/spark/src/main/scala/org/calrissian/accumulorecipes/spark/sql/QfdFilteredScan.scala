@@ -77,7 +77,7 @@ abstract class QfdFilteredScan(inst: String, zk: String, user: String, pass: Str
   }
 
   private def buildQuery(filters: Array[Filter]): Node = {
-    var andNode = new QueryBuilder().and()
+    var andNode = QueryBuilder.create().and()
 
     filters.foreach(it => it match {
       case EqualTo(attr, value) => andNode = andNode.eq(attr, value)

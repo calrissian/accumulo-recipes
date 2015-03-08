@@ -80,7 +80,7 @@ abstract class QfdStoreCatalystScan(inst: String, zk: String, user: String, pass
 
 
   override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
-    val node = buildQuery(new QueryBuilder().and(), filters).end().build()
+    val node = buildQuery(QueryBuilder.create().and(), filters).end().build()
     buildRDD(requiredColumns, filters, node).map(it => asRow(it, schema, requiredColumns.map(_.name).toArray))
   }
 

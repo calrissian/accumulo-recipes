@@ -69,7 +69,7 @@ public class EntityGlobalIndexVisitorTest {
 
         dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
-        Node node = new QueryBuilder().and().eq("key1", "val1").eq("key2", "val2").eq("key3", true).end().build();
+        Node node = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").eq("key3", true).end().build();
 
         BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, new Authorizations(), 2);
         GlobalIndexVisitor visitor = new EntityGlobalIndexVisitor(scanner,

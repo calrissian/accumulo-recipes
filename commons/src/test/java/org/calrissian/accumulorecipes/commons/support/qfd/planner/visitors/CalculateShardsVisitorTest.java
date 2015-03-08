@@ -51,7 +51,7 @@ public class CalculateShardsVisitorTest {
         /**
          * The result of an AND nested within an AND with an EQ as a sibling
          */
-        Node node = new QueryBuilder().and().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().and().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
             .end().end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
@@ -67,7 +67,7 @@ public class CalculateShardsVisitorTest {
         /**
          * The result of nesting an OR within an OR with an EQ as a sibling
          */
-        Node node = new QueryBuilder().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().or().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
             .end().end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
@@ -81,7 +81,7 @@ public class CalculateShardsVisitorTest {
         /**
          * The result of nesting an AND within an OR with an EQ as a sibling
          */
-        Node node = new QueryBuilder().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().or().eq("key3", "val3").and().eq("key2", "val2").eq("key1", "val1")
             .end().end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
@@ -96,7 +96,7 @@ public class CalculateShardsVisitorTest {
         /**
          * The result of nesting an OR within an AND with an EQ as a sibling
          */
-        Node node = new QueryBuilder().and().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
+        Node node = QueryBuilder.create().and().eq("key3", "val3").or().eq("key2", "val2").eq("key1", "val1")
             .end().end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
@@ -110,7 +110,7 @@ public class CalculateShardsVisitorTest {
         /**
          * When we have a node that doesn't exist in an and, we shouldn't scan any shards
          */
-        Node node = new QueryBuilder().and().eq("key4", "val2").eq("key2", "val2").end().build();
+        Node node = QueryBuilder.create().and().eq("key4", "val2").eq("key2", "val2").end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
 
@@ -125,7 +125,7 @@ public class CalculateShardsVisitorTest {
          * When we have a node that doesn't exist in an and, the whole and should should fail but the or
          * should have shards
          */
-        Node node = new QueryBuilder().or().eq("key1", "val1").and().eq("key4", "val2").eq("key2", "val2")
+        Node node = QueryBuilder.create().or().eq("key1", "val1").and().eq("key4", "val2").eq("key2", "val2")
             .end().end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
@@ -139,7 +139,7 @@ public class CalculateShardsVisitorTest {
         /**
          * When we have a negation node and we OR that with another node.
          */
-        Node node = new QueryBuilder().or().eq("key1", "val1").and().notEq("key2", "val2")
+        Node node = QueryBuilder.create().or().eq("key1", "val1").and().notEq("key2", "val2")
             .end().end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
@@ -154,7 +154,7 @@ public class CalculateShardsVisitorTest {
         /**
          * This pretty much becomes an and. The only shard in common is 2
          */
-        Node node = new QueryBuilder().and().eq("key1", "val1").or().notEq("key2", "val2")
+        Node node = QueryBuilder.create().and().eq("key1", "val1").or().notEq("key2", "val2")
             .end().end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
@@ -169,7 +169,7 @@ public class CalculateShardsVisitorTest {
         /**
          * The result of nesting an OR within an AND with an EQ as a sibling
          */
-        Node node = new QueryBuilder().and().greaterThan("key1", "val1").lessThan("key2", "val2").notEq("key1", "hellp")
+        Node node = QueryBuilder.create().and().greaterThan("key1", "val1").lessThan("key2", "val2").notEq("key1", "hellp")
             .end().build();
 
         CalculateShardsVisitor visitor = runShardsVisitor(node);
