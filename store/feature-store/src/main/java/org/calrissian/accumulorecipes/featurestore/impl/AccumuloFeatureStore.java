@@ -15,13 +15,44 @@
  */
 package org.calrissian.accumulorecipes.featurestore.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static org.apache.commons.lang.StringUtils.defaultString;
+import static org.calrissian.accumulorecipes.commons.support.Constants.EMPTY_VALUE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
+import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
+import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.generateTimestamp;
+import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
+import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
+import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
+import static org.calrissian.mango.collect.CloseableIterables.transform;
+import static org.calrissian.mango.collect.CloseableIterables.wrap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import com.google.common.base.Preconditions;
-import org.apache.accumulo.core.client.*;
+import com.google.common.base.Function;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.ScannerBase;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.FirstEntryInRowIterator;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
@@ -33,20 +64,11 @@ import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.support.Constants;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry;
 import org.calrissian.accumulorecipes.featurestore.support.FeatureTransform;
+import org.calrissian.accumulorecipes.featurestore.support.GroupIndexIterator;
+import org.calrissian.accumulorecipes.featurestore.support.TypeIndexIterator;
 import org.calrissian.accumulorecipes.featurestore.support.config.AccumuloFeatureConfig;
 import org.calrissian.mango.collect.CloseableIterable;
-
-import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
-import static org.apache.commons.lang.StringUtils.defaultString;
-import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
-import static org.calrissian.accumulorecipes.commons.util.TimestampUtil.generateTimestamp;
-import static org.calrissian.accumulorecipes.featurestore.support.Constants.DEFAULT_ITERATOR_PRIORITY;
-import static org.calrissian.accumulorecipes.featurestore.support.FeatureRegistry.BASE_FEATURES;
-import static org.calrissian.accumulorecipes.featurestore.support.Utilities.combine;
-import static org.calrissian.mango.collect.CloseableIterables.transform;
+import org.calrissian.mango.domain.Pair;
 
 /**
  * This class will store simple feature vectors into accumulo.  The features will aggregate over predefined time intervals
@@ -64,6 +86,7 @@ public class AccumuloFeatureStore implements FeatureStore {
 
     public static final String DEFAULT_TABLE_NAME = "features";
     public static final String REVERSE_SUFFIX = "_reverse";
+    public static final String INDEX_SUFFIX = "_index";
     protected static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000, 100, 10);
 
     private final Connector connector;
@@ -71,6 +94,7 @@ public class AccumuloFeatureStore implements FeatureStore {
     private final String tableName;
     private BatchWriter groupWriter;
     private BatchWriter typeWriter;
+    private BatchWriter indexWriter;
 
     private boolean isInitialized = false;
 
@@ -96,12 +120,15 @@ public class AccumuloFeatureStore implements FeatureStore {
         createTable(this.tableName);
         createTable(this.tableName + REVERSE_SUFFIX);
 
+        if(!connector.tableOperations().exists(tableName + INDEX_SUFFIX))
+            connector.tableOperations().create(tableName + INDEX_SUFFIX, true);
+
         this.groupWriter = this.connector.createBatchWriter(tableName, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
         this.typeWriter = this.connector.createBatchWriter(tableName + REVERSE_SUFFIX, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
+        this.indexWriter = this.connector.createBatchWriter(tableName + INDEX_SUFFIX, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
 
         isInitialized = true;
     }
-
 
     private void createTable(String tableName) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
         int priority = DEFAULT_ITERATOR_PRIORITY;
@@ -123,7 +150,7 @@ public class AccumuloFeatureStore implements FeatureStore {
 
 
     protected ScannerBase metricScanner(AccumuloFeatureConfig xform, Date start, Date end, String group, Iterable<String> types, String name, TimeUnit timeUnit, Auths auths) {
-        Preconditions.checkNotNull(xform);
+        checkNotNull(xform);
 
         try {
             group = defaultString(group);
@@ -146,7 +173,7 @@ public class AccumuloFeatureStore implements FeatureStore {
     }
 
     protected ScannerBase metricScanner(AccumuloFeatureConfig xform, Date start, Date end, String group, String type, String name, TimeUnit timeUnit, Auths auths) {
-        Preconditions.checkNotNull(xform);
+        checkNotNull(xform);
 
         try {
 
@@ -209,6 +236,8 @@ public class AccumuloFeatureStore implements FeatureStore {
         if (!isInitialized)
             throw new RuntimeException("Please called initialize() on the store first");
 
+        Set<Pair<String, String>> indices = new HashSet<Pair<String,String>>();
+
         try {
             for (Feature feature : featureData) {
 
@@ -231,6 +260,8 @@ public class AccumuloFeatureStore implements FeatureStore {
                     Mutation group_mutation = new Mutation(
                             combine(group, timestamp)
                     );
+
+                    indices.add(new Pair<String,String>(group + NULL_BYTE + type + NULL_BYTE + name, feature.getVisibility()));
 
                     //Create mutation with:
                     //rowID: type\u0000timestamp
@@ -264,6 +295,12 @@ public class AccumuloFeatureStore implements FeatureStore {
                 }
             }
 
+            for(Pair<String,String> entries : indices) {
+                Mutation m = new Mutation(entries.getOne());
+                m.put("", "", new ColumnVisibility(entries.getTwo()), EMPTY_VALUE);
+                indexWriter.addMutation(m);
+            }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -273,6 +310,7 @@ public class AccumuloFeatureStore implements FeatureStore {
     public void flush() throws Exception {
         groupWriter.flush();
         typeWriter.flush();
+        indexWriter.flush();
     }
 
     /**
@@ -306,6 +344,65 @@ public class AccumuloFeatureStore implements FeatureStore {
         );
     }
 
+    @Override
+    public Iterable<String> groups(String prefix, Auths auths) {
+
+        checkNotNull(prefix);
+        checkNotNull(auths);
+        try {
+            BatchScanner scanner = connector.createBatchScanner(tableName + INDEX_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
+            scanner.setRanges(singleton(Range.prefix(prefix)));
+
+            IteratorSetting setting = new IteratorSetting(7, GroupIndexIterator.class);
+            scanner.addScanIterator(setting);
+
+            return transform(wrap(scanner), groupIndexTransform);
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Iterable<String> types(String group, String prefix, Auths auths) {
+
+        checkNotNull(group);
+        checkNotNull(prefix);
+        checkNotNull(auths);
+
+        try {
+            BatchScanner scanner = connector.createBatchScanner(tableName + INDEX_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
+            scanner.setRanges(singleton(Range.prefix(group + NULL_BYTE + prefix)));
+
+            IteratorSetting setting = new IteratorSetting(7, TypeIndexIterator.class);
+            scanner.addScanIterator(setting);
+
+            return transform(wrap(scanner), typeIndexTransform);
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Iterable<String> names(String group, String type, String prefix, Auths auths) {
+
+        checkNotNull(group);
+        checkNotNull(type);
+        checkNotNull(prefix);
+        checkNotNull(auths);
+
+        try {
+            BatchScanner scanner = connector.createBatchScanner(tableName + INDEX_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
+            scanner.setRanges(singleton(Range.prefix(group + NULL_BYTE + type + NULL_BYTE + prefix)));
+
+            IteratorSetting setting = new IteratorSetting(7, FirstEntryInRowIterator.class);
+            scanner.addScanIterator(setting);
+
+            return transform(wrap(scanner), groupTypeNameIndexTransform);
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     protected <T extends Feature>FeatureTransform<T> buildFeatureTransform(final AccumuloFeatureConfig xform) {
         return new FeatureTransform<T>() {
             @Override
@@ -314,4 +411,35 @@ public class AccumuloFeatureStore implements FeatureStore {
             }
         };
     }
+
+    protected Function<Map.Entry<Key,Value>, String> groupIndexTransform = new Function<Map.Entry<Key,Value>,String>() {
+        @Override
+        public String apply(Map.Entry<Key,Value> s) {
+            String row = s.getKey().getRow().toString();
+            int idx = row.indexOf(NULL_BYTE);
+            return row.substring(0, idx);
+        }
+    };
+
+    protected Function<Map.Entry<Key,Value>, String> typeIndexTransform = new Function<Map.Entry<Key,Value>,String>() {
+        @Override
+        public String apply(Map.Entry<Key,Value> s) {
+            String row = s.getKey().getRow().toString();
+            int idx = row.indexOf(NULL_BYTE);
+            int nameIdx = row.lastIndexOf(NULL_BYTE);
+            return row.substring(idx+1, nameIdx);
+        }
+    };
+
+    protected Function<Map.Entry<Key,Value>, String> groupTypeNameIndexTransform = new Function<Map.Entry<Key,Value>,String>() {
+        @Override
+        public String apply(Map.Entry<Key,Value> s) {
+            String row = s.getKey().getRow().toString();
+            int nameIdx = row.lastIndexOf(NULL_BYTE);
+            return row.substring(nameIdx+1, row.length());
+        }
+    };
+
+
+
 }
