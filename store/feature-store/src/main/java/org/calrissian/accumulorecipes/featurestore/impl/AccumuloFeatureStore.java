@@ -353,7 +353,7 @@ public class AccumuloFeatureStore implements FeatureStore {
             BatchScanner scanner = connector.createBatchScanner(tableName + INDEX_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
             scanner.setRanges(singleton(Range.prefix(prefix)));
 
-            IteratorSetting setting = new IteratorSetting(7, GroupIndexIterator.class);
+            IteratorSetting setting = new IteratorSetting(25, GroupIndexIterator.class);
             scanner.addScanIterator(setting);
 
             return transform(wrap(scanner), groupIndexTransform);
@@ -373,7 +373,7 @@ public class AccumuloFeatureStore implements FeatureStore {
             BatchScanner scanner = connector.createBatchScanner(tableName + INDEX_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
             scanner.setRanges(singleton(Range.prefix(group + NULL_BYTE + prefix)));
 
-            IteratorSetting setting = new IteratorSetting(7, TypeIndexIterator.class);
+            IteratorSetting setting = new IteratorSetting(25, TypeIndexIterator.class);
             scanner.addScanIterator(setting);
 
             return transform(wrap(scanner), typeIndexTransform);
@@ -394,7 +394,7 @@ public class AccumuloFeatureStore implements FeatureStore {
             BatchScanner scanner = connector.createBatchScanner(tableName + INDEX_SUFFIX, auths.getAuths(), config.getMaxQueryThreads());
             scanner.setRanges(singleton(Range.prefix(group + NULL_BYTE + type + NULL_BYTE + prefix)));
 
-            IteratorSetting setting = new IteratorSetting(7, FirstEntryInRowIterator.class);
+            IteratorSetting setting = new IteratorSetting(25, FirstEntryInRowIterator.class);
             scanner.addScanIterator(setting);
 
             return transform(wrap(scanner), groupTypeNameIndexTransform);
