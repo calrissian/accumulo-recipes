@@ -16,7 +16,6 @@
 package org.calrissian.accumulorecipes.entitystore.hadoop;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.apache.accumulo.core.data.Range.prefix;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
@@ -29,7 +28,6 @@ import static org.calrissian.mango.io.Serializables.toBase64;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -55,9 +53,9 @@ import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.SimpleMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
@@ -106,10 +104,6 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
         job.getConfiguration().set(TYPE_REGISTRY, new String(toBase64(typeRegistry)));
     }
 
-    public static void setMetadataSerDe(Configuration configuration, MetadataSerDe metadataSerDe) throws IOException {
-        configuration.set("metadataSerDe", new String(toBase64(metadataSerDe)));
-    }
-
     public static void setQueryInfo(Job job, Set<String> entityTypes) throws AccumuloSecurityException, AccumuloException, TableNotFoundException, IOException {
         setQueryInfo(job, entityTypes, DEFAULT_SHARD_BUILDER, LEXI_TYPES);
     }
@@ -140,21 +134,10 @@ public class EntityInputFormat extends BaseQfdInputFormat<Entity, EntityWritable
     @Override
     protected Function<Map.Entry<Key, Value>, Entity> getTransform(Configuration configuration) {
 
-
-        final String[] selectFields = configuration.getStrings("selectFields");
-
-
-        Set<String> finalSelectFields = selectFields != null ?
-                new HashSet<String>(asList(selectFields)) : null;
-
         try {
             TypeRegistry<String> typeRegistry = fromBase64(configuration.get(TYPE_REGISTRY).getBytes());
 
-            MetadataSerDe metadataSerDe;
-            if(configuration.get("metadataSerDe") != null)
-                metadataSerDe = fromBase64(configuration.get("metadataSerDe").getBytes());
-            else
-                metadataSerDe = new SimpleMetadataSerDe(typeRegistry);
+            MetadataSerDe metadataSerDe = new SimpleMetadataSerDe();
 
             Kryo kryo = new Kryo();
             initializeKryo(kryo);

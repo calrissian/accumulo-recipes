@@ -23,7 +23,7 @@ import org.junit.Test;
 
 public class SimpleMetadataSerDeTest {
 
-    MetadataSerdeFactory metadataSerDe = new SimpleMetadataSerdeFactory();
+    MetadataSerDe metadataSerDe = new SimpleMetadataSerDe();
 
     @Test
     public void testSimpleSerializationDeserialization() {
@@ -35,9 +35,9 @@ public class SimpleMetadataSerDeTest {
         map.put("key4", "1.0");
         map.put("key5", "true");
 
-        byte[] bytes = metadataSerDe.create().serialize(map);
+        byte[] bytes = metadataSerDe.serialize(map);
 
-        Map<String,String> actualMap = metadataSerDe.create().deserialize(bytes);
+        Map<String,String> actualMap = metadataSerDe.deserialize(bytes);
         assertEquals(map, actualMap);
     }
 }

@@ -72,12 +72,11 @@ import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.QueryPlanner;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.attribute.Metadata;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
-import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerdeFactory;
-import org.calrissian.accumulorecipes.commons.support.attribute.metadata.SimpleMetadataSerdeFactory;
+import org.calrissian.accumulorecipes.commons.support.attribute.metadata.SimpleMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.QueryPlanner;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
@@ -98,14 +97,12 @@ public abstract class QfdHelper<T extends Entity> {
     private final NodeToJexl nodeToJexl;
     private ShardBuilder<T> shardBuilder;
     private TypeRegistry<String> typeRegistry;
-    private MetadataSerDe metadataSerDe;
-    private MetadataSerdeFactory metadataSerdeFactory;
+    private MetadataSerDe metadataSerDe = new SimpleMetadataSerDe();
 
     private KeyValueIndex<T> keyValueIndex;
 
     public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex,
-        MetadataSerdeFactory metadaSerdeFactory, NodeToJexl nodeToJexl)
+        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex, NodeToJexl nodeToJexl)
         throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 
         checkNotNull(connector);
@@ -115,7 +112,6 @@ public abstract class QfdHelper<T extends Entity> {
         checkNotNull(shardBuilder);
         checkNotNull(typeRegistry);
         checkNotNull(keyValueIndex);
-        checkNotNull(metadaSerdeFactory);
 
         this.connector = connector;
         this.indexTable = indexTable;
@@ -126,9 +122,6 @@ public abstract class QfdHelper<T extends Entity> {
         this.typeRegistry = typeRegistry;
         this.keyValueIndex = keyValueIndex;
         this.nodeToJexl = nodeToJexl;
-
-        this.metadataSerDe = metadaSerdeFactory.create();
-        this.metadataSerdeFactory = metadaSerdeFactory;
 
         if (!connector.tableOperations().exists(this.indexTable)) {
             connector.tableOperations().create(this.indexTable);
@@ -161,20 +154,6 @@ public abstract class QfdHelper<T extends Entity> {
     }
 
 
-    public QfdHelper(Connector connector, String indexTable, String shardTable, StoreConfig config,
-        ShardBuilder<T> shardBuilder, TypeRegistry<String> typeRegistry, KeyValueIndex<T> keyValueIndex, NodeToJexl nodeToJexl)
-        throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, indexTable, shardTable, config, shardBuilder, typeRegistry, keyValueIndex, new SimpleMetadataSerdeFactory(), nodeToJexl);
-    }
-
-    public MetadataSerDe getMetadataSerDe() {
-        return metadataSerDe;
-    }
-
-    public MetadataSerdeFactory getMetadataSerdeFactory() {
-        return metadataSerdeFactory;
-    }
-
     public static Kryo getKryo() {
         return kryo;
     }
@@ -182,6 +161,10 @@ public abstract class QfdHelper<T extends Entity> {
     public void flush() throws Exception {
         shardWriter.flush();
         keyValueIndex.flush();
+    }
+
+    public MetadataSerDe getMetadataSerDe() {
+        return metadataSerDe;
     }
 
     /**

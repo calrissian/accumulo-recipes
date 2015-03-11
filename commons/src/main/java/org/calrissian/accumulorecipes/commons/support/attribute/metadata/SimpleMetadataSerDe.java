@@ -24,18 +24,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.calrissian.mango.types.TypeRegistry;
-
 /**
  * A base serializer/deserializer for a hashmap of metadata. This will encode the data into and from a simple byte array.
  */
 public class SimpleMetadataSerDe implements MetadataSerDe {
-
-    private TypeRegistry<String> typeRegistry;
-
-    public SimpleMetadataSerDe(TypeRegistry<String> typeRegistry) {
-        this.typeRegistry = typeRegistry;
-    }
 
     @Override
     public byte[] serialize(Map<String, String> metadata) {

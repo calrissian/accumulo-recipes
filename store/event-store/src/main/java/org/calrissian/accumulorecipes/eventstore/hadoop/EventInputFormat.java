@@ -195,17 +195,6 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
     }
 
-    /**
-     * Sets a custom {@link MetadataSerDe} to be used on the job. Only use this if a custom {@link MetadataSerD«e} was
-     * used to persist the events.
-     * @param configuration
-     * @param metadataSerDe
-     * @throws IOException
-     */
-    public static void setMetadataSerDe(Configuration configuration, MetadataSerDe metadataSerDe) throws IOException {
-        configuration.set("metadataSerDe", new String(toBase64(metadataSerDe)));
-    }
-
     @Override
     protected Function<Map.Entry<Key, Value>, Event> getTransform(Configuration configuration) {
 
@@ -213,12 +202,7 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
             TypeRegistry<String> typeRegistry = fromBase64(configuration.get("typeRegistry").getBytes());
 
-            MetadataSerDe metadataSerDe;
-            if(configuration.get("metadataSerDe") != null)
-                metadataSerDe = fromBase64(configuration.get("metadataSerDe").getBytes());
-            else
-                metadataSerDe = new SimpleMetadataSerDe(typeRegistry);
-
+            MetadataSerDe metadataSerDe = new SimpleMetadataSerDe();
             final Kryo kryo = new Kryo();
             initializeKryo(kryo);
 
