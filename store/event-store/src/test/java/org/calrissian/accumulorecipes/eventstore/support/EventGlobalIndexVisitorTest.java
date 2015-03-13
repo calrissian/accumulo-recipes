@@ -41,8 +41,8 @@ import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.junit.Test;
 
 public class EventGlobalIndexVisitorTest {
@@ -54,14 +54,14 @@ public class EventGlobalIndexVisitorTest {
         Connector connector = instance.getConnector("root", "".getBytes());
         EventStore eventStore = new AccumuloEventStore(connector);
 
-        Event event = new BaseEvent("id");
-        event.put(new Attribute("key1", "val1"));
-        event.put(new Attribute("key2", "val2"));
+        Event event = EventBuilder.create("", "id", System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", "val2")).build();
 
-        Event event2 = new BaseEvent("id2");
-        event2.put(new Attribute("key1", "val1"));
-        event2.put(new Attribute("key2", "val2"));
-        event2.put(new Attribute("key3", true));
+        Event event2 = EventBuilder.create("", "id2", System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", "val2"))
+            .attr(new Attribute("key3", true)).build();
 
         eventStore.save(asList(new Event[]{event, event2}));
 

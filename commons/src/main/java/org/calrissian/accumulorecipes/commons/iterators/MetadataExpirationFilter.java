@@ -24,16 +24,20 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.calrissian.accumulorecipes.commons.support.Constants;
 
 public class MetadataExpirationFilter extends WrappingIterator {
 
+    private Value extractedValue;
     public Value extractExpiredAttributes(Key k, Value v) {
 
         if(k.getColumnFamily().toString().startsWith(Constants.PREFIX_E)) {
@@ -94,9 +98,23 @@ public class MetadataExpirationFilter extends WrappingIterator {
     }
 
     @Override
+    public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
+        super.seek(range, columnFamilies, inclusive);
+        extractedValue = null;
+    }
+
+    @Override
+    public void next() throws IOException {
+        super.next();
+        extractedValue = null;
+    }
+
+    @Override
     public Value getTopValue() {
         // apply expiration
-        return extractExpiredAttributes(getTopKey(), super.getTopValue());
+        if(extractedValue == null)
+            extractedValue = extractExpiredAttributes(getTopKey(), super.getTopValue());
+        return extractedValue;
     }
 
 }

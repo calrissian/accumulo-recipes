@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.qfd.QfdStore;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
@@ -30,7 +31,7 @@ import org.calrissian.mango.domain.entity.EntityIdentifier;
  * An entity store is for objects that represent elements of the real world. Entities can have
  * first-class relationships to other entities.
  */
-public interface EntityStore {
+public interface EntityStore extends QfdStore<Entity, EntityIdentifier> {
 
     /**
      * Saves entities to the underlying storage implementation

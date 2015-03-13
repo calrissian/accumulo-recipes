@@ -23,9 +23,8 @@ import org.apache.hadoop.io.Writable;
 import org.calrissian.accumulorecipes.commons.domain.Gettable;
 import org.calrissian.accumulorecipes.commons.domain.Settable;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
-
+import org.calrissian.mango.domain.event.EventBuilder;
 
 public class EventWritable implements Writable, Settable<Event>, Gettable<Event> {
 
@@ -63,13 +62,15 @@ public class EventWritable implements Writable, Settable<Event>, Gettable<Event>
         String type = dataInput.readUTF();
         String uuid = dataInput.readUTF();
         long timestamp = dataInput.readLong();
-        entry = new BaseEvent(type, uuid, timestamp);
+        EventBuilder builder = EventBuilder.create(type, uuid, timestamp);
 
         int count = dataInput.readInt();
         for (int i = 0; i < count; i++) {
             attributeWritable.readFields(dataInput);
-            entry.put(attributeWritable.get());
+            builder = builder.attr(attributeWritable.get());
         }
+
+        entry = builder.build();
     }
 
     public void set(Event entry) {

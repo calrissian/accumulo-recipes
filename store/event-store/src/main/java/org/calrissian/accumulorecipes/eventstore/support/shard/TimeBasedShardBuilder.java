@@ -28,46 +28,48 @@ import org.joda.time.format.DateTimeFormatter;
 
 public abstract class TimeBasedShardBuilder implements ShardBuilder<Event>, EventShardBuilder {
 
-  protected final Integer numPartitions;
+    protected final Integer numPartitions;
 
-  protected String delimiter = "_";
+    protected String delimiter = "_";
 
-  protected DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(getDateFormat());
+    protected DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(getDateFormat());
 
-  public TimeBasedShardBuilder(Integer numPartitions) {
-    this.numPartitions = numPartitions;
-  }
-
-  protected abstract String getDateFormat();
-
-  @Override public int numPartitions() {
-    return numPartitions;
-  }
-
-  public String buildShard(Event event) {
-    return buildShard(event.getTimestamp(), (Math.abs(event.getId().hashCode()) % numPartitions));
-  }
-
-  public String buildShard(long timestamp, int partition) {
-    int partitionWidth = String.valueOf(numPartitions).length();
-    return String.format("%s%s%0" + partitionWidth + "d", dateTimeFormatter.print(timestamp),
-        delimiter, partition);
-  }
-
-  @Override
-  public SortedSet<Text> buildShardsInRange(Date start, Date stop) {
-
-    SortedSet<Text> shards = new TreeSet<Text>();
-
-    int hours = (int) ((stop.getTime() - start.getTime()) / (60 * 60 * 1000));
-    hours = hours > 0 ? hours : 1;
-
-    for (int i = 0; i < hours; i++) {
-      for (int j = 0; j < numPartitions; j++)
-        shards.add(new Text(buildShard(start.getTime(), j)));
-      start.setTime(start.getTime() + (60 * 60 * 1000));
+    public TimeBasedShardBuilder(Integer numPartitions) {
+        this.numPartitions = numPartitions;
     }
 
-    return shards;
-  }
+    protected abstract String getDateFormat();
+
+    @Override public int numPartitions() {
+        return numPartitions;
+    }
+
+    public String buildShard(Event event) {
+        return buildShard(event.getTimestamp(), (Math.abs(event.getId().hashCode()) % numPartitions));
+    }
+
+    public String buildShard(long timestamp, int partition) {
+        int partitionWidth = String.valueOf(numPartitions).length();
+        return String.format("%s%s%0" + partitionWidth + "d", dateTimeFormatter.print(timestamp),
+            delimiter, partition);
+    }
+
+    @Override
+    public SortedSet<Text> buildShardsInRange(Date start, Date stop) {
+
+        SortedSet<Text> shards = new TreeSet<Text>();
+
+        Date newStart = new Date(start.getTime());
+
+        int hours = (int) ((stop.getTime() - newStart.getTime()) / (60 * 60 * 1000));
+        hours = hours > 0 ? hours : 1;
+
+        for (int i = 0; i < hours; i++) {
+            for (int j = 0; j < numPartitions; j++)
+                shards.add(new Text(buildShard(newStart.getTime(), j)));
+            newStart.setTime(newStart.getTime() + (60 * 60 * 1000));
+        }
+
+        return shards;
+    }
 }

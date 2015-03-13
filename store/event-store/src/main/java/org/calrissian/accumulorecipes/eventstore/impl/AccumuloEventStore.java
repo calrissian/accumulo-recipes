@@ -57,8 +57,8 @@ import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.EventIdentifier;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -189,24 +189,24 @@ public class AccumuloEventStore implements EventStore {
             Collection<Range> eventRanges = new LinkedList<Range>();
 
             for (EventIdentifier curIndex : uuids) {
-                String shardId = shardBuilder.buildShard(new BaseEvent(curIndex.getType(), curIndex.getId(), curIndex.getTimestamp()));
+                String shardId = shardBuilder.buildShard(EventBuilder.create(curIndex.getType(), curIndex.getId(), curIndex.getTimestamp()).build());
                 eventRanges.add(prefix(shardId, PREFIX_E + ONE_BYTE + curIndex.getType() + ONE_BYTE + curIndex.getId()));
             }
 
             eventScanner.setRanges(eventRanges);
 
             if (selectFields != null && selectFields.size() > 0) {
-                IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
+                IteratorSetting iteratorSetting = new IteratorSetting(25, SelectFieldsExtractor.class);
                 SelectFieldsExtractor.setSelectFields(iteratorSetting, selectFields);
                 eventScanner.addScanIterator(iteratorSetting);
             }
 
-            IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
+            IteratorSetting expirationFilter = new IteratorSetting(23, "metaExpiration", MetadataExpirationFilter.class);
             eventScanner.addScanIterator(expirationFilter);
-            IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
+            IteratorSetting emptyDataFilter = new IteratorSetting(24, "emptyFilter", EmptyEncodedRowFilter.class);
             eventScanner.addScanIterator(emptyDataFilter);
 
-            IteratorSetting setting = new IteratorSetting(18, WholeColumnQualifierIterator.class);
+            IteratorSetting setting = new IteratorSetting(26, WholeColumnQualifierIterator.class);
             eventScanner.addScanIterator(setting);
 
             return transform(closeableIterable(eventScanner), helper.buildWholeColFXform());
@@ -240,17 +240,18 @@ public class AccumuloEventStore implements EventStore {
                 scanner.addScanIterator(iteratorSetting);
             }
 
-            IteratorSetting timeFilter = new IteratorSetting(5, TimeLimitingFilter.class);
+            IteratorSetting timeFilter = new IteratorSetting(12, TimeLimitingFilter.class);
             TimeLimitingFilter.setCurrentTime(timeFilter, stop.getTime());
+
             TimeLimitingFilter.setTTL(timeFilter, stop.getTime() - start.getTime());
             scanner.addScanIterator(timeFilter);
 
             IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
             scanner.addScanIterator(setting);
 
-            IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
+            IteratorSetting expirationFilter = new IteratorSetting(13, "metaExpiration", MetadataExpirationFilter.class);
             scanner.addScanIterator(expirationFilter);
-            IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
+            IteratorSetting emptyDataFilter = new IteratorSetting(14, "emptyFilter", EmptyEncodedRowFilter.class);
             scanner.addScanIterator(emptyDataFilter);
 
             return transform(closeableIterable(scanner), helper.buildWholeColFXform());

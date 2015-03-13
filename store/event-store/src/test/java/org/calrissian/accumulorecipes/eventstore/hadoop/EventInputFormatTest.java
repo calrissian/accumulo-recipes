@@ -44,8 +44,8 @@ import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,9 +65,9 @@ public class EventInputFormatTest {
         Instance instance = new MockInstance("eventInst");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEventStore store = new AccumuloEventStore(connector);
-        event = new BaseEvent(UUID.randomUUID().toString());
-        event.put(new Attribute("key1", "val1"));
-        event.put(new Attribute("key2", false));
+        event = EventBuilder.create("", UUID.randomUUID().toString(), System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", false)).build();
         store.save(singleton(event));
 
         Job job = new Job(new Configuration());
@@ -99,9 +99,9 @@ public class EventInputFormatTest {
     Instance instance = new MockInstance("eventInst2");
     Connector connector = instance.getConnector("root", "".getBytes());
     AccumuloEventStore store = new AccumuloEventStore(connector);
-    event = new BaseEvent(UUID.randomUUID().toString());
-    event.put(new Attribute("key1", "val1"));
-    event.put(new Attribute("key2", false));
+    event = EventBuilder.create("", UUID.randomUUID().toString(), System.currentTimeMillis())
+        .attr(new Attribute("key1", "val1"))
+        .attr(new Attribute("key2", false)).build();
     store.save(singleton(event));
     store.flush();
       AccumuloTestUtils.dumpTable(connector, "eventStore_shard");

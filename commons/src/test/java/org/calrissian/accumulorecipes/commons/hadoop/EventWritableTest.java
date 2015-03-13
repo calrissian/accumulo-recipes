@@ -16,25 +16,24 @@
 package org.calrissian.accumulorecipes.commons.hadoop;
 
 
-import com.google.common.collect.ImmutableMap;
-import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
-import org.calrissian.mango.domain.event.Event;
-import org.junit.Test;
-
-import java.io.IOException;
-
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.asWritable;
 import static org.calrissian.accumulorecipes.commons.util.WritableUtils2.serialize;
 import static org.junit.Assert.assertEquals;
+import java.io.IOException;
+
+import com.google.common.collect.ImmutableMap;
+import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
+import org.junit.Test;
 
 public class EventWritableTest {
 
     @Test
     public void testSerializesAndDeserializes() throws IOException {
 
-        Event event = new BaseEvent("id");
-        event.put(new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal")));
+        Event event = EventBuilder.create("", "id", System.currentTimeMillis())
+            .attr(new Attribute("key", "val", ImmutableMap.of("metaKey", "metaVal"))).build();
 
         byte[] serialized = serialize(new EventWritable(event));
 

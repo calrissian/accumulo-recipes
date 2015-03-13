@@ -54,11 +54,13 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key, Va
             return;
         Text currentRow;
         Text currentCF;
+        long curTS;
         do {
             if (sourceIter.hasTop() == false)
                 return;
             currentRow = new Text(sourceIter.getTopKey().getRow());
             currentCF = new Text(sourceIter.getTopKey().getColumnFamily());
+            curTS = sourceIter.getTopKey().getTimestamp();
             keysValues.clear();
             while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
                 sourceIter.getTopKey().getColumnFamily().equals(currentCF)) {
@@ -67,7 +69,7 @@ public class WholeColumnFamilyIterator implements SortedKeyValueIterator<Key, Va
             }
         } while (!filter(currentRow, keysValues));
 
-        topKey = new Key(currentRow, currentCF);
+        topKey = new Key(currentRow, currentCF, new Text(""), curTS);
         topValue = RowEncoderUtil.encodeRow(keysValues);
 
     }

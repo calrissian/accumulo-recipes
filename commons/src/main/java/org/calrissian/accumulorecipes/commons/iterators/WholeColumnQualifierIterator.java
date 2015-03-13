@@ -34,6 +34,7 @@ import org.calrissian.accumulorecipes.commons.util.RowEncoderUtil;
 
 public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key, Value> {
 
+    private static final Text EMPTY = new Text("");
     List<Map.Entry<Key,Value>> keysValues = Lists.newArrayList();
     private SortedKeyValueIterator<Key, Value> sourceIter;
     private Key topKey = null;
@@ -54,12 +55,15 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
         Text currentRow;
         Text currentColF;
         Text currentColQ;
+        long curTS;
         if (sourceIter.hasTop() == false)
             return;
 
         currentRow = new Text(sourceIter.getTopKey().getRow());
         currentColF = new Text(sourceIter.getTopKey().getColumnFamily());
         currentColQ = new Text(sourceIter.getTopKey().getColumnQualifier());
+        curTS = sourceIter.getTopKey().getTimestamp();
+
 
         keysValues.clear();
         while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
@@ -69,7 +73,7 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
             sourceIter.next();
         }
 
-        topKey = new Key(currentRow, currentColF);
+        topKey = new Key(currentRow, currentColF, EMPTY, curTS);
         topValue = RowEncoderUtil.encodeRow(keysValues);
     }
 

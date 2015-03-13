@@ -38,7 +38,7 @@ limitations under the License.
     <module>thirdparty</module>
   </modules>
   <properties>
-    <accumulo.version>1.6.2</accumulo.version>
+    <accumulo.version>1.6.1</accumulo.version>
     <commons.jexl.version>2.0.1</commons.jexl.version>
     <commons.kryo.version>2.24.0</commons.kryo.version>
     <commons.math.version>3.2</commons.math.version>

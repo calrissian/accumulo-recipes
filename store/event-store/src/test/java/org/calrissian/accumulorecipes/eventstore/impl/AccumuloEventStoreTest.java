@@ -48,8 +48,8 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.EventIdentifier;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -198,21 +198,26 @@ public class AccumuloEventStoreTest {
 
 
     @Test
-    public void testExpirationOfAttributes_get() {
+    public void testExpirationOfAttributes_get() throws Exception {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
         Event event = EventBuilder.create("", UUID.randomUUID().toString(), currentTimeMillis()-500)
-            .attr(new Attribute("key1", "val1", meta))
-            .attr(new Attribute("key2", "val2", shouldntSee))
+            .attr("key1", "val1", meta)
+            .attr("key2", "val2", shouldntSee)
             .build();
 
 
         store.save(asList(event));
+        store.flush();
+
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
+
 
         List<EventIdentifier> eventIndexes = Arrays.asList(new EventIdentifier(event.getId(), event.getTimestamp()));
 
         Iterable<Event> events = store.get(eventIndexes, null, DEFAULT_AUTHS);
+
 
         assertEquals(1, Iterables.size(events));
         assertEquals(1, Iterables.get(events, 0).size());
@@ -324,7 +329,7 @@ public class AccumuloEventStoreTest {
     @Test
     public void test_TimeLimit() throws Exception {
 
-        long currentTime = System.currentTimeMillis();
+        long currentTime = currentTimeMillis();
 
         Event event = EventBuilder.create("", UUID.randomUUID().toString(), currentTime)
             .attr(new Attribute("key1", "val1", meta))
@@ -609,7 +614,7 @@ public class AccumuloEventStoreTest {
     @Test
     public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
-        Event event = EventBuilder.create("", "id", System.currentTimeMillis())
+        Event event = EventBuilder.create("", "id", currentTimeMillis())
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
@@ -624,13 +629,14 @@ public class AccumuloEventStoreTest {
 
     @Ignore
     @Test
-    public void testQuery_hasNot() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_hasNot() throws Exception {
 
-        Event event = EventBuilder.create("", "id", System.currentTimeMillis())
+        Event event = EventBuilder.create("", "id", currentTimeMillis())
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(event));
+        store.flush();
 
         Node node = QueryBuilder.create().hasNot("key2").build();
 
@@ -639,5 +645,21 @@ public class AccumuloEventStoreTest {
         assertEquals(event, Iterables.get(itr, 0));
     }
 
+
+    @Test
+    public void testGetAllByType() throws Exception {
+
+        Event event = EventBuilder.create("type-a", "id", currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .build();
+
+        store.save(asList(event));
+        store.flush();
+
+        Iterable<Event> itr = store.getAllByType(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis()), Sets.newHashSet("type-a"),
+            null, DEFAULT_AUTHS);
+        assertEquals(1, Iterables.size(itr));
+        assertEquals(event, Iterables.get(itr, 0));
+    }
 
 }

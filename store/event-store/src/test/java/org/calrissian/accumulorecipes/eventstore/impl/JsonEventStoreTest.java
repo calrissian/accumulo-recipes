@@ -26,11 +26,13 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Sets;
 import com.google.common.io.Resources;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -46,8 +48,8 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.json.util.store.JsonAttributeStore.FlattenedLevelsComparator;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,8 +79,8 @@ public class JsonEventStoreTest {
          * Create tweet event with a random UUID and timestamp of current time
          * (both of these can be set manually in the constructor)
          */
-        Event tweetEvent = new BaseEvent();
-        tweetEvent.putAll(fromJson(tweetJson, objectMapper));
+        Event tweetEvent = EventBuilder.create("tweet", UUID.randomUUID().toString(), System.currentTimeMillis())
+            .attrs(fromJson(tweetJson, objectMapper)).build();
 
         eventList.add(tweetEvent);
 
@@ -96,8 +98,8 @@ public class JsonEventStoreTest {
         for(JsonNode node1 : node) {
 
             // create an event from the current json object
-            Event timelineEvent = new BaseEvent();
-            timelineEvent.putAll(fromJson((ObjectNode) node1));
+            Event timelineEvent = EventBuilder.create("tweet", UUID.randomUUID().toString(), System.currentTimeMillis())
+                .attrs(fromJson((ObjectNode) node1)).build();
 
             eventList.add(timelineEvent);
         }
@@ -125,6 +127,7 @@ public class JsonEventStoreTest {
         CloseableIterable<Event> results = store.query(
             new Date(0),
             new Date(currentTimeMillis()),
+            Sets.newHashSet("tweet"),
             query,
             Auths.EMPTY
         );
