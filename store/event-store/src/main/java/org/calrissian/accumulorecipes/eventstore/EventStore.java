@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.commons.support.qfd.QfdStore;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
@@ -30,7 +31,7 @@ import org.calrissian.mango.domain.event.EventIdentifier;
  * An event store generally holds temporal events each with some number of
  * defining attributes.
  */
-public interface EventStore {
+public interface EventStore extends QfdStore<Event, EventIdentifier> {
 
     /**
      * Persists a set of StoreEntry objects into the event store

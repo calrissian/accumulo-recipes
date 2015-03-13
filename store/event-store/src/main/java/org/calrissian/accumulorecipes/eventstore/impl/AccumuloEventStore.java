@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.accumulo.core.client.AccumuloException;
@@ -112,6 +113,8 @@ public class AccumuloEventStore implements EventStore {
     public void shutdown() throws MutationsRejectedException {
         helper.shutdown();
     }
+
+
 
     /**
      * Events get saved into a sharded table to parallelize queries & ingest. Since the data is temporal by default,

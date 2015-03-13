@@ -28,7 +28,6 @@ import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.accumulo.core.client.AccumuloException;
@@ -102,7 +101,7 @@ public class AccumuloEntityStore implements EntityStore {
     }
 
     @Override
-    public CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Set<String> selectFields, Auths auths) {
+    public CloseableIterable<Entity> get(Collection<EntityIdentifier> typesAndIds, Set<String> selectFields, Auths auths) {
         checkNotNull(typesAndIds);
         checkNotNull(auths);
         try {
@@ -141,7 +140,7 @@ public class AccumuloEntityStore implements EntityStore {
     }
 
     @Override
-    public CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Auths auths) {
+    public CloseableIterable<Entity> get(Collection<EntityIdentifier> typesAndIds, Auths auths) {
         return get(typesAndIds, null, auths);
     }
 

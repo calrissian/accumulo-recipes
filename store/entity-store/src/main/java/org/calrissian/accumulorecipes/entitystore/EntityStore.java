@@ -16,11 +16,11 @@
 package org.calrissian.accumulorecipes.entitystore;
 
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.accumulorecipes.commons.support.qfd.QfdStore;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
@@ -31,7 +31,7 @@ import org.calrissian.mango.domain.entity.EntityIdentifier;
  * An entity store is for objects that represent elements of the real world. Entities can have
  * first-class relationships to other entities.
  */
-public interface EntityStore extends QfdStore<Entity, EntityIdentifier> {
+public interface EntityStore {
 
     /**
      * Saves entities to the underlying storage implementation
@@ -47,7 +47,7 @@ public interface EntityStore extends QfdStore<Entity, EntityIdentifier> {
      * @param auths
      * @return
      */
-    CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Set<String> selectFields, Auths auths);
+    CloseableIterable<Entity> get(Collection<EntityIdentifier> typesAndIds, Set<String> selectFields, Auths auths);
 
     /**
      * Retrives a list of entities by their types and ids. Only attributes with the given auths will
@@ -56,7 +56,7 @@ public interface EntityStore extends QfdStore<Entity, EntityIdentifier> {
      * @param auths
      * @return
      */
-    CloseableIterable<Entity> get(List<EntityIdentifier> typesAndIds, Auths auths);
+    CloseableIterable<Entity> get(Collection<EntityIdentifier> typesAndIds, Auths auths);
 
     /**
      * Retrieves all entities for a specified type. Only fields in the given set of select fields will
