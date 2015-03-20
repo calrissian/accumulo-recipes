@@ -27,6 +27,7 @@ import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 
@@ -63,7 +64,7 @@ public class EntityEdge extends EntityElement implements Edge {
         if (vertexEntity != null)
             return new EntityVertex(vertexEntity, graphStore, auths);
 
-        return null;
+        return new EntityVertex(EntityBuilder.create(rel.getType(), rel.getId()).build(), getGraphStore(), auths);
     }
 
     @Override
