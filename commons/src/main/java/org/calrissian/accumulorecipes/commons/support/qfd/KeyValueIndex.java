@@ -18,6 +18,7 @@ package org.calrissian.accumulorecipes.commons.support.qfd;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.join;
+import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
@@ -45,7 +46,6 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
@@ -54,8 +54,8 @@ import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexUniqueKeyValu
 import org.calrissian.accumulorecipes.commons.support.Constants;
 import org.calrissian.accumulorecipes.commons.support.attribute.Metadata;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -236,21 +236,21 @@ public class KeyValueIndex<T extends Entity> {
      * @param auths
      * @return
      */
-    public CloseableIterable<String> getTypes(Auths auths) {
+    public CloseableIterable<String> getTypes(String prefix, Auths auths) {
 
         checkNotNull(auths);
 
         try {
             BatchScanner scanner = connector.createBatchScanner(indexTable, auths.getAuths(), config.getMaxQueryThreads());
             IteratorSetting setting = new IteratorSetting(15, GlobalIndexTypesIterator.class);
-            scanner.addScanIterator(setting);
 
-            scanner.setRanges(singletonList(new Range(INDEX_K + INDEX_SEP, INDEX_K + INDEX_SEP + "\uffff")));
+            scanner.addScanIterator(setting);
+            scanner.setRanges(singletonList(new Range(INDEX_K + INDEX_SEP + prefix, INDEX_K + INDEX_SEP + prefix + "\uffff")));
 
             return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, String>() {
                 @Override
                 public String apply(Map.Entry<Key, Value> keyValueEntry) {
-                    String[] parts = StringUtils.splitByWholeSeparatorPreserveAllTokens(keyValueEntry.getKey().getRow().toString(), INDEX_SEP);
+                    String[] parts = splitByWholeSeparatorPreserveAllTokens(keyValueEntry.getKey().getRow().toString(), INDEX_SEP);
                     return parts[1];
                 }
             });

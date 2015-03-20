@@ -223,8 +223,8 @@ public class AccumuloEntityStore implements EntityStore {
         return helper.getKeyValueIndex().uniqueValuesForKey(prefix, type, alias, key, auths);
     }
 
-    public CloseableIterable<String> getTypes(Auths auths) {
-        return helper.getKeyValueIndex().getTypes(auths);
+    public CloseableIterable<String> getTypes(String prefix, Auths auths) {
+        return helper.getKeyValueIndex().getTypes(prefix, auths);
     }
 
 

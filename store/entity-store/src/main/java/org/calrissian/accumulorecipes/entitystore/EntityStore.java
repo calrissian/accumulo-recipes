@@ -17,7 +17,6 @@ package org.calrissian.accumulorecipes.entitystore;
 
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
@@ -103,7 +102,7 @@ public interface EntityStore {
 
     public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths);
     public CloseableIterable<Object> uniqueValuesForKey(String prefix, String type, String alias, String key, Auths auths);
-    public CloseableIterable<String> getTypes(Auths auths);
+    public CloseableIterable<String> getTypes(String prefix, Auths auths);
 
     /**
      * Flushes the in-memory buffer of entities to the server. It's important to make sure method is eventually

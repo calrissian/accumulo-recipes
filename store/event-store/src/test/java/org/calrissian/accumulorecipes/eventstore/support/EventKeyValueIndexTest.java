@@ -105,13 +105,56 @@ public class EventKeyValueIndexTest {
 
         dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
 
-        CloseableIterable<String> types = eventKeyValueIndex.getTypes(Auths.EMPTY);
+        CloseableIterable<String> types = eventKeyValueIndex.getTypes("", Auths.EMPTY);
 
         assertEquals(2, Iterables.size(types));
 
         assertEquals("type1", Iterables.get(types, 0));
         assertEquals("type2", Iterables.get(types, 1));
     }
+
+    @Test
+    public void testTypesWithPrefix() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Instance instance = new MockInstance();
+        Connector connector = instance.getConnector("root", "".getBytes());
+        EventStore eventStore = new AccumuloEventStore(connector);
+
+
+        KeyValueIndex eventKeyValueIndex = new KeyValueIndex(
+            connector, "eventStore_index", DEFAULT_SHARD_BUILDER, DEFAULT_STORE_CONFIG,
+            LEXI_TYPES
+        );
+
+        Event event = EventBuilder.create("type1", "id", System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", "val2")).build();
+
+        Event event2 = EventBuilder.create("type2", "id2", System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", "val2"))
+            .attr(new Attribute("key3", true))
+            .attr(new Attribute("aKey", 1)).build();
+
+        Event event3 = EventBuilder.create("aType3", "id2", System.currentTimeMillis())
+            .attr(new Attribute("key1", "val1"))
+            .attr(new Attribute("key2", "val2"))
+            .attr(new Attribute("key3", true))
+            .attr(new Attribute("aKey", 1)).build();
+
+
+        eventStore.save(Arrays.asList(new Event[] {event, event2, event3}));
+
+        dumpTable(connector, DEFAULT_IDX_TABLE_NAME);
+
+        CloseableIterable<String> types = eventKeyValueIndex.getTypes("t", Auths.EMPTY);
+
+        assertEquals(2, Iterables.size(types));
+
+        assertEquals("type1", Iterables.get(types, 0));
+        assertEquals("type2", Iterables.get(types, 1));
+    }
+
 
     @Test
     public void testUniqueValues() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
