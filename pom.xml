@@ -36,6 +36,7 @@ limitations under the License.
     <module>store</module>
     <module>test</module>
     <module>thirdparty</module>
+    <module>web</module>
   </modules>
   <properties>
     <accumulo.version>1.6.1</accumulo.version>
