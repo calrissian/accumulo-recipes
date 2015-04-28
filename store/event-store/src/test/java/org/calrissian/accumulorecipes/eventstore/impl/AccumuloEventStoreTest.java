@@ -15,9 +15,34 @@
  */
 package org.calrissian.accumulorecipes.eventstore.impl;
 
+import static com.google.common.collect.Iterables.size;
+import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME;
+import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_STORE_CONFIG;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
@@ -35,16 +60,6 @@ import org.calrissian.mango.domain.event.EventIdentifier;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.*;
-
-import static com.google.common.collect.Iterables.size;
-import static java.lang.System.currentTimeMillis;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.*;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import static org.junit.Assert.*;
 
 public class AccumuloEventStoreTest {
 
@@ -473,7 +488,7 @@ public class AccumuloEventStoreTest {
 
 
 
-        query = QueryBuilder.create().or().eq("key1", "val1").eq("`key1`", "val2").end().build();
+        query = QueryBuilder.create().or().eq("key1", "val1").eq("key1", "val2").end().build();
 
         itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS).iterator();
