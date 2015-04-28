@@ -155,7 +155,7 @@ public class QueryEvaluator {
         HashSet<String> literalsCopy = new HashSet<String>(literals);
 
         // Loop through the event fields and add them to the JexlContext.
-        for (Entry<String, Collection<FieldValue>> field : eventFields.asMap().entrySet()) {
+        for (Entry<String, Set<FieldValue>> field : eventFields.asMap().entrySet()) {
             String fName = normalizeKey(topKey, field.getKey());
             fName = removeInvalidChars(fName);
 

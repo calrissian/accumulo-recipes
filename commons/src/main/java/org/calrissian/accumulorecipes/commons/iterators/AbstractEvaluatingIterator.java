@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -199,13 +200,18 @@ public abstract class AbstractEvaluatingIterator implements SortedKeyValueIterat
                         ByteBuffer buf = ByteBuffer.wrap(serializedMap);
                         // Serialize the EventFields object
 
-                        EventFields newEventFields = new EventFields();
-                        for(Map.Entry<String,EventFields.FieldValue> entry  : event.entries()) {
-                            if((selectFields != null && selectFields.contains(entry.getKey()) || selectFields == null))
-                                newEventFields.put(entry.getKey(), entry.getValue());
+                        Set<String> keysToRemove = new HashSet<String>();
+                        if(selectFields != null) {
+                            for(String field : event.keys()) {
+                                if(!selectFields.contains(field))
+                                    keysToRemove.add(field);
+                            }
                         }
 
-                        newEventFields.write(kryo, new ByteBufferOutput(buf), newEventFields);
+                        for(String field : keysToRemove)
+                            event.removeAll(field);
+
+                        event.write(kryo, new ByteBufferOutput(buf), event);
                         // Truncate array to the used size.
                         returnValue = new Value(copyOfRange(serializedMap, 0, buf.position()));
                     } else {

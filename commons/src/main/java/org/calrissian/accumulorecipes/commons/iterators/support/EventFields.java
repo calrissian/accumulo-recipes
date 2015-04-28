@@ -16,7 +16,9 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
-import java.util.Collection;
+import static java.util.Collections.unmodifiableMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -25,77 +27,66 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.DefaultArraySerializers;
+import com.esotericsoftware.kryo.serializers.DefaultArraySerializers.ByteArraySerializer;
 import com.esotericsoftware.kryo.serializers.DefaultSerializers;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.SetMultimap;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
 
 /**
  * Object used to hold the fields in an event. This is a multimap because fields can be repeated.
  */
-public class EventFields extends Serializer<EventFields> implements SetMultimap<String, FieldValue> {
+public class EventFields extends Serializer<EventFields> {
 
     private static boolean kryoInitialized = false;
-    private static DefaultArraySerializers.ByteArraySerializer valueSerializer = new DefaultArraySerializers.ByteArraySerializer();
+    private static ByteArraySerializer valueSerializer = new ByteArraySerializer();
     private static DefaultSerializers.IntSerializer intSerializer = new DefaultSerializers.IntSerializer();
     private static DefaultSerializers.StringSerializer stringSerializer = new DefaultSerializers.StringSerializer();
 
-    private Multimap<String, FieldValue> map = null;
+    private Map<String, Set<FieldValue>> map = null;
 
+    private int size = 0;
     public EventFields() {
-        map = HashMultimap.create();
+        map = new HashMap<String,Set<FieldValue>>();
     }
 
-    public EventFields(Kryo kryo, Input input) {
+    @Override public void write(Kryo kryo, Output output, EventFields eventFields) {
+        // Write out the number of entries;
+        intSerializer.write(kryo, output, size);
+        for (Entry<String, Set<FieldValue>> entry : map.entrySet()) {
+            for(FieldValue fieldValue : entry.getValue()) {
+                // Write the fields in the value
+                stringSerializer.write(kryo, output, entry.getKey());
+                valueSerializer.write(kryo, output, fieldValue.getVisibility().getExpression().length > 0 ? fieldValue.getVisibility().flatten() : fieldValue.getVisibility().getExpression());
+                valueSerializer.write(kryo, output, fieldValue.getValue());
+                valueSerializer.write(kryo, output, fieldValue.getMetadata());
+            }
+        }
 
-      this();
-      if(!kryoInitialized)
-        EventFields.initializeKryo(kryo);
+        output.flush();
+
     }
 
-  @Override public void write(Kryo kryo, Output output, EventFields eventFields) {
-    // Write out the number of entries;
-    intSerializer.write(kryo, output, map.size());
-    for (Entry<String, FieldValue> entry : map.entries()) {
-      // Write the key
-      stringSerializer.write(kryo, output, entry.getKey());
-      // Write the fields in the value
+    @Override
+    public EventFields read(Kryo kryo, Input input, Class<EventFields> eventFieldsClass) {
 
-      valueSerializer.write(kryo, output, entry.getValue().getVisibility().getExpression().length > 0 ? entry.getValue().getVisibility().flatten() : entry.getValue().getVisibility().getExpression());
-      valueSerializer.write(kryo, output, entry.getValue().getValue());
-      valueSerializer.write(kryo, output, entry.getValue().getMetadata());
+        // Read in the number of map entries
+        int entries = intSerializer.read(kryo, input, Integer.class);
+        for (int i = 0; i < entries; i++) {
+            // Read in the key
+            String key = stringSerializer.read(kryo, input, String.class);
+            // Read in the fields in the value
+            ColumnVisibility vis = new ColumnVisibility(valueSerializer.read(kryo, input, byte[].class));
+            byte[] value = valueSerializer.read(kryo, input, byte[].class);
+            byte[] metadata = valueSerializer.read(kryo, input, byte[].class);
+            put(key, new FieldValue(vis, value, metadata));
+        }
+
+        return this;
     }
 
-    output.flush();
-
-  }
-
-  @Override
-  public EventFields read(Kryo kryo, Input input, Class<EventFields> eventFieldsClass) {
-
-    // Read in the number of map entries
-    int entries = intSerializer.read(kryo, input, Integer.class);
-    for (int i = 0; i < entries; i++) {
-      // Read in the key
-      String key = stringSerializer.read(kryo, input, String.class);
-      // Read in the fields in the value
-      ColumnVisibility vis = new ColumnVisibility(valueSerializer.read(kryo, input, byte[].class));
-      byte[] value = valueSerializer.read(kryo, input, byte[].class);
-      byte[] metadata = valueSerializer.read(kryo, input, byte[].class);
-      map.put(key, new FieldValue(vis, value, metadata));
-    }
-
-    return this;
-  }
-
-  public static synchronized void initializeKryo(Kryo kryo) {
+    public static synchronized void initializeKryo(Kryo kryo) {
         if (kryoInitialized)
             return;
-        valueSerializer = new DefaultArraySerializers.ByteArraySerializer();
+        valueSerializer = new ByteArraySerializer();
         kryo.register(byte[].class, valueSerializer);
 
         kryoInitialized = true;
@@ -103,6 +94,14 @@ public class EventFields extends Serializer<EventFields> implements SetMultimap<
 
     public int size() {
         return map.size();
+    }
+
+    public Set<Map.Entry<String, Set<FieldValue>>> entrySet() {
+        return map.entrySet();
+    }
+
+    public Map<String, Set<FieldValue>> asMap() {
+        return unmodifiableMap(map);
     }
 
     public boolean isEmpty() {
@@ -113,81 +112,46 @@ public class EventFields extends Serializer<EventFields> implements SetMultimap<
         return map.containsKey(key);
     }
 
-    public boolean containsValue(Object value) {
-        return map.containsValue(value);
-    }
-
-    public boolean containsEntry(Object key, Object value) {
-        return map.containsEntry(key, value);
-    }
-
     public boolean put(String key, FieldValue value) {
-        return map.put(key, value);
-    }
 
-    public boolean remove(Object key, Object value) {
-        return map.remove(key, value);
-    }
+        Set<FieldValue> fieldValues = map.get(key);
+        if(fieldValues == null) {
+            fieldValues = new HashSet<FieldValue>();
+            map.put(key, fieldValues);
+        }
 
-    public boolean putAll(String key, Iterable<? extends FieldValue> values) {
-        return map.putAll(key, values);
-    }
+        if(!fieldValues.contains(value))
+            size++;
 
-    public boolean putAll(Multimap<? extends String, ? extends FieldValue> multimap) {
-        return map.putAll(multimap);
+        return fieldValues.add(value);
     }
 
     public void clear() {
         map.clear();
     }
 
-    public Set<String> keySet() {
+    public Set<String> keys() {
         return map.keySet();
     }
 
-    public Multiset<String> keys() {
-        return map.keys();
-    }
-
-    public Collection<FieldValue> values() {
-        return map.values();
-    }
-
     public Set<FieldValue> get(String key) {
-        return (Set<FieldValue>) map.get(key);
+        return map.get(key);
     }
 
-    public Set<FieldValue> removeAll(Object key) {
-        return (Set<FieldValue>) map.removeAll(key);
-    }
-
-    public Set<FieldValue> replaceValues(String key, Iterable<? extends FieldValue> values) {
-        return (Set<FieldValue>) map.replaceValues(key, values);
-    }
-
-    public Set<Entry<String, FieldValue>> entries() {
-        return (Set<Entry<String, FieldValue>>) map.entries();
-    }
-
-    public Map<String, Collection<FieldValue>> asMap() {
-        return map.asMap();
+    public Set<FieldValue> removeAll(String key) {
+        Set<FieldValue> values =  map.remove(key);
+        if(values != null)
+            size -= values.size();
+        return values;
     }
 
     public int getByteSize() {
         int count = 0;
-        for (Entry<String, FieldValue> e : map.entries()) {
-            count += e.getKey().getBytes().length + e.getValue().size();
+        for (Entry<String, Set<FieldValue>> e : map.entrySet()) {
+            for(FieldValue fieldValue : e.getValue())
+                count += e.getKey().getBytes().length + fieldValue.size();
         }
         return count;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        for (Entry<String, FieldValue> entry : map.entries()) {
-            buf.append("\tkey: ").append(entry.getKey()).append(" -> ").append(entry.getValue().toString()).append("\n");
-        }
-        return buf.toString();
     }
 
 
