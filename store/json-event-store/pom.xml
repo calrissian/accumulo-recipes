@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) 2013 The Calrissian Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.calrissian.accumulorecipes</groupId>
+    <artifactId>store</artifactId>
+    <version>2.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>json-event-store</artifactId>
+  <packaging>jar</packaging>
+  <name>Calrissian Accumulo Recipes Event Store</name>
+  <description>The event store is a document store for time-based events.</description>
+  <dependencies>
+
+    <!-- Accumulo Recipes -->
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.calrissian.mango</groupId>
+      <artifactId>mango-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.calrissian.mango</groupId>
+      <artifactId>mango-json</artifactId>
+      <version>${mango.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>event-store</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+
+
+    <!-- Hadoop / Accumulo -->
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+    </dependency>
+
+    <!-- JUNIT -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+
+    <!-- Joda-Time -->
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>org.calrissian.mango</groupId>
+      <artifactId>mango-json</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-minicluster</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+</project>

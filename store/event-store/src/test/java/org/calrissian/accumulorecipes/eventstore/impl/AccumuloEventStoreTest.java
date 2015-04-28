@@ -440,6 +440,32 @@ public class AccumuloEventStoreTest {
         }
     }
 
+
+    @Test
+    public void testQuery_AndQuery1() throws Exception {
+
+        Event event = EventBuilder.create("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("key1", 500, meta))
+            .attr(new Attribute("key1", 501, meta))
+            .build();
+
+        Event event2 = EventBuilder.create("", UUID.randomUUID().toString(), currentTimeMillis())
+            .attr(new Attribute("`key`.`1`", "val1", meta))
+            .attr(new Attribute("key2", "val2", meta))
+            .build();
+
+        store.save(asList(event, event2));
+
+        Node query = QueryBuilder.create().and().greaterThan("key1", 400).end().build();
+
+        Iterator<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
+            new Date(), query, null, DEFAULT_AUTHS).iterator();
+
+        while(itr.hasNext()) {
+            System.out.println(itr.next());
+        }
+    }
+
     @Test
     public void testQuery_OrQuery() throws Exception {
 
