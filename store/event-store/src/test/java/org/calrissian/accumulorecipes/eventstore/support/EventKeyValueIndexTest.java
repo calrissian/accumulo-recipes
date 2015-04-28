@@ -169,15 +169,15 @@ public class EventKeyValueIndexTest {
             LEXI_TYPES
         );
 
-        Event event = EventBuilder.create("type1", "id")
+        Event event = EventBuilder.create("type1", "id", System.currentTimeMillis())
             .attr(new Attribute("key1", "val1"))
             .attr(new Attribute("key2", "val2")).build();
 
-        Event event1 = EventBuilder.create("type1", "id")
+        Event event1 = EventBuilder.create("type1", "id", System.currentTimeMillis())
             .attr(new Attribute("key1", "theVal1"))
             .attr(new Attribute("key2", "aVal")).build();
 
-        Event event2 = EventBuilder.create("type2", "id2")
+        Event event2 = EventBuilder.create("type2", "id2", System.currentTimeMillis())
             .attr(new Attribute("key1", "val1"))
             .attr(new Attribute("key2", "val2"))
             .attr(new Attribute("key3", true))
