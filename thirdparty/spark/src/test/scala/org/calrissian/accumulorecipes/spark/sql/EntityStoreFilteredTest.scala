@@ -18,8 +18,7 @@ package org.calrissian.accumulorecipes.spark.sql
 import java.util.Collections
 
 import org.apache.accumulo.minicluster.impl.MiniAccumuloClusterImpl
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.catalyst.errors.TreeNodeException
+import org.apache.spark.sql.{AnalysisException, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils
@@ -169,7 +168,7 @@ class EntityStoreFilteredTest {
     Assert.assertEquals("val1", rows(0).getAs(0))
   }
 
-  @Test(expected = classOf[TreeNodeException[_]])
+  @Test(expected = classOf[AnalysisException])
   def testSelectFieldNotInSchema: Unit = sqlContext.sql("SELECT doesntExist FROM entities").collect
 
   @Test

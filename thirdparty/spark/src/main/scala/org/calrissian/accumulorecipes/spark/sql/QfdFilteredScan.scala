@@ -20,10 +20,18 @@ import java.util.Date
 import org.apache.accumulo.core.client.security.tokens.PasswordToken
 import org.apache.accumulo.core.client.{Connector, ZooKeeperInstance}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.Row
+import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
-import org.apache.spark.sql.catalyst.types.{BooleanType, ByteType, IntegerType}
+import org.apache.spark.sql.sources.And
+import org.apache.spark.sql.sources.GreaterThan
+import org.apache.spark.sql.sources.GreaterThanOrEqual
+import org.apache.spark.sql.sources.In
+import org.apache.spark.sql.sources.LessThan
+import org.apache.spark.sql.sources.LessThanOrEqual
+import org.apache.spark.sql.sources.Or
 import org.apache.spark.sql.sources._
-import org.apache.spark.sql.{DataType, DateType, DoubleType, FloatType, LongType, StringType, StructField, StructType, _}
+import org.apache.spark.sql.types._
 import org.calrissian.accumulorecipes.commons.domain.Gettable
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat
 import org.calrissian.mango.collect.CloseableIterable
@@ -37,7 +45,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConversions._
 
 abstract class QfdFilteredScan(inst: String, zk: String, user: String, pass: String, objectType: String,
-                          @transient val sqlContext: SQLContext) extends PrunedFilteredScan with Serializable {   // TODO: Find out what's forcing this to be serializable
+                          @transient val sqlContext: SQLContext) extends BaseRelation with PrunedFilteredScan with Serializable {   // TODO: Find out what's forcing this to be serializable
 
   private val log = LoggerFactory.getLogger(classOf[QfdFilteredScan])
 
@@ -76,26 +84,27 @@ abstract class QfdFilteredScan(inst: String, zk: String, user: String, pass: Str
     schema
   }
 
-  private def buildQuery(filters: Array[Filter]): Node = {
-    var andNode = QueryBuilder.create().and()
-
+  private def buildQuery(qb: QueryBuilder, filters: Array[Filter]): QueryBuilder = {
+    var query = qb
     filters.foreach(it => it match {
-      case EqualTo(attr, value) => andNode = andNode.eq(attr, value)
-      case GreaterThan(attr, value) => andNode = andNode.greaterThan(attr, value)
-      case GreaterThanOrEqual(attr, value) => andNode = andNode.greaterThanEq(attr, value)
-      case LessThan(attr, value) => andNode = andNode.lessThan(attr, value)
-      case LessThanOrEqual(attr, value) => andNode = andNode.lessThanEq(attr, value)
-      case In(attr, values) => andNode = andNode.in(attr, values)
-      case _ => log.warn("Invalid filter found- not applying in query [" + it.getClass + "]")
+      case EqualTo(attr, value) => query = query.eq(attr, value)
+      case and: And => query = buildQuery(query.and(), Array(and.left, and.right)).end()
+      case or: Or => query = buildQuery(query.or(), Array(or.left, or.right)).end()
+      case GreaterThan(attr, value) => query = query.greaterThan(attr, value)
+      case GreaterThanOrEqual(attr, value) => query = query.greaterThanEq(attr, value)
+      case LessThan(attr, value) => query = query.lessThan(attr, value)
+      case LessThanOrEqual(attr, value) => query = query.lessThanEq(attr, value)
+      case In(attr, values) => query = query.in(attr, values)
+      case _ => query
     })
-
-    andNode.end.build
+    query
   }
+
 
   def buildRDD(columns: Array[String], filters: Array[Filter], query: Node): RDD[T]
 
   override def buildScan(columns: Array[String], filters: Array[Filter]): RDD[Row] =
-    buildRDD(columns, filters, buildQuery(filters))
+    buildRDD(columns, filters, buildQuery(QueryBuilder.create().and(), filters).end().build())
       .map(it => asRow(it, schema, columns))
 
   private def asRow(event: T, schema: StructType, columns: Array[String]): Row = {
