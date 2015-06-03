@@ -16,7 +16,7 @@
 package org.calrissian.accumulorecipes.rangestore;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
-import org.calrissian.mango.domain.ValueRange;
+import org.calrissian.accumulorecipes.rangestore.support.ValueRange;
 
 /**
  * A range store is a 1-dimensional NoSQL key/value version of the common interval tree data structure.

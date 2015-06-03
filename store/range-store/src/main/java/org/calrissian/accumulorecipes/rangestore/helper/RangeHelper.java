@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.rangestore.helper;
 
-import org.calrissian.mango.domain.ValueRange;
+import org.calrissian.accumulorecipes.rangestore.support.ValueRange;
 
 public interface RangeHelper<T extends Comparable<T>> {
 

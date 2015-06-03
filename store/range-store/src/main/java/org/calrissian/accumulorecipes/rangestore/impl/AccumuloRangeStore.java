@@ -25,10 +25,10 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.rangestore.RangeStore;
+import org.calrissian.accumulorecipes.rangestore.support.ValueRange;
 import org.calrissian.accumulorecipes.rangestore.helper.RangeHelper;
 import org.calrissian.accumulorecipes.rangestore.iterator.OverlappingScanFilter;
 import org.calrissian.accumulorecipes.rangestore.iterator.ReverseScanFilter;
-import org.calrissian.mango.domain.ValueRange;
 
 import java.util.Iterator;
 

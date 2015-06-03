@@ -15,7 +15,7 @@
  */
 package org.calrissian.accumulorecipes.rangestore.helper;
 
-import org.calrissian.mango.domain.ValueRange;
+import org.calrissian.accumulorecipes.rangestore.support.ValueRange;
 import org.calrissian.mango.types.TypeEncoder;
 
 import static org.calrissian.mango.types.LexiTypeEncoders.longEncoder;
