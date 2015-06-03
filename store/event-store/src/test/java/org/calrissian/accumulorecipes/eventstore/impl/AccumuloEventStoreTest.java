@@ -128,8 +128,8 @@ public class AccumuloEventStoreTest {
         store.save(asList(event, event2));
 
         List<EventIdentifier> indexes = asList(new EventIdentifier[] {
-            new EventIdentifier(event.getId(), event.getTimestamp()),
-            new EventIdentifier(event2.getId(), event2.getTimestamp())
+            new EventIdentifier("", event.getId(), event.getTimestamp()),
+            new EventIdentifier("", event2.getId(), event2.getTimestamp())
         });
 
         Iterable<Event> actualEvent1 = store.get(indexes, null, new Auths("A"));
@@ -214,7 +214,7 @@ public class AccumuloEventStoreTest {
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
 
 
-        List<EventIdentifier> eventIndexes = Arrays.asList(new EventIdentifier(event.getId(), event.getTimestamp()));
+        List<EventIdentifier> eventIndexes = Arrays.asList(new EventIdentifier("", event.getId(), event.getTimestamp()));
 
         Iterable<Event> events = store.get(eventIndexes, null, DEFAULT_AUTHS);
 
@@ -367,7 +367,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
-        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIdentifier(event.getId(), event.getTimestamp())),
+        CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIdentifier("", event.getId(), event.getTimestamp())),
                 Collections.singleton("key1"), DEFAULT_AUTHS);
 
         assertEquals(1, size(actualEvent));

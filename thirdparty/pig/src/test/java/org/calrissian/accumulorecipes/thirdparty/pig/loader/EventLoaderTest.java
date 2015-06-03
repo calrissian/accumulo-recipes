@@ -15,7 +15,9 @@
 */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
+import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.net.URI;
@@ -50,6 +52,7 @@ import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -143,14 +146,15 @@ public class EventLoaderTest extends AccumuloInputFormat {
         Instance instance = new MockInstance("instName");
         Connector connector = instance.getConnector("root", "".getBytes());
         AccumuloEventStore store = new AccumuloEventStore(connector);
-        event = new BaseEvent(UUID.randomUUID().toString());
-        event.put(new Attribute("key1", "val1"));
-        event.put(new Attribute("key2", false));
+        event = EventBuilder.create("", randomUUID().toString(), currentTimeMillis())
+                .attr(new Attribute("key1", "val1"))
+                .attr(new Attribute("key2", false))
+                .build();
         store.save(singleton(event));
 
         EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
         EventInputFormat.setMockInstance(job, "instName");
-        EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), Collections.singleton(""),
+        EventInputFormat.setQueryInfo(job, new Date(currentTimeMillis() - 50000), new Date(), Collections.singleton(""),
                 QueryBuilder.create().eq("key1", "val1").build());
 
     }

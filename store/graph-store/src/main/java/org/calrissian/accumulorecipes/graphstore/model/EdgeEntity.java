@@ -15,15 +15,17 @@
  */
 package org.calrissian.accumulorecipes.graphstore.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
-import java.util.HashMap;
-
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
+
+import java.util.HashMap;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 
 public class EdgeEntity extends BaseEntity {
 
@@ -33,26 +35,12 @@ public class EdgeEntity extends BaseEntity {
 
     @Deprecated
     public EdgeEntity(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
-        super(type, id);
-
-        checkNotNull(head);
-        checkNotNull(headVis);
-        checkNotNull(tail);
-        checkNotNull(tailVis);
-        checkNotNull(label);
-
-
-        Attribute headAttribute = new Attribute(HEAD, new EntityIdentifier(head), setVisibility(new HashMap<String, String>(1), headVis));
-        Attribute tailAttribute = new Attribute(TAIL, new EntityIdentifier(tail), setVisibility(new HashMap<String, String>(1), tailVis));
-
-        put(headAttribute);
-        put(tailAttribute);
-        put(new Attribute(LABEL, label));
-    }
-
-    @Deprecated
-    public EdgeEntity(String type, String id, Entity head, Entity tail, String label) {
-        this(type, id, head, "", tail, "", label);
+        super(new EntityIdentifier(type, id),
+                asList(
+                        new Attribute(HEAD, head.getIdentifier(), setVisibility(new HashMap<String, String>(1), checkNotNull(headVis))),
+                        new Attribute(TAIL, tail.getIdentifier(), setVisibility(new HashMap<String, String>(1), checkNotNull(tailVis))),
+                        new Attribute(LABEL, checkNotNull(label))
+                ));
     }
 
     public EdgeEntity(Entity entity) {
@@ -79,16 +67,16 @@ public class EdgeEntity extends BaseEntity {
 
     public static final class EdgeEntityBuilder extends EntityBuilder {
 
-        public static final EdgeEntityBuilder create(String type, String id, Entity head, Entity tail, String label) {
-            return EdgeEntityBuilder.create(type, id, head, tail, label);
+        public static EdgeEntityBuilder create(EntityIdentifier identifier, Entity head, Entity tail, String label) {
+            return create(identifier, head, "", tail, "", label);
         }
 
-        public static final EdgeEntityBuilder create(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
-            return EdgeEntityBuilder.create(type, id, head, headVis, tail, tailVis, label);
+        public static EdgeEntityBuilder create(EntityIdentifier identifier, Entity head, String headVis, Entity tail, String tailVis, String label) {
+            return new EdgeEntityBuilder(identifier, head, headVis, tail, tailVis, label);
         }
 
-        protected EdgeEntityBuilder(String type, String id, Entity head, String headVis, Entity tail, String tailVis, String label) {
-            super(type, id);
+        protected EdgeEntityBuilder(EntityIdentifier identifier, Entity head, String headVis, Entity tail, String tailVis, String label) {
+            super(identifier);
 
             checkNotNull(head);
             checkNotNull(headVis);
@@ -96,16 +84,12 @@ public class EdgeEntity extends BaseEntity {
             checkNotNull(tailVis);
             checkNotNull(label);
 
-            Attribute headAttribute = new Attribute(HEAD, new EntityIdentifier(head), setVisibility(new HashMap<String, String>(1), headVis));
-            Attribute tailAttribute = new Attribute(TAIL, new EntityIdentifier(tail), setVisibility(new HashMap<String, String>(1), tailVis));
+            Attribute headAttribute = new Attribute(HEAD, head.getIdentifier(), setVisibility(new HashMap<String, String>(1), headVis));
+            Attribute tailAttribute = new Attribute(TAIL, tail.getIdentifier(), setVisibility(new HashMap<String, String>(1), tailVis));
 
             attr(headAttribute);
             attr(tailAttribute);
             attr(new Attribute(LABEL, label));
-        }
-
-        protected EdgeEntityBuilder(String type, String id, Entity head, Entity tail, String label) {
-            this(type, id, head, "", tail, "", label);
         }
 
         @Override

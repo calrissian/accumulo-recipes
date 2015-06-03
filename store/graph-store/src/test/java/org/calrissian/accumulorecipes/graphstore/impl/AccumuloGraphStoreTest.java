@@ -15,22 +15,7 @@
  */
 package org.calrissian.accumulorecipes.graphstore.impl;
 
-import static com.google.common.collect.Iterables.get;
-import static com.google.common.collect.Iterables.size;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-import static org.junit.Assert.assertEquals;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -42,17 +27,27 @@ import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+
+import static com.google.common.collect.Iterables.get;
+import static com.google.common.collect.Iterables.size;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static org.junit.Assert.assertEquals;
+
 public class AccumuloGraphStoreTest {
 
-    Entity vertex1 = new BaseEntity("vertex", "id1");
-    Entity vertex2 = new BaseEntity("vertex", "id2");
-    Entity edge = new EdgeEntity("edge", "edgeId", vertex1, "", vertex2, "", "label1");
+    Entity vertex1;
+    Entity vertex2;
+    Entity edge;
 
     private AccumuloEntityGraphStore graphStore;
     private Connector connector;
@@ -66,13 +61,21 @@ public class AccumuloGraphStoreTest {
         Attribute attribute3 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
         Attribute attribute4 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
 
-        vertex1.put(attribute);
-        vertex1.put(attribute2);
-        vertex2.put(attribute3);
-        vertex2.put(attribute4);
+        vertex1 = EntityBuilder.create("vertex", "id1")
+                .attr(attribute)
+                .attr(attribute2)
+                .build();
+
+        vertex2 = EntityBuilder.create("vertex", "id2")
+                .attr(attribute3)
+                .attr(attribute4)
+                .build();
 
         Attribute edgeAttribute = new Attribute("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
-        edge.put(edgeAttribute);
+        edge = EdgeEntity.EdgeEntityBuilder.create(new EntityIdentifier("edge", "edgeId"), vertex1, vertex2, "label1")
+                .attr(edgeAttribute)
+                .build();
+
         Instance instance = new MockInstance();
         connector = instance.getConnector("root", "".getBytes());
         graphStore = new AccumuloEntityGraphStore(connector);

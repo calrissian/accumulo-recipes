@@ -17,8 +17,8 @@ package org.calrissian.accumulorecipes.thirdparty.pig.support;
 
 
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,8 +28,8 @@ import static org.junit.Assert.fail;
 
 public class AttributeStoreIteratorTest {
 
-    Entity entity = new BaseEntity("type", "id1");
-    Entity entity2 = new BaseEntity("type", "id2");
+    Entity entity;
+    Entity entity2;
 
     Attribute e1T1 = new Attribute("key", "val");
     Attribute e1T2 = new Attribute("key3", "val3");
@@ -39,12 +39,15 @@ public class AttributeStoreIteratorTest {
 
     @Before
     public void setup() {
+        entity = EntityBuilder.create("type", "id1")
+                .attr(e1T1)
+                .attr(e1T2)
+                .build();
 
-        entity.put(e1T1);
-        entity.put(e1T2);
-
-        entity2.put(e2T1);
-        entity2.put(e2T2);
+        entity2 = EntityBuilder.create("type", "id2")
+                .attr(e2T1)
+                .attr(e2T2)
+                .build();
     }
 
     @Test
