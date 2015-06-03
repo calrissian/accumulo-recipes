@@ -15,9 +15,6 @@
  */
 package org.calrissian.accumulorecipes.thirdparty.tinkerpop;
 
-import static java.util.Arrays.asList;
-import java.util.HashSet;
-
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.tinkerpop.blueprints.Edge;
@@ -34,12 +31,16 @@ import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.HashSet;
+
+import static java.util.Arrays.asList;
 
 public class BlueprintsGraphStoreTest {
 
@@ -47,9 +48,9 @@ public class BlueprintsGraphStoreTest {
     EntityGraph graph;
     Connector connector;
 
-    Entity vertex1 = new BaseEntity("vertexType1", "id1");
-    Entity vertex2 = new BaseEntity("vertexType2", "id2");
-    Entity edge = new EdgeEntity("edgeType1", "edgeId", vertex1, "", vertex2, "", "label1");
+    Entity vertex1;
+    Entity vertex2;
+    Entity edge;
 
     @Before
     public void start() throws Exception {
@@ -66,13 +67,19 @@ public class BlueprintsGraphStoreTest {
         Attribute attribute3 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
         Attribute attribute4 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
 
-        vertex1.put(attribute);
-        vertex1.put(attribute2);
-        vertex2.put(attribute3);
-        vertex2.put(attribute4);
+        vertex1 = EntityBuilder.create("vertexType1", "id1")
+                .attr(attribute)
+                .attr(attribute2)
+                .build();
+        vertex2 = EntityBuilder.create("vertexType2", "id2")
+                .attr(attribute3)
+                .attr(attribute4)
+                .build();
 
         Attribute edgeAttribute = new Attribute("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
-        edge.put(edgeAttribute);
+        edge = EdgeEntity.EdgeEntityBuilder.create(new EntityIdentifier("edgeType1", "edgeId"), vertex1, "", vertex2, "", "label1")
+                .attr(edgeAttribute)
+                .build();
 
         entityGraphStore.save(asList(vertex1, vertex2, edge));
 

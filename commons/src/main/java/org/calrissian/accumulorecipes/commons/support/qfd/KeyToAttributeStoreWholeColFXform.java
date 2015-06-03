@@ -34,12 +34,12 @@ import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.AttributeStore;
-import org.calrissian.mango.domain.BaseAttributeStoreBuilder;
+import org.calrissian.mango.domain.AbstractAttributeStoreBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore, B extends BaseAttributeStoreBuilder<V,B>> implements Function<Map.Entry<Key,Value>,V> {
+public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore, B extends AbstractAttributeStoreBuilder<V,B>> implements Function<Map.Entry<Key,Value>,V> {
 
   public static final Logger log = LoggerFactory.getLogger(KeyToAttributeStoreWholeColFXform.class);
 
