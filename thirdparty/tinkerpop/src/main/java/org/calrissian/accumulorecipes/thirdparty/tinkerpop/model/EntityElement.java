@@ -15,16 +15,20 @@
  */
 package org.calrissian.accumulorecipes.thirdparty.tinkerpop.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import java.util.Set;
-
 import com.google.common.base.Preconditions;
 import com.tinkerpop.blueprints.Element;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.graphstore.GraphStore;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
+
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.equalTo;
+import static com.google.common.collect.Iterables.filter;
 
 public class EntityElement implements Element {
 
@@ -69,13 +73,20 @@ public class EntityElement implements Element {
     public void setProperty(String s, Object o) {
         checkNotNull(s);
         checkNotNull(o);
-        entity.put(new Attribute(s, o));
+        entity = EntityBuilder.create(entity)
+                .attr(s, o)
+                .build();
     }
 
     @Override
     public <T> T removeProperty(String s) {
         Preconditions.checkNotNull(s);
-        return (T) entity.remove(s).getValue();
+        Attribute attr = entity.get(s);
+        entity = EntityBuilder.create(entity.getIdentifier())
+                .attrs(filter(entity.getAttributes(), equalTo(attr)))
+                .build();
+
+        return (T) attr.getValue();
     }
 
     @Override

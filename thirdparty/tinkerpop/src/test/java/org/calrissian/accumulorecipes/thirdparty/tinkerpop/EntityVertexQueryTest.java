@@ -46,6 +46,7 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.BaseEntity;
 import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,12 +58,12 @@ public class EntityVertexQueryTest {
     EntityGraph graph;
     Connector connector;
 
-    Entity vertex1 = new BaseEntity("vertexType1", "id1");
-    Entity vertex2 = new BaseEntity("vertexType2", "id2");
-    Entity edge = new EdgeEntity("edgeType1", "edgeId", vertex1, "", vertex2, "", "label1");
-    Entity edge2 = new EdgeEntity("edgeType2", "edgeId2", vertex1, "", vertex2, "", "label2");
-    Entity vertex3 = new BaseEntity("vertexType2", "id3");
-    Entity edge3 = new EdgeEntity("edgeType2", "edgeId3", vertex3, "", vertex1, "", "label1");
+    Entity vertex1;
+    Entity vertex2;
+    Entity vertex3;
+    Entity edge;
+    Entity edge2;
+    Entity edge3;
 
     private static EntityIdentifier entityIndex(Entity entity) {
         return new EntityIdentifier(entity.getType(), entity.getId());
@@ -79,43 +80,44 @@ public class EntityVertexQueryTest {
 
 
         Attribute v1t1 = new Attribute("key1", "val1", new MetadataBuilder().setVisibility("U").build());
-        vertex1.put(v1t1);
-
         Attribute v1t2 = new Attribute("key2", "val2", new MetadataBuilder().setVisibility("U").build());
-        vertex1.put(v1t2);
-
         Attribute v2t1 = new Attribute("key3", "val3", new MetadataBuilder().setVisibility("U").build());
-        vertex2.put(v2t1);
-
         Attribute v2t2 = new Attribute("key4", "val4", new MetadataBuilder().setVisibility("U").build());
-        vertex2.put(v2t2);
-
         Attribute v3t1 = new Attribute("key5", "val5", new MetadataBuilder().setVisibility("U").build());
-        vertex3.put(v3t1);
-
         Attribute keyVal = new Attribute("key", "val", new MetadataBuilder().setVisibility("U").build());
-        vertex1.put(keyVal);
-        vertex2.put(keyVal);
-
         Attribute e1t1 = new Attribute("edgeProp1", "edgeVal1", new MetadataBuilder().setVisibility("ADMIN").build());
-        edge.put(e1t1);
-
         Attribute e1t2 = new Attribute("edgeProp2", "edgeVal2", new MetadataBuilder().setVisibility("U").build());
-        edge.put(e1t2);
-
         Attribute e2t1 = new Attribute("edgeProp3", "edgeVal3", new MetadataBuilder().setVisibility("ADMIN").build());
-        edge2.put(e2t1);
-
         Attribute e2t2 = new Attribute("edgeProp4", "edgeVal4", new MetadataBuilder().setVisibility("U").build());
-        edge2.put(e2t2);
-
         Attribute edgeKeyVal = new Attribute("edgeProp", "edgeVal", new MetadataBuilder().setVisibility("U").build());
-
-        edge.put(edgeKeyVal);
-        edge2.put(edgeKeyVal);
-
         Attribute e3t1 = new Attribute("edgeProp3", "edgeVal3", new MetadataBuilder().setVisibility("ADMIN").build());
-        edge3.put(e3t1);
+
+        vertex1 = EntityBuilder.create("vertexType1", "id1")
+                .attr(v1t1)
+                .attr(v1t2)
+                .attr(keyVal)
+                .build();
+        vertex2 = EntityBuilder.create("vertexType2", "id2")
+                .attr(v2t1)
+                .attr(v2t2)
+                .attr(keyVal)
+                .build();
+        vertex3 = EntityBuilder.create("vertexType2", "id3")
+                .attr(v3t1)
+                .build();
+        edge = EdgeEntity.EdgeEntityBuilder.create(new EntityIdentifier("edgeType1", "edgeId"), vertex1, "", vertex2, "", "label1")
+                .attr(e1t1)
+                .attr(e1t2)
+                .attr(edgeKeyVal)
+                .build();
+        edge2 = EdgeEntity.EdgeEntityBuilder.create(new EntityIdentifier("edgeType2", "edgeId2"), vertex1, "", vertex2, "", "label2")
+                .attr(e2t1)
+                .attr(e2t2)
+                .attr(edgeKeyVal)
+                .build();
+        edge3 = EdgeEntity.EdgeEntityBuilder.create(new EntityIdentifier("edgeType2", "edgeId3"), vertex3, "", vertex1, "", "label1")
+                .attr(e3t1)
+                .build();
 
         entityGraphStore.save(Arrays.asList(vertex1, vertex2, vertex3, edge, edge2, edge3));
     }

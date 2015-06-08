@@ -21,8 +21,8 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.rangestore.support.ValueRange;
 import org.calrissian.accumulorecipes.rangestore.helper.LongRangeHelper;
-import org.calrissian.mango.domain.ValueRange;
 import org.junit.Test;
 
 import java.util.List;

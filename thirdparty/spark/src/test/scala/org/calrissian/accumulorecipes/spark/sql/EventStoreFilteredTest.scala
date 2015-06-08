@@ -24,7 +24,7 @@ import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
 import org.calrissian.accumulorecipes.spark.sql.util.TableUtil
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils
 import org.calrissian.mango.domain.Attribute
-import org.calrissian.mango.domain.event.BaseEvent
+import org.calrissian.mango.domain.event.EventBuilder
 import org.joda.time.DateTime
 import org.junit._
 import org.junit.rules.TemporaryFolder
@@ -64,14 +64,15 @@ object EventStoreFilteredTest {
   }
 
   private def persistEvents = {
-    val event = new BaseEvent("type", "id")
-    event.put(new Attribute("key1", "val1"))
-    event.put(new Attribute("key2", 5))
+    val event = EventBuilder.create("type", "id", System.currentTimeMillis())
+      .attr(new Attribute("key1", "val1"))
+      .attr(new Attribute("key2", 5))
+      .build()
 
-
-    val entity2 = new BaseEvent("type2", "id")
-    entity2.put(new Attribute("key1", "val1"))
-    entity2.put(new Attribute("key3", "val3"))
+    val entity2 = EventBuilder.create("type2", "id", System.currentTimeMillis())
+      .attr(new Attribute("key1", "val1"))
+      .attr(new Attribute("key3", "val3"))
+      .build()
 
     eventStore.save(Collections.singleton(event))
     eventStore.save(Collections.singleton(entity2))
@@ -159,10 +160,12 @@ class EventStoreFilteredTest {
 
   @Test
   def testFieldInSchemaMissingFromEventIsNull: Unit = {
-    val event = new BaseEvent("type", "id2")
-    event.put(new Attribute("key1", "val2"))
-    event.put(new Attribute("key2", 10))
-    event.put(new Attribute("key3", 5))
+    val event = EventBuilder.create("type", "id2", System.currentTimeMillis())
+      .attr(new Attribute("key1", "val2"))
+      .attr(new Attribute("key2", 10))
+      .attr(new Attribute("key3", 5))
+      .build()
+
     eventStore.save(Collections.singleton(event))
     eventStore.flush
 

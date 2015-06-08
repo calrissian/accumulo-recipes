@@ -36,6 +36,7 @@ import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,13 +55,15 @@ public class AccumuloTemporalLastNTest {
     @Test
     public void testMultipleEntries_sameGroup() throws TableNotFoundException {
 
-        Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Attribute("key1", "val1"));
-        testEntry.put(new Attribute("key2", "val2"));
+        Event testEntry = EventBuilder.create("", randomUUID().toString(), currentTimeMillis())
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
-        Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
-        testEntry2.put(new Attribute("key1", "val1"));
-        testEntry2.put(new Attribute("key2", "val2"));
+        Event testEntry2 = EventBuilder.create("", randomUUID().toString(), currentTimeMillis() - 5000)
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
@@ -86,13 +89,15 @@ public class AccumuloTemporalLastNTest {
     public void testTimeLimit_downToMillis() throws TableNotFoundException {
 
         long curTime = currentTimeMillis();
-        Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Attribute("key1", "val1"));
-        testEntry.put(new Attribute("key2", "val2"));
+        Event testEntry = EventBuilder.create("", randomUUID().toString(), curTime)
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
-        Event testEntry2 = new BaseEvent(randomUUID().toString(), curTime - 5000);
-        testEntry2.put(new Attribute("key1", "val1"));
-        testEntry2.put(new Attribute("key2", "val2"));
+        Event testEntry2 = EventBuilder.create("", randomUUID().toString(), curTime - 5000)
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
@@ -117,13 +122,15 @@ public class AccumuloTemporalLastNTest {
     @Test
     public void testMultipleEntries_differentGroups() throws TableNotFoundException {
 
-        Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Attribute("key1", "val1"));
-        testEntry.put(new Attribute("key2", "val2"));
+        Event testEntry = EventBuilder.create("", randomUUID().toString(), currentTimeMillis())
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
-        Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
-        testEntry2.put(new Attribute("key1", "val1"));
-        testEntry2.put(new Attribute("key2", "val2"));
+        Event testEntry2 = EventBuilder.create("", randomUUID().toString(), currentTimeMillis() - 5000)
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
         store.put("group", testEntry);
         store.put("group1", testEntry2);
@@ -150,17 +157,20 @@ public class AccumuloTemporalLastNTest {
     @Test
     public void testMultipleEntries_differentGroupsSomeInSameGroup() throws Exception {
 
-        Event testEntry = new BaseEvent(randomUUID().toString());
-        testEntry.put(new Attribute("key1", "val1"));
-        testEntry.put(new Attribute("key2", "val2"));
+        Event testEntry = EventBuilder.create("", randomUUID().toString(), currentTimeMillis())
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
-        Event testEntry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
-        testEntry2.put(new Attribute("key1", "val1"));
-        testEntry2.put(new Attribute("key2", "val2"));
+        Event testEntry2 = EventBuilder.create("", randomUUID().toString(), currentTimeMillis() - 5000)
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
-        Event testEntry3 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 500);
-        testEntry3.put(new Attribute("key1", "val1"));
-        testEntry3.put(new Attribute("key2", "val2"));
+        Event testEntry3 = EventBuilder.create("", randomUUID().toString(), currentTimeMillis() - 500)
+                .attr("key1", "val1")
+                .attr("key2", "val2")
+                .build();
 
 
         store.put("group", testEntry);

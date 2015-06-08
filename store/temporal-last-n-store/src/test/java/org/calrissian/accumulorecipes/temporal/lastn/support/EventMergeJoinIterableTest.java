@@ -16,15 +16,18 @@
 package org.calrissian.accumulorecipes.temporal.lastn.support;
 
 import com.google.common.collect.Iterables;
+import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
+import org.calrissian.mango.domain.event.EventIdentifier;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import static java.lang.System.currentTimeMillis;
+import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 
@@ -33,14 +36,14 @@ public class EventMergeJoinIterableTest {
     @Test
     public void test() {
 
-        Event entry1 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 5000);
-        Event entry2 = new BaseEvent(randomUUID().toString(), currentTimeMillis());
-        Event entry3 = new BaseEvent(randomUUID().toString(), currentTimeMillis() - 30);
+        Event entry1 = new BaseEvent(new EventIdentifier("", randomUUID().toString(), currentTimeMillis() - 5000), Collections.<Attribute>emptySet());
+        Event entry2 = new BaseEvent(new EventIdentifier("", randomUUID().toString(), currentTimeMillis()), Collections.<Attribute>emptySet());
+        Event entry3 = new BaseEvent(new EventIdentifier("", randomUUID().toString(), currentTimeMillis() - 30), Collections.<Attribute>emptySet());
 
         List<Iterable<Event>> entryIter = new LinkedList<Iterable<Event>>();
-        entryIter.add(Arrays.asList(new Event[]{entry1}));
-        entryIter.add(Arrays.asList(new Event[]{entry2}));
-        entryIter.add(Arrays.asList(new Event[]{entry3}));
+        entryIter.add(singletonList(entry1));
+        entryIter.add(singletonList(entry2));
+        entryIter.add(singletonList(entry3));
 
         EventMergeJoinIterable iterable = new EventMergeJoinIterable(entryIter);
 
