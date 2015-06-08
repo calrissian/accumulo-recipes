@@ -16,6 +16,7 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter.shouldExpire;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import java.io.ByteArrayInputStream;
@@ -115,7 +116,7 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
               for(Map.Entry<Key,Value> kv : entryList) {
 
                 long expiration = Long.parseLong(kv.getKey().getColumnFamily().toString());
-                if(!MetadataExpirationFilter.shouldExpire(expiration, kv.getKey().getTimestamp())) {
+                if(!shouldExpire(expiration, kv.getKey().getTimestamp())) {
                     String colq = kv.getKey().getColumnQualifier().toString();
                     int idx = colq.indexOf(NULL_BYTE);
                     String fieldName = colq.substring(0, idx);

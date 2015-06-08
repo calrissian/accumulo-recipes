@@ -20,6 +20,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -62,20 +63,23 @@ public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore, B 
         EventFields eventFields = new EventFields();
         eventFields.read(kryo, new Input(keyValueEntry.getValue().get()), EventFields.class);
         B entry = buildAttributeCollectionFromKey(keyValueEntry.getKey());
-        for (Map.Entry<String, EventFields.FieldValue> fieldValue : eventFields.entries()) {
-            String[] aliasVal = splitPreserveAllTokens(new String(fieldValue.getValue().getValue()), ONE_BYTE);
-            Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
+        for (Map.Entry<String,Set<EventFields.FieldValue>> fieldValue : eventFields.entrySet()) {
 
-            String vis = fieldValue.getValue().getVisibility().getExpression().length > 0 ? new String(fieldValue.getValue().getVisibility().getExpression()) : "";
+            for(EventFields.FieldValue fieldValue1 : fieldValue.getValue()) {
+                String[] aliasVal = splitPreserveAllTokens(new String(fieldValue1.getValue()), ONE_BYTE);
+                Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
 
-            try {
-                Map<String,String> meta = metadataSerDe.deserialize(fieldValue.getValue().getMetadata());
-                Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
-                setVisibility(metadata, vis);
-                Attribute attribute = new Attribute(fieldValue.getKey(), javaVal, metadata);
-                entry.attr(attribute);
-            } catch(Exception e) {
-                log.error("There was an error deserializing the metadata for a attribute", e);
+                String vis = fieldValue1.getVisibility().getExpression().length > 0 ? new String(fieldValue1.getVisibility().getExpression()) : "";
+
+                try {
+                    Map<String,String> meta = metadataSerDe.deserialize(fieldValue1.getMetadata());
+                    Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
+                    setVisibility(metadata, vis);
+                    Attribute attribute = new Attribute(fieldValue.getKey(), javaVal, metadata);
+                    entry.attr(attribute);
+                } catch(Exception e) {
+                    log.error("There was an error deserializing the metadata for a attribute", e);
+                }
             }
         }
         return entry.build();

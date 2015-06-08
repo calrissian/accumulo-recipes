@@ -21,8 +21,8 @@ import org.apache.accumulo.core.client.security.tokens.PasswordToken
 import org.apache.accumulo.core.client.{Connector, ZooKeeperInstance}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.types._
-import org.apache.spark.sql.sources.CatalystScan
+import org.apache.spark.sql.sources.{BaseRelation, CatalystScan}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SQLContext}
 import org.calrissian.accumulorecipes.commons.domain.Gettable
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat
@@ -39,7 +39,7 @@ import scala.collection.JavaConversions._
 
 
 abstract class QfdStoreCatalystScan(inst: String, zk: String, user: String, pass: String, objectType: String,
-                       @transient val sqlContext: SQLContext) extends CatalystScan with Serializable {   // TODO: Find out what's forcing this to be serializable
+                       @transient val sqlContext: SQLContext) extends BaseRelation with CatalystScan with Serializable {   // TODO: Find out what's forcing this to be serializable
 
   private val log = LoggerFactory.getLogger(classOf[QfdFilteredScan])
 

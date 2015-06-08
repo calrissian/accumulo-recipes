@@ -18,8 +18,7 @@ package org.calrissian.accumulorecipes.spark.sql
 import java.util.Collections
 
 import org.apache.accumulo.minicluster.impl.MiniAccumuloClusterImpl
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.catalyst.errors.TreeNodeException
+import org.apache.spark.sql.{AnalysisException, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
 import org.calrissian.accumulorecipes.spark.sql.util.TableUtil
@@ -237,7 +236,7 @@ class EventStoreCatalystTest {
   /**
    * Selecting a field that is not in the schema should fail gracefully
    */
-  @Test(expected = classOf[TreeNodeException[_]])
+  @Test(expected = classOf[AnalysisException])
   def testSelectFieldNotInSchema: Unit = sqlContext.sql("SELECT doesntExist FROM events").collect
 
   /**

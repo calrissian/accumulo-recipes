@@ -22,7 +22,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
-import org.apache.spark.sql.sources._
+import org.apache.spark.sql.sources.{BaseRelation, RelationProvider}
 import org.calrissian.accumulorecipes.commons.domain.Auths
 import org.calrissian.accumulorecipes.commons.hadoop.{BaseQfdInputFormat, EventWritable}
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex
