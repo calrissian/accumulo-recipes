@@ -15,12 +15,6 @@
 */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
@@ -45,14 +39,20 @@ import org.apache.pig.data.TupleFactory;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterator;
 import org.calrissian.accumulorecipes.commons.support.GettableTransform;
+import org.calrissian.accumulorecipes.commons.util.UriUtils;
 import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat;
 import org.calrissian.accumulorecipes.thirdparty.pig.support.AttributeStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.types.SimpleTypeEncoders;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.uri.support.UriUtils;
 import org.joda.time.DateTime;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Allows events to be streamed from the event store into Pig attributes. This class is really a proxy

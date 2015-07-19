@@ -15,19 +15,6 @@
 */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Sets.newHashSet;
-import static java.util.Arrays.asList;
-import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import groovy.lang.Binding;
@@ -47,13 +34,27 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.calrissian.accumulorecipes.commons.hadoop.RecordReaderValueIterator;
 import org.calrissian.accumulorecipes.commons.support.GettableTransform;
+import org.calrissian.accumulorecipes.commons.util.UriUtils;
 import org.calrissian.accumulorecipes.entitystore.hadoop.EntityInputFormat;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
 import org.calrissian.accumulorecipes.thirdparty.pig.support.AttributeStoreIterator;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.types.TypeRegistry;
-import org.calrissian.mango.uri.support.UriUtils;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Arrays.asList;
+import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.calrissian.mango.types.SimpleTypeEncoders.SIMPLE_TYPES;
 
 public class EntityLoader extends LoadFunc implements Serializable {
 

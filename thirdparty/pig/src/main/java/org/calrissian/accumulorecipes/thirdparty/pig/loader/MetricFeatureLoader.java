@@ -15,10 +15,6 @@
  */
 package org.calrissian.accumulorecipes.thirdparty.pig.loader;
 
-import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
-import java.io.IOException;
-import java.util.Collection;
-
 import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
@@ -33,11 +29,16 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.calrissian.accumulorecipes.commons.support.TimeUnit;
+import org.calrissian.accumulorecipes.commons.util.UriUtils;
 import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.model.Feature;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
-import org.calrissian.mango.uri.support.UriUtils;
 import org.joda.time.DateTime;
+
+import java.io.IOException;
+import java.util.Collection;
+
+import static org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.isConnectorInfoSet;
 
 public class MetricFeatureLoader extends LoadFunc {
 
