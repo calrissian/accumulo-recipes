@@ -15,7 +15,8 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import static com.google.common.collect.Maps.immutableEntry;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
 import java.io.IOException;
 import java.util.Collection;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -61,10 +61,10 @@ public class VisibilityExtractor extends WrappingIterator {
 
         Collection<Map.Entry<Key,Value>> keysValue = Lists.newArrayList();
         try {
-            List<Map.Entry<Key,Value>> map = decodeRow(getTopKey(), super.getTopValue());
+            List<Map.Entry<Key,Value>> map = decodeRowSimple(getTopKey(), super.getTopValue());
             for(Map.Entry<Key,Value> entry : map) {
-                if(checker.evaluate(getColumnVisibility(entry.getKey()))) {
-                    keysValue.add(Maps.immutableEntry(entry.getKey(), entry.getValue()));
+                if(checker.evaluate(getColumnVisibility(getTopKey()))) {
+                    keysValue.add(immutableEntry(entry.getKey(), entry.getValue()));
                 }
             }
             return encodeRow(keysValue);

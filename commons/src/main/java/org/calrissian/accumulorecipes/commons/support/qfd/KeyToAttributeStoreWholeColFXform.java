@@ -18,8 +18,9 @@ package org.calrissian.accumulorecipes.commons.support.qfd;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -71,13 +72,13 @@ public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore
           dis.readInt();    // number of keys/values
           dis.readLong();   // minimum expiration of keys and values
 
-        List<Map.Entry<Key,Value>> keyValues = decodeRow(groupedEvent.getKey(), bais);
+        List<Map.Entry<Key,Value>> keyValues = decodeRowSimple(groupedEvent.getKey(), bais);
 
         for (Map.Entry<Key,Value> curEntry : keyValues) {
 
           String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
           String[] aliasValue = splitPreserveAllTokens(colQParts[1], ONE_BYTE);
-          String visibility = curEntry.getKey().getColumnVisibility().toString();
+          String visibility = groupedEvent.getKey().getColumnVisibility().toString();
 
           try {
             Map<String,String> meta = metadataSerDe.deserialize(curEntry.getValue().get());

@@ -15,10 +15,12 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static com.google.common.collect.Maps.immutableEntry;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRowSimple;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -30,8 +32,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -63,7 +63,7 @@ public class SelectFieldsExtractor extends WrappingIterator {
         if (eventFieldsOpt == null)
             throw new IllegalArgumentException(SELECT_FIELDS + " must be set for " + SelectFieldsExtractor.class.getName());
 
-        selectFields = Sets.newHashSet(splitPreserveAllTokens(eventFieldsOpt, NULL_BYTE));
+        selectFields = newHashSet(splitPreserveAllTokens(eventFieldsOpt, NULL_BYTE));
     }
 
     @Override public Value getTopValue() {
@@ -74,10 +74,10 @@ public class SelectFieldsExtractor extends WrappingIterator {
             DataInputStream dis = new DataInputStream(bais);
             dis.readInt();
             long expiration = dis.readLong();
-            List<Map.Entry<Key,Value>> map = decodeRow(getTopKey(), bais);
+            List<Map.Entry<Key,Value>> map = decodeRowSimple(getTopKey(), bais);
             for(Map.Entry<Key,Value> entry : map) {
                 if(selectFields.contains(extractKey(entry.getKey()))) {
-                    keysValues.add(Maps.immutableEntry(entry.getKey(), entry.getValue()));
+                    keysValues.add(immutableEntry(entry.getKey(), entry.getValue()));
                 }
             }
 
@@ -86,7 +86,7 @@ public class SelectFieldsExtractor extends WrappingIterator {
             dos.writeInt(keysValues.size());
             dos.writeLong(expiration);
             dos.flush();
-            encodeRow(keysValues, baos);
+            encodeRowSimple(keysValues, baos);
             return new Value(baos.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);

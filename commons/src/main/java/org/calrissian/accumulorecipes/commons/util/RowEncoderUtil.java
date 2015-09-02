@@ -32,6 +32,8 @@ import org.apache.accumulo.core.data.Value;
 
 public class RowEncoderUtil {
 
+    private static final byte[] empty = new byte[]{};
+
     public static final List<Map.Entry<Key,Value>> decodeRow(Key rowKey, ByteArrayInputStream in) throws IOException {
         List<Map.Entry<Key,Value>> map = new ArrayList<Map.Entry<Key, Value>>();
         DataInputStream din = new DataInputStream(in);
@@ -72,6 +74,45 @@ public class RowEncoderUtil {
         }
         return map;
     }
+
+    public static final List<Map.Entry<Key,Value>> decodeRowSimple(Key rowKey, ByteArrayInputStream in) throws IOException {
+        List<Map.Entry<Key,Value>> map = new ArrayList<Map.Entry<Key, Value>>();
+        DataInputStream din = new DataInputStream(in);
+        int numKeys = din.readInt();
+
+        for (int i = 0; i < numKeys; i++) {
+            byte[] cf;
+            byte[] cq;
+            byte[] valBytes;
+            // read the col fam
+            {
+                int len = din.readInt();
+                cf = new byte[len];
+                din.read(cf);
+            }
+            // read the col qual
+            {
+                int len = din.readInt();
+                cq = new byte[len];
+                din.read(cq);
+            }
+            // read the value
+            {
+                int len = din.readInt();
+                valBytes = new byte[len];
+                din.read(valBytes);
+            }
+            map.add(immutableEntry(new Key(rowKey.getRowData().toArray(), cf, cq, empty, -1, false, false), new Value(valBytes, false)));
+        }
+        return map;
+    }
+
+    // decode a bunch of key value pairs that have been encoded into a single value
+    public static final List<Map.Entry<Key,Value>> decodeRowSimple(Key rowKey, Value rowValue) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(rowValue.get());
+        return decodeRowSimple(rowKey, in);
+    }
+
 
     // decode a bunch of key value pairs that have been encoded into a single value
     public static final List<Map.Entry<Key,Value>> decodeRow(Key rowKey, Value rowValue) throws IOException {
@@ -117,6 +158,41 @@ public class RowEncoderUtil {
             dout.writeInt(valBytes.length);
             dout.write(valBytes);
         }
+    }
+
+    public static final void encodeRowSimple(Collection<Map.Entry<Key,Value>> keyValueCollection, ByteArrayOutputStream out) throws IOException {
+        DataOutputStream dout = new DataOutputStream(out);
+        dout.writeInt(keyValueCollection.size());
+
+        for(Map.Entry<Key,Value> entry : keyValueCollection) {
+            Key k = entry.getKey();
+            Value v = entry.getValue();
+            // write the colfam
+            {
+                ByteSequence bs = k.getColumnFamilyData();
+                dout.writeInt(bs.length());
+                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
+            }
+            // write the colqual
+            {
+                ByteSequence bs = k.getColumnQualifierData();
+                dout.writeInt(bs.length());
+                dout.write(bs.getBackingArray(), bs.offset(), bs.length());
+            }
+            // write the value
+            byte[] valBytes = v.get();
+            dout.writeInt(valBytes.length);
+            dout.write(valBytes);
+        }
+    }
+
+
+    // take a stream of keys and values and output a value that encodes everything but their row
+    // keys and values must be paired one for one
+    public static final Value encodeRowSimple(Collection<Map.Entry<Key,Value>> keyValueCollection) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        encodeRowSimple(keyValueCollection, out);
+        return new Value(out.toByteArray());
     }
 
 

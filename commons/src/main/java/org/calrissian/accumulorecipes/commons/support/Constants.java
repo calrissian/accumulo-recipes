@@ -26,6 +26,7 @@ public class Constants {
     public static final String PREFIX_FI = "fi";        // field index index
     public static final String INDEX_V = "v";           // key index
     public static final String INDEX_K = "k";           // value index prefix
+    public static final String INDEX_T = "t";           // type index prefix
 
     public static final String NULL_BYTE = "\u0000";
     public static final String ONE_BYTE = "\u0001";

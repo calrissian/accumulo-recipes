@@ -17,7 +17,10 @@ package org.calrissian.accumulorecipes.eventstore.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.accumulo.core.data.Range.prefix;
+import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.DEFAULT_PARTITION_SIZE;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
@@ -26,8 +29,9 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.accumulo.core.client.AccumuloException;
@@ -38,8 +42,9 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
-import org.apache.hadoop.io.Text;
+import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.EmptyEncodedRowFilter;
@@ -228,11 +233,22 @@ public class AccumuloEventStore implements EventStore {
 
             BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
+            BatchScanner typeShardScanner = helper.buildIndexScanner(auths.getAuths());
+
+            Set<Range> typeIndexRanges = new HashSet<Range>();
+            for(String type : types) {
+
+                Key typeStartKey = new Key("t__" + type + NULL_BYTE + shardBuilder.buildShard(start.getTime(), 0));
+                Key typeStopKey = new Key("t__" + type + NULL_BYTE + shardBuilder.buildShard(stop.getTime(), shardBuilder.numPartitions()));
+                typeIndexRanges.add(new Range(typeStartKey, typeStopKey));
+            }
+            typeShardScanner.setRanges(typeIndexRanges);
+
             Collection<Range> ranges = new LinkedList<Range>();
-            for (String type : types) {
-                Set<Text> shards = shardBuilder.buildShardsInRange(start, stop);
-                for (Text shard : shards)
-                    ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type + ONE_BYTE));
+            for(Entry<Key,Value> entry : typeShardScanner) {
+                String[] parts = splitPreserveAllTokens(entry.getKey().getRow().toString(), NULL_BYTE);
+                String[] typeParts = splitByWholeSeparatorPreserveAllTokens(parts[0], "__");
+                ranges.add(prefix(parts[1], PREFIX_E + ONE_BYTE + typeParts[1] + ONE_BYTE));
             }
 
             scanner.setRanges(ranges);

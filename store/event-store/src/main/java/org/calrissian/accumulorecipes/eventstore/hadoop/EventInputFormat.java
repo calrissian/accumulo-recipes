@@ -16,7 +16,10 @@
 package org.calrissian.accumulorecipes.eventstore.hadoop;
 
 import static org.apache.accumulo.core.data.Range.prefix;
+import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
+import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore.DEFAULT_IDX_TABLE_NAME;
@@ -28,8 +31,10 @@ import static org.calrissian.mango.io.Serializables.fromBase64;
 import static org.calrissian.mango.io.Serializables.toBase64;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,15 +53,14 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.calrissian.accumulorecipes.commons.hadoop.BaseQfdInputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.SimpleMetadataSerDe;
+import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventOptimizedQueryIterator;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
@@ -158,17 +162,29 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
       job.getConfiguration().set("typeRegistry", new String(toBase64(typeRegistry)));
 
-      if(query == null) {
+        Instance instance = getInstance(job);
+        Connector connector = instance.getConnector(getPrincipal(job), getAuthenticationToken(job));
+        BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getScanAuthorizations(job), 5);
 
-          //TODO: This could be dangerous- so it may be reasonable to limit the possible number of shards- perhaps indexing the shards for the types would help?
-          Set<Text> shards = shardBuilder.buildShardsInRange(start, end);
-          Set<Range> ranges = new HashSet<Range>();
+        if(query == null) {
+
+
+          Set<Range> typeIndexRanges = new HashSet<Range>();
           for(String type : types) {
-              for(Text shard : shards)
-                  ranges.add(prefix(shard.toString(), PREFIX_E + ONE_BYTE + type + ONE_BYTE));
+
+              Key typeStartKey = new Key("t__" + type + NULL_BYTE + shardBuilder.buildShard(start.getTime(), 0));
+              Key typeStopKey = new Key("t__" + type + NULL_BYTE + shardBuilder.buildShard(end.getTime(), shardBuilder.numPartitions()));
+              typeIndexRanges.add(new Range(typeStartKey, typeStopKey));
           }
+          scanner.setRanges(typeIndexRanges);
 
-
+          Collection<Range> ranges = new LinkedList<Range>();
+          for(Map.Entry<Key,Value> entry : scanner) {
+              String[] parts = splitPreserveAllTokens(entry.getKey().getRow().toString(), NULL_BYTE);
+              String[] typeParts = splitByWholeSeparatorPreserveAllTokens(parts[0], "__");
+              ranges.add(prefix(parts[1], PREFIX_E + ONE_BYTE + typeParts[1] + ONE_BYTE));
+          }
+          scanner.close();
 
           job.getConfiguration().set(XFORM_KEY, CF_XFORM);
 
@@ -177,9 +193,6 @@ public class EventInputFormat extends BaseQfdInputFormat<Event, EventWritable> {
 
         } else {
 
-          Instance instance = getInstance(job);
-          Connector connector = instance.getConnector(getPrincipal(job), getAuthenticationToken(job));
-          BatchScanner scanner = connector.createBatchScanner(DEFAULT_IDX_TABLE_NAME, getScanAuthorizations(job), 5);
           GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, types, scanner, shardBuilder);
 
           IteratorSetting timeSetting = new IteratorSetting(14, TimeLimitingFilter.class);

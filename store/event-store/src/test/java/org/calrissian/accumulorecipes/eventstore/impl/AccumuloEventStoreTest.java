@@ -207,7 +207,6 @@ public class AccumuloEventStoreTest {
             .attr("key2", "val2", shouldntSee)
             .build();
 
-
         store.save(asList(event));
         store.flush();
 
@@ -310,7 +309,7 @@ public class AccumuloEventStoreTest {
         store.save(asList(event, event2));
         store.flush();
 
-        AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
+        AccumuloTestUtils.dumpTable(connector, "eventStore_index", DEFAULT_AUTHS.getAuths());
 
         CloseableIterable<Event> actualEvent = store.query(new Date(time-50), new Date(time+50), QueryBuilder.create().greaterThan("key-@#$%^&*()1", 9).build(), null, DEFAULT_AUTHS);
 
@@ -658,6 +657,9 @@ public class AccumuloEventStoreTest {
 
         Iterable<Event> itr = store.getAllByType(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis()), Sets.newHashSet("type-a"),
             null, DEFAULT_AUTHS);
+
+
+        AccumuloTestUtils.dumpTable(connector, "eventStore_index", DEFAULT_AUTHS.getAuths());
         assertEquals(1, Iterables.size(itr));
         assertEquals(event, Iterables.get(itr, 0));
     }

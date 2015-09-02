@@ -16,15 +16,16 @@
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Math.max;
 import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.commons.lang.StringUtils.splitByWholeSeparatorPreserveAllTokens;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
+import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_T;
 import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Expiration.getExpiration;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
@@ -52,7 +53,6 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexTypesIterator;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexUniqueKeyValueIterator;
 import org.calrissian.accumulorecipes.commons.support.Constants;
-import org.calrissian.accumulorecipes.commons.support.attribute.Metadata;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.Pair;
@@ -89,13 +89,30 @@ public class KeyValueIndex<T extends Entity> {
 
     public void indexKeyValues(Iterable<T> items) {
 
-        Map<String, Long> indexCache = new HashMap<String, Long>();
-        Map<String, Long> expirationCache = new HashMap<String, Long>();
+        Map<String[], Long> indexCache = new HashMap<String[], Long>();
+        Map<String[], Long> typeCache = new HashMap<String[], Long>();
+
+        Map<String[], Long> expirationCache = new HashMap<String[], Long>();
+        Map<String[], Long> typeExpirationCache = new HashMap<String[], Long>();
 
         for (T item : items) {
+
             String shardId = shardBuilder.buildShard(item);
+
+            String[] typeCacheString = new String[]{
+                shardId,
+                item.getType()
+            };
+
+            Long typeCount = typeCache.get(typeCacheString);
+            if(typeCount == null)
+                typeCount = 0l;
+
+
+            typeCache.put(typeCacheString, ++typeCount);
+
             for (Attribute attribute : item.getAttributes()) {
-                String[] strings = new String[]{
+                String[] indexCacheString = new String[]{
                     shardId,
                     attribute.getKey(),
                     typeRegistry.getAlias(attribute.getValue()),
@@ -104,46 +121,65 @@ public class KeyValueIndex<T extends Entity> {
                     item.getType()
                 };
 
-                String cacheKey = join(strings, ONE_BYTE);
-                Long count = indexCache.get(cacheKey);
+                Long count = indexCache.get(indexCacheString);
                 if (count == null)
                     count = 0l;
 
-                Long expiration = expirationCache.get(cacheKey);
+                Long expiration = expirationCache.get(indexCacheString);
                 if(expiration == null)
                     expiration = 0l;
 
-                Long curExpiration = Metadata.Expiration.getExpiration(attribute.getMetadata(), -1);
-                if(curExpiration == -1)
-                    expiration = -1l;
-                else
-                    expiration = Math.max(expiration, curExpiration);
+                Long typeExpiration = typeExpirationCache.get(typeCacheString);
+                if(typeExpiration == null)
+                    typeExpiration = 0l;
 
-                indexCache.put(cacheKey, ++count);
-                expirationCache.put(cacheKey, expiration);
+                Long curExpiration = getExpiration(attribute.getMetadata(), -1);
+                if(curExpiration == -1) {
+                    expiration = -1l;
+                    typeExpiration = -1l;
+                } else {
+                    expiration = max(expiration, curExpiration);
+                    typeExpiration = max(typeExpiration, curExpiration);
+                }
+
+                indexCache.put(indexCacheString, ++count);
+                expirationCache.put(indexCacheString, expiration);
+                typeExpirationCache.put(typeCacheString, typeExpiration);
             }
         }
 
-        for (Map.Entry<String, Long> indexCacheKey : indexCache.entrySet()) {
+        for (Map.Entry<String[], Long> indexParts : indexCache.entrySet()) {
 
-            String[] indexParts = splitPreserveAllTokens(indexCacheKey.getKey(), ONE_BYTE);
-            String alias = indexParts[2];
-            String key = indexParts[1];
-            String shard = indexParts[0];
-            String vis = indexParts[4];
-            String val = indexParts[3];
-            String type = indexParts[5];
+            String alias = indexParts.getKey()[2];
+            String key = indexParts.getKey()[1];
+            String shard = indexParts.getKey()[0];
+            String vis = indexParts.getKey()[4];
+            String val = indexParts.getKey()[3];
+            String type = indexParts.getKey()[5];
 
             Mutation keyMutation = new Mutation(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + shard);
             Mutation valueMutation = new Mutation(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + key + NULL_BYTE + val + NULL_BYTE + shard);
 
-            Long expiration = expirationCache.get(indexCacheKey.getKey());
-            Value value = new GlobalIndexValue(indexCacheKey.getValue(), expiration).toValue();
+            Long expiration = expirationCache.get(indexParts.getKey());
+            Value value = new GlobalIndexValue(indexParts.getValue(), expiration).toValue();
             keyMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
             valueMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
             try {
                 writer.addMutation(keyMutation);
                 writer.addMutation(valueMutation);
+            } catch (MutationsRejectedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        for(Map.Entry<String[], Long> typeCacheKey : typeCache.entrySet()) {
+            Mutation typeMutation = new Mutation(INDEX_T + INDEX_SEP + typeCacheKey.getKey()[1] + NULL_BYTE + typeCacheKey.getKey()[0]);
+            Long expiration = typeExpirationCache.get(typeCacheKey.getKey());
+            Value value = new GlobalIndexValue(typeCacheKey.getValue(), expiration).toValue();
+            typeMutation.put(EMPTY_TEXT, EMPTY_TEXT, value);
+
+            try {
+                writer.addMutation(typeMutation);
             } catch (MutationsRejectedException e) {
                 throw new RuntimeException(e);
             }
@@ -245,13 +281,13 @@ public class KeyValueIndex<T extends Entity> {
             IteratorSetting setting = new IteratorSetting(15, GlobalIndexTypesIterator.class);
 
             scanner.addScanIterator(setting);
-            scanner.setRanges(singletonList(new Range(INDEX_K + INDEX_SEP + prefix, INDEX_K + INDEX_SEP + prefix + "\uffff")));
+            scanner.setRanges(singletonList(new Range(INDEX_T + INDEX_SEP + prefix, INDEX_T + INDEX_SEP + prefix + "\uffff")));
 
             return transform(closeableIterable(scanner), new Function<Map.Entry<Key, Value>, String>() {
                 @Override
                 public String apply(Map.Entry<Key, Value> keyValueEntry) {
                     String[] parts = splitByWholeSeparatorPreserveAllTokens(keyValueEntry.getKey().getRow().toString(), INDEX_SEP);
-                    return parts[1];
+                    return splitPreserveAllTokens(parts[1], NULL_BYTE)[0];
                 }
             });
         } catch (Exception e) {

@@ -15,9 +15,10 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static java.lang.Long.parseLong;
 import static java.lang.Math.min;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRowSimple;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -50,9 +51,9 @@ public class MetadataExpirationFilter extends WrappingIterator {
                 if(shouldExpire(expiration, parseTimestampFromKey(k))) {
                     long newMinExpiration = Long.MAX_VALUE;
                     List<Map.Entry<Key,Value>> finalKeyValList = new ArrayList();
-                    for(Map.Entry<Key,Value> curEntry : decodeRow(k, bais)) {
-                        long curExpiration = Long.parseLong(curEntry.getKey().getColumnFamily().toString());
-                        if(!shouldExpire(curExpiration, curEntry.getKey().getTimestamp())) {
+                    for(Map.Entry<Key,Value> curEntry : decodeRowSimple(k, bais)) {
+                        long curExpiration = parseLong(curEntry.getKey().getColumnFamily().toString());
+                        if(!shouldExpire(curExpiration, k.getTimestamp())) {
                             min(curExpiration, newMinExpiration);
                             finalKeyValList.add(curEntry);
                         }
@@ -63,7 +64,7 @@ public class MetadataExpirationFilter extends WrappingIterator {
                     dos.writeInt(finalKeyValList.size());
                     dos.writeLong(newMinExpiration != Long.MAX_VALUE ? newMinExpiration : -1);
                     dos.flush();
-                    encodeRow(finalKeyValList, baos);
+                    encodeRowSimple(finalKeyValList, baos);
                     baos.flush();
 
                     return new Value(baos.toByteArray());

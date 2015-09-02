@@ -16,10 +16,10 @@
 package org.calrissian.accumulorecipes.commons.support.qfd.planner;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.calrissian.mango.criteria.support.NodeUtils.isEmpty;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.CalculateShardsVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.CardinalityReorderVisitor;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.ExtractInNotInVisitor;
@@ -42,7 +42,7 @@ import org.calrissian.mango.types.TypeRegistry;
 public class QueryPlanner implements NodeVisitor {
 
     protected Node node;
-    protected Set<String> shards = Sets.newHashSet();
+    protected Set<String> shards = newHashSet();
     protected GlobalIndexVisitor indexVisitor;
     protected TypeRegistry<String> typeRegistry;
 

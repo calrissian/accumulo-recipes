@@ -16,9 +16,10 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static java.lang.Long.parseLong;
 import static org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter.shouldExpire;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.iterators.support.EventFields;
+import org.calrissian.accumulorecipes.commons.iterators.support.EventFields.FieldValue;
 import org.calrissian.accumulorecipes.commons.iterators.support.QueryEvaluator;
 
 public class EvaluatingIterator extends AbstractEvaluatingIterator {
@@ -103,7 +105,7 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
             DataInputStream dis = new DataInputStream(bais);
             dis.readInt();
             dis.readLong(); // because we have expiration as the first byte
-            entryList = decodeRow(key, bais);
+            entryList = decodeRowSimple(key, bais);
             bais.close();
         } catch (Exception e) {
             /**
@@ -115,13 +117,13 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         try {
               for(Map.Entry<Key,Value> kv : entryList) {
 
-                long expiration = Long.parseLong(kv.getKey().getColumnFamily().toString());
-                if(!shouldExpire(expiration, kv.getKey().getTimestamp())) {
+                long expiration = parseLong(kv.getKey().getColumnFamily().toString());
+                if(!shouldExpire(expiration, key.getTimestamp())) {
                     String colq = kv.getKey().getColumnQualifier().toString();
                     int idx = colq.indexOf(NULL_BYTE);
                     String fieldName = colq.substring(0, idx);
                     String fieldValue = colq.substring(idx + 1);
-                    event.put(fieldName, new EventFields.FieldValue(getColumnVisibility(kv.getKey()), fieldValue.getBytes(), kv.getValue().get()));
+                    event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes(), kv.getValue().get()));
                 }
               }
         } catch(Exception e) {

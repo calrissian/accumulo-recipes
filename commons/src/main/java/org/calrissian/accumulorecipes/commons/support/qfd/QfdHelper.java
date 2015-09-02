@@ -16,6 +16,7 @@
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Math.min;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
@@ -27,7 +28,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_FI;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.VISIBILITY;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRow;
+import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRowSimple;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -209,7 +210,7 @@ public abstract class QfdHelper<T extends Entity> {
                         fiVal.set(expiration.toString().getBytes());
 
                         if(expiration > -1)
-                            minExpiration = Math.min(minExpiration, expiration);
+                            minExpiration = min(minExpiration, expiration);
 
                         forwardCF.set(expiration.toString());  // no need to copy the id when this is going to be rolled up anyways
                         forwardCQ.set(attribute.getKey() + NULL_BYTE + aliasValue);
@@ -236,7 +237,7 @@ public abstract class QfdHelper<T extends Entity> {
                     dout.writeInt(keysValuesToEncode.size());
                     long expirationToWrite = minExpiration == Long.MAX_VALUE ? -1 : minExpiration;
                     dout.writeLong(expirationToWrite);   // -1 means don't expire.
-                    encodeRow(keysValuesToEncode, baos);
+                    encodeRowSimple(keysValuesToEncode, baos);
                     shardMutation.put(new Text(id), new Text(), colVis, buildAttributeTimestampForEntity(item), new Value(baos.toByteArray()));
                   }
                   shardWriter.addMutation(shardMutation);
