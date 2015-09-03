@@ -77,13 +77,16 @@ public abstract class BaseQfdInputFormat<T extends AttributeStore, W extends Set
         } else {
             for (String shard : logicalPlan.getShards())
                 ranges.add(new Range(shard));
+
+            IteratorSetting setting = new IteratorSetting(16, optimizedQueryIteratorClass);
+            setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
+            setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
+
+            addIterator(job, setting);
         }
 
         setRanges(job, ranges);
 
-        IteratorSetting setting = new IteratorSetting(16, optimizedQueryIteratorClass);
-        setting.addOption(BooleanLogicIterator.QUERY_OPTION, originalJexl);
-        setting.addOption(BooleanLogicIterator.FIELD_INDEX_QUERY, jexl);
 
         final String[] selectFields = job.getConfiguration().getStrings(SELECT_FIELDS);
 
@@ -91,9 +94,6 @@ public abstract class BaseQfdInputFormat<T extends AttributeStore, W extends Set
             IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
             SelectFieldsExtractor.setSelectFields(iteratorSetting, new HashSet<String>(asList(selectFields)));
         }
-
-
-        addIterator(job, setting);
     }
 
     protected abstract Function<Map.Entry<Key, Value>, T> getTransform(Configuration configuration);

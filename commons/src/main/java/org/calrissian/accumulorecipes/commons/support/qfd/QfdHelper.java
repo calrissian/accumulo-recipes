@@ -16,7 +16,6 @@
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Maps.immutableEntry;
 import static java.lang.Math.min;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
@@ -27,6 +26,7 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_FI;
+import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Expiration.getExpiration;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.VISIBILITY;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
@@ -43,8 +43,6 @@ import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -54,7 +52,6 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.admin.TimeType;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -71,7 +68,6 @@ import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
 import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.attribute.Metadata;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.SimpleMetadataSerDe;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.QueryPlanner;
@@ -136,7 +132,7 @@ public abstract class QfdHelper<T extends Entity> {
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
-            connector.tableOperations().create(this.shardTable, false, TimeType.LOGICAL);  // we want the shard table to be idempotent
+            connector.tableOperations().create(this.shardTable);  // we want the shard table to be idempotent
             configureShardTable(connector, this.shardTable);
             IteratorSetting expirationFilter = new IteratorSetting(6, "fiExpiration", FieldIndexExpirationFilter.class);
             connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
@@ -167,9 +163,7 @@ public abstract class QfdHelper<T extends Entity> {
     public void save(Iterable<T> items) {
         checkNotNull(items);
 
-        Value shardVal = new Value();
         Value fiVal = new Value();
-        Text forwardCF = new Text();
         Text forwardCQ = new Text();
         Text fieldIndexCF = new Text();
         Text fieldIndexCQ = new Text();
@@ -184,11 +178,11 @@ public abstract class QfdHelper<T extends Entity> {
 
                     String shardId = shardBuilder.buildShard(item);
 
-                    Multimap<ColumnVisibility,Map.Entry<Key,Value>> visToKeyCache = ArrayListMultimap.create();
-
                     long minExpiration = Long.MAX_VALUE;
+
+                    int time = 0;
+                    Mutation shardMutation = new Mutation(shardId);
                     for (Attribute attribute : item.getAttributes()) {
-                        Mutation shardMutation = new Mutation(shardId);
                         String visibility = getVisibility(attribute.getMetadata(), "");
                         String aliasValue = typeRegistry.getAlias(attribute.getValue()) + ONE_BYTE +
                             typeRegistry.encode(attribute.getValue());
@@ -196,9 +190,9 @@ public abstract class QfdHelper<T extends Entity> {
                         ColumnVisibility columnVisibility = new ColumnVisibility(visibility);
 
                         Map<String,String> meta = new HashMap<String, String>(attribute.getMetadata());
-                        meta.remove(Metadata.Visiblity.VISIBILITY);
+                        meta.remove(VISIBILITY);
 
-                        Long expiration = Metadata.Expiration.getExpiration(meta, -1);
+                        Long expiration = getExpiration(meta, -1);
 
                         byte[] metaBytes = metadataSerDe.serialize(meta);
 
@@ -207,16 +201,11 @@ public abstract class QfdHelper<T extends Entity> {
                         if(expiration > -1)
                             minExpiration = min(minExpiration, expiration);
 
-                        forwardCF.set(expiration.toString());  // no need to copy the id when this is going to be rolled up anyways
                         forwardCQ.set(attribute.getKey() + NULL_BYTE + aliasValue);
                         fieldIndexCF.set(PREFIX_FI + NULL_BYTE + buildAttributeKey(item, attribute.getKey()));
                         fieldIndexCQ.set(aliasValue + NULL_BYTE + id);
 
                         long timestamp  = buildAttributeTimestampForEntity(item);
-
-                        Key key = new Key(new Text(shardId), forwardCF, forwardCQ, columnVisibility, timestamp);
-                        Value valuePart = new Value(shardVal);
-                        visToKeyCache.put(columnVisibility, immutableEntry(key, valuePart));
 
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         DataOutputStream dout = new DataOutputStream(baos);
@@ -229,6 +218,7 @@ public abstract class QfdHelper<T extends Entity> {
                         shardMutation.put(new Text(id),
                                           forwardCQ,
                                           columnVisibility,
+                                          time,
                                           new Value(baos.toByteArray()));
 
                         shardMutation.put(fieldIndexCF,
@@ -237,14 +227,14 @@ public abstract class QfdHelper<T extends Entity> {
                             timestamp,
                             fiVal);
 
-                        shardWriter.addMutation(shardMutation);
+                        time++;
                     }
 
+                    shardWriter.addMutation(shardMutation);
                 }
             }
 
             keyValueIndex.indexKeyValues(items);
-            shardWriter.flush();
 
         } catch (RuntimeException re) {
             throw re;
