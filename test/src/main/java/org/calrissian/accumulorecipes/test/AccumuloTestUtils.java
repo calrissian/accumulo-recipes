@@ -29,6 +29,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.hadoop.io.Text;
 
 public class AccumuloTestUtils {
 
@@ -59,5 +60,9 @@ public class AccumuloTestUtils {
         batchDelete.setRanges(Collections.singleton(new Range()));
         batchDelete.delete();
         batchDelete.close();
+
+        connector.tableOperations().compact("eventStore_shard", new Text("\u0000"), new Text("\uffff"), true, true);
+
+
     }
 }
