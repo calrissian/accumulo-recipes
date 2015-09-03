@@ -61,8 +61,6 @@ public class AccumuloTestUtils {
         batchDelete.delete();
         batchDelete.close();
 
-        connector.tableOperations().compact("eventStore_shard", new Text("\u0000"), new Text("\uffff"), true, true);
-
-
+        connector.tableOperations().compact(table, new Text("\u0000"), new Text("\uffff"), true, true);
     }
 }
