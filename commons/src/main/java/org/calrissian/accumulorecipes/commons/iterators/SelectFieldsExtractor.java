@@ -15,42 +15,41 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import static com.google.common.collect.Maps.immutableEntry;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRowSimple;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.Filter;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.commons.lang.StringUtils;
+import org.calrissian.accumulorecipes.commons.support.Constants;
 
 /**
  * Given a set of fieldNames and fieldValues encoded into the value of a single keyValue, this will filter
  * those fieldNames which are included in a given set of selectFields.
  */
-public class SelectFieldsExtractor extends WrappingIterator {
+public class SelectFieldsExtractor extends Filter {
 
     protected static final String SELECT_FIELDS = "selectFields";
     private Set<String> selectFields;
 
     public static void setSelectFields(IteratorSetting is, Set<String> selectFields) {
         is.addOption(SELECT_FIELDS, StringUtils.join(selectFields, NULL_BYTE));
+    }
+
+    @Override
+    public boolean accept(Key k, Value v) {
+        if(selectFields.size() > 0 && selectFields != null && k.getColumnFamily().toString().startsWith(Constants.PREFIX_E))
+            return selectFields.contains(extractKey(k));
+
+        return true;
     }
 
     @Override
@@ -64,33 +63,6 @@ public class SelectFieldsExtractor extends WrappingIterator {
             throw new IllegalArgumentException(SELECT_FIELDS + " must be set for " + SelectFieldsExtractor.class.getName());
 
         selectFields = newHashSet(splitPreserveAllTokens(eventFieldsOpt, NULL_BYTE));
-    }
-
-    @Override public Value getTopValue() {
-
-        Collection<Map.Entry<Key,Value>> keysValues = Lists.newArrayList();
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(super.getTopValue().get());
-            DataInputStream dis = new DataInputStream(bais);
-            dis.readInt();
-            long expiration = dis.readLong();
-            List<Map.Entry<Key,Value>> map = decodeRowSimple(getTopKey(), bais);
-            for(Map.Entry<Key,Value> entry : map) {
-                if(selectFields.contains(extractKey(entry.getKey()))) {
-                    keysValues.add(immutableEntry(entry.getKey(), entry.getValue()));
-                }
-            }
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeInt(keysValues.size());
-            dos.writeLong(expiration);
-            dos.flush();
-            encodeRowSimple(keysValues, baos);
-            return new Value(baos.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     protected String extractKey(Key key) {

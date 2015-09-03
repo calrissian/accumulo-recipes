@@ -366,6 +366,7 @@ public class AccumuloEventStoreTest {
 
         store.save(asList(event, event2));
 
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
         CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIdentifier("", event.getId(), event.getTimestamp())),
                 Collections.singleton("key1"), DEFAULT_AUTHS);
 
@@ -659,7 +660,7 @@ public class AccumuloEventStoreTest {
             null, DEFAULT_AUTHS);
 
 
-        AccumuloTestUtils.dumpTable(connector, "eventStore_index", DEFAULT_AUTHS.getAuths());
+        AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
         assertEquals(1, Iterables.size(itr));
         assertEquals(event, Iterables.get(itr, 0));
     }

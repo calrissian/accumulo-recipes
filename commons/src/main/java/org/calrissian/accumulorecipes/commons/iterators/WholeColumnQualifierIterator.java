@@ -15,13 +15,13 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
+import static com.google.common.collect.Maps.immutableEntry;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
@@ -69,7 +69,7 @@ public class WholeColumnQualifierIterator implements SortedKeyValueIterator<Key,
         while (sourceIter.hasTop() && sourceIter.getTopKey().getRow().equals(currentRow) &&
             sourceIter.getTopKey().getColumnFamily().equals(currentColF) &&
             sourceIter.getTopKey().getColumnQualifier().equals(currentColQ)) {
-            keysValues.add(Maps.immutableEntry(new Key(sourceIter.getTopKey()), new Value(sourceIter.getTopValue())));
+            keysValues.add(immutableEntry(new Key(sourceIter.getTopKey()), new Value(sourceIter.getTopValue())));
             sourceIter.next();
         }
 

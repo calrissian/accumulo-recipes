@@ -18,6 +18,8 @@ package org.calrissian.accumulorecipes.commons.support.qfd;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -62,18 +64,30 @@ public abstract class KeyToAttributeStoreQueryXform<V extends AttributeStore, B 
     public V apply(Map.Entry<Key, Value> keyValueEntry) {
         EventFields eventFields = new EventFields();
         eventFields.read(kryo, new Input(keyValueEntry.getValue().get()), EventFields.class);
-        B entry = buildAttributeCollectionFromKey(keyValueEntry.getKey());
+        B entry = null;
         for (Map.Entry<String,Set<EventFields.FieldValue>> fieldValue : eventFields.entrySet()) {
 
             for(EventFields.FieldValue fieldValue1 : fieldValue.getValue()) {
+
                 String[] aliasVal = splitPreserveAllTokens(new String(fieldValue1.getValue()), ONE_BYTE);
                 Object javaVal = typeRegistry.decode(aliasVal[0], aliasVal[1]);
 
                 String vis = fieldValue1.getVisibility().getExpression().length > 0 ? new String(fieldValue1.getVisibility().getExpression()) : "";
 
                 try {
-                    Map<String,String> meta = metadataSerDe.deserialize(fieldValue1.getMetadata());
-                    Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
+                    ByteArrayInputStream bais = new ByteArrayInputStream(fieldValue1.getMetadata());
+                    DataInputStream dis = new DataInputStream(bais);
+                    dis.readLong();   // minimum expiration of keys and values
+                    long timestamp = dis.readLong();
+                    if(entry == null)
+                        entry = buildAttributeCollectionFromKey(new Key(keyValueEntry.getKey().getRow(), keyValueEntry.getKey().getColumnFamily(), keyValueEntry.getKey().getColumnQualifier(), timestamp));
+
+                    int length = dis.readInt();
+                    byte[] metaBytes = new byte[length];
+                    dis.readFully(metaBytes);
+
+                    Map<String,String> meta = metadataSerDe.deserialize(metaBytes);
+                    Map<String,String> metadata = (length == 0 ? new HashMap<String,String>() : new HashMap<String,String>(meta));
                     setVisibility(metadata, vis);
                     Attribute attribute = new Attribute(fieldValue.getKey(), javaVal, metadata);
                     entry.attr(attribute);

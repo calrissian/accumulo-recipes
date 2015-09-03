@@ -42,7 +42,6 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.EmptyEncodedRowFilter;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
@@ -124,8 +123,6 @@ public class AccumuloEntityStore implements EntityStore {
 
             IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
             scanner.addScanIterator(expirationFilter);
-            IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
-            scanner.addScanIterator(emptyDataFilter);
 
             IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
             scanner.addScanIterator(setting);
@@ -170,8 +167,6 @@ public class AccumuloEntityStore implements EntityStore {
 
             IteratorSetting expirationFilter = new IteratorSetting(7, "metaExpiration", MetadataExpirationFilter.class);
             scanner.addScanIterator(expirationFilter);
-            IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
-            scanner.addScanIterator(emptyDataFilter);
 
 
             IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);

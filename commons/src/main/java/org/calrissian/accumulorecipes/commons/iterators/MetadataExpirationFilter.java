@@ -15,76 +15,29 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import static java.lang.Long.parseLong;
-import static java.lang.Math.min;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRowSimple;
+import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.WrappingIterator;
-import org.calrissian.accumulorecipes.commons.support.Constants;
+import org.apache.accumulo.core.iterators.Filter;
 
-public class MetadataExpirationFilter extends WrappingIterator {
+public class MetadataExpirationFilter extends Filter {
 
-    private Value extractedValue;
-    public Value extractExpiredAttributes(Key k, Value v) {
 
-        if(k.getColumnFamily().toString().startsWith(Constants.PREFIX_E)) {
-
-            ByteArrayInputStream bais = new ByteArrayInputStream(v.get());
-            DataInputStream dis = new DataInputStream(bais);
-            try {
-                dis.readInt();
-                long expiration = dis.readLong();
-                if(shouldExpire(expiration, parseTimestampFromKey(k))) {
-                    long newMinExpiration = Long.MAX_VALUE;
-                    List<Map.Entry<Key,Value>> finalKeyValList = new ArrayList();
-                    for(Map.Entry<Key,Value> curEntry : decodeRowSimple(k, bais)) {
-                        long curExpiration = parseLong(curEntry.getKey().getColumnFamily().toString());
-                        if(!shouldExpire(curExpiration, k.getTimestamp())) {
-                            min(curExpiration, newMinExpiration);
-                            finalKeyValList.add(curEntry);
-                        }
-                    }
-
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    DataOutputStream dos = new DataOutputStream(baos);
-                    dos.writeInt(finalKeyValList.size());
-                    dos.writeLong(newMinExpiration != Long.MAX_VALUE ? newMinExpiration : -1);
-                    dos.flush();
-                    encodeRowSimple(finalKeyValList, baos);
-                    baos.flush();
-
-                    return new Value(baos.toByteArray());
-                }
-            } catch (IOException e) {
-                return v;
-            }
+    protected long parseTimestampFromValue(Value v) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(v.get());
+        DataInputStream dis = new DataInputStream(bais);
+        try {
+            dis.readLong();
+            long returnVal = dis.readLong();
+            return returnVal;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        return v;
-    }
-
-    /**
-     * This method has been broken out for situations where logical may be used and the timestamp
-     * has been placed somewhere else in the key.
-     * @param k
-     * @return
-     */
-    protected long parseTimestampFromKey(Key k) {
-        return k.getTimestamp();
+        return -1;
     }
 
     /**
@@ -98,25 +51,25 @@ public class MetadataExpirationFilter extends WrappingIterator {
         return (expiration > -1 && System.currentTimeMillis() - timestamp > expiration);
     }
 
-    @Override
-    public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
-        super.seek(range, columnFamilies, inclusive);
-        extractedValue = null;
-    }
 
     @Override
-    public void next() throws IOException {
-        super.next();
-        extractedValue = null;
+    public boolean accept(Key k, Value v) {
+         if(k.getColumnFamily().toString().startsWith(PREFIX_E)) {
+
+            ByteArrayInputStream bais = new ByteArrayInputStream(v.get());
+            DataInputStream dis = new DataInputStream(bais);
+            try {
+                long expiration = dis.readLong();
+                boolean should = shouldExpire(expiration, parseTimestampFromValue(v));
+                return !should;
+            } catch(Exception e) {
+                return true;
+            }
+        }
+
+        return true;
     }
 
-    @Override
-    public Value getTopValue() {
-        // apply expiration
-        if(extractedValue == null)
-            extractedValue = extractExpiredAttributes(getTopKey(), super.getTopValue());
-        return extractedValue;
-    }
 
 }
 

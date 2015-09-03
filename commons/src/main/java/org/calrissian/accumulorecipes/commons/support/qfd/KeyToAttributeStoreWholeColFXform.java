@@ -20,7 +20,6 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -33,9 +32,9 @@ import com.google.common.base.Function;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.support.attribute.metadata.MetadataSerDe;
+import org.calrissian.mango.domain.AbstractAttributeStoreBuilder;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.AttributeStore;
-import org.calrissian.mango.domain.AbstractAttributeStoreBuilder;
 import org.calrissian.mango.types.TypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,34 +61,37 @@ public abstract class KeyToAttributeStoreWholeColFXform<V extends AttributeStore
   public V apply(Map.Entry<Key,Value> keyValueEntry) {
     try {
 
-      B entry = buildEntryFromKey(keyValueEntry.getKey());
+      B entry = null;
 
       List<Map.Entry<Key,Value>> groupedKVs = decodeRow(keyValueEntry.getKey(), keyValueEntry.getValue());
 
       for (Map.Entry<Key,Value> groupedEvent : groupedKVs) {
-          ByteArrayInputStream bais = new ByteArrayInputStream(groupedEvent.getValue().get());
-          DataInputStream dis = new DataInputStream(bais);
-          dis.readInt();    // number of keys/values
-          dis.readLong();   // minimum expiration of keys and values
 
-        List<Map.Entry<Key,Value>> keyValues = decodeRowSimple(groupedEvent.getKey(), bais);
-
-        for (Map.Entry<Key,Value> curEntry : keyValues) {
-
-          String[] colQParts = splitPreserveAllTokens(curEntry.getKey().getColumnQualifier().toString(), NULL_BYTE);
+          String[] colQParts = splitPreserveAllTokens(groupedEvent.getKey().getColumnQualifier().toString(), NULL_BYTE);
           String[] aliasValue = splitPreserveAllTokens(colQParts[1], ONE_BYTE);
           String visibility = groupedEvent.getKey().getColumnVisibility().toString();
 
           try {
-            Map<String,String> meta = metadataSerDe.deserialize(curEntry.getValue().get());
-            Map<String,String> metadata = (meta == null ? new HashMap<String,String>() : new HashMap<String,String>(meta));
+            ByteArrayInputStream bais = new ByteArrayInputStream(groupedEvent.getValue().get());
+              DataInputStream dis = new DataInputStream(bais);
+              dis.readLong();   // minimum expiration of keys and values
+              long timestamp = dis.readLong();
+
+              if(entry == null)
+                  entry = buildEntryFromKey(new Key(keyValueEntry.getKey().getRow(), keyValueEntry.getKey().getColumnFamily(), keyValueEntry.getKey().getColumnQualifier(), timestamp));
+
+              int length = dis.readInt();
+              byte[] metaBytes = new byte[length];
+              dis.readFully(metaBytes);
+
+            Map<String,String> meta = metadataSerDe.deserialize(metaBytes);
+            Map<String,String> metadata = (length == 0 ? new HashMap<String,String>() : new HashMap<String,String>(meta));
             setVisibility(metadata, visibility);
             Attribute attribute = new Attribute(colQParts[0], typeRegistry.decode(aliasValue[0], aliasValue[1]), metadata);
             entry.attr(attribute);
           } catch (Exception e) {
             log.error("There was an error deserializing the metadata for a attribute", e);
           }
-        }
       }
 
       return entry.build();

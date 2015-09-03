@@ -15,12 +15,12 @@
  */
 package org.calrissian.accumulorecipes.commons.hadoop;
 
+import static java.util.Arrays.asList;
 import static org.apache.accumulo.core.util.format.DefaultFormatter.formatEntry;
 import static org.calrissian.accumulorecipes.commons.iterators.support.EventFields.initializeKryo;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -89,7 +89,7 @@ public abstract class BaseQfdInputFormat<T extends AttributeStore, W extends Set
 
         if (selectFields != null && selectFields.length > 0) {
             IteratorSetting iteratorSetting = new IteratorSetting(16, SelectFieldsExtractor.class);
-            SelectFieldsExtractor.setSelectFields(iteratorSetting, new HashSet<String>(Arrays.asList(selectFields)));
+            SelectFieldsExtractor.setSelectFields(iteratorSetting, new HashSet<String>(asList(selectFields)));
         }
 
 

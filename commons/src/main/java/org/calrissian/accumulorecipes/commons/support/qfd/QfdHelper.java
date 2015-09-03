@@ -16,6 +16,7 @@
 package org.calrissian.accumulorecipes.commons.support.qfd;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Maps.immutableEntry;
 import static java.lang.Math.min;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.EnumSet.allOf;
@@ -28,7 +29,6 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_FI;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.VISIBILITY;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.encodeRowSimple;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.collect.CloseableIterables.wrap;
@@ -44,9 +44,7 @@ import java.util.Set;
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -56,6 +54,7 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.admin.TimeType;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -66,7 +65,6 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
-import org.calrissian.accumulorecipes.commons.iterators.EmptyEncodedRowFilter;
 import org.calrissian.accumulorecipes.commons.iterators.EvaluatingIterator;
 import org.calrissian.accumulorecipes.commons.iterators.FieldIndexExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.GlobalIndexCombiner;
@@ -138,15 +136,10 @@ public abstract class QfdHelper<T extends Entity> {
         }
 
         if (!connector.tableOperations().exists(this.shardTable)) {
-
-            Set<IteratorScope> scopes = Sets.newHashSet(IteratorScope.majc, IteratorScope.minc);
-
-            connector.tableOperations().create(this.shardTable, true);  // we want the shard table to be idempotent
+            connector.tableOperations().create(this.shardTable, false, TimeType.LOGICAL);  // we want the shard table to be idempotent
             configureShardTable(connector, this.shardTable);
             IteratorSetting expirationFilter = new IteratorSetting(6, "fiExpiration", FieldIndexExpirationFilter.class);
             connector.tableOperations().attachIterator(this.shardTable, expirationFilter, allOf(IteratorScope.class));
-            IteratorSetting emptyDataFilter = new IteratorSetting(8, "emptyFilter", EmptyEncodedRowFilter.class);
-            connector.tableOperations().attachIterator(this.shardTable, emptyDataFilter, Sets.newEnumSet(scopes, IteratorScope.class));
         }
 
         initializeKryo(kryo);
@@ -192,10 +185,10 @@ public abstract class QfdHelper<T extends Entity> {
                     String shardId = shardBuilder.buildShard(item);
 
                     Multimap<ColumnVisibility,Map.Entry<Key,Value>> visToKeyCache = ArrayListMultimap.create();
-                    Mutation shardMutation = new Mutation(shardId);
 
                     long minExpiration = Long.MAX_VALUE;
                     for (Attribute attribute : item.getAttributes()) {
+                        Mutation shardMutation = new Mutation(shardId);
                         String visibility = getVisibility(attribute.getMetadata(), "");
                         String aliasValue = typeRegistry.getAlias(attribute.getValue()) + ONE_BYTE +
                             typeRegistry.encode(attribute.getValue());
@@ -206,7 +199,9 @@ public abstract class QfdHelper<T extends Entity> {
                         meta.remove(Metadata.Visiblity.VISIBILITY);
 
                         Long expiration = Metadata.Expiration.getExpiration(meta, -1);
-                        shardVal.set(metadataSerDe.serialize(meta));
+
+                        byte[] metaBytes = metadataSerDe.serialize(meta);
+
                         fiVal.set(expiration.toString().getBytes());
 
                         if(expiration > -1)
@@ -221,35 +216,42 @@ public abstract class QfdHelper<T extends Entity> {
 
                         Key key = new Key(new Text(shardId), forwardCF, forwardCQ, columnVisibility, timestamp);
                         Value valuePart = new Value(shardVal);
-                        visToKeyCache.put(columnVisibility, Maps.immutableEntry(key, valuePart));
+                        visToKeyCache.put(columnVisibility, immutableEntry(key, valuePart));
+
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        DataOutputStream dout = new DataOutputStream(baos);
+                        dout.writeLong(expiration);
+                        dout.writeLong(timestamp);
+                        dout.writeInt(metaBytes.length);
+                        dout.write(metaBytes);
+                        dout.flush();
+
+                        shardMutation.put(new Text(id),
+                                          forwardCQ,
+                                          columnVisibility,
+                                          new Value(baos.toByteArray()));
 
                         shardMutation.put(fieldIndexCF,
                             fieldIndexCQ,
                             columnVisibility,
                             timestamp,
                             fiVal);
+
+                        shardWriter.addMutation(shardMutation);
                     }
 
-                  for(ColumnVisibility colVis : visToKeyCache.keySet()) {
-                    Collection<Map.Entry<Key,Value>> keysValuesToEncode = visToKeyCache.get(colVis);
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    DataOutputStream dout = new DataOutputStream(baos);
-                    dout.writeInt(keysValuesToEncode.size());
-                    long expirationToWrite = minExpiration == Long.MAX_VALUE ? -1 : minExpiration;
-                    dout.writeLong(expirationToWrite);   // -1 means don't expire.
-                    encodeRowSimple(keysValuesToEncode, baos);
-                    shardMutation.put(new Text(id), new Text(), colVis, buildAttributeTimestampForEntity(item), new Value(baos.toByteArray()));
-                  }
-                  shardWriter.addMutation(shardMutation);
                 }
             }
+
             keyValueIndex.indexKeyValues(items);
+            shardWriter.flush();
 
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Set<String> types, Node query,

@@ -16,16 +16,10 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators;
 
-import static java.lang.Long.parseLong;
-import static org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter.shouldExpire;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRowSimple;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.accumulo.core.data.ByteSequence;
@@ -46,6 +40,7 @@ import org.calrissian.accumulorecipes.commons.iterators.support.QueryEvaluator;
 public class EvaluatingIterator extends AbstractEvaluatingIterator {
 
     public static final String AUTHS = "auths";
+
 
     LRUMap visibilityMap = new LRUMap();
 
@@ -69,6 +64,8 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
   public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         return new EvaluatingIterator(this, env);
     }
+
+    MetadataExpirationFilter expirationFilter = new MetadataExpirationFilter();
 
     @Override
     public PartialKey getKeyComparator() {
@@ -99,36 +96,14 @@ public class EvaluatingIterator extends AbstractEvaluatingIterator {
         // each field name and field value are stored in the column qualifier
         // separated by a \0.
 
-        List<Map.Entry<Key,Value>> entryList = Collections.emptyList();
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(value.get());
-            DataInputStream dis = new DataInputStream(bais);
-            dis.readInt();
-            dis.readLong(); // because we have expiration as the first byte
-            entryList = decodeRowSimple(key, bais);
-            bais.close();
-        } catch (Exception e) {
-            /**
-             * It's possible there is no content encoded into the value, if this is the case, adding no fields to the
-             * event will cause it to be skipped by the {@link AbstractEvaluatingIterator}
-             */
+        if(expirationFilter.accept(key, value)) {
+            String colq = key.getColumnQualifier().toString();
+            int idx = colq.indexOf(NULL_BYTE);
+            String fieldName = colq.substring(0, idx);
+            String fieldValue = colq.substring(idx + 1);
+            event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes(), value.get()));
         }
 
-        try {
-              for(Map.Entry<Key,Value> kv : entryList) {
-
-                long expiration = parseLong(kv.getKey().getColumnFamily().toString());
-                if(!shouldExpire(expiration, key.getTimestamp())) {
-                    String colq = kv.getKey().getColumnQualifier().toString();
-                    int idx = colq.indexOf(NULL_BYTE);
-                    String fieldName = colq.substring(0, idx);
-                    String fieldValue = colq.substring(idx + 1);
-                    event.put(fieldName, new FieldValue(getColumnVisibility(key), fieldValue.getBytes(), kv.getValue().get()));
-                }
-              }
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
 
     }
 

@@ -47,17 +47,15 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.iterators.EmptyEncodedRowFilter;
 import org.calrissian.accumulorecipes.commons.iterators.MetadataExpirationFilter;
 import org.calrissian.accumulorecipes.commons.iterators.SelectFieldsExtractor;
-import org.calrissian.accumulorecipes.commons.iterators.TimeLimitingFilter;
 import org.calrissian.accumulorecipes.commons.iterators.WholeColumnFamilyIterator;
-import org.calrissian.accumulorecipes.commons.iterators.WholeColumnQualifierIterator;
 import org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
 import org.calrissian.accumulorecipes.eventstore.support.EventGlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.EventQfdHelper;
+import org.calrissian.accumulorecipes.eventstore.support.EventTimeLimitingFilter;
 import org.calrissian.accumulorecipes.eventstore.support.shard.DailyShardBuilder;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -160,9 +158,9 @@ public class AccumuloEventStore implements EventStore {
         GlobalIndexVisitor globalIndexVisitor = new EventGlobalIndexVisitor(start, end, types, indexScanner, shardBuilder);
         BatchScanner scanner = helper.buildShardScanner(auths.getAuths());
 
-        IteratorSetting timeFilter = new IteratorSetting(5, TimeLimitingFilter.class);
-        TimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
-        TimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
+        IteratorSetting timeFilter = new IteratorSetting(5, EventTimeLimitingFilter.class);
+        EventTimeLimitingFilter.setCurrentTime(timeFilter, end.getTime());
+        EventTimeLimitingFilter.setTTL(timeFilter, end.getTime() - start.getTime());
         scanner.addScanIterator(timeFilter);
 
         CloseableIterable<Event> events = helper.query(scanner, globalIndexVisitor, types, node, helper.buildQueryXform(), selectFields, auths);
@@ -211,10 +209,8 @@ public class AccumuloEventStore implements EventStore {
 
             IteratorSetting expirationFilter = new IteratorSetting(23, "metaExpiration", MetadataExpirationFilter.class);
             eventScanner.addScanIterator(expirationFilter);
-            IteratorSetting emptyDataFilter = new IteratorSetting(24, "emptyFilter", EmptyEncodedRowFilter.class);
-            eventScanner.addScanIterator(emptyDataFilter);
 
-            IteratorSetting setting = new IteratorSetting(26, WholeColumnQualifierIterator.class);
+            IteratorSetting setting = new IteratorSetting(26, WholeColumnFamilyIterator.class);
             eventScanner.addScanIterator(setting);
 
             return transform(closeableIterable(eventScanner), helper.buildWholeColFXform());
@@ -259,10 +255,10 @@ public class AccumuloEventStore implements EventStore {
                 scanner.addScanIterator(iteratorSetting);
             }
 
-            IteratorSetting timeFilter = new IteratorSetting(12, TimeLimitingFilter.class);
-            TimeLimitingFilter.setCurrentTime(timeFilter, stop.getTime());
+            IteratorSetting timeFilter = new IteratorSetting(12, EventTimeLimitingFilter.class);
+            EventTimeLimitingFilter.setCurrentTime(timeFilter, stop.getTime());
 
-            TimeLimitingFilter.setTTL(timeFilter, stop.getTime() - start.getTime());
+            EventTimeLimitingFilter.setTTL(timeFilter, stop.getTime() - start.getTime());
             scanner.addScanIterator(timeFilter);
 
             IteratorSetting setting = new IteratorSetting(18, WholeColumnFamilyIterator.class);
@@ -270,8 +266,6 @@ public class AccumuloEventStore implements EventStore {
 
             IteratorSetting expirationFilter = new IteratorSetting(13, "metaExpiration", MetadataExpirationFilter.class);
             scanner.addScanIterator(expirationFilter);
-            IteratorSetting emptyDataFilter = new IteratorSetting(14, "emptyFilter", EmptyEncodedRowFilter.class);
-            scanner.addScanIterator(emptyDataFilter);
 
             return transform(closeableIterable(scanner), helper.buildWholeColFXform());
         } catch (RuntimeException re) {
