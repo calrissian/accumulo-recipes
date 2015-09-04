@@ -134,7 +134,7 @@ public class AccumuloEventStoreTest {
 
         Iterable<Event> actualEvent1 = store.get(indexes, null, new Auths("A"));
 
-        assertEquals(2, Iterables.size(actualEvent1));
+        assertEquals(2, size(actualEvent1));
         assertEquals(1, Iterables.get(actualEvent1, 0).size());
         assertEquals(1, Iterables.get(actualEvent1, 1).size());
     }
@@ -161,7 +161,7 @@ public class AccumuloEventStoreTest {
     Iterable<Event> actualEvent1 = store.query(new Date(event.getTimestamp() - 500),
         new Date(event.getTimestamp() + 500), query, null, new Auths("A"));
 
-    assertEquals(0, Iterables.size(actualEvent1));
+    assertEquals(0, size(actualEvent1));
 
   }
 
@@ -190,7 +190,7 @@ public class AccumuloEventStoreTest {
     Iterable<Event> actualEvent1 = store.query(new Date(event.getTimestamp() - 500),
         new Date(event.getTimestamp() + 500), query, null, new Auths("A,B"));
 
-    assertEquals(2, Iterables.size(actualEvent1));
+    assertEquals(2, size(actualEvent1));
 
     assertEquals(2, Iterables.get(actualEvent1, 0).size());
     assertEquals(2, Iterables.get(actualEvent1, 1).size());
@@ -218,7 +218,7 @@ public class AccumuloEventStoreTest {
         Iterable<Event> events = store.get(eventIndexes, null, DEFAULT_AUTHS);
 
 
-        assertEquals(1, Iterables.size(events));
+        assertEquals(1, size(events));
         assertEquals(1, Iterables.get(events, 0).size());
     }
 
@@ -239,7 +239,7 @@ public class AccumuloEventStoreTest {
         Iterable<Event> events = store.query(
             new Date(currentTimeMillis()-5000), new Date(currentTimeMillis()), node, null, DEFAULT_AUTHS);
 
-        assertEquals(1, Iterables.size(events));
+        assertEquals(1, size(events));
         assertEquals(1, Iterables.get(events, 0).size());
     }
 
@@ -263,7 +263,7 @@ public class AccumuloEventStoreTest {
         Iterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS);
 
-        assertEquals(0, Iterables.size(itr));
+        assertEquals(0, size(itr));
     }
 
 
@@ -287,7 +287,7 @@ public class AccumuloEventStoreTest {
         Iterable<Event> itr = store.query(new Date(currentTimeMillis() - 5000),
                 new Date(), query, null, DEFAULT_AUTHS);
 
-        assertEquals(0, Iterables.size(itr));
+        assertEquals(0, size(itr));
     }
 
 
@@ -542,12 +542,12 @@ public class AccumuloEventStoreTest {
         CloseableIterable<Event> events = store.query(new Date(currentTimeMillis() - 5000),
             new Date(), Sets.newHashSet("type1", "type2"), query, null, DEFAULT_AUTHS);
 
-        assertEquals(2, Iterables.size(events));
+        assertEquals(2, size(events));
 
         events = store.query(new Date(currentTimeMillis() - 5000),
             new Date(), Sets.newHashSet("type1"), query, null, DEFAULT_AUTHS);
 
-        assertEquals(1, Iterables.size(events));
+        assertEquals(1, size(events));
         assertEquals("type1", Iterables.get(events, 0).getType());
 
     }
@@ -623,9 +623,29 @@ public class AccumuloEventStoreTest {
         Node node = QueryBuilder.create().has("key1").build();
 
         Iterable<Event> itr = store.query(new Date(0), new Date(), node, null, DEFAULT_AUTHS);
-        assertEquals(1, Iterables.size(itr));
+        assertEquals(1, size(itr));
         assertEquals(event, Iterables.get(itr, 0));
     }
+
+
+    @Test
+    public void testNoIndices() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Event event = EventBuilder.create("", "id", currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .build();
+
+        store.save(asList(event), false);
+
+        Node node = QueryBuilder.create().has("key1").build();
+
+        Iterable<Event> itr = store.query(new Date(0), new Date(), node, null, DEFAULT_AUTHS);
+        assertEquals(0, size(itr));
+
+        itr = store.getAllByType(new Date(0), new Date(), Sets.newHashSet(""), DEFAULT_AUTHS);
+        assertEquals(1, size(itr));
+    }
+
 
     @Ignore
     @Test
@@ -641,7 +661,7 @@ public class AccumuloEventStoreTest {
         Node node = QueryBuilder.create().hasNot("key2").build();
 
         Iterable<Event> itr = store.query(new Date(0), new Date(), node, null, DEFAULT_AUTHS);
-        assertEquals(1, Iterables.size(itr));
+        assertEquals(1, size(itr));
         assertEquals(event, Iterables.get(itr, 0));
     }
 
@@ -661,7 +681,7 @@ public class AccumuloEventStoreTest {
 
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
-        assertEquals(1, Iterables.size(itr));
+        assertEquals(1, size(itr));
         assertEquals(event, Iterables.get(itr, 0));
     }
 

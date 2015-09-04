@@ -160,7 +160,7 @@ public abstract class QfdHelper<T extends Entity> {
     /**
      * Items get saved into a sharded table to parallelize queries & ingest.
      */
-    public void save(Iterable<T> items) {
+    public void save(Iterable<T> items, boolean writeIndices) {
         checkNotNull(items);
 
         Value fiVal = new Value();
@@ -221,11 +221,13 @@ public abstract class QfdHelper<T extends Entity> {
                                           time,
                                           new Value(baos.toByteArray()));
 
-                        shardMutation.put(fieldIndexCF,
-                            fieldIndexCQ,
-                            columnVisibility,
-                            timestamp,
-                            fiVal);
+                        if(writeIndices) {
+                            shardMutation.put(fieldIndexCF,
+                                fieldIndexCQ,
+                                columnVisibility,
+                                timestamp,
+                                fiVal);
+                        }
 
                         time++;
                     }
@@ -234,7 +236,7 @@ public abstract class QfdHelper<T extends Entity> {
                 }
             }
 
-            keyValueIndex.indexKeyValues(items);
+            keyValueIndex.indexKeyValues(items, writeIndices);
 
         } catch (RuntimeException re) {
             throw re;

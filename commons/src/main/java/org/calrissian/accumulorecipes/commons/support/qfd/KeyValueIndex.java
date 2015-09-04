@@ -87,7 +87,7 @@ public class KeyValueIndex<T extends Entity> {
         writer = connector.createBatchWriter(indexTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
-    public void indexKeyValues(Iterable<T> items) {
+    public void indexKeyValues(Iterable<T> items, boolean writeKeyValueIndices) {
 
         Map<String[], Long> indexCache = new HashMap<String[], Long>();
         Map<String[], Long> typeCache = new HashMap<String[], Long>();
@@ -99,15 +99,11 @@ public class KeyValueIndex<T extends Entity> {
 
             String shardId = shardBuilder.buildShard(item);
 
-            String[] typeCacheString = new String[]{
-                shardId,
-                item.getType()
-            };
+            String[] typeCacheString = new String[] { shardId, item.getType() };
 
             Long typeCount = typeCache.get(typeCacheString);
             if(typeCount == null)
                 typeCount = 0l;
-
 
             typeCache.put(typeCacheString, ++typeCount);
 
@@ -148,27 +144,29 @@ public class KeyValueIndex<T extends Entity> {
             }
         }
 
-        for (Map.Entry<String[], Long> indexParts : indexCache.entrySet()) {
+        if(writeKeyValueIndices) {
+            for (Map.Entry<String[], Long> indexParts : indexCache.entrySet()) {
 
-            String alias = indexParts.getKey()[2];
-            String key = indexParts.getKey()[1];
-            String shard = indexParts.getKey()[0];
-            String vis = indexParts.getKey()[4];
-            String val = indexParts.getKey()[3];
-            String type = indexParts.getKey()[5];
+                String alias = indexParts.getKey()[2];
+                String key = indexParts.getKey()[1];
+                String shard = indexParts.getKey()[0];
+                String vis = indexParts.getKey()[4];
+                String val = indexParts.getKey()[3];
+                String type = indexParts.getKey()[5];
 
-            Mutation keyMutation = new Mutation(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + shard);
-            Mutation valueMutation = new Mutation(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + key + NULL_BYTE + val + NULL_BYTE + shard);
+                Mutation keyMutation = new Mutation(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + shard);
+                Mutation valueMutation = new Mutation(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + key + NULL_BYTE + val + NULL_BYTE + shard);
 
-            Long expiration = expirationCache.get(indexParts.getKey());
-            Value value = new GlobalIndexValue(indexParts.getValue(), expiration).toValue();
-            keyMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
-            valueMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
-            try {
-                writer.addMutation(keyMutation);
-                writer.addMutation(valueMutation);
-            } catch (MutationsRejectedException e) {
-                throw new RuntimeException(e);
+                Long expiration = expirationCache.get(indexParts.getKey());
+                Value value = new GlobalIndexValue(indexParts.getValue(), expiration).toValue();
+                keyMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
+                valueMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
+                try {
+                    writer.addMutation(keyMutation);
+                    writer.addMutation(valueMutation);
+                } catch (MutationsRejectedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 

@@ -96,7 +96,12 @@ public class AccumuloEntityStore implements EntityStore {
 
     @Override
     public void save(Iterable<Entity> entities) {
-        helper.save(entities);
+        save(entities, true);
+    }
+
+    @Override
+    public void save(Iterable<Entity> entities, boolean writeIndices) {
+        helper.save(entities, writeIndices);
     }
 
     @Override

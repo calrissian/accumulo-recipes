@@ -128,7 +128,12 @@ public class AccumuloEventStore implements EventStore {
      */
     @Override
     public void save(Iterable<Event> events) {
-        helper.save(events);
+        save(events, true);
+    }
+
+    @Override
+    public void save(Iterable<Event> events, boolean writeIndices) {
+        helper.save(events, writeIndices);
     }
 
     @Override

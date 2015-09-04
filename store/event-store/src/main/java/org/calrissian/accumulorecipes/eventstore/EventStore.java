@@ -41,6 +41,8 @@ public interface EventStore extends QfdStore<Event, EventIdentifier> {
      */
     void save(Iterable<Event> events);
 
+    void save(Iterable<Event> events, boolean writeIndices);
+
     /**
      * Force persistence of all events currently in-memory to the backing persistence
      * implementation.

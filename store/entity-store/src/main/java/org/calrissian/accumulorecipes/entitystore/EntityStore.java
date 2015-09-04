@@ -38,6 +38,8 @@ public interface EntityStore {
      */
     void save(Iterable<Entity> entities);
 
+    void save(Iterable<Entity> entities, boolean writeIndices);
+
     /**
      * Retrieves a list of entities by their types and ids. This method also allows for selection
      * of specific subsets of fields. Only attributes that match the given auths will be returned.
