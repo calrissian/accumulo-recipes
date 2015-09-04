@@ -638,7 +638,7 @@ public class AccumuloEventStoreTest {
         store.save(asList(event));
 
         Node node = QueryBuilder.create().eq("key1", "val1").build();
-`
+
         Iterable<Event> itr = store.query(new Date(0), new Date(), newHashSet("type:has%special-chars"), node, null, DEFAULT_AUTHS);
         assertEquals(1, size(itr));
         assertEquals(event, Iterables.get(itr, 0));
