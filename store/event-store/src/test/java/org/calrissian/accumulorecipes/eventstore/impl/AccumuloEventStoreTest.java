@@ -16,6 +16,7 @@
 package org.calrissian.accumulorecipes.eventstore.impl;
 
 import static com.google.common.collect.Iterables.size;
+import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -32,7 +33,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -540,12 +540,12 @@ public class AccumuloEventStoreTest {
         Node query = QueryBuilder.create().eq("key-@#$%^&*()1", "val1").build();
 
         CloseableIterable<Event> events = store.query(new Date(currentTimeMillis() - 5000),
-            new Date(), Sets.newHashSet("type1", "type2"), query, null, DEFAULT_AUTHS);
+            new Date(), newHashSet("type1", "type2"), query, null, DEFAULT_AUTHS);
 
         assertEquals(2, size(events));
 
         events = store.query(new Date(currentTimeMillis() - 5000),
-            new Date(), Sets.newHashSet("type1"), query, null, DEFAULT_AUTHS);
+            new Date(), newHashSet("type1"), query, null, DEFAULT_AUTHS);
 
         assertEquals(1, size(events));
         assertEquals("type1", Iterables.get(events, 0).getType());
@@ -629,6 +629,24 @@ public class AccumuloEventStoreTest {
 
 
     @Test
+    public void testQuery_typeHasSpecialChars() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+
+        Event event = EventBuilder.create("type:has%special-chars", "id", currentTimeMillis())
+            .attr(new Attribute("key1", "val1", meta))
+            .build();
+
+        store.save(asList(event));
+
+        Node node = QueryBuilder.create().eq("key1", "val1").build();
+`
+        Iterable<Event> itr = store.query(new Date(0), new Date(), newHashSet("type:has%special-chars"), node, null, DEFAULT_AUTHS);
+        assertEquals(1, size(itr));
+        assertEquals(event, Iterables.get(itr, 0));
+    }
+
+
+
+    @Test
     public void testNoIndices() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
 
         Event event = EventBuilder.create("", "id", currentTimeMillis())
@@ -642,7 +660,7 @@ public class AccumuloEventStoreTest {
         Iterable<Event> itr = store.query(new Date(0), new Date(), node, null, DEFAULT_AUTHS);
         assertEquals(0, size(itr));
 
-        itr = store.getAllByType(new Date(0), new Date(), Sets.newHashSet(""), DEFAULT_AUTHS);
+        itr = store.getAllByType(new Date(0), new Date(), newHashSet(""), DEFAULT_AUTHS);
         assertEquals(1, size(itr));
     }
 
@@ -676,7 +694,7 @@ public class AccumuloEventStoreTest {
         store.save(asList(event));
         store.flush();
 
-        Iterable<Event> itr = store.getAllByType(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis()), Sets.newHashSet("type-a"),
+        Iterable<Event> itr = store.getAllByType(new Date(currentTimeMillis() - 50000), new Date(currentTimeMillis()), newHashSet("type-a"),
             null, DEFAULT_AUTHS);
 
 
