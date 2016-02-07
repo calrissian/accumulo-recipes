@@ -32,7 +32,6 @@ public class NoOrNotEqualsValidator implements NodeVisitor {
 
     @Override
     public void end(ParentNode node) {
-
     }
 
     @Override

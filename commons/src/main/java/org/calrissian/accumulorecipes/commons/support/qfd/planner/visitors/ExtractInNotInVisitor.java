@@ -15,33 +15,22 @@
 */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
-import java.util.Collection;
-import java.util.Iterator;
-
-import org.calrissian.mango.criteria.domain.AndNode;
-import org.calrissian.mango.criteria.domain.EqualsLeaf;
-import org.calrissian.mango.criteria.domain.InLeaf;
-import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
-import org.calrissian.mango.criteria.domain.NotInLeaf;
-import org.calrissian.mango.criteria.domain.OrNode;
-import org.calrissian.mango.criteria.domain.ParentNode;
+import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
+
+import java.util.Collection;
 
 /**
  * Any In and NotIn nodes can be expressed as Or and And nodes respectively. This visitor makes the querying planning
  * easier by extracting the In and NotIn nodes to their respective And/Or NotEq/Eq combinations.
  */
-public class ExtractInNotInVisitor implements NodeVisitor
-{
+public class ExtractInNotInVisitor implements NodeVisitor {
     @Override
     public void begin(ParentNode parentNode) {
-
     }
 
     @Override
     public void end(ParentNode parentNode) {
-
     }
 
     @Override
@@ -52,14 +41,11 @@ public class ExtractInNotInVisitor implements NodeVisitor
             InLeaf node = (InLeaf)leaf;
             node.parent().removeChild(node);
 
-            OrNode andNode = new OrNode(leaf.parent());
-            Iterator<Object> objs = ((Collection<Object>)node.getValue()).iterator();
-            while(objs.hasNext()) {
-                Object curObj = objs.next();
-                andNode.addChild(new EqualsLeaf(node.getKey(), curObj, andNode));
+            OrNode orNode = new OrNode(leaf.parent());
+            for (Object obj : (Collection)node.getValue()) {
+                orNode.addChild(new EqualsLeaf<Object>(node.getTerm(), obj, orNode));
             }
-
-            leaf.parent().addChild(andNode);
+            leaf.parent().addChild(orNode);
         }
 
         else if(leaf instanceof NotInLeaf) {
@@ -68,12 +54,9 @@ public class ExtractInNotInVisitor implements NodeVisitor
             node.parent().removeChild(node);
 
             AndNode andNode = new AndNode(leaf.parent());
-            Iterator<Object> objs = ((Collection<Object>)node.getValue()).iterator();
-            while(objs.hasNext()) {
-                Object curObj = objs.next();
-                andNode.addChild(new NotEqualsLeaf(node.getKey(), curObj, andNode));
+            for (Object obj : (Collection)node.getValue()) {
+                andNode.addChild(new NotEqualsLeaf<Object>(node.getTerm(), obj, andNode));
             }
-
             leaf.parent().addChild(andNode);
         }
     }

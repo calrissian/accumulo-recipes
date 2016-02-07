@@ -15,49 +15,37 @@
  */
 package org.calrissian.accumulorecipes.eventstore.support;
 
-import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_K;
-import static org.calrissian.accumulorecipes.commons.support.Constants.INDEX_V;
-import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
-import static org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex.INDEX_SEP;
-import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
-import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
+import org.calrissian.accumulorecipes.commons.support.qfd.GlobalIndexValue;
 import org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors.GlobalIndexVisitor;
 import org.calrissian.accumulorecipes.eventstore.support.shard.EventShardBuilder;
-import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
-import org.calrissian.mango.criteria.domain.HasLeaf;
-import org.calrissian.mango.criteria.domain.HasNotLeaf;
-import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
-import org.calrissian.mango.criteria.domain.ParentNode;
+import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.TypeRegistry;
+
+import java.util.*;
+
+import static org.calrissian.accumulorecipes.commons.support.Constants.*;
+import static org.calrissian.accumulorecipes.commons.support.qfd.KeyValueIndex.INDEX_SEP;
+import static org.calrissian.mango.criteria.support.NodeUtils.isRangeLeaf;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 
 public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
     private static TypeRegistry<String> registry = LEXI_TYPES;
 
-    private Date start;
-    private Date end;
-    private BatchScanner indexScanner;
-    private EventShardBuilder shardBuilder;
+    private final Date start;
+    private final Date end;
+    private final BatchScanner indexScanner;
+    private final EventShardBuilder shardBuilder;
 
     private Map<AttributeIndexKey, Long> cardinalities = new HashMap<AttributeIndexKey, Long>();
     private Map<AttributeIndexKey, Set<String>> mappedShards = new HashMap<AttributeIndexKey, Set<String>>();
-    private Set<String> types;
+    private final Set<String> types;
 
     private Set<Leaf> leaves = new HashSet<Leaf>();
 
@@ -85,41 +73,30 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
         Set<Range> ranges = new HashSet<Range>();
         for (Leaf leaf : leaves) {
 
-            AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
+            TypedTermLeaf typedTerm = (TypedTermLeaf) leaf;
+            String alias = registry.getClassAlias(typedTerm.getType());
 
-            String alias = registry.getAlias(kvLeaf.getValue());
             String startShard = shardBuilder.buildShard(start.getTime(), 0);
             String stopShard = shardBuilder.buildShard(end.getTime(), shardBuilder.numPartitions() - 1) + END_BYTE;
 
-            if (isRangeLeaf(leaf) || leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || leaf instanceof NotEqualsLeaf) {
-
-                if(leaf instanceof HasLeaf) {
-                    String hasLeafAlias = registry.getAlias(((HasLeaf)leaf).getClazz());
-                    if(hasLeafAlias == null)
-                        buildRangeForAllAliases(ranges, kvLeaf.getKey(), startShard, stopShard);
-                    else
-                        buildRangeForSingleAlias(ranges, kvLeaf.getKey(), hasLeafAlias, startShard, stopShard);
-                } else if(leaf instanceof HasNotLeaf) {
-                    String hasNotLeafAlias = registry.getAlias(((HasNotLeaf)leaf).getClazz());
-                    if(hasNotLeafAlias == null)
-                        buildRangeForAllAliases(ranges, kvLeaf.getKey(), startShard, stopShard);
-                    else
-                        buildRangeForSingleAlias(ranges, kvLeaf.getKey(), alias, startShard, stopShard);
-                } else
-                    buildRangeForSingleAlias(ranges, kvLeaf.getKey(), alias, startShard, stopShard);
+            if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf) {
+                if (alias == null)
+                    buildRangeForAllAliases(ranges, typedTerm.getTerm(), startShard, stopShard);
+                else
+                    buildRangeForSingleAlias(ranges, typedTerm.getTerm(), alias, startShard, stopShard);
+            } else if (isRangeLeaf(leaf) || leaf instanceof NotEqualsLeaf) {
+                buildRangeForSingleAlias(ranges, typedTerm.getTerm(), alias, startShard, stopShard);
             } else {
-
-                String normVal = registry.encode(kvLeaf.getValue());
-
+                TermValueLeaf termValLeaf = (TermValueLeaf) leaf;
+                String normVal = registry.encode(termValLeaf.getValue());
                 for(String type : types) {
-                  ranges.add(
-                      new Range(
-                          new Key(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + startShard),
-                          new Key(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + kvLeaf.getKey() + NULL_BYTE + normVal + NULL_BYTE + stopShard)
-                      )
-                  );
+                    ranges.add(
+                            new Range(
+                                    new Key(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + termValLeaf.getTerm() + NULL_BYTE + normVal + NULL_BYTE + startShard),
+                                    new Key(INDEX_V + INDEX_SEP + type + INDEX_SEP + alias + INDEX_SEP + termValLeaf.getTerm() + NULL_BYTE + normVal + NULL_BYTE + stopShard)
+                            )
+                    );
                 }
-
             }
         }
 
@@ -147,12 +124,11 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
     }
 
     private void buildRangeForSingleAlias(Collection<Range> ranges, String key, String alias, String startShard, String stopShard) {
-
         for(String type : types) {
-          ranges.add(new Range(
-              new Key(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + startShard),
-              new Key(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + stopShard)
-          ));
+            ranges.add(new Range(
+                    new Key(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + startShard),
+                    new Key(INDEX_K + INDEX_SEP + type + INDEX_SEP + key + INDEX_SEP + alias + NULL_BYTE + stopShard)
+            ));
         }
     }
 
@@ -167,7 +143,6 @@ public class EventGlobalIndexVisitor implements GlobalIndexVisitor {
 
     @Override
     public void end(ParentNode parentNode) {
-
     }
 
     @Override

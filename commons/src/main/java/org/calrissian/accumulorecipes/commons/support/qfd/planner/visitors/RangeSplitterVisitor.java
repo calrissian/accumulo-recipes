@@ -15,16 +15,10 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
-import static java.util.Arrays.asList;
-
-import org.calrissian.mango.criteria.domain.AndNode;
-import org.calrissian.mango.criteria.domain.GreaterThanEqualsLeaf;
-import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.criteria.domain.LessThanEqualsLeaf;
-import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.domain.ParentNode;
-import org.calrissian.mango.criteria.domain.RangeLeaf;
+import org.calrissian.mango.criteria.domain.*;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
+
+import java.util.Arrays;
 
 /**
  * This visitor pulls all bounded ranges into unbounded ranges.
@@ -43,17 +37,18 @@ public class RangeSplitterVisitor implements NodeVisitor {
     public void visit(Leaf leaf) {
 
         if (leaf instanceof RangeLeaf) {
+            RangeLeaf rangeLeaf = (RangeLeaf) leaf;
             GreaterThanEqualsLeaf lhs =
-                    new GreaterThanEqualsLeaf(((RangeLeaf) leaf).getKey(), ((RangeLeaf) leaf).getStart(), leaf.parent());
+                    new GreaterThanEqualsLeaf<Object>(rangeLeaf.getTerm(), rangeLeaf.getStart(), rangeLeaf.parent());
             LessThanEqualsLeaf rhs =
-                    new LessThanEqualsLeaf(((RangeLeaf) leaf).getKey(), ((RangeLeaf) leaf).getEnd(), leaf.parent());
+                    new LessThanEqualsLeaf<Object>(rangeLeaf.getTerm(), rangeLeaf.getEnd(), rangeLeaf.parent());
 
             leaf.parent().removeChild(leaf);
             if (leaf.parent() instanceof AndNode) {
                 leaf.parent().addChild(lhs);
                 leaf.parent().addChild(rhs);
             } else {
-                AndNode node = new AndNode(leaf.parent(), asList(new Node[]{lhs, rhs}));
+                AndNode node = new AndNode(leaf.parent(), Arrays.<Node>asList(lhs, rhs));
                 leaf.parent().addChild(node);
             }
         }

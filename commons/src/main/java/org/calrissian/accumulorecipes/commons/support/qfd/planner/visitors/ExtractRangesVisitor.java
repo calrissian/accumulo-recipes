@@ -15,14 +15,14 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
 import org.calrissian.mango.criteria.support.NodeUtils;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * It's not possible for the intersecting or union iterators to work on ranges of
@@ -39,11 +39,9 @@ public class ExtractRangesVisitor implements NodeVisitor {
 
     @Override
     public void end(ParentNode parentNode) {
-
     }
 
     public void extract() {
-
         if (rangeNodes.size() > 0) {
             Iterator<Leaf> nodeIter = rangeNodes.iterator();
             if (!nonRangeFound)
