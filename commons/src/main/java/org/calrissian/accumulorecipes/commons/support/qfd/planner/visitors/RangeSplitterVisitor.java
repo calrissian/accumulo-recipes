@@ -48,7 +48,7 @@ public class RangeSplitterVisitor implements NodeVisitor {
                 leaf.parent().addChild(lhs);
                 leaf.parent().addChild(rhs);
             } else {
-                AndNode node = new AndNode(leaf.parent(), Arrays.<Node>asList(lhs, rhs));
+                AndNode node = new AndNode(Arrays.<Node>asList(lhs, rhs), leaf.parent());
                 leaf.parent().addChild(node);
             }
         }
