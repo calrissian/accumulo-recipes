@@ -15,11 +15,11 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
-import java.util.Map;
-import java.util.Set;
-
 import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A global index visitor knows how to extract 2 very important things

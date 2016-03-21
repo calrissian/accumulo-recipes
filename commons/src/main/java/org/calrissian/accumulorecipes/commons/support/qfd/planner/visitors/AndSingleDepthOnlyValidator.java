@@ -15,17 +15,14 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
-import static com.google.common.collect.Collections2.filter;
-import static org.calrissian.mango.criteria.support.NodeUtils.parentContainsOnlyLeaves;
+import com.google.common.base.Predicate;
+import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.visitor.NodeVisitor;
+
 import java.util.Collection;
 
-import com.google.common.base.Predicate;
-import org.calrissian.mango.criteria.domain.AndNode;
-import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
-import org.calrissian.mango.criteria.domain.ParentNode;
-import org.calrissian.mango.criteria.visitor.NodeVisitor;
+import static com.google.common.collect.Collections2.filter;
+import static org.calrissian.mango.criteria.support.NodeUtils.parentContainsOnlyLeaves;
 
 /**
  * Will validate that the criteria is only And with 2 or more leaves.
@@ -60,11 +57,9 @@ public class AndSingleDepthOnlyValidator implements NodeVisitor {
 
     @Override
     public void end(ParentNode node) {
-
     }
 
     @Override
     public void visit(Leaf node) {
-
     }
 }

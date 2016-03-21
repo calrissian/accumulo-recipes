@@ -15,22 +15,19 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
+import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
+import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
+import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.criteria.domain.*;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import static java.util.Collections.singleton;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.calrissian.accumulorecipes.commons.iterators.support.NodeToJexl;
-import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
-import org.calrissian.mango.criteria.builder.QueryBuilder;
-import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
-import org.calrissian.mango.criteria.domain.AndNode;
-import org.calrissian.mango.criteria.domain.EqualsLeaf;
-import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.domain.OrNode;
-import org.junit.Test;
 
 public class CardinalityReorderVisitorTest {
 
@@ -51,9 +48,9 @@ public class CardinalityReorderVisitorTest {
 
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof AndNode);
-        assertEquals("key2", ((AbstractKeyValueLeaf) node.children().get(0).children().get(0)).getKey());
-        assertEquals("key1", ((AbstractKeyValueLeaf) node.children().get(0).children().get(1)).getKey());
-        assertEquals("key3", ((AbstractKeyValueLeaf) node.children().get(1)).getKey());
+        assertEquals("key2", ((TermLeaf) node.children().get(0).children().get(0)).getTerm());
+        assertEquals("key1", ((TermLeaf) node.children().get(0).children().get(1)).getTerm());
+        assertEquals("key3", ((TermLeaf) node.children().get(1)).getTerm());
     }
 
     @Test
@@ -74,7 +71,7 @@ public class CardinalityReorderVisitorTest {
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof EqualsLeaf);
         assertEquals(1, node.children().size());
-        assertEquals("key3", ((AbstractKeyValueLeaf) node.children().get(0)).getKey());
+        assertEquals("key3", ((TermLeaf) node.children().get(0)).getTerm());
     }
 
     @Test
@@ -95,7 +92,7 @@ public class CardinalityReorderVisitorTest {
         assertTrue(node instanceof OrNode);
         assertTrue(node.children().get(0) instanceof EqualsLeaf);
         assertEquals(1, node.children().size());
-        assertEquals("key3", ((AbstractKeyValueLeaf) node.children().get(0)).getKey());
+        assertEquals("key3", ((TermLeaf) node.children().get(0)).getTerm());
     }
 
     @Test

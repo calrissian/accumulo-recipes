@@ -15,13 +15,13 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
 import org.calrissian.mango.criteria.domain.Leaf;
 import org.calrissian.mango.criteria.domain.ParentNode;
+import org.calrissian.mango.criteria.domain.TermLeaf;
 import org.calrissian.mango.criteria.visitor.NodeVisitor;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class will extract all the keys used anywhere in a query. This can be helpful
@@ -33,17 +33,15 @@ public class QueryKeysExtractorVisitor implements NodeVisitor {
 
     @Override
     public void begin(ParentNode parentNode) {
-
     }
 
     @Override
     public void end(ParentNode parentNode) {
-
     }
 
     @Override
     public void visit(Leaf leaf) {
-        keysFound.add(((AbstractKeyValueLeaf) leaf).getKey());
+        keysFound.add(((TermLeaf) leaf).getTerm());
     }
 
     public Set<String> getKeysFound() {

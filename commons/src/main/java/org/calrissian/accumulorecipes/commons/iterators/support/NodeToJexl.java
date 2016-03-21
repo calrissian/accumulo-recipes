@@ -15,34 +15,16 @@
  */
 package org.calrissian.accumulorecipes.commons.iterators.support;
 
+import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.types.TypeRegistry;
+
+import java.util.*;
+
 import static org.apache.commons.lang.StringUtils.containsAny;
 import static org.apache.commons.lang.StringUtils.replaceEach;
 import static org.apache.commons.lang3.StringUtils.contains;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
-import org.calrissian.mango.criteria.domain.AndNode;
-import org.calrissian.mango.criteria.domain.EqualsLeaf;
-import org.calrissian.mango.criteria.domain.GreaterThanEqualsLeaf;
-import org.calrissian.mango.criteria.domain.GreaterThanLeaf;
-import org.calrissian.mango.criteria.domain.HasLeaf;
-import org.calrissian.mango.criteria.domain.HasNotLeaf;
-import org.calrissian.mango.criteria.domain.InLeaf;
-import org.calrissian.mango.criteria.domain.LessThanEqualsLeaf;
-import org.calrissian.mango.criteria.domain.LessThanLeaf;
-import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
-import org.calrissian.mango.criteria.domain.NotInLeaf;
-import org.calrissian.mango.criteria.domain.OrNode;
-import org.calrissian.mango.criteria.domain.ParentNode;
-import org.calrissian.mango.criteria.domain.RangeLeaf;
-import org.calrissian.mango.types.TypeRegistry;
 
 public class NodeToJexl {
 
@@ -173,7 +155,7 @@ public class NodeToJexl {
         StringBuilder builder = new StringBuilder();
 
         String normalizedType = removeInvalidChars(type);
-        String leafKey = removeInvalidChars(((AbstractKeyValueLeaf)node).getKey());
+        String leafKey = removeInvalidChars(((TermLeaf)node).getTerm());
 
         if (node instanceof EqualsLeaf) {
             builder.append("(");

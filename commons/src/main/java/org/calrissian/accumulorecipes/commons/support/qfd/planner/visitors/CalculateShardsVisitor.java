@@ -15,26 +15,20 @@
  */
 package org.calrissian.accumulorecipes.commons.support.qfd.planner.visitors;
 
+import com.google.common.collect.Sets;
+import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
+import org.calrissian.mango.criteria.domain.*;
+import org.calrissian.mango.criteria.support.NodeUtils;
+import org.calrissian.mango.criteria.visitor.NodeVisitor;
+import org.calrissian.mango.types.TypeRegistry;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
-import org.calrissian.accumulorecipes.commons.support.qfd.AttributeIndexKey;
-import org.calrissian.mango.criteria.domain.AbstractKeyValueLeaf;
-import org.calrissian.mango.criteria.domain.AndNode;
-import org.calrissian.mango.criteria.domain.HasLeaf;
-import org.calrissian.mango.criteria.domain.HasNotLeaf;
-import org.calrissian.mango.criteria.domain.Leaf;
-import org.calrissian.mango.criteria.domain.NegationLeaf;
-import org.calrissian.mango.criteria.domain.Node;
-import org.calrissian.mango.criteria.domain.NotEqualsLeaf;
-import org.calrissian.mango.criteria.domain.OrNode;
-import org.calrissian.mango.criteria.domain.ParentNode;
-import org.calrissian.mango.criteria.support.NodeUtils;
-import org.calrissian.mango.criteria.visitor.NodeVisitor;
-import org.calrissian.mango.types.TypeRegistry;
+import static com.google.common.collect.Sets.intersection;
+import static com.google.common.collect.Sets.newHashSet;
 
 /**
  * An optimization function that calculates the sets of shards for each section of a given query
@@ -45,8 +39,8 @@ import org.calrissian.mango.types.TypeRegistry;
 public class CalculateShardsVisitor implements NodeVisitor {
 
     private final Map<AttributeIndexKey,Set<String>> keysToShards;
-    private Map<String, Set<AttributeIndexKey>> accumuloKeyToAttributeIndexKey = new HashMap<String, Set<AttributeIndexKey>>();
-    private TypeRegistry<String> registry;
+    private final Map<String, Set<AttributeIndexKey>> accumuloKeyToAttributeIndexKey = new HashMap<String, Set<AttributeIndexKey>>();
+    private final TypeRegistry<String> registry;
 
     private Set<String> finalShards;
 
@@ -55,12 +49,10 @@ public class CalculateShardsVisitor implements NodeVisitor {
         this.registry = registry;
 
         for (AttributeIndexKey key : shards.keySet()) {
-            Set<AttributeIndexKey> attributeIndexKey = accumuloKeyToAttributeIndexKey.get(key.getKey());
-            if (attributeIndexKey == null) {
-                attributeIndexKey = new HashSet<AttributeIndexKey>();
-                accumuloKeyToAttributeIndexKey.put(key.getKey(), attributeIndexKey);
+            if (!accumuloKeyToAttributeIndexKey.containsKey(key.getKey())) {
+                accumuloKeyToAttributeIndexKey.put(key.getKey(), Sets.<AttributeIndexKey>newHashSet());
             }
-            attributeIndexKey.add(key);
+            accumuloKeyToAttributeIndexKey.get(key.getKey()).add(key);
         }
     }
 
@@ -72,12 +64,10 @@ public class CalculateShardsVisitor implements NodeVisitor {
 
     @Override
     public void end(ParentNode parentNode) {
-
     }
 
     @Override
     public void visit(Leaf leaf) {
-
     }
 
     public Set<String> getShards() {
@@ -112,8 +102,7 @@ public class CalculateShardsVisitor implements NodeVisitor {
                 if(combinedSet == null)
                     combinedSet = curShards;
                 else {
-                    Set<String> intersected = Sets.intersection(combinedSet, curShards);
-                    combinedSet = new HashSet<String>(intersected);
+                    combinedSet = newHashSet(intersection(combinedSet, curShards));
                 }
             }
 
@@ -125,7 +114,7 @@ public class CalculateShardsVisitor implements NodeVisitor {
         } else {
             for(Set<String> curShards : resultShards) {
                 if(combinedSet == null)
-                    combinedSet = Sets.newHashSet();
+                    combinedSet = newHashSet();
                 combinedSet.addAll(curShards);
             }
         }
@@ -134,8 +123,6 @@ public class CalculateShardsVisitor implements NodeVisitor {
     }
 
     private Set<String> getShards(Leaf leaf) {
-        AbstractKeyValueLeaf kvLeaf = (AbstractKeyValueLeaf) leaf;
-
         /**
          * Range leaves are unbounded- that is, any number of shards within the beginning and ending shard
          * ranges given could have values that would evaluate these leaves to true. Because of this, we
@@ -144,14 +131,14 @@ public class CalculateShardsVisitor implements NodeVisitor {
          */
         // hasKey and hasNotKey need special treatment since we don't know the aliases
         if (leaf instanceof HasLeaf || leaf instanceof HasNotLeaf || NodeUtils.isRangeLeaf(leaf) || leaf instanceof NotEqualsLeaf) {
-            Set<AttributeIndexKey> attributeIndexKeys = accumuloKeyToAttributeIndexKey.get(kvLeaf.getKey());
-            Set<String> unionedShards = new HashSet<String>();
-            if (attributeIndexKeys == null) {
+            TermLeaf termLeaf = (TermLeaf) leaf;
+            Set<String> unionedShards = newHashSet();
+            if (!accumuloKeyToAttributeIndexKey.containsKey(termLeaf.getTerm())) {
                 if (leaf instanceof NegationLeaf)
                     return unionedShards;
             } else {
-                for (AttributeIndexKey key : attributeIndexKeys) {
-                    unionedShards.addAll(this.keysToShards.get(key));
+                for (AttributeIndexKey key : accumuloKeyToAttributeIndexKey.get(termLeaf.getTerm())) {
+                    unionedShards.addAll(keysToShards.get(key));
                 }
             }
 
@@ -162,18 +149,20 @@ public class CalculateShardsVisitor implements NodeVisitor {
          * indexed so we know exactly which shards will contain these values. It's still possible every shard does
          * contain the value- but at least we can be sure we'll get results from those shards.
          */
-        } else {
-            String alias = registry.getAlias(kvLeaf.getValue());
-            String normalizedVal;
-            normalizedVal = registry.encode(kvLeaf.getValue());
+        } else if (leaf instanceof TermValueLeaf) {
+            TermValueLeaf termValLeaf = (TermValueLeaf) leaf;
+            String alias = registry.getAlias(termValLeaf.getValue());
+            String normalizedVal = registry.encode(termValLeaf.getValue());
 
-            AttributeIndexKey attributeIndexKey = new AttributeIndexKey(kvLeaf.getKey(), normalizedVal, alias);
+            AttributeIndexKey attributeIndexKey = new AttributeIndexKey(termValLeaf.getTerm(), normalizedVal, alias);
             Set<String> leafShards = keysToShards.get(attributeIndexKey);
 
             if (leafShards == null)
-                return Sets.newHashSet();
+                return newHashSet();
 
             return leafShards;
         }
+
+        return newHashSet();
     }
 }
