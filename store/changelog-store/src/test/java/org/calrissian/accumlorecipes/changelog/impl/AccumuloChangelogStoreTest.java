@@ -13,34 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.changelog.impl;
-
-import static java.lang.System.currentTimeMillis;
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+package org.calrissian.accumlorecipes.changelog.impl;
 
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumlorecipes.changelog.domain.BucketHashLeaf;
-import org.calrissian.accumlorecipes.changelog.impl.AccumuloChangelogStore;
+import org.calrissian.accumlorecipes.changelog.domain.MerkleTree;
 import org.calrissian.accumlorecipes.changelog.support.BucketSize;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
-import org.calrissian.mango.hash.tree.MerkleTree;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
+import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AccumuloChangelogStoreTest {
 

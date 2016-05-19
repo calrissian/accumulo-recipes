@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Calrissian Authors
+ * Copyright (C) 2016 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,26 @@
  */
 package org.calrissian.accumlorecipes.changelog.domain;
 
-public class DiffPair {
+import java.io.Serializable;
+import java.util.List;
 
-    HashLeaf minus;
-    HashLeaf plus;
+/**
+ * A node in a merkle tree representing a hash
+ */
+public interface Node extends Serializable {
 
-    public DiffPair(HashLeaf minus, HashLeaf plus) {
+    /**
+     * Accessor for the children that this Node's hash is comprised of
+     *
+     * @return
+     */
+    List<Node> getChildren();
 
-        this.minus = minus;
-        this.plus = plus;
-    }
-
-    @Override
-    public String toString() {
-        return "{-" + minus + ", +" + plus + "}";
-    }
+    /**
+     * If this node has children, aggregates the hashes of the children. If this node is a leaf, represents the hash
+     * of the data.
+     *
+     * @return
+     */
+    String getHash();
 }

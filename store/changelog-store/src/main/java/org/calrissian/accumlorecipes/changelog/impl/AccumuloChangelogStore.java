@@ -56,7 +56,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.hash.tree.MerkleTree;
+import org.calrissian.accumlorecipes.changelog.domain.MerkleTree;
 
 /**
  * An Accumulo implementation of a bucketed merkle tree-based changelog store providing tools to keep data consistent

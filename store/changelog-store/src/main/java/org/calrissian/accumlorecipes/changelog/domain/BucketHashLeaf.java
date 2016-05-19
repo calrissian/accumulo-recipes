@@ -16,8 +16,6 @@
 package org.calrissian.accumlorecipes.changelog.domain;
 
 
-import org.calrissian.mango.hash.tree.HashLeaf;
-
 /**
  * Represents a hashed bucket that sorts by timestamp (in descending order).
  */
