@@ -15,6 +15,7 @@
  */
 package org.calrissian.accumulorecipes.temporal.lastn.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.singletonList;
 import static org.apache.accumulo.core.client.admin.TimeType.LOGICAL;
@@ -206,5 +207,33 @@ public class AccumuloTemporalLastNStore implements TemporalLastNStore {
             }
         }
         return wrap(new EventMergeJoinIterable(cursors));
+    }
+
+    public static class Builder {
+        private final Connector connector;
+        private String tableName = DEFAULT_TABLE_NAME;
+        private StoreConfig config = DEFAULT_STORE_CONFIG;
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setTableName(String tableName) {
+            checkNotNull(tableName);
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder setConfig(StoreConfig config) {
+            checkNotNull(config);
+            this.config = config;
+            return this;
+        }
+
+        public AccumuloTemporalLastNStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloTemporalLastNStore(connector, tableName, config);
+        }
+
     }
 }

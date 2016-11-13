@@ -440,6 +440,38 @@ public class AccumuloFeatureStore implements FeatureStore {
         }
     };
 
+    public class Builder {
+        private final Connector connector;
+        private String tableName = DEFAULT_TABLE_NAME;
+        private StoreConfig config = DEFAULT_STORE_CONFIG;
+        private FeatureRegistry featureRegistry = BASE_FEATURES;
 
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setTableName(String tableName) {
+            checkNotNull(tableName);
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder setConfig(StoreConfig config) {
+            checkNotNull(config);
+            this.config = config;
+            return this;
+        }
+
+        public Builder setFeatureRegistry(FeatureRegistry featureRegistry) {
+            checkNotNull(featureRegistry);
+            this.featureRegistry = featureRegistry;
+            return this;
+        }
+
+        public AccumuloFeatureStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloFeatureStore(connector,tableName,config,featureRegistry);
+        }
+    }
 
 }

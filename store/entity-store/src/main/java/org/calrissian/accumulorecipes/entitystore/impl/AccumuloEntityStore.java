@@ -63,7 +63,7 @@ public class AccumuloEntityStore implements EntityStore {
     public static final String DEFAULT_IDX_TABLE_NAME = "entity_index";
     public static final String DEFAULT_SHARD_TABLE_NAME = "entity_shard";
 
-    private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
+    protected static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(3, 100000L, 10000L, 3);
 
     public static final EntityShardBuilder DEFAULT_SHARD_BUILDER = new EntityShardBuilder(DEFAULT_PARTITION_SIZE);
 
@@ -236,4 +236,53 @@ public class AccumuloEntityStore implements EntityStore {
     protected EntityQfdHelper getHelper() {
         return helper;
     }
+
+    public static class Builder {
+        private final Connector connector;
+        private String indexTable = DEFAULT_IDX_TABLE_NAME;
+        private String shardTable = DEFAULT_SHARD_TABLE_NAME;
+        private StoreConfig storeConfig = DEFAULT_STORE_CONFIG;
+        private TypeRegistry<String> typeRegistry = LEXI_TYPES;
+        private EntityShardBuilder shardBuilder = DEFAULT_SHARD_BUILDER;
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setIndexTable(String indexTable) {
+            checkNotNull(indexTable);
+            this.indexTable = indexTable;
+            return this;
+        }
+
+        public Builder setShardTable(String shardTable) {
+            checkNotNull(shardTable);
+            this.shardTable = shardTable;
+            return this;
+        }
+
+        public Builder setStoreConfig(StoreConfig storeConfig) {
+            checkNotNull(storeConfig);
+            this.storeConfig = storeConfig;
+            return this;
+        }
+
+        public Builder setTypeRegistry(TypeRegistry<String> typeRegistry) {
+            checkNotNull(typeRegistry);
+            this.typeRegistry = typeRegistry;
+            return this;
+        }
+
+        public Builder setShardBuilder(EntityShardBuilder shardBuilder) {
+            checkNotNull(shardBuilder);
+            this.shardBuilder = shardBuilder;
+            return this;
+        }
+
+        public AccumuloEntityStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloEntityStore(connector, indexTable, shardTable, shardBuilder,storeConfig, typeRegistry);
+        }
+    }
+
 }

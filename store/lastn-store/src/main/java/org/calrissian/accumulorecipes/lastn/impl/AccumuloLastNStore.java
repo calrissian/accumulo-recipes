@@ -20,6 +20,7 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.EnumSet.allOf;
 import static java.util.Map.Entry;
 import static org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
+import static org.apache.commons.lang.Validate.isTrue;
 import static org.calrissian.accumulorecipes.commons.support.Constants.END_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
@@ -66,6 +67,7 @@ public class AccumuloLastNStore implements LastNStore {
     private static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig(1, 100000L, 10000L, 3);
     private static final IteratorSetting EVENT_FILTER_SETTING =
             new IteratorSetting(40, "eventFilter", IndexEntryFilteringIterator.class);
+    public static final int DEFAULT_MAX_VERSIONS = 100;
 
     private final Connector connector;
     private final String tableName;
@@ -90,7 +92,7 @@ public class AccumuloLastNStore implements LastNStore {
      * @param connector
      */
     public AccumuloLastNStore(Connector connector) throws TableNotFoundException, AccumuloSecurityException, AccumuloException, TableExistsException {
-        this(connector, 100);
+        this(connector, DEFAULT_MAX_VERSIONS);
     }
 
     /**
@@ -219,6 +221,47 @@ public class AccumuloLastNStore implements LastNStore {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class Builder {
+        private final Connector connector;
+        private String tableName = DEFAULT_TABLE_NAME;
+        private StoreConfig config = DEFAULT_STORE_CONFIG;
+        private int maxVersions = DEFAULT_MAX_VERSIONS;
+        private TypeRegistry<String> typeRegistry = LEXI_TYPES;
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setTableName(String tableName) {
+            checkNotNull(tableName);
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder setConfig(StoreConfig config) {
+            checkNotNull(config);
+            this.config = config;
+            return this;
+        }
+
+        public Builder setMaxVersions(int maxVersions) {
+            isTrue(maxVersions > 0);
+            this.maxVersions = maxVersions;
+            return this;
+        }
+
+        public Builder setTypeRegistry(TypeRegistry<String> typeRegistry) {
+            checkNotNull(typeRegistry);
+            this.typeRegistry = typeRegistry;
+            return this;
+        }
+
+        public AccumuloLastNStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloLastNStore(connector, tableName, config, maxVersions,typeRegistry);
         }
     }
 }

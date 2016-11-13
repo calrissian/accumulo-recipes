@@ -15,8 +15,11 @@
  */
 package org.calrissian.accumulorecipes.geospatialstore.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Math.abs;
+import static java.lang.Math.max;
 import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
+import static org.apache.commons.lang.Validate.isTrue;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.getVisibility;
 import static org.calrissian.accumulorecipes.commons.support.attribute.Metadata.Visiblity.setVisibility;
@@ -65,6 +68,9 @@ import org.calrissian.mango.types.TypeRegistry;
 public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
     private static final String DEFAULT_TABLE_NAME = "geoStore";
+    public static final StoreConfig DEFAULT_STORE_CONFIG = new StoreConfig();
+    public static final double DEFAULT_MAX_PRECISION = .002;
+    public static final int DEFAULT_NUM_PARTITIONS = 50;
     private static Function<Map.Entry<Key, Value>, Entity> xform = new Function<Map.Entry<Key, Value>, Entity>() {
         @Override
         public Entity apply(Map.Entry<Key, Value> keyValueEntry) {
@@ -99,7 +105,7 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
     private final String tableName;
 
     public AccumuloGeoSpatialStore(Connector connector) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
-        this(connector, DEFAULT_TABLE_NAME, new StoreConfig(), .002, 50);
+        this(connector, DEFAULT_TABLE_NAME, DEFAULT_STORE_CONFIG, DEFAULT_MAX_PRECISION, DEFAULT_NUM_PARTITIONS);
     }
 
     public AccumuloGeoSpatialStore(Connector connector, String tableName, StoreConfig config, double maxPrecision, int numPartitions) throws TableExistsException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
@@ -209,6 +215,48 @@ public class AccumuloGeoSpatialStore implements GeoSpatialStore {
 
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class Builder {
+        private final Connector connector;
+        private String tableName = DEFAULT_TABLE_NAME;
+        private StoreConfig config = DEFAULT_STORE_CONFIG;
+        private double maxPrecision = DEFAULT_MAX_PRECISION;
+        private int numPartitions = DEFAULT_NUM_PARTITIONS;
+
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setTableName(String tableName) {
+            checkNotNull(tableName);
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder setConfig(StoreConfig config) {
+            checkNotNull(config);
+            this.config = config;
+            return this;
+        }
+
+        public Builder setMaxPrecision(double maxPrecision) {
+            isTrue(maxPrecision > 0);
+            this.maxPrecision = maxPrecision;
+            return this;
+        }
+
+        public Builder setNumPartitions(int numPartitions) {
+            isTrue(numPartitions > 0);
+            this.numPartitions = numPartitions;
+            return this;
+        }
+
+        public AccumuloGeoSpatialStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloGeoSpatialStore(connector, tableName, config, maxPrecision,numPartitions);
         }
     }
 }

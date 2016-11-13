@@ -264,4 +264,38 @@ public class AccumuloChangelogStore implements ChangelogStore {
             throw new RuntimeException(e);
         }
     }
+
+    public class Builder {
+        private final Connector connector;
+        private String tableName = DEFAULT_TABLE_NAME;
+        private StoreConfig config = DEFAULT_STORE_CONFIG;
+        private BucketSize bucketSize = FIVE_MINS;
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setTableName(String tableName) {
+            checkNotNull(tableName);
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder setConfig(StoreConfig config) {
+            checkNotNull(config);
+            this.config = config;
+            return this;
+        }
+
+        public Builder setBucketSize(BucketSize bucketSize) {
+            checkNotNull(bucketSize);
+            this.bucketSize = bucketSize;
+            return this;
+        }
+
+        public AccumuloChangelogStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloChangelogStore(connector,tableName,config,bucketSize);
+        }
+    }
 }
