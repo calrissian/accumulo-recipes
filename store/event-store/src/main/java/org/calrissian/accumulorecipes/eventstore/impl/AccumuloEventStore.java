@@ -301,4 +301,52 @@ public class AccumuloEventStore implements EventStore {
     public CloseableIterable<String> getTypes(String prefix, Auths auths) {
         return helper.getKeyValueIndex().getTypes(prefix, auths);
     }
+
+
+    public static class Builder {
+        private final Connector connector;
+        private String indexTable = DEFAULT_IDX_TABLE_NAME;
+        private String shardTable = DEFAULT_SHARD_TABLE_NAME;
+        private StoreConfig storeConfig = DEFAULT_STORE_CONFIG;
+        private TypeRegistry<String> typeRegistry = LEXI_TYPES;
+        private EventShardBuilder shardBuilder = DEFAULT_SHARD_BUILDER;
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setIndexTable(String indexTable) {
+            checkNotNull(indexTable);
+            this.indexTable = indexTable;
+            return this;
+        }
+
+        public Builder setShardTable(String shardTable) {
+            checkNotNull(shardTable);
+            this.shardTable = shardTable;
+            return this;
+        }
+
+        public Builder setStoreConfig(StoreConfig storeConfig) {
+            checkNotNull(storeConfig);
+            this.storeConfig = storeConfig;
+            return this;
+        }
+
+        public Builder setTypeRegistry(TypeRegistry<String> typeRegistry) {
+            checkNotNull(typeRegistry);
+            this.typeRegistry = typeRegistry;
+            return this;
+        }
+
+        public Builder setShardBuilder(EventShardBuilder shardBuilder) {
+            this.shardBuilder = shardBuilder;
+            return this;
+        }
+
+        public AccumuloEventStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloEventStore(connector, indexTable, shardTable, storeConfig, typeRegistry, shardBuilder);
+        }
+    }
 }

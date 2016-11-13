@@ -352,4 +352,60 @@ public class AccumuloEntityGraphStore extends AccumuloEntityStore implements Gra
                 ", writer=" + writer +
                 '}';
     }
+
+    public static class Builder {
+        private final Connector connector;
+        private String indexTable = DEFAULT_IDX_TABLE_NAME;
+        private String shardTable = DEFAULT_SHARD_TABLE_NAME;
+        private String edgeTable = DEFAULT_TABLE_NAME;
+        private int bufferSize = DEFAULT_BUFFER_SIZE;
+        private StoreConfig storeConfig = DEFAULT_STORE_CONFIG;
+        private TypeRegistry<String> typeRegistry = LEXI_TYPES;
+        private EntityShardBuilder shardBuilder = DEFAULT_SHARD_BUILDER;
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public Builder setIndexTable(String indexTable) {
+            checkNotNull(indexTable);
+            this.indexTable = indexTable;
+            return this;
+        }
+
+        public Builder setShardTable(String shardTable) {
+            checkNotNull(shardTable);
+            this.shardTable = shardTable;
+            return this;
+        }
+
+        public Builder setEdgeTable(String edgeTable) {
+            checkNotNull(edgeTable);
+            this.edgeTable = edgeTable;
+            return this;
+        }
+
+        public Builder setStoreConfig(StoreConfig storeConfig) {
+            checkNotNull(storeConfig);
+            this.storeConfig = storeConfig;
+            return this;
+        }
+
+        public Builder setTypeRegistry(TypeRegistry<String> typeRegistry) {
+            checkNotNull(typeRegistry);
+            this.typeRegistry = typeRegistry;
+            return this;
+        }
+
+        public Builder setShardBuilder(EntityShardBuilder shardBuilder) {
+            checkNotNull(shardBuilder);
+            this.shardBuilder = shardBuilder;
+            return this;
+        }
+
+        public AccumuloEntityGraphStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloEntityGraphStore(connector, indexTable, shardTable, edgeTable, shardBuilder, storeConfig, typeRegistry, bufferSize);
+        }
+    }
 }

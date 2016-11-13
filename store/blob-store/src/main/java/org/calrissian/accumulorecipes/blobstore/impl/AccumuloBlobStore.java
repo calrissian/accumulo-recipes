@@ -28,6 +28,7 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.mango.io.AbstractBufferedInputStream;
 import org.calrissian.mango.io.AbstractBufferedOutputStream;
 import org.calrissian.mango.types.TypeEncoder;
+import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,8 +36,10 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.Validate.*;
+import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.calrissian.mango.types.LexiTypeEncoders.integerEncoder;
 
 /**
@@ -247,6 +250,40 @@ public class AccumuloBlobStore implements BlobStore {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class Builder {
+        private final Connector connector;
+        private String tableName = DEFAULT_TABLE_NAME;
+        private StoreConfig config;
+        private int bufferSize = DEFAULT_BUFFER_SIZE;
+
+        public Builder(Connector connector) {
+            checkNotNull(connector);
+            this.connector = connector;
+        }
+
+        public void setTableName(String tableName) {
+            checkNotNull(tableName);
+            this.tableName = tableName;
+        }
+
+        public void setConfig(StoreConfig config) {
+            checkNotNull(config);
+            this.config = config;
+        }
+
+        public void setBufferSize(int bufferSize) {
+            isTrue(bufferSize > 0);
+            this.bufferSize = bufferSize;
+        }
+
+        public AccumuloBlobStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            if (config==null) {
+                config = new StoreConfig(1, bufferSize * 100, 100, 1);
+            }
+            return new AccumuloBlobStore(connector, tableName, config, bufferSize);
         }
     }
 

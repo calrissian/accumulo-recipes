@@ -308,4 +308,35 @@ public class AccumuloRangeStore<T extends Comparable<T>> implements RangeStore<T
             return new ValueRange<T>(lower, upper);
         }
     }
+
+    public static class Builder<T extends Comparable<T>> {
+        private final Connector connector;
+        private String tableName = DEFAULT_TABLE_NAME;
+        private StoreConfig config = DEFAULT_STORE_CONFIG;
+        private final RangeHelper<T> helper;
+
+        public Builder(Connector connector, RangeHelper<T> helper) {
+            checkNotNull(connector);
+            checkNotNull(helper);
+            this.connector = connector;
+            this.helper = helper;
+        }
+
+        public Builder setTableName(String tableName) {
+            checkNotNull(tableName);
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder setConfig(StoreConfig config) {
+            checkNotNull(config);
+            this.config = config;
+            return this;
+        }
+
+        public AccumuloRangeStore build() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+            return new AccumuloRangeStore<T>(connector, tableName, config, helper);
+        }
+
+    }
 }
