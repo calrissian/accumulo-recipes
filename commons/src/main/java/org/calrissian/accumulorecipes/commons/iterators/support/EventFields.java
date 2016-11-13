@@ -128,6 +128,7 @@ public class EventFields extends Serializer<EventFields> {
 
     public void clear() {
         map.clear();
+        size = 0;
     }
 
     public Set<String> keys() {
