@@ -31,6 +31,7 @@ import org.apache.hadoop.util.StringUtils;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
+import org.calrissian.mango.io.Serializables;
 import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.TypeRegistry;
 
@@ -63,23 +64,6 @@ public class EventOutputFormat extends OutputFormat<Text, EventWritable> {
         OutputConfigurator.setConnectorInfo(CLASS, job.getConfiguration(), principal, token);
     }
 
-    public static void setTypeRegistry(Job job, Class<TypeEncoder<?, String>>... encoderClass) throws AccumuloSecurityException {
-        setTypeRegistry(job, Lists.newArrayList(encoderClass));
-    }
-
-    public static void setTypeRegistry(Job job, Collection<Class<TypeEncoder<?, String>>> encoderClasses) throws AccumuloSecurityException {
-        ArgumentChecker.notNull(encoderClasses);
-        String value = Joiner.on(",").join(Iterables.transform(encoderClasses, new Function<Class, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable Class clazz) {
-                isTrue(TypeEncoder.class.isAssignableFrom(clazz));
-                return clazz.getName();
-            }
-        }));
-        job.getConfiguration().set(enumToConfKey(CLASS, TypeRegistryInfo.TYPE_REGISTRY), value);
-    }
-
     public static void setTables(Job job, String indexTable, String shardTable) throws AccumuloSecurityException {
         ArgumentChecker.notNull(indexTable, shardTable);
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEventStoreTableOptions.INDEX_TABLE), indexTable);
@@ -102,23 +86,17 @@ public class EventOutputFormat extends OutputFormat<Text, EventWritable> {
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEventStoreStoreConfigOptions.MAX_WRITE_THREADS), storeConfig.getMaxWriteThreads()+"");
     }
 
-    protected static TypeRegistry<String> getTypeRegistry(JobContext context) {
+    public static <U> void setTypeRegistry(Job job, TypeRegistry<U> typeRegistry) throws AccumuloSecurityException, IOException {
+        ArgumentChecker.notNull(typeRegistry);
+        job.getConfiguration().set(enumToConfKey(CLASS, TypeRegistryInfo.TYPE_REGISTRY),  new String(Serializables.toBase64(typeRegistry),"UTF-8"));
+    }
+
+    protected static <U> TypeRegistry<U> getTypeRegistry(JobContext context) throws IOException, ClassNotFoundException {
         String value = context.getConfiguration().get(enumToConfKey(CLASS, TypeRegistryInfo.TYPE_REGISTRY));
         if (value==null) {
             return null;
         }
-        List<TypeEncoder<?, String>> encoders = Lists.transform(Splitter.on(",").splitToList(value), new Function<String, TypeEncoder<?, String>>() {
-            @Nullable
-            @Override
-            public TypeEncoder<?, String> apply(@Nullable String input) {
-                try {
-                    return (TypeEncoder<?, String>)Class.forName(input).newInstance();
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-        return new TypeRegistry(encoders.toArray(new TypeEncoder[encoders.size()]));
+        return Serializables.fromBase64(value.getBytes());
     }
 
     protected static StoreConfig getStoreConfig(JobContext context) {

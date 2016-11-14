@@ -39,6 +39,8 @@ import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
+import org.calrissian.mango.types.LexiTypeEncoders;
+import org.calrissian.mango.types.TypeRegistry;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,6 +70,9 @@ public class EventOutputFormatTest {
     MockInstance mockInstance;
     Connector connector;
 
+    public static final TypeRegistry<String> TYPE_REGISTRY = new TypeRegistry<>(LexiTypeEncoders.stringEncoder());
+
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -94,10 +99,12 @@ public class EventOutputFormatTest {
                 .setIndexTable(tableIdx)
                 .setShardTable(shardTable)
                 .setStoreConfig(storeConfig)
+                .setTypeRegistry(TYPE_REGISTRY)
                 .build();
         Job job = Job.getInstance(new Configuration());
         EventOutputFormat.setTables(job, tableIdx, shardTable);
         EventOutputFormat.setStoreConfig(job,storeConfig);
+        EventOutputFormat.setTypeRegistry(job,TYPE_REGISTRY);
         runJob(job,eventStore);
     }
 
