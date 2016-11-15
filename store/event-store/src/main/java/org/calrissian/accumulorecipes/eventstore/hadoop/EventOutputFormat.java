@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Calrissian Authors
+ * Copyright (C) 2016 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 package org.calrissian.accumulorecipes.eventstore.hadoop;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.lib.impl.OutputConfigurator;
 import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
@@ -32,16 +27,11 @@ import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
 import org.calrissian.mango.io.Serializables;
-import org.calrissian.mango.types.TypeEncoder;
 import org.calrissian.mango.types.TypeRegistry;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 
 import static java.util.Collections.singleton;
-import static org.apache.commons.lang.Validate.isTrue;
 
 public class EventOutputFormat extends OutputFormat<Text, EventWritable> {
 
