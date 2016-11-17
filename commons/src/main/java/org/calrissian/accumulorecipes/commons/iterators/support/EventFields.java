@@ -48,7 +48,8 @@ public class EventFields extends Serializer<EventFields> {
         map = new HashMap<String,Set<FieldValue>>();
     }
 
-    @Override public void write(Kryo kryo, Output output, EventFields eventFields) {
+    @Override
+    public void write(Kryo kryo, Output output, EventFields eventFields) {
         // Write out the number of entries;
         intSerializer.write(kryo, output, size);
         for (Entry<String, Set<FieldValue>> entry : map.entrySet()) {
