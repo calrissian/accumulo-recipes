@@ -87,8 +87,15 @@ public class KeyValueIndex<T extends Entity> {
         writer = connector.createBatchWriter(indexTable, config.getMaxMemory(), config.getMaxLatency(), config.getMaxWriteThreads());
     }
 
-    public void indexKeyValues(Iterable<T> items, boolean writeKeyValueIndices) {
+    public void indexKeyValues(Iterable<T> items, boolean mutateIndices) {
+        mutateIndexKeyValues(items,mutateIndices,false);
+    }
 
+    public void deleteIndexKeyValues(Iterable<T> items, boolean mutateIndices) {
+        mutateIndexKeyValues(items,mutateIndices,true);
+    }
+
+    public void mutateIndexKeyValues(Iterable<T> items, boolean mutateIndices, boolean deleteItems) {
         Map<String[], Long> indexCache = new HashMap<String[], Long>();
         Map<String[], Long> typeCache = new HashMap<String[], Long>();
 
@@ -109,12 +116,12 @@ public class KeyValueIndex<T extends Entity> {
 
             for (Attribute attribute : item.getAttributes()) {
                 String[] indexCacheString = new String[]{
-                    shardId,
-                    attribute.getKey(),
-                    typeRegistry.getAlias(attribute.getValue()),
-                    typeRegistry.encode(attribute.getValue()),
-                    getVisibility(attribute, ""),
-                    item.getType()
+                        shardId,
+                        attribute.getKey(),
+                        typeRegistry.getAlias(attribute.getValue()),
+                        typeRegistry.encode(attribute.getValue()),
+                        getVisibility(attribute, ""),
+                        item.getType()
                 };
 
                 Long count = indexCache.get(indexCacheString);
@@ -144,7 +151,7 @@ public class KeyValueIndex<T extends Entity> {
             }
         }
 
-        if(writeKeyValueIndices) {
+        if(mutateIndices) {
             for (Map.Entry<String[], Long> indexParts : indexCache.entrySet()) {
 
                 String alias = indexParts.getKey()[2];
@@ -159,8 +166,13 @@ public class KeyValueIndex<T extends Entity> {
 
                 Long expiration = expirationCache.get(indexParts.getKey());
                 Value value = new GlobalIndexValue(indexParts.getValue(), expiration).toValue();
-                keyMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
-                valueMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
+                if (deleteItems) {
+                    keyMutation.putDelete(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis));
+                    valueMutation.putDelete(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis));
+                } else {
+                    keyMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
+                    valueMutation.put(EMPTY_TEXT, EMPTY_TEXT, new ColumnVisibility(vis), value);
+                }
                 try {
                     writer.addMutation(keyMutation);
                     writer.addMutation(valueMutation);
@@ -174,7 +186,11 @@ public class KeyValueIndex<T extends Entity> {
             Mutation typeMutation = new Mutation(INDEX_T + INDEX_SEP + typeCacheKey.getKey()[1] + NULL_BYTE + typeCacheKey.getKey()[0]);
             Long expiration = typeExpirationCache.get(typeCacheKey.getKey());
             Value value = new GlobalIndexValue(typeCacheKey.getValue(), expiration).toValue();
-            typeMutation.put(EMPTY_TEXT, EMPTY_TEXT, value);
+            if (deleteItems) {
+                typeMutation.putDelete(EMPTY_TEXT, EMPTY_TEXT);
+            } else {
+                typeMutation.put(EMPTY_TEXT, EMPTY_TEXT, value);
+            }
 
             try {
                 writer.addMutation(typeMutation);
@@ -228,13 +244,10 @@ public class KeyValueIndex<T extends Entity> {
     /**
      * Returns all the unique values for the given event type for the given key, alias, and prefix. It's possible that a large
      * set of unique values could take a long time to return.
-     * @param connector
-     * @param indexTable
      * @param prefix
      * @param type
      * @param alias
      * @param key
-     * @param maxQueryThreads
      * @param auths
      * @return
      */
@@ -300,4 +313,5 @@ public class KeyValueIndex<T extends Entity> {
     public void shutdown() throws Exception {
         writer.close();
     }
+
 }

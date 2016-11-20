@@ -158,9 +158,16 @@ public abstract class QfdHelper<T extends Entity> {
     }
 
     /**
-     * Items get saved into a sharded table to parallelize queries & ingest.
+     * items to delete
+     * @param items
+     * @param deleteIndices
      */
-    public void save(Iterable<T> items, boolean writeIndices) {
+    public void delete(Iterable<T> items, boolean deleteIndices) {
+        checkNotNull(items);
+        createMutations(items,deleteIndices,true);
+    }
+
+    private void createMutations(Iterable<T> items, boolean mutateIndices, boolean deleteItems) {
         checkNotNull(items);
 
         Value fiVal = new Value();
@@ -185,7 +192,7 @@ public abstract class QfdHelper<T extends Entity> {
                     for (Attribute attribute : item.getAttributes()) {
                         String visibility = getVisibility(attribute.getMetadata(), "");
                         String aliasValue = typeRegistry.getAlias(attribute.getValue()) + ONE_BYTE +
-                            typeRegistry.encode(attribute.getValue());
+                                typeRegistry.encode(attribute.getValue());
 
                         ColumnVisibility columnVisibility = new ColumnVisibility(visibility);
 
@@ -215,18 +222,31 @@ public abstract class QfdHelper<T extends Entity> {
                         dout.write(metaBytes);
                         dout.flush();
 
-                        shardMutation.put(new Text(id),
-                                          forwardCQ,
-                                          columnVisibility,
-                                          time,
-                                          new Value(baos.toByteArray()));
+                        if (deleteItems) {
+                            shardMutation.putDelete(new Text(id),
+                                    forwardCQ,
+                                    columnVisibility);
+                        } else {
+                            shardMutation.put(new Text(id),
+                                    forwardCQ,
+                                    columnVisibility,
+                                    time,
+                                    new Value(baos.toByteArray()));
+                        }
 
-                        if(writeIndices) {
-                            shardMutation.put(fieldIndexCF,
-                                fieldIndexCQ,
-                                columnVisibility,
-                                timestamp,
-                                fiVal);
+                        if(mutateIndices) {
+                            if (deleteItems) {
+                                shardMutation.putDelete(fieldIndexCF,
+                                        fieldIndexCQ,
+                                        columnVisibility,
+                                        timestamp);
+                            } else {
+                                shardMutation.put(fieldIndexCF,
+                                        fieldIndexCQ,
+                                        columnVisibility,
+                                        timestamp,
+                                        fiVal);
+                            }
                         }
 
                         time++;
@@ -236,14 +256,25 @@ public abstract class QfdHelper<T extends Entity> {
                 }
             }
 
-            keyValueIndex.indexKeyValues(items, writeIndices);
+            if (deleteItems) {
+                keyValueIndex.deleteIndexKeyValues(items, mutateIndices);
+            } else {
+                keyValueIndex.indexKeyValues(items, mutateIndices);
+            }
 
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
 
+    /**
+     * Items get saved into a sharded table to parallelize queries & ingest.
+     */
+    public void save(Iterable<T> items, boolean writeIndices) {
+        checkNotNull(items);
+        createMutations(items,writeIndices,false);
     }
 
     public CloseableIterable<T> query(BatchScanner scanner, GlobalIndexVisitor globalIndexVisitor, Set<String> types, Node query,
