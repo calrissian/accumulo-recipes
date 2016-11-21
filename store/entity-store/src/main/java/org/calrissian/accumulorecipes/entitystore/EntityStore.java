@@ -60,12 +60,10 @@ public interface EntityStore {
     CloseableIterable<Entity> get(Collection<EntityIdentifier> typesAndIds, Auths auths);
 
     /**
-     * Deletes a list of entities by their types and ids. Only attributes with the given auths will
-     * be deleted.
-     * @param singleton
-     * @param auths
+     * Saves entities from the underlying storage implementation
+     * @param entities
      */
-    void delete(Collection<EntityIdentifier> singleton, Auths auths);
+    void delete(Iterable<Entity> entities);
 
     /**
      * Retrieves all entities for a specified type. Only fields in the given set of select fields will

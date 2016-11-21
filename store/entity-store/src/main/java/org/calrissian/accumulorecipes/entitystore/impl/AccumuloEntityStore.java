@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -53,7 +52,6 @@ import org.calrissian.accumulorecipes.entitystore.support.EntityGlobalIndexVisit
 import org.calrissian.accumulorecipes.entitystore.support.EntityQfdHelper;
 import org.calrissian.accumulorecipes.entitystore.support.EntityShardBuilder;
 import org.calrissian.mango.collect.CloseableIterable;
-import org.calrissian.mango.collect.Iterables2;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
@@ -149,8 +147,7 @@ public class AccumuloEntityStore implements EntityStore {
     }
 
     @Override
-    public void delete(Collection<EntityIdentifier> typesAndIds, Auths auths) {
-        Collection<Entity> entities = Lists.newArrayList(get(typesAndIds, auths));
+    public void delete(Iterable<Entity> entities) {
         helper.delete(entities,true);
 
     }
