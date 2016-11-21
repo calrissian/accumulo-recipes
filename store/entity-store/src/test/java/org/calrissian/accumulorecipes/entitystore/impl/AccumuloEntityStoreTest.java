@@ -26,24 +26,21 @@ import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStor
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
@@ -68,6 +65,7 @@ public class AccumuloEntityStoreTest {
         return new MockInstance().getConnector("root", "".getBytes());
     }
     private Map<String, String> meta = new MetadataBuilder().setVisibility("A").build();
+    private Map<String, String> meta_b = new MetadataBuilder().setVisibility("B").build();
     private Auths DEFAULT_AUTHS = new Auths("A");
 
     @Before
@@ -742,6 +740,103 @@ public class AccumuloEntityStoreTest {
         CloseableIterable<Entity> itr = store.query(singleton("type"), query, null, DEFAULT_AUTHS);
 
         assertEquals(0, size(itr));
+    }
+
+    @Test
+    public void test_Delete() {
+
+        for (int i = 0; i < 10; i++) {
+            Entity entity = EntityBuilder.create("type", "type_"+i)
+                    .attr(new Attribute("key1", "val1", meta))
+                    .attr(new Attribute("key2", "val2", meta))
+                    .build();
+
+            store.save(singleton(entity));
+        }
+
+
+        List<EntityIdentifier> typesAndIds = Arrays.asList(new EntityIdentifier("type", "type_0"),
+                new EntityIdentifier("type", "type_1"), new EntityIdentifier("type", "type_2"));
+        Iterable<Entity> actualEntities = store.get(typesAndIds, null, new Auths("A"));
+        assertEquals(3,Iterables.size(actualEntities));
+
+        store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
+
+        Iterable<Entity> actualEntitiesAfterDelete = store.get(typesAndIds, null, new Auths("A"));
+        assertEquals(0,Iterables.size(actualEntitiesAfterDelete));
+
+    }
+
+    @Test
+    public void test_createAndDeleteEntities() throws Exception {
+
+        for (int i = 0; i < 10; i++) {
+            Entity entity = EntityBuilder.create("type", "type_"+i)
+                    .attr(new Attribute("key1", "val1", meta))
+                    .attr(new Attribute("key2", "val2", meta))
+                    .build();
+
+            store.save(singleton(entity));
+        }
+        store.flush();
+
+        List<EntityIdentifier> typesAndIds = Arrays.asList(new EntityIdentifier("type", "type_0"),
+                new EntityIdentifier("type", "type_1"), new EntityIdentifier("type", "type_2"));
+        Iterable<Entity> actualEntities = store.get(typesAndIds, null, new Auths("A"));
+        assertEquals(3,Iterables.size(actualEntities));
+
+        store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
+        store.flush();
+
+        Iterable<Entity> actualEntitiesAfterDelete = store.get(typesAndIds, null, new Auths("A"));
+        assertEquals(0,Iterables.size(actualEntitiesAfterDelete));
+
+    }
+
+    @Test
+    public void test_createAndPartialDeleteBasedOnVisibilities() throws Exception {
+
+        assertKeyValuePairsInTable(0,AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME,new Authorizations("A","B"));
+        assertKeyValuePairsInTable(0,AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME,new Authorizations("A","B"));
+
+        Entity entity = EntityBuilder.create("type", "type_0")
+                .attr(new Attribute("key1", "val1", meta))
+                .attr(new Attribute("key2", "val2", meta_b))
+                .build();
+
+        store.save(singleton(entity));
+        store.flush();
+
+        List<EntityIdentifier> typesAndIds = Arrays.asList(new EntityIdentifier("type", "type_0"));
+        Iterable<Entity> actualEntities = store.get(typesAndIds, null, new Auths("A","B"));
+        assertEquals(1,Iterables.size(actualEntities));
+
+        assertKeyValuePairsInTable(4,AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME,new Authorizations("A","B"));
+        assertKeyValuePairsInTable(5,AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME,new Authorizations("A","B"));
+
+        //delete only visibilities I can see
+        store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
+        store.flush();
+
+        //should be no entities
+        List<Entity> actualEntitiesAfterDelete = Lists.newArrayList(store.get(typesAndIds, null, new Auths("A")));
+        assertEquals(""+actualEntitiesAfterDelete,0,actualEntitiesAfterDelete.size());
+
+        //partial entities still in tables
+        assertKeyValuePairsInTable(2,AccumuloEntityStore.DEFAULT_SHARD_TABLE_NAME,new Authorizations("A","B"));
+        assertKeyValuePairsInTable(2,AccumuloEntityStore.DEFAULT_IDX_TABLE_NAME,new Authorizations("A","B"));
+
+
+
+    }
+
+    private void assertKeyValuePairsInTable(int expectedSize, String tableName, Authorizations authorizations) throws TableNotFoundException {
+        BatchScanner batchScanner = connector.createBatchScanner(tableName,authorizations,2);
+        batchScanner.setRanges(Collections.singleton(new Range((Text)null)));
+
+        ArrayList<Map.Entry<Key, Value>> entries = Lists.newArrayList(batchScanner.iterator());
+
+        assertEquals("size of entries not matching " +expectedSize+": "+entries + " :" + entries.size(),expectedSize, entries.size());
     }
 
 }

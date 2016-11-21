@@ -17,6 +17,7 @@ package org.calrissian.accumulorecipes.eventstore;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import org.calrissian.accumulorecipes.commons.domain.Auths;
@@ -90,6 +91,14 @@ public interface EventStore extends QfdStore<Event, EventIdentifier> {
      */
     CloseableIterable<Event> get(Collection<EventIdentifier> indexes, Set<String> selectFields, Auths auths);
 
+    /**
+     * deletes a set of StoreEntry objects from the event store
+     *
+     * @param events
+     * @throws Exception
+     */
+    void delete(Iterable<Event> events);
+
     CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Set<String> selectFields, Auths auths);
 
     CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Auths auths);
@@ -106,4 +115,5 @@ public interface EventStore extends QfdStore<Event, EventIdentifier> {
     public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths);
     public CloseableIterable<Object> uniqueValuesForKey(String prefix, String type, String alias, String key, Auths auths);
     public CloseableIterable<String> getTypes(String prefix, Auths auths);
+
 }

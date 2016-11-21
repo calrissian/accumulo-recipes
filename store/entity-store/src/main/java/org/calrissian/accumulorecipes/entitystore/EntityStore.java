@@ -60,6 +60,12 @@ public interface EntityStore {
     CloseableIterable<Entity> get(Collection<EntityIdentifier> typesAndIds, Auths auths);
 
     /**
+     * Saves entities from the underlying storage implementation
+     * @param entities
+     */
+    void delete(Iterable<Entity> entities);
+
+    /**
      * Retrieves all entities for a specified type. Only fields in the given set of select fields will
      * be returned for each entity (null will return all fields). Only attributes matching the given
      * auths will be included in the resulting entities.
@@ -118,4 +124,5 @@ public interface EntityStore {
      * @throws Exception
      */
     void shutdown() throws Exception;
+
 }

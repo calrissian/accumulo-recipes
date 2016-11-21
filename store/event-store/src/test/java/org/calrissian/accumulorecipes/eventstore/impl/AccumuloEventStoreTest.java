@@ -19,27 +19,23 @@ import static com.google.common.collect.Iterables.size;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+
+import java.util.*;
 
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import com.google.common.collect.Lists;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
@@ -48,6 +44,9 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
+import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.EventIdentifier;
@@ -62,6 +61,7 @@ public class AccumuloEventStoreTest {
     private EventStore store;
 
     private Map<String, String> meta = new MetadataBuilder().setVisibility("A").build();
+    private Map<String, String> meta_b = new MetadataBuilder().setVisibility("B").build();
     private Auths DEFAULT_AUTHS = new Auths("A");
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
@@ -701,6 +701,81 @@ public class AccumuloEventStoreTest {
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
         assertEquals(1, size(itr));
         assertEquals(event, Iterables.get(itr, 0));
+    }
+
+    @Test
+    public void test_createAndDeleteEvents() throws Exception {
+
+        long time = currentTimeMillis();
+        for (int i = 0; i < 10; i++) {
+            Event event = EventBuilder.create("type",  "type_"+i, time)
+                    .attr(new Attribute("key1", "val1", meta))
+                    .attr(new Attribute("key2", "val2", meta))
+                    .build();
+
+            store.save(singleton(event));
+        }
+        store.flush();
+
+        List<EventIdentifier> typesAndIds = Arrays.asList(new EventIdentifier("type", "type_0",time),
+                new EventIdentifier("type", "type_1",time), new EventIdentifier("type", "type_2",time));
+        Iterable<Event> actualEvents = store.get(typesAndIds, null, new Auths("A"));
+        assertEquals(3,Iterables.size(actualEvents));
+
+        store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
+        store.flush();
+
+        Iterable<Event> actualEventsAfterDelete = store.get(typesAndIds, null, new Auths("A"));
+        assertEquals(0,Iterables.size(actualEventsAfterDelete));
+
+    }
+
+    @Test
+    public void test_createAndPartialDeleteBasedOnVisibilities() throws Exception {
+
+        assertKeyValuePairsInTable(0,AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME,new Authorizations("A","B"));
+        assertKeyValuePairsInTable(0,AccumuloEventStore.DEFAULT_IDX_TABLE_NAME,new Authorizations("A","B"));
+
+        long time = currentTimeMillis();
+
+        Event event = EventBuilder.create("type",  "type_0", time)
+                .attr(new Attribute("key1", "val1", meta))
+                .attr(new Attribute("key2", "val2", meta_b))
+                .build();
+
+        store.save(singleton(event));
+        store.flush();
+
+        List<EventIdentifier> typesAndIds = Arrays.asList(new EventIdentifier("type", "type_0",time));
+        Iterable<Event> actualEvents = store.get(typesAndIds, null, new Auths("A","B"));
+        assertEquals(1,Iterables.size(actualEvents));
+
+        assertKeyValuePairsInTable(4,AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME,new Authorizations("A","B"));
+        assertKeyValuePairsInTable(5,AccumuloEventStore.DEFAULT_IDX_TABLE_NAME,new Authorizations("A","B"));
+
+        //delete only visibilities I can see
+        store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
+        store.flush();
+
+        //should be no entities
+        List<Event> actualEventsAfterDelete = Lists.newArrayList(store.get(typesAndIds, null, new Auths("A")));
+        assertEquals(""+actualEventsAfterDelete,0,actualEventsAfterDelete.size());
+
+        //partial entities still in tables
+        assertKeyValuePairsInTable(2,AccumuloEventStore.DEFAULT_SHARD_TABLE_NAME,new Authorizations("A","B"));
+        assertKeyValuePairsInTable(2,AccumuloEventStore.DEFAULT_IDX_TABLE_NAME,new Authorizations("A","B"));
+
+
+
+    }
+
+    private void assertKeyValuePairsInTable(int expectedSize, String table, Authorizations authorizations) throws TableNotFoundException {
+        BatchScanner batchScanner = connector.createBatchScanner(table,authorizations,2);
+        batchScanner.setRanges(Collections.singleton(new Range((Text)null)));
+
+        ArrayList<Map.Entry<Key, Value>> entries = Lists.newArrayList(batchScanner.iterator());
+
+        assertEquals("size of entries not matching " +expectedSize+": "+entries + " :" + entries.size(),expectedSize, entries.size());
     }
 
 }

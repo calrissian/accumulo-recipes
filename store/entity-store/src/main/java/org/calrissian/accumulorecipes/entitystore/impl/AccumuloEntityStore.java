@@ -147,6 +147,12 @@ public class AccumuloEntityStore implements EntityStore {
     }
 
     @Override
+    public void delete(Iterable<Entity> entities) {
+        helper.delete(entities,true);
+
+    }
+
+    @Override
     public CloseableIterable<Entity> getAllByType(Set<String> types, Set<String> selectFields, Auths auths) {
         checkNotNull(types);
         checkNotNull(auths);
