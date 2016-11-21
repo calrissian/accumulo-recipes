@@ -26,14 +26,11 @@ import static org.calrissian.accumulorecipes.commons.support.Constants.PREFIX_E;
 import static org.calrissian.accumulorecipes.commons.util.Scanners.closeableIterable;
 import static org.calrissian.mango.collect.CloseableIterables.transform;
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map.Entry;
-import java.util.Set;
 
+import java.util.*;
+import java.util.Map.Entry;
+
+import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -227,6 +224,12 @@ public class AccumuloEventStore implements EventStore {
     }
 
     @Override
+    public void delete(List<EventIdentifier> indexes, Auths auths) {
+        Collection<Event> events = Lists.newArrayList(get(indexes, auths));
+        helper.delete(events,true);
+    }
+
+    @Override
     public CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Set<String> selectFields, Auths auths) {
         checkNotNull(types);
         checkNotNull(auths);
@@ -287,7 +290,7 @@ public class AccumuloEventStore implements EventStore {
 
     @Override
     public CloseableIterable<Event> get(Collection<EventIdentifier> indexes, Auths auths) {
-        return get(indexes, auths);
+        return get(indexes, null, auths);
     }
 
     public CloseableIterable<Pair<String,String>> uniqueKeys(String prefix, String type, Auths auths) {
