@@ -92,12 +92,12 @@ public interface EventStore extends QfdStore<Event, EventIdentifier> {
     CloseableIterable<Event> get(Collection<EventIdentifier> indexes, Set<String> selectFields, Auths auths);
 
     /**
-     * deletes events by id and timestamp.
-     * @param indexes
-     * @param auths
-     * @return
+     * deletes a set of StoreEntry objects from the event store
+     *
+     * @param events
+     * @throws Exception
      */
-    void delete(List<EventIdentifier> indexes, Auths auths);
+    void delete(Iterable<Event> events);
 
     CloseableIterable<Event> getAllByType(Date start, Date stop, Set<String> types, Set<String> selectFields, Auths auths);
 

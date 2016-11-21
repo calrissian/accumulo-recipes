@@ -30,7 +30,6 @@ import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -224,8 +223,7 @@ public class AccumuloEventStore implements EventStore {
     }
 
     @Override
-    public void delete(List<EventIdentifier> indexes, Auths auths) {
-        Collection<Event> events = Lists.newArrayList(get(indexes, auths));
+    public void delete(Iterable<Event> events) {
         helper.delete(events,true);
     }
 

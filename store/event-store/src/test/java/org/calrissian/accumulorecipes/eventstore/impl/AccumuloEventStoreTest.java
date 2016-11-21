@@ -722,7 +722,7 @@ public class AccumuloEventStoreTest {
         Iterable<Event> actualEvents = store.get(typesAndIds, null, new Auths("A"));
         assertEquals(3,Iterables.size(actualEvents));
 
-        store.delete(typesAndIds,new Auths("A"));
+        store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
         store.flush();
 
         Iterable<Event> actualEventsAfterDelete = store.get(typesAndIds, null, new Auths("A"));
@@ -754,7 +754,7 @@ public class AccumuloEventStoreTest {
         assertKeyValuePairsInTable(5,AccumuloEventStore.DEFAULT_IDX_TABLE_NAME,new Authorizations("A","B"));
 
         //delete only visibilities I can see
-        store.delete(typesAndIds,new Auths("A"));
+        store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
         store.flush();
 
         //should be no entities
