@@ -18,6 +18,7 @@ package org.calrissian.accumulorecipes.commons.iterators;
 
 import java.io.IOException;
 
+import org.apache.accumulo.core.client.impl.BaseIteratorEnvironment;
 import org.apache.accumulo.core.conf.AccumuloConfiguration;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -32,7 +33,7 @@ import org.apache.hadoop.fs.FileSystem;
 /**
  *
  */
-public class DefaultIteratorEnvironment implements IteratorEnvironment {
+public class DefaultIteratorEnvironment extends BaseIteratorEnvironment {
 
     AccumuloConfiguration conf;
 

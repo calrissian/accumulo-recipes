@@ -20,9 +20,9 @@ import org.calrissian.mango.types.TypeRegistry;
 
 import java.util.*;
 
+import static org.apache.commons.lang.StringUtils.contains;
 import static org.apache.commons.lang.StringUtils.containsAny;
 import static org.apache.commons.lang.StringUtils.replaceEach;
-import static org.apache.commons.lang3.StringUtils.contains;
 import static org.calrissian.accumulorecipes.commons.support.Constants.NULL_BYTE;
 import static org.calrissian.accumulorecipes.commons.support.Constants.ONE_BYTE;
 
