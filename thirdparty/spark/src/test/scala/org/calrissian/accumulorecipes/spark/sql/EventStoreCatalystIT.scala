@@ -17,34 +17,29 @@ package org.calrissian.accumulorecipes.spark.sql
 
 import java.util.Collections
 
-import org.apache.accumulo.minicluster.impl.MiniAccumuloClusterImpl
+import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore
 import org.apache.spark.sql.{AnalysisException, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore
 import org.calrissian.accumulorecipes.spark.sql.util.TableUtil
-import org.calrissian.accumulorecipes.test.AccumuloTestUtils
+import org.calrissian.accumulorecipes.test.{AccumuloMiniClusterDriver, AccumuloTestUtils}
 import org.calrissian.mango.domain.Attribute
 import org.calrissian.mango.domain.event.EventBuilder
 import org.joda.time.DateTime
 import org.junit._
-import org.junit.rules.TemporaryFolder
 
-object EventStoreCatalystTest {
+object EventStoreCatalystIT {
 
-  private val tempDir = new TemporaryFolder()
-  private var miniCluster: MiniAccumuloClusterImpl = _
+  private val driver = new AccumuloMiniClusterDriver()
   private var eventStore:AccumuloEventStore = _
   private var sparkContext: SparkContext = _
   private implicit var sqlContext: SQLContext = _
 
   @BeforeClass
   def setup: Unit = {
-    tempDir.create()
-    println("WORKING DIRECTORY: " + tempDir.getRoot)
-    miniCluster = new MiniAccumuloClusterImpl(tempDir.getRoot, "secret")
-    miniCluster.start
-
-    eventStore = new AccumuloEventStore(miniCluster.getConnector("root", "secret"))
+    driver.start()
+    driver.deleteAllTables()
+    eventStore = new AccumuloEventStore(driver.getConnector)
 
     val sparkConf = new SparkConf().setMaster("local").setAppName("TestEventStoreSQL")
     sparkContext = new SparkContext(sparkConf)
@@ -55,8 +50,8 @@ object EventStoreCatalystTest {
 
     TableUtil.registerEventCatalystTable("root",
       "secret",
-      miniCluster.getInstanceName,
-      miniCluster.getZooKeepers,
+      driver.getInstanceName,
+      driver.getZooKeepers,
       new DateTime(System.currentTimeMillis() - 5000),
       new DateTime(System.currentTimeMillis() + 5000),
       "type",
@@ -81,15 +76,14 @@ object EventStoreCatalystTest {
 
   @AfterClass
   def tearDown: Unit = {
-    miniCluster.stop
-    tempDir.delete
     sparkContext.stop()
+    driver.close
   }
 
 }
-class EventStoreCatalystTest {
+class EventStoreCatalystIT {
 
-  import org.calrissian.accumulorecipes.spark.sql.EventStoreCatalystTest._
+  import org.calrissian.accumulorecipes.spark.sql.EventStoreCatalystIT._
 
   @Before
   def setupTest: Unit = {
@@ -100,8 +94,8 @@ class EventStoreCatalystTest {
   @After
   def teardownTest: Unit = {
     sqlContext.dropTempTable("events")
-    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "eventStore_shard")
-    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "eventStore_index")
+    AccumuloTestUtils.clearTable(driver.getConnector, "eventStore_shard")
+    AccumuloTestUtils.clearTable(driver.getConnector, "eventStore_index")
   }
 
   /**
@@ -111,14 +105,14 @@ class EventStoreCatalystTest {
   def testJoin(): Unit = {
     TableUtil.registerEventCatalystTable("root",
       "secret",
-      miniCluster.getInstanceName,
-      miniCluster.getZooKeepers,
+      driver.getInstanceName,
+      driver.getZooKeepers,
       new DateTime(System.currentTimeMillis() - 5000),
       new DateTime(System.currentTimeMillis() + 5000),
       "type2",
       "events2")
 
-    AccumuloTestUtils.dumpTable(miniCluster.getConnector("root", "secret"), "eventStore_shard")
+    AccumuloTestUtils.dumpTable(driver.getConnector, "eventStore_shard")
 
     val rows = sqlContext.sql("SELECT e.key1,e.key2,t.key3 FROM events e JOIN events2 t ON e.key1 = t.key1").collect
 

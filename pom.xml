@@ -276,7 +276,27 @@ limitations under the License.
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins></plugins>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*IT.java</include>
+              </includes>
+              <skipTests>${skipTests}</skipTests>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
   <url>http://www.calrissian.org</url>
   <organization>
@@ -320,7 +340,7 @@ limitations under the License.
 
   <profiles>
     <profile>
-      <id>mini-cluster</id>
+      <id>with-mini-cluster</id>
       <dependencies>
         <dependency>
           <groupId>org.apache.accumulo</groupId>

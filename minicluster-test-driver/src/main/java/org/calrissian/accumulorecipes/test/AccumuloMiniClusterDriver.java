@@ -8,6 +8,8 @@ import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.commons.io.FileUtils;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -19,21 +21,19 @@ import static com.google.common.base.Objects.firstNonNull;
 
 public class AccumuloMiniClusterDriver extends ExternalResource implements Closeable {
 
+    public static final Logger log = LoggerFactory.getLogger(AccumuloMiniClusterDriver.class);
+
     public static String INSTANCE_NAME = firstNonNull(System.getProperty("accumulo.minicluster.instance.name"),"test-instance");
     public static String ROOT_PASSWORD = firstNonNull(System.getProperty("accumulo.minicluster.root.password"),"secret");
     public static int ZOOKEEPER_PORT = Integer.parseInt(firstNonNull(System.getProperty("accumulo.minicluster.zookeeper.port"),findFreePort()+""));
     private MiniAccumuloCluster miniAccumuloCluster;
-    private final MiniAccumuloConfig miniAccumuloConfig;
-    private final File tempDir = Files.createTempDir();
+    private MiniAccumuloConfig miniAccumuloConfig;
+    private File tempDir;
     private ClientConfiguration clientConfiguration;
     private Instance instance;
     private Connector connector;
 
-    public AccumuloMiniClusterDriver() {
-        miniAccumuloConfig = new MiniAccumuloConfig(tempDir,ROOT_PASSWORD);
-        miniAccumuloConfig.setZooKeeperPort(ZOOKEEPER_PORT);
-        miniAccumuloConfig.setInstanceName(INSTANCE_NAME);
-    }
+    public AccumuloMiniClusterDriver() {}
 
     @Override
     protected void before() throws Throwable {
@@ -63,8 +63,10 @@ public class AccumuloMiniClusterDriver extends ExternalResource implements Close
             initInstanceAndConnector(300);
         } catch (Throwable e) {
             try {
+                initConfig();
                 miniAccumuloCluster = new MiniAccumuloCluster(miniAccumuloConfig);
                 miniAccumuloCluster.start();
+                log.info("started minicluster");
                 initInstanceAndConnector(null);
             } catch (Throwable e1) {
                 throw new IOException(e1);
@@ -72,23 +74,37 @@ public class AccumuloMiniClusterDriver extends ExternalResource implements Close
         }
     }
 
-    private void initInstanceAndConnector(Integer zkTimeout) throws AccumuloException, AccumuloSecurityException {
+    private void initConfig() {
+        tempDir = Files.createTempDir();
+        miniAccumuloConfig = new MiniAccumuloConfig(tempDir,ROOT_PASSWORD);
+        miniAccumuloConfig.setZooKeeperPort(ZOOKEEPER_PORT);
+        miniAccumuloConfig.setInstanceName(INSTANCE_NAME);
+        log.info("attempting to start minicluster in " + tempDir.getAbsolutePath());
+    }
+
+    private void initInstanceAndConnector(final Integer zkTimeout) throws AccumuloException, AccumuloSecurityException {
         clientConfiguration = new ClientConfiguration()
-                .withInstance(miniAccumuloConfig.getInstanceName())
-                .withZkHosts("localhost:" + miniAccumuloConfig.getZooKeeperPort());
+                .withInstance(INSTANCE_NAME)
+                .withZkHosts("localhost:" + ZOOKEEPER_PORT);
 
         if (zkTimeout!=null && zkTimeout!=-1) {
+            clientConfiguration.withZkTimeout(zkTimeout);
             ExecutorService service = Executors.newSingleThreadExecutor();
             Future<ZooKeeperInstance> future = service.submit(new Callable<ZooKeeperInstance>() {
                 @Override
                 public ZooKeeperInstance call() throws Exception {
-                   return new ZooKeeperInstance(clientConfiguration);
+                    log.info("trying to try to get zookeperInstance");
+                    return new ZooKeeperInstance(clientConfiguration);
                 }
             });
             try {
-                instance = future.get(300, TimeUnit.MILLISECONDS);
+                log.info("about to try to get zookeperInstance");
+                instance = future.get(zkTimeout, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
                throw new AccumuloException(e);
+            } finally {
+                future.cancel(true);
+                service.shutdownNow();
             }
         } else {
             instance = new ZooKeeperInstance(clientConfiguration);
@@ -136,15 +152,19 @@ public class AccumuloMiniClusterDriver extends ExternalResource implements Close
 
     @Override
     public void close() throws IOException {
+        log.info("attempting to close");
         if (miniAccumuloCluster != null) {
             try {
+                log.info("miniAccumuloCluster found attempting to stop it");
                 miniAccumuloCluster.stop();
+                log.info("stopped miniAccumuloCluster");
             } catch (InterruptedException e) {
                 //noop
             }
         }
 
         if (tempDir!=null) {
+            log.info("deleting temp dir: "+ tempDir.getAbsolutePath());
             FileUtils.deleteQuietly(tempDir);
         }
     }

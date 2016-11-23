@@ -17,32 +17,27 @@ package org.calrissian.accumulorecipes.spark.sql
 
 import java.util.Collections
 
-import org.apache.accumulo.minicluster.impl.MiniAccumuloClusterImpl
 import org.apache.spark.sql.{AnalysisException, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils
 import org.calrissian.mango.domain.Attribute
 import org.calrissian.mango.domain.entity.EntityBuilder
 import org.junit._
-import org.junit.rules.TemporaryFolder
 
-object EntityStoreFilteredTest {
+object EntityStoreFilteredIT {
 
-  private val tempDir = new TemporaryFolder()
-  private var miniCluster: MiniAccumuloClusterImpl = _
+  private val driver = new AccumuloMiniClusterDriver()
   private var entityStore: AccumuloEntityStore = _
   private var sparkContext: SparkContext = _
   private var sqlContext: SQLContext = _
 
   @BeforeClass
   def setup: Unit = {
-    tempDir.create()
-    println("WORKING DIRECTORY: " + tempDir.getRoot)
-    miniCluster = new MiniAccumuloClusterImpl(tempDir.getRoot, "secret")
-    miniCluster.start
-
-    entityStore = new AccumuloEntityStore(miniCluster.getConnector("root", "secret"))
+    driver.start()
+    driver.deleteAllTables()
+    entityStore = new AccumuloEntityStore(driver.getConnector)
 
     val sparkConf = new SparkConf().setMaster("local").setAppName("TestEntityStoreSQL")
     sparkContext = new SparkContext(sparkConf)
@@ -56,8 +51,8 @@ object EntityStoreFilteredTest {
         |CREATE TEMPORARY TABLE entities
         |USING org.calrissian.accumulorecipes.spark.sql.EntityStoreFiltered
         |OPTIONS (
-        | inst '${miniCluster.getInstanceName}',
-        | zk '${miniCluster.getZooKeepers}',
+        | inst '${driver.getInstanceName}',
+        | zk '${driver.getZooKeepers}',
         | user 'root',
         | pass 'secret',
         | type 'type'
@@ -77,15 +72,14 @@ object EntityStoreFilteredTest {
 
   @AfterClass
   def tearDown: Unit = {
-    miniCluster.stop
-    tempDir.delete
     sparkContext.stop()
+    driver.close
   }
 
 }
-class EntityStoreFilteredTest {
+class EntityStoreFilteredIT {
 
-  import org.calrissian.accumulorecipes.spark.sql.EntityStoreFilteredTest._
+  import org.calrissian.accumulorecipes.spark.sql.EntityStoreFilteredIT._
 
   @Before
   def setupTest: Unit = {
@@ -96,8 +90,8 @@ class EntityStoreFilteredTest {
   @After
   def teardownTest: Unit = {
     sqlContext.dropTempTable("entities")
-    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "entity_shard")
-    AccumuloTestUtils.clearTable(miniCluster.getConnector("root", "secret"), "entity_index")
+    AccumuloTestUtils.clearTable(driver.getConnector, "entity_shard")
+    AccumuloTestUtils.clearTable(driver.getConnector, "entity_index")
   }
 
   @Test

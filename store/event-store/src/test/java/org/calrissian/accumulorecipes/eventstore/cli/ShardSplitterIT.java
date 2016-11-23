@@ -22,35 +22,32 @@ import java.io.IOException;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-public class ShardSplitterTest {
+public class ShardSplitterIT {
 
-    public static Instance instance = new MockInstance("mock");
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
+
+    @Before
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
+    }
 
     @Test
     public void test() throws AccumuloSecurityException, AccumuloException, IOException, TableExistsException, TableNotFoundException, InterruptedException {
 
-        TemporaryFolder folder = new TemporaryFolder();
-        folder.create();
-
-        MiniAccumuloCluster mac = new MiniAccumuloCluster(folder.getRoot(), "secret");
-        mac.start();
-
-        Instance instance = new ZooKeeperInstance(mac.getInstanceName(), mac.getZooKeepers());
-        Connector connector = instance.getConnector("root", "secret".getBytes());
+        Connector connector = accumuloMiniClusterDriver.getConnector();
         connector.tableOperations().create("event_shard");
 
         DailyShardSplitter.main(new String[] {
-            mac.getZooKeepers(),
-            mac.getInstanceName(),
+                accumuloMiniClusterDriver.getZooKeepers(),
+                accumuloMiniClusterDriver.getInstanceName(),
             "root",
             "secret",
             "event_shard",
@@ -58,11 +55,11 @@ public class ShardSplitterTest {
             "1969-01-01"
         });
 
-        assertEquals(DEFAULT_PARTITION_SIZE, connector.tableOperations().getSplits("event_shard").size());
+        assertEquals(DEFAULT_PARTITION_SIZE, connector.tableOperations().listSplits("event_shard").size());
 
         DailyShardSplitter.main(new String[] {
-            mac.getZooKeepers(),
-            mac.getInstanceName(),
+                accumuloMiniClusterDriver.getZooKeepers(),
+                accumuloMiniClusterDriver.getInstanceName(),
             "root",
             "secret",
             "event_shard",
@@ -74,8 +71,5 @@ public class ShardSplitterTest {
 
         assertEquals(DEFAULT_PARTITION_SIZE, connector.tableOperations().getSplits("event_shard").size());
 
-
-        mac.stop();
-        folder.delete();
     }
 }
