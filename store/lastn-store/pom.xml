@@ -56,5 +56,12 @@ limitations under the License.
       <artifactId>joda-time</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.calrissian.accumulorecipes</groupId>
+      <artifactId>minicluster-test-driver</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 </project>

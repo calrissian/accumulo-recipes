@@ -16,7 +16,6 @@
 package org.calrissian.accumulorecipes.entitystore.hadoop;
 
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
@@ -26,11 +25,13 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -44,25 +45,29 @@ import static org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStor
 import static org.calrissian.mango.types.LexiTypeEncoders.LEXI_TYPES;
 import static org.junit.Assert.assertEquals;
 
-public class EntityInputFormatTest {
+public class EntityInputFormatIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     public static Entity entity;
     public static Entity entity2;
     public static Entity entity3;
 
     @Before
-    public void setup() {
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
         TestMapper.entities = new ArrayList<Entity>();
     }
 
     @Test
-    public void testQuery() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery() throws Exception {
 
-        Instance instance = new MockInstance("entityInst");
-        Connector connector = instance.getConnector("root", "".getBytes());
+        Connector connector = accumuloMiniClusterDriver.getConnector();
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = EntityBuilder.create("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity));
+        store.flush();
 
         Job job = Job.getInstance();
         job.setJarByClass(getClass());
@@ -71,8 +76,8 @@ public class EntityInputFormatTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EntityInputFormat.class);
-        EntityInputFormat.setMockInstance(job, "entityInst");
-        EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        EntityInputFormat.setZooKeeperInstance(job,accumuloMiniClusterDriver.getClientConfiguration());
+        EntityInputFormat.setInputInfo(job, "root", accumuloMiniClusterDriver.getRootPassword().getBytes(), new Authorizations());
         EntityInputFormat.setQueryInfo(job, Collections.singleton("type"),
                 QueryBuilder.create().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
         job.setOutputFormatClass(NullOutputFormat.class);
@@ -88,11 +93,10 @@ public class EntityInputFormatTest {
     }
 
     @Test
-    public void testGetAllByType() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testGetAllByType() throws Exception {
 
 
-        Instance instance = new MockInstance("entityInst1");
-        Connector connector = instance.getConnector("root", "".getBytes());
+        Connector connector = accumuloMiniClusterDriver.getConnector();
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = EntityBuilder.create("type", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity));
@@ -103,15 +107,17 @@ public class EntityInputFormatTest {
         entity3 = EntityBuilder.create("type1", "id").attr(new Attribute("key1", "val1")).attr(new Attribute("key2", false)).build();
         store.save(singleton(entity3));
 
-        Job job = new Job(new Configuration());
+        store.flush();
+
+        Job job = Job.getInstance(new Configuration());
         job.setJarByClass(getClass());
         job.setMapperClass(TestMapper.class);
         job.setNumReduceTasks(0);
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EntityInputFormat.class);
-        EntityInputFormat.setMockInstance(job, "entityInst1");
-        EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
+        EntityInputFormat.setZooKeeperInstance(job,accumuloMiniClusterDriver.getClientConfiguration());
+        EntityInputFormat.setInputInfo(job, "root", accumuloMiniClusterDriver.getRootPassword().getBytes(), new Authorizations());
         EntityInputFormat.setQueryInfo(job, Collections.singleton("type"));
         job.setOutputFormatClass(NullOutputFormat.class);
 

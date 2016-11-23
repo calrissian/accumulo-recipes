@@ -72,4 +72,9 @@ public class DefaultIteratorEnvironment extends BaseIteratorEnvironment {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public boolean isSamplingEnabled() {
+        return false;
+    }
+
 }

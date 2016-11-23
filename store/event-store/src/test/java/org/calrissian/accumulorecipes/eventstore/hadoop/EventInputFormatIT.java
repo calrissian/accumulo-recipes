@@ -41,34 +41,40 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-public class EventInputFormatTest {
+public class EventInputFormatIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     public static Event event;
 
     @Before
-    public void setup() {
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+      accumuloMiniClusterDriver.deleteAllTables();
       event = null;
       TestMapper.entry = null;
     }
 
     @Test
-    public void test() throws IOException, ClassNotFoundException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void test() throws Exception {
 
-        Instance instance = new MockInstance("eventInst");
-        Connector connector = instance.getConnector("root", "".getBytes());
+        Connector connector = accumuloMiniClusterDriver.getConnector();
         AccumuloEventStore store = new AccumuloEventStore(connector);
         event = EventBuilder.create("", UUID.randomUUID().toString(), System.currentTimeMillis())
             .attr(new Attribute("key1", "val1"))
             .attr(new Attribute("key2", false)).build();
         store.save(singleton(event));
+        store.flush();
 
         Job job = new Job(new Configuration());
         job.setJarByClass(getClass());
@@ -77,8 +83,8 @@ public class EventInputFormatTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(EventInputFormat.class);
-        EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
-        EventInputFormat.setMockInstance(job, "eventInst");
+        EventInputFormat.setZooKeeperInstance(job, accumuloMiniClusterDriver.getClientConfiguration());
+        EventInputFormat.setInputInfo(job, "root", accumuloMiniClusterDriver.getRootPassword().getBytes(), new Authorizations());
         EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), Collections.singleton(""),
                 QueryBuilder.create().eq("key1", "val1").build());
         job.setOutputFormatClass(NullOutputFormat.class);
@@ -96,8 +102,7 @@ public class EventInputFormatTest {
   @Test
   public void testNoQuery() throws Exception {
 
-    Instance instance = new MockInstance("eventInst2");
-    Connector connector = instance.getConnector("root", "".getBytes());
+    Connector connector = accumuloMiniClusterDriver.getConnector();
     AccumuloEventStore store = new AccumuloEventStore(connector);
     event = EventBuilder.create("", UUID.randomUUID().toString(), System.currentTimeMillis())
         .attr(new Attribute("key1", "val1"))
@@ -112,8 +117,8 @@ public class EventInputFormatTest {
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(Text.class);
     job.setInputFormatClass(EventInputFormat.class);
-    EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
-    EventInputFormat.setMockInstance(job, "eventInst2");
+      EventInputFormat.setZooKeeperInstance(job, accumuloMiniClusterDriver.getClientConfiguration());
+      EventInputFormat.setInputInfo(job, "root", accumuloMiniClusterDriver.getRootPassword().getBytes(), new Authorizations());
     EventInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), Collections.singleton(""));
     job.setOutputFormatClass(NullOutputFormat.class);
 

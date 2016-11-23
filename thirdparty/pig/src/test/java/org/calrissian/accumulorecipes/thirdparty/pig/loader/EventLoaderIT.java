@@ -27,43 +27,38 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.eventstore.hadoop.EventInputFormat;
 import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.test.MockRecordReader;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-public class EventLoaderTest extends AccumuloInputFormat {
+public class EventLoaderIT extends AccumuloInputFormat {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     Event event;
     Job job;
 
     @Before
-    public void setup() throws IOException {
+    public void setup() throws IOException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
         job = new Job();
     }
 
@@ -107,17 +102,10 @@ public class EventLoaderTest extends AccumuloInputFormat {
     @Test
     public void testSetLocation() throws URISyntaxException, IOException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException {
 
-        TemporaryFolder folder = new TemporaryFolder();
-        folder.create();
+        String zk = accumuloMiniClusterDriver.getZooKeepers();
+        String inst = accumuloMiniClusterDriver.getInstanceName();
 
-        MiniAccumuloCluster cluster = new MiniAccumuloCluster(folder.getRoot(), "");
-        cluster.start();
-
-        String zk = cluster.getZooKeepers();
-        String inst = cluster.getInstanceName();
-
-        Instance instance = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-        Connector conn = instance.getConnector("root", "".getBytes());
+        Connector conn = accumuloMiniClusterDriver.getConnector();
 
         conn.tableOperations().create("eventStore_index");
         conn.tableOperations().create("eventStore_shard");
@@ -130,30 +118,27 @@ public class EventLoaderTest extends AccumuloInputFormat {
         loader.setLocation(location.toString(), job);   // make sure two calls to set location don't fail
 
 
-        cluster.stop();
-        folder.delete();
-
         assertEquals(true, isConnectorInfoSet(job));
         assertEquals("root", getPrincipal(job));
-        assertEquals(new PasswordToken(""), getAuthenticationToken(job));
+        assertEquals(new PasswordToken(accumuloMiniClusterDriver.getRootPassword()), getAuthenticationToken(job));
         assertEquals(zk, getInstance(job).getZooKeepers());
         assertEquals(inst, getInstance(job).getInstanceName());
         assertEquals("eventStore_shard", getInputTableName(job));
 
     }
 
-    private void setUpJob() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException, IOException {
-        Instance instance = new MockInstance("instName");
-        Connector connector = instance.getConnector("root", "".getBytes());
+    private void setUpJob() throws Exception {
+        Connector connector = accumuloMiniClusterDriver.getConnector();
         AccumuloEventStore store = new AccumuloEventStore(connector);
         event = EventBuilder.create("", randomUUID().toString(), currentTimeMillis())
                 .attr(new Attribute("key1", "val1"))
                 .attr(new Attribute("key2", false))
                 .build();
         store.save(singleton(event));
+        store.flush();
 
-        EventInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
-        EventInputFormat.setMockInstance(job, "instName");
+        EventInputFormat.setInputInfo(job, "root", accumuloMiniClusterDriver.getRootPassword().getBytes(), new Authorizations());
+        EventInputFormat.setZooKeeperInstance(job, accumuloMiniClusterDriver.getClientConfiguration());
         EventInputFormat.setQueryInfo(job, new Date(currentTimeMillis() - 50000), new Date(), Collections.singleton(""),
                 QueryBuilder.create().eq("key1", "val1").build());
 

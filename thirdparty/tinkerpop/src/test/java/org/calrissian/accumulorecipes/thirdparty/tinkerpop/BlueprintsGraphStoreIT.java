@@ -21,12 +21,13 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -36,13 +37,17 @@ import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.HashSet;
 
 import static java.util.Arrays.asList;
 
-public class BlueprintsGraphStoreTest {
+public class BlueprintsGraphStoreIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     AccumuloEntityGraphStore entityGraphStore;
     EntityGraph graph;
@@ -54,8 +59,8 @@ public class BlueprintsGraphStoreTest {
 
     @Before
     public void start() throws Exception {
-        Instance instance = new MockInstance();
-        connector = instance.getConnector("root", new PasswordToken(""));
+        connector = accumuloMiniClusterDriver.getConnector();
+        accumuloMiniClusterDriver.setRootAuths(new Authorizations("U","ADMIN"));
         entityGraphStore = new AccumuloEntityGraphStore(connector);
         graph = new EntityGraph(entityGraphStore, Sets.newHashSet("vertexType1", "vertexType2"),
                 Sets.newHashSet("edgeType1", "edgeType2"),
@@ -82,6 +87,7 @@ public class BlueprintsGraphStoreTest {
                 .build();
 
         entityGraphStore.save(asList(vertex1, vertex2, edge));
+        entityGraphStore.flush();
 
     }
 

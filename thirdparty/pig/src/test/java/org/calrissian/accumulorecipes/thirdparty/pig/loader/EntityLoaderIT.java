@@ -33,20 +33,17 @@ import java.util.UUID;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.calrissian.accumulorecipes.entitystore.hadoop.EntityInputFormat;
 import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
 import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.test.MockRecordReader;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.domain.Attribute;
@@ -54,10 +51,13 @@ import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-public class EntityLoaderTest extends AccumuloInputFormat {
+public class EntityLoaderIT extends AccumuloInputFormat {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     Entity entity;
     Job job;
@@ -65,7 +65,8 @@ public class EntityLoaderTest extends AccumuloInputFormat {
 
 
     @Before
-    public void setup() throws IOException {
+    public void setup() throws IOException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
         job = Job.getInstance();
     }
 
@@ -109,17 +110,10 @@ public class EntityLoaderTest extends AccumuloInputFormat {
     @Test
     public void testSetLocation() throws URISyntaxException, IOException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException {
 
-        TemporaryFolder folder = new TemporaryFolder();
-        folder.create();
+        String zk = accumuloMiniClusterDriver.getZooKeepers();
+        String inst = accumuloMiniClusterDriver.getInstanceName();
 
-        MiniAccumuloCluster cluster = new MiniAccumuloCluster(folder.getRoot(), "");
-        cluster.start();
-
-        String zk = cluster.getZooKeepers();
-        String inst = cluster.getInstanceName();
-
-        Instance instance = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-        Connector conn = instance.getConnector("root", "".getBytes());
+        Connector conn = accumuloMiniClusterDriver.getConnector();
 
         conn.tableOperations().create(DEFAULT_IDX_TABLE_NAME);
         conn.tableOperations().create(DEFAULT_SHARD_TABLE_NAME);
@@ -132,30 +126,27 @@ public class EntityLoaderTest extends AccumuloInputFormat {
         loader.setLocation(location.toString(), job);   // make sure we don't fail if setLocation() called more than once
 
 
-        cluster.stop();
-        folder.delete();
-
         assertEquals(true, isConnectorInfoSet(job));
         assertEquals("root", getPrincipal(job));
-        assertEquals(new PasswordToken(""), getAuthenticationToken(job));
+        assertEquals(new PasswordToken(accumuloMiniClusterDriver.getRootPassword()), getAuthenticationToken(job));
         assertEquals(inst, getInstance(job).getInstanceName());
         assertEquals(zk, getInstance(job).getZooKeepers());
         assertEquals(DEFAULT_SHARD_TABLE_NAME, getInputTableName(job));
 
     }
 
-    private void setUpJob() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException, IOException {
-        Instance instance = new MockInstance("instName");
-        Connector connector = instance.getConnector("root", "".getBytes());
+    private void setUpJob() throws Exception {
+        Connector connector = accumuloMiniClusterDriver.getConnector();
         AccumuloEntityStore store = new AccumuloEntityStore(connector);
         entity = EntityBuilder.create("myType", UUID.randomUUID().toString())
             .attr(new Attribute("key1", "val1"))
             .attr(new Attribute("key2", false))
             .build();
         store.save(singleton(entity));
+        store.flush();
 
-        EntityInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
-        EntityInputFormat.setMockInstance(job, "instName");
+        EntityInputFormat.setInputInfo(job, "root", accumuloMiniClusterDriver.getRootPassword().getBytes(), new Authorizations());
+        EntityInputFormat.setZooKeeperInstance(job, accumuloMiniClusterDriver.getClientConfiguration());
         EntityInputFormat.setQueryInfo(job, Collections.singleton("myType"),
                 QueryBuilder.create().eq("key1", "val1").build(), DEFAULT_SHARD_BUILDER, LEXI_TYPES);
 

@@ -405,13 +405,26 @@ limitations under the License.
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
-            <configuration>
-              <systemPropertyVariables>
-                <accumulo.minicluster.instance.name>${accumulo.minicluster.instance.name}</accumulo.minicluster.instance.name>
-                <accumulo.minicluster.root.password>${$accumulo.minicluster.root.password}</accumulo.minicluster.root.password>
-                <accumulo.minicluster.zookeeper.port>${accumulo.minicluster.zookeeper.port}</accumulo.minicluster.zookeeper.port>
-              </systemPropertyVariables>
-            </configuration>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <systemPropertyVariables>
+                    <accumulo.minicluster.instance.name>${accumulo.minicluster.instance.name}</accumulo.minicluster.instance.name>
+                    <accumulo.minicluster.root.password>${$accumulo.minicluster.root.password}</accumulo.minicluster.root.password>
+                    <accumulo.minicluster.zookeeper.port>${accumulo.minicluster.zookeeper.port}</accumulo.minicluster.zookeeper.port>
+                  </systemPropertyVariables>
+                  <includes>
+                    <include>**/*IT.java</include>
+                  </includes>
+                  <skipTests>${skipTests}</skipTests>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
           <plugin>
             <groupId>com.google.code.sortpom</groupId>

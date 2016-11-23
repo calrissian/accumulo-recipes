@@ -39,10 +39,9 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
@@ -52,18 +51,28 @@ import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.json.util.store.JsonAttributeStore.FlattenedLevelsComparator;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * A real-world example to test storage/query of twitter json.
  * @throws Exception
  */
-public class JsonEventStoreTest {
+public class JsonEventStoreIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     private static FlattenedLevelsComparator comparator = new FlattenedLevelsComparator();
 
     private EventStore store;
     private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Before
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableNotFoundException, TableExistsException {
+        accumuloMiniClusterDriver.deleteAllTables();
+        store = new AccumuloEventStore(getConnector());
+    }
 
     @Test
     public void testTwitterJson() throws Exception {
@@ -143,12 +152,7 @@ public class JsonEventStoreTest {
     }
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance("jsonTest").getConnector("root", new PasswordToken(""));
-    }
-
-    @Before
-    public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        store = new AccumuloEventStore(getConnector());
+        return accumuloMiniClusterDriver.getConnector();
     }
 
 

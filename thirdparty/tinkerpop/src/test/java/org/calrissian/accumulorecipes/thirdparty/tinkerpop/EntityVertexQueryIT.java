@@ -40,6 +40,7 @@ import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.graphstore.impl.AccumuloEntityGraphStore;
 import org.calrissian.accumulorecipes.graphstore.model.EdgeEntity;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityEdge;
 import org.calrissian.accumulorecipes.thirdparty.tinkerpop.model.EntityVertex;
 import org.calrissian.mango.collect.CloseableIterable;
@@ -50,9 +51,13 @@ import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-public class EntityVertexQueryTest {
+public class EntityVertexQueryIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     AccumuloEntityGraphStore entityGraphStore;
     EntityGraph graph;
@@ -70,9 +75,9 @@ public class EntityVertexQueryTest {
     }
 
     @Before
-    public void start() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        Instance instance = new MockInstance();
-        connector = instance.getConnector("root", "".getBytes());
+    public void start() throws Exception {
+        connector = accumuloMiniClusterDriver.getConnector();
+        accumuloMiniClusterDriver.setRootAuths(new Authorizations("U","ADMIN"));
         entityGraphStore = new AccumuloEntityGraphStore(connector);
         graph = new EntityGraph(entityGraphStore, Sets.newHashSet("vertexType1", "vertexType2"),
                 Sets.newHashSet("edgeType1", "edgeType2"),
@@ -120,6 +125,7 @@ public class EntityVertexQueryTest {
                 .build();
 
         entityGraphStore.save(Arrays.asList(vertex1, vertex2, vertex3, edge, edge2, edge3));
+        entityGraphStore.flush();
     }
 
 

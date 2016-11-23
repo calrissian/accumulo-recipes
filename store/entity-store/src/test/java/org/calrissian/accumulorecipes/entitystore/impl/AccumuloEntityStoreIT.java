@@ -44,6 +44,7 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.entitystore.EntityStore;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
@@ -54,25 +55,28 @@ import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-public class AccumuloEntityStoreTest {
+public class AccumuloEntityStoreIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     private EntityStore store;
+
     private Connector connector;
 
-    private Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance().getConnector("root", "".getBytes());
-    }
+
     private Map<String, String> meta = new MetadataBuilder().setVisibility("A").build();
     private Map<String, String> meta_b = new MetadataBuilder().setVisibility("B").build();
     private Auths DEFAULT_AUTHS = new Auths("A");
 
     @Before
     public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        connector = getConnector();
-        connector.securityOperations().createLocalUser("root", new PasswordToken(""));
-        connector.securityOperations().changeUserAuthorizations("root", new Authorizations("A"));
+        accumuloMiniClusterDriver.deleteAllTables();
+        connector = accumuloMiniClusterDriver.getConnector();
+        connector.securityOperations().changeUserAuthorizations("root", new Authorizations("A","B"));
         store = new AccumuloEntityStore(connector);
     }
 
@@ -90,6 +94,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Scanner scanner = connector.createScanner(DEFAULT_SHARD_TABLE_NAME, new Authorizations());
         for (Map.Entry<Key, Value> entry : scanner) {
@@ -109,7 +114,7 @@ public class AccumuloEntityStoreTest {
 
 
     @Test
-    public void testGet_withVisibilities() {
+    public void testGet_withVisibilities() throws Exception {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
@@ -124,6 +129,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         List<EntityIdentifier> indexes = asList(new EntityIdentifier[] {
             new EntityIdentifier(entity.getType(), entity.getId()),
@@ -138,7 +144,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testVisibilityForQuery_noResults() {
+    public void testVisibilityForQuery_noResults() throws Exception {
 
       Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
@@ -153,6 +159,7 @@ public class AccumuloEntityStoreTest {
           .build();
 
       store.save(asList(entity, entity2));
+      store.flush();
 
       Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
@@ -164,7 +171,7 @@ public class AccumuloEntityStoreTest {
 
 
     @Test
-    public void testVisibilityForQuery_resultsReturned() {
+    public void testVisibilityForQuery_resultsReturned() throws Exception {
 
       Map<String, String> canSee = new MetadataBuilder().setVisibility("A&B").build();
       Map<String, String> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
@@ -182,6 +189,7 @@ public class AccumuloEntityStoreTest {
           .build();
 
       store.save(asList(entity, entity2));
+      store.flush();
 
       Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
@@ -208,6 +216,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Scanner scanner = connector.createScanner(DEFAULT_SHARD_TABLE_NAME, new Authorizations());
         for (Map.Entry<Key, Value> entry : scanner) {
@@ -225,7 +234,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQueryKeyNotInIndex() {
+    public void testQueryKeyNotInIndex() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
@@ -238,6 +247,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().eq("key5", "val5").end().build();
 
@@ -248,7 +258,7 @@ public class AccumuloEntityStoreTest {
 
 
     @Test
-    public void testQueryRangeNotInIndex() {
+    public void testQueryRangeNotInIndex() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
@@ -261,6 +271,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().range("key5", 0, 5).end().build();
 
@@ -285,6 +296,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         CloseableIterable<Entity> actualEvent = store.get(singletonList(new EntityIdentifier("type", entity.getId())),
                 singleton("key1"), DEFAULT_AUTHS);
@@ -308,6 +320,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
@@ -335,6 +348,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
@@ -400,6 +414,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node query = QueryBuilder.create().eq("key1", "val1").build();
 
@@ -420,13 +435,14 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_has() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(entity));
+        store.flush();
 
         Node node = QueryBuilder.create().has("key1").build();
 
@@ -436,13 +452,14 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQuery_hasNot() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_hasNot() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(entity));
+        store.flush();
 
         Node node = QueryBuilder.create().has("key2").build();
 
@@ -452,13 +469,14 @@ public class AccumuloEntityStoreTest {
 
 
     @Test
-    public void testQuery_in_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_in_noResults() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(entity));
+        store.flush();
 
         Node node = QueryBuilder.create().in("key1", "val2", "val3", "val4").build();
 
@@ -467,13 +485,14 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQuery_in_results() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_in_results() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(entity));
+        store.flush();
 
         Node node = QueryBuilder.create().and().in("key1", "val1", "val2", "val3").eq("key1", "val1").end().build();
 
@@ -482,13 +501,14 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQuery_notIn_noResults() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_notIn_noResults() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(entity));
+        store.flush();
 
         Node node = QueryBuilder.create().notIn("key1", "val1", "val2", "val3").build();
 
@@ -497,7 +517,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQuery_greaterThan() {
+    public void testQuery_greaterThan() throws Exception {
 
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("key1", 5, meta))
@@ -508,6 +528,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node node = QueryBuilder.create().greaterThan("key1", 4).build();
 
@@ -526,7 +547,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQuery_greaterThanEq() {
+    public void testQuery_greaterThanEq() throws Exception {
 
 
         Entity entity = EntityBuilder.create("type", "id")
@@ -538,6 +559,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node node = QueryBuilder.create().greaterThanEq("key1", 4).build();
 
@@ -556,7 +578,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testQuery_lessThan() {
+    public void testQuery_lessThan() throws Exception {
 
 
         Entity entity = EntityBuilder.create("type", "id")
@@ -568,6 +590,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node node = QueryBuilder.create().lessThan("key1", 11).build();
 
@@ -587,7 +610,7 @@ public class AccumuloEntityStoreTest {
 
 
     @Test
-    public void testQuery_lessThanEq() throws TableNotFoundException {
+    public void testQuery_lessThanEq() throws Exception {
 
 
         Entity entity = EntityBuilder.create("type", "id")
@@ -599,6 +622,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2));
+        store.flush();
 
         Node node = QueryBuilder.create().lessThanEq("key1", 11).build();
 
@@ -619,7 +643,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void testKeys() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testKeys() throws Exception {
         Entity entity = EntityBuilder.create("type", "id")
             .attr(new Attribute("hasIp", "true", meta))
             .attr(new Attribute("ip", "1.1.1.1", meta))
@@ -636,6 +660,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2, entity3));
+        store.flush();
 
         CloseableIterable<Pair<String, String>> keys = store.uniqueKeys("", "type", DEFAULT_AUTHS);
 
@@ -684,6 +709,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(singleton(entity));
+        store.flush();
 
         Node query = QueryBuilder.create().and().eq("hasIp", "true").end().build();
         Iterable<Entity> entities = store.query(newHashSet(new String[] {"type"}), query, null, DEFAULT_AUTHS);
@@ -711,6 +737,7 @@ public class AccumuloEntityStoreTest {
             .build();
 
         store.save(asList(entity, entity2, entity3));
+        store.flush();
 
         Node query = QueryBuilder.create()
                 .and()
@@ -743,7 +770,7 @@ public class AccumuloEntityStoreTest {
     }
 
     @Test
-    public void test_Delete() {
+    public void test_Delete() throws Exception {
 
         for (int i = 0; i < 10; i++) {
             Entity entity = EntityBuilder.create("type", "type_"+i)
@@ -754,6 +781,8 @@ public class AccumuloEntityStoreTest {
             store.save(singleton(entity));
         }
 
+        store.flush();
+
 
         List<EntityIdentifier> typesAndIds = Arrays.asList(new EntityIdentifier("type", "type_0"),
                 new EntityIdentifier("type", "type_1"), new EntityIdentifier("type", "type_2"));
@@ -761,6 +790,7 @@ public class AccumuloEntityStoreTest {
         assertEquals(3,Iterables.size(actualEntities));
 
         store.delete(Lists.newArrayList(store.get(typesAndIds,new Auths("A"))));
+        store.flush();
 
         Iterable<Entity> actualEntitiesAfterDelete = store.get(typesAndIds, null, new Auths("A"));
         assertEquals(0,Iterables.size(actualEntitiesAfterDelete));
