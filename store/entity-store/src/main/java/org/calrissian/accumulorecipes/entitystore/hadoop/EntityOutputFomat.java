@@ -20,7 +20,6 @@ import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.lib.impl.OutputConfigurator;
 import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
-import org.apache.accumulo.core.util.ArgumentChecker;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
@@ -37,6 +36,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singleton;
 
 public class EntityOutputFomat extends OutputFormat {
@@ -64,7 +64,8 @@ public class EntityOutputFomat extends OutputFormat {
     }
 
     public static void setTables(Job job, String indexTable, String shardTable) throws AccumuloSecurityException {
-        ArgumentChecker.notNull(indexTable, shardTable);
+        checkNotNull(indexTable);
+        checkNotNull(shardTable);
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEntityStoreTableOptions.INDEX_TABLE), indexTable);
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEntityStoreTableOptions.SHARD_TABLE), shardTable);
     }
@@ -90,7 +91,7 @@ public class EntityOutputFomat extends OutputFormat {
     }
 
     public static <U> void setTypeRegistry(Job job, TypeRegistry<U> typeRegistry) throws AccumuloSecurityException, IOException {
-        ArgumentChecker.notNull(typeRegistry);
+        checkNotNull(typeRegistry);
         job.getConfiguration().set(enumToConfKey(CLASS, TypeRegistryInfo.TYPE_REGISTRY), new String(Serializables.toBase64(typeRegistry), "UTF-8"));
     }
 
@@ -103,7 +104,7 @@ public class EntityOutputFomat extends OutputFormat {
     }
 
     public static void setStoreConfig(Job job, StoreConfig storeConfig) throws AccumuloSecurityException {
-        ArgumentChecker.notNull(storeConfig);
+        checkNotNull(storeConfig);
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEntityStoreStoreConfigOptions.MAX_QUERY_THREADS), storeConfig.getMaxQueryThreads() + "");
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEntityStoreStoreConfigOptions.MAX_MEMORY), storeConfig.getMaxMemory() + "");
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEntityStoreStoreConfigOptions.MAX_LATENCY), storeConfig.getMaxLatency() + "");
