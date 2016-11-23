@@ -27,6 +27,7 @@ limitations under the License.
     <module>blob-store</module>
     <module>changelog-store</module>
     <module>entity-store</module>
+    <module>json-event-store</module>
     <module>event-store</module>
     <module>geospatial-store</module>
     <module>graph-store</module>

@@ -282,7 +282,6 @@ public abstract class QfdHelper<T extends Entity> {
         checkNotNull(query);
         checkNotNull(auths);
 
-
         QueryPlanner queryPlan = new QueryPlanner(query, globalIndexVisitor, typeRegistry);
 
         if (isEmpty(queryPlan.getOptimizedQuery()))
