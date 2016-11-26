@@ -110,7 +110,7 @@ public class EventLoaderIT extends AccumuloInputFormat {
         conn.tableOperations().create("eventStore_index");
         conn.tableOperations().create("eventStore_shard");
         Job job = new Job();
-        URI location = new URI("event://eventStore_index/eventStore_shard?user=root&pass=&inst=" +
+        URI location = new URI("event://eventStore_index/eventStore_shard?user=root&pass="+accumuloMiniClusterDriver.getRootPassword()+"&inst=" +
                 inst + "&zk=" + zk  +
                 "&start=2014-01-01&end=2014-01-02&auths=&types=type1,type2");
         EventLoader loader = new EventLoader("q.eq('key','val')");

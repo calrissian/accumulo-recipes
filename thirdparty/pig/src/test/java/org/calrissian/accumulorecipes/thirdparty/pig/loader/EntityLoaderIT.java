@@ -118,7 +118,7 @@ public class EntityLoaderIT extends AccumuloInputFormat {
         conn.tableOperations().create(DEFAULT_IDX_TABLE_NAME);
         conn.tableOperations().create(DEFAULT_SHARD_TABLE_NAME);
         Job job = new Job();
-        URI location = new URI("entity://eventStore_index/eventStore_shard?user=root&pass=&inst=" +
+        URI location = new URI("entity://eventStore_index/eventStore_shard?user=root&pass="+accumuloMiniClusterDriver.getRootPassword()+"&inst=" +
                 inst + "&zk=" + zk  +
                 "&types=myType&auths=");
         EntityLoader loader = new EntityLoader("q.eq('key','val')");

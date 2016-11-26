@@ -70,7 +70,7 @@ public class MetricsLoaderIT extends AccumuloInputFormat {
 
 
         MetricFeatureLoader loader = new MetricFeatureLoader();
-        setLocation(loader, new Job(), "mockInst", "mockZk");
+        setLocation(loader, new Job(), "mockInst", "mockZk",accumuloMiniClusterDriver.getRootPassword());
         loader.prepareToRead(mockRecordReader, new PigSplit());
 
         org.apache.pig.data.Tuple t;
@@ -97,7 +97,7 @@ public class MetricsLoaderIT extends AccumuloInputFormat {
         Job job = new Job();
 
         MetricFeatureLoader loader = new MetricFeatureLoader();
-        setLocation(loader, job, inst, zk);
+        setLocation(loader, job, inst, zk,accumuloMiniClusterDriver.getRootPassword());
 
         assertEquals(true, isConnectorInfoSet(job));
         assertEquals("root", getPrincipal(job));
@@ -122,8 +122,8 @@ public class MetricsLoaderIT extends AccumuloInputFormat {
 
     }
 
-    private void setLocation(LoadFunc loader, Job job, String inst, String zk) throws IOException, URISyntaxException {
-        URI location = new URI("metrics://metrics?user=root&pass=&inst=" +
+    private void setLocation(LoadFunc loader, Job job, String inst, String zk, String rootPass) throws IOException, URISyntaxException {
+        URI location = new URI("metrics://metrics?user=root&pass="+rootPass+"&inst=" +
                 inst + "&zk=" + zk  +
                 "&timeUnit=MINUTES&group=group&start=2014-01-01&end=2014-01-02&auths=");
         loader.setLocation(location.toString(), job);
