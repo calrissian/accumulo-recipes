@@ -22,6 +22,9 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.commons.io.FileUtils;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +92,23 @@ public class AccumuloMiniClusterDriver extends ExternalResource implements Close
         }
     }
 
+    private Boolean isZookeeperRunning(String host, int timeout) {
+        final CountDownLatch connectedSignal = new CountDownLatch(1);
+        try {
+            new ZooKeeper(host, timeout,
+                        new Watcher() {
+                            public void process(WatchedEvent event) {
+                                if (event.getState() == Event.KeeperState.SyncConnected) {
+                                    connectedSignal.countDown();
+                                }
+                            }
+                        });
+            return connectedSignal.await(timeout,TimeUnit.MILLISECONDS);
+        } catch (Throwable e) {
+            return Boolean.FALSE;
+        }
+    }
+
     private void initConfig() {
         tempDir = Files.createTempDir();
         miniAccumuloConfig = new MiniAccumuloConfig(tempDir,ROOT_PASSWORD);
@@ -103,23 +123,8 @@ public class AccumuloMiniClusterDriver extends ExternalResource implements Close
                 .withZkHosts("localhost:" + ZOOKEEPER_PORT);
 
         if (zkTimeout!=null && zkTimeout!=-1) {
-            clientConfiguration.withZkTimeout(zkTimeout);
-            ExecutorService service = Executors.newSingleThreadExecutor();
-            Future<ZooKeeperInstance> future = service.submit(new Callable<ZooKeeperInstance>() {
-                @Override
-                public ZooKeeperInstance call() throws Exception {
-                    log.info("trying to try to get zookeperInstance");
-                    return new ZooKeeperInstance(clientConfiguration);
-                }
-            });
-            try {
-                log.info("about to try to get zookeperInstance");
-                instance = future.get(zkTimeout, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-               throw new AccumuloException(e);
-            } finally {
-                future.cancel(true);
-                service.shutdownNow();
+            if (isZookeeperRunning("localhost:"+ZOOKEEPER_PORT,zkTimeout)) {
+                instance = new ZooKeeperInstance(clientConfiguration);
             }
         } else {
             instance = new ZooKeeperInstance(clientConfiguration);

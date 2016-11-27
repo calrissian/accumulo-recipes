@@ -47,10 +47,7 @@ import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.EventIdentifier;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 public class AccumuloEventStoreIT {
 
@@ -71,6 +68,11 @@ public class AccumuloEventStoreIT {
         connector = accumuloMiniClusterDriver.getConnector();
         connector.securityOperations().changeUserAuthorizations("root", new Authorizations("A","B"));
         store = new AccumuloEventStore(connector);
+    }
+
+    @After
+    public void close() throws Exception {
+        store.shutdown();
     }
 
     @Test

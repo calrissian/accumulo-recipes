@@ -54,6 +54,7 @@ import org.calrissian.mango.domain.Pair;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -78,6 +79,11 @@ public class AccumuloEntityStoreIT {
         connector = accumuloMiniClusterDriver.getConnector();
         connector.securityOperations().changeUserAuthorizations("root", new Authorizations("A","B"));
         store = new AccumuloEntityStore(connector);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        store.shutdown();
     }
 
     @Test
