@@ -355,7 +355,7 @@ limitations under the License.
             <artifactId>build-helper-maven-plugin</artifactId>
             <executions>
               <execution>
-                <id>reserve-tomcat-port</id>
+                <id>reserve-zookeper-port</id>
                 <goals>
                   <goal>reserve-network-port</goal>
                 </goals>
