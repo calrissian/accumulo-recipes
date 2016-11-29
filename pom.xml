@@ -278,6 +278,19 @@ limitations under the License.
     </pluginManagement>
     <plugins>
       <plugin>
+        <groupId>com.google.code.sortpom</groupId>
+        <artifactId>maven-sortpom-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>sort-pom</id>
+            <goals>
+              <goal>sort</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <executions>
@@ -443,19 +456,6 @@ limitations under the License.
                   </includes>
                   <skipTests>${skipTests}</skipTests>
                 </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.google.code.sortpom</groupId>
-            <artifactId>maven-sortpom-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>sort-pom</id>
-                <goals>
-                  <goal>sort</goal>
-                </goals>
-                <phase>verify</phase>
               </execution>
             </executions>
           </plugin>
