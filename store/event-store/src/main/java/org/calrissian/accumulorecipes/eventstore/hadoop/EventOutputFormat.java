@@ -18,7 +18,6 @@ package org.calrissian.accumulorecipes.eventstore.hadoop;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.lib.impl.OutputConfigurator;
 import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
-import org.apache.accumulo.core.util.ArgumentChecker;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
@@ -31,6 +30,7 @@ import org.calrissian.mango.types.TypeRegistry;
 
 import java.io.IOException;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singleton;
 
 public class EventOutputFormat extends OutputFormat<Text, EventWritable> {
@@ -55,7 +55,7 @@ public class EventOutputFormat extends OutputFormat<Text, EventWritable> {
     }
 
     public static void setTables(Job job, String indexTable, String shardTable) throws AccumuloSecurityException {
-        ArgumentChecker.notNull(indexTable, shardTable);
+        checkNotNull(indexTable, shardTable);
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEventStoreTableOptions.INDEX_TABLE), indexTable);
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEventStoreTableOptions.SHARD_TABLE), shardTable);
     }
@@ -69,7 +69,7 @@ public class EventOutputFormat extends OutputFormat<Text, EventWritable> {
     }
 
     public static void setStoreConfig(Job job, StoreConfig storeConfig) throws AccumuloSecurityException {
-        ArgumentChecker.notNull(storeConfig);
+        checkNotNull(storeConfig);
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEventStoreStoreConfigOptions.MAX_QUERY_THREADS), storeConfig.getMaxQueryThreads()+"");
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEventStoreStoreConfigOptions.MAX_MEMORY), storeConfig.getMaxMemory()+"");
         job.getConfiguration().set(enumToConfKey(CLASS, AccumuloEventStoreStoreConfigOptions.MAX_LATENCY), storeConfig.getMaxLatency()+"");
@@ -77,7 +77,7 @@ public class EventOutputFormat extends OutputFormat<Text, EventWritable> {
     }
 
     public static <U> void setTypeRegistry(Job job, TypeRegistry<U> typeRegistry) throws AccumuloSecurityException, IOException {
-        ArgumentChecker.notNull(typeRegistry);
+        checkNotNull(typeRegistry);
         job.getConfiguration().set(enumToConfKey(CLASS, TypeRegistryInfo.TYPE_REGISTRY),  new String(Serializables.toBase64(typeRegistry),"UTF-8"));
     }
 

@@ -20,7 +20,6 @@ import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
@@ -30,10 +29,11 @@ import org.calrissian.accumulorecipes.featurestore.hadoop.FeaturesInputFormat;
 import org.calrissian.accumulorecipes.featurestore.impl.AccumuloFeatureStore;
 import org.calrissian.accumulorecipes.featurestore.model.Metric;
 import org.calrissian.accumulorecipes.featurestore.model.MetricFeature;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.mango.domain.Pair;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,13 +45,17 @@ import java.util.List;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 
-public class MetricsLoaderTest extends AccumuloInputFormat {
+public class MetricsLoaderIT extends AccumuloInputFormat {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     MetricFeature metric;
     Job job;
 
     @Before
-    public void setup() throws IOException {
+    public void setup() throws IOException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
         job = new Job();
     }
 
@@ -66,7 +70,7 @@ public class MetricsLoaderTest extends AccumuloInputFormat {
 
 
         MetricFeatureLoader loader = new MetricFeatureLoader();
-        setLocation(loader, new Job(), "mockInst", "mockZk");
+        setLocation(loader, new Job(), "mockInst", "mockZk",accumuloMiniClusterDriver.getRootPassword());
         loader.prepareToRead(mockRecordReader, new PigSplit());
 
         org.apache.pig.data.Tuple t;
@@ -84,52 +88,42 @@ public class MetricsLoaderTest extends AccumuloInputFormat {
     @Test
     public void testSetLocation() throws URISyntaxException, IOException, InterruptedException, AccumuloSecurityException, AccumuloException, TableExistsException {
 
-        TemporaryFolder folder = new TemporaryFolder();
-        folder.create();
+        String zk = accumuloMiniClusterDriver.getZooKeepers();
+        String inst = accumuloMiniClusterDriver.getInstanceName();
 
-        MiniAccumuloCluster cluster = new MiniAccumuloCluster(folder.getRoot(), "");
-        cluster.start();
-
-        String zk = cluster.getZooKeepers();
-        String inst = cluster.getInstanceName();
-
-        Instance instance = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-        Connector conn = instance.getConnector("root", "".getBytes());
+        Connector conn = accumuloMiniClusterDriver.getConnector();
 
         conn.tableOperations().create("features");
         Job job = new Job();
 
         MetricFeatureLoader loader = new MetricFeatureLoader();
-        setLocation(loader, job, inst, zk);
-
-        cluster.stop();
-        folder.delete();
+        setLocation(loader, job, inst, zk,accumuloMiniClusterDriver.getRootPassword());
 
         assertEquals(true, isConnectorInfoSet(job));
         assertEquals("root", getPrincipal(job));
-        assertEquals(new PasswordToken(""), getAuthenticationToken(job));
+        assertEquals(new PasswordToken(accumuloMiniClusterDriver.getRootPassword()), getAuthenticationToken(job));
         assertEquals(zk, getInstance(job).getZooKeepers());
         assertEquals(inst, getInstance(job).getInstanceName());
         assertEquals("features", getInputTableName(job));
 
     }
 
-    private void setUpJob() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException, IOException {
-        Instance instance = new MockInstance("instName");
-        Connector connector = instance.getConnector("root", "".getBytes());
+    private void setUpJob() throws Exception {
+        Connector connector = accumuloMiniClusterDriver.getConnector();
         AccumuloFeatureStore store = new AccumuloFeatureStore(connector);
         store.initialize();
         metric = new MetricFeature(System.currentTimeMillis(), "group", "type", "name", "", new Metric(1));
         store.save(singleton(metric));
+        store.flush();
 
-        FeaturesInputFormat.setInputInfo(job, "root", "".getBytes(), new Authorizations());
-        FeaturesInputFormat.setMockInstance(job, "instName");
+        FeaturesInputFormat.setInputInfo(job, "root", accumuloMiniClusterDriver.getRootPassword().getBytes(), new Authorizations());
+        FeaturesInputFormat.setZooKeeperInstance(job, accumuloMiniClusterDriver.getClientConfiguration());
         FeaturesInputFormat.setQueryInfo(job, new Date(System.currentTimeMillis() - 50000), new Date(), TimeUnit.MINUTES, "group", "type", "name", MetricFeature.class);
 
     }
 
-    private void setLocation(LoadFunc loader, Job job, String inst, String zk) throws IOException, URISyntaxException {
-        URI location = new URI("metrics://metrics?user=root&pass=&inst=" +
+    private void setLocation(LoadFunc loader, Job job, String inst, String zk, String rootPass) throws IOException, URISyntaxException {
+        URI location = new URI("metrics://metrics?user=root&pass="+rootPass+"&inst=" +
                 inst + "&zk=" + zk  +
                 "&timeUnit=MINUTES&group=group&start=2014-01-01&end=2014-01-02&auths=");
         loader.setLocation(location.toString(), job);

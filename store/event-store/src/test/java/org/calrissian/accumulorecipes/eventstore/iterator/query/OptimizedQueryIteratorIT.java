@@ -17,18 +17,9 @@ package org.calrissian.accumulorecipes.eventstore.iterator.query;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchScanner;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -39,23 +30,27 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.iterators.BooleanLogicIterator;
 import org.calrissian.accumulorecipes.commons.iterators.EvaluatingIterator;
 import org.calrissian.accumulorecipes.commons.iterators.OptimizedQueryIterator;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Deprecated
-public class OptimizedQueryIteratorTest {
+public class OptimizedQueryIteratorIT {
 
-    private static Logger log = LoggerFactory.getLogger(OptimizedQueryIteratorTest.class);
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
+
+    private static Logger log = LoggerFactory.getLogger(OptimizedQueryIteratorIT.class);
 
     Connector connector;
 
     @Before
     public void setUp() throws AccumuloSecurityException, AccumuloException {
-
-        Instance instance = new MockInstance();
-        connector = instance.getConnector("user", "password".getBytes());
+        connector = accumuloMiniClusterDriver.getConnector();
+        accumuloMiniClusterDriver.setRootAuths(new Authorizations("U"));
     }
 
 
@@ -64,8 +59,14 @@ public class OptimizedQueryIteratorTest {
 
         connector.tableOperations().create("event_index");
         connector.tableOperations().create("event_shard");
-        BatchWriter writer = connector.createBatchWriter("event_shard", 1000, 1000, 1);
-        BatchWriter indexWriter = connector.createBatchWriter("event_index", 1000, 1000, 1);
+        BatchWriter writer = connector.createBatchWriter("event_shard", new BatchWriterConfig()
+                                                                        .setMaxMemory(1000)
+                                                                        .setMaxLatency(1, TimeUnit.SECONDS)
+                                                                        .setMaxWriteThreads(1));
+        BatchWriter indexWriter = connector.createBatchWriter("event_index", new BatchWriterConfig()
+                                                                        .setMaxMemory(1000)
+                                                                        .setMaxLatency(1, TimeUnit.SECONDS)
+                                                                        .setMaxWriteThreads(1));
 
         Mutation m = new Mutation("0");
         m.put(new Text("auuid"), new Text("key1\0string\u000100000005"), new ColumnVisibility("U"), new Value("".getBytes()));

@@ -20,10 +20,13 @@ import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.List;
@@ -31,10 +34,19 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
-public class AccumuloLastNStoreTest {
+public class AccumuloLastNStoreIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
+
 
     public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance().getConnector("root", "".getBytes());
+        return accumuloMiniClusterDriver.getConnector();
+    }
+
+    @Before
+    public void setup() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
     }
 
     @Test
@@ -65,6 +77,8 @@ public class AccumuloLastNStoreTest {
         lastNStore.put("index1", entry2);
         lastNStore.put("index1", entry3);
         lastNStore.put("index1", entry4);
+
+        lastNStore.flush();
 
         List<Event> results = Lists.newArrayList(lastNStore.get("index1", Auths.EMPTY));
         assertEquals(3, results.size());

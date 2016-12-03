@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (C) 2013 The Calrissian Authors
+Copyright (C) 2016 The Calrissian Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,50 +18,41 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.calrissian.accumulorecipes</groupId>
-    <artifactId>store</artifactId>
+    <artifactId>accumulorecipes-parent</artifactId>
     <version>2.1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>lastn-store</artifactId>
-  <packaging>jar</packaging>
-  <name>Calrissian Accumulo Recipes LastN Store</name>
-  <description>The last-n store provides a window into data being stored that can is evicted by count.</description>
+  <groupId>org.calrissian.accumulorecipes</groupId>
+  <artifactId>minicluster-test-driver</artifactId>
+  <name>Calrissian Accumulo Minicluster Test Driver</name>
+  <description>Accumulo Minicluster Driver for testing</description>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.accumulo</groupId>
+        <artifactId>accumulo-minicluster</artifactId>
+        <version>${accumulo.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
-
-    <!-- Accumulo Recipes -->
-    <dependency>
-      <groupId>org.calrissian.accumulorecipes</groupId>
-      <artifactId>commons</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- Hadoop / Accumulo -->
     <dependency>
       <groupId>org.apache.accumulo</groupId>
-      <artifactId>accumulo-core</artifactId>
+      <artifactId>accumulo-minicluster</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <scope>provided</scope>
     </dependency>
-
-    <!-- JUNIT -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>provided</scope>
     </dependency>
-
-    <!-- Joda Time -->
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.calrissian.accumulorecipes</groupId>
-      <artifactId>minicluster-test-driver</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 </project>

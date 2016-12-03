@@ -27,33 +27,34 @@ import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
-import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.BaseEvent;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-public class AccumuloTemporalLastNTest {
+public class AccumuloTemporalLastNIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     Connector connector;
     AccumuloTemporalLastNStore store;
 
     @Before
     public void setUp() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        Instance instance = new MockInstance();
-        connector = instance.getConnector("root", "".getBytes());
+        accumuloMiniClusterDriver.deleteAllTables();
+        connector = accumuloMiniClusterDriver.getConnector();
         store = new AccumuloTemporalLastNStore(connector);
     }
 
     @Test
-    public void testMultipleEntries_sameGroup() throws TableNotFoundException {
+    public void testMultipleEntries_sameGroup() throws Exception {
 
         Event testEntry = EventBuilder.create("", randomUUID().toString(), currentTimeMillis())
                 .attr("key1", "val1")
@@ -67,6 +68,8 @@ public class AccumuloTemporalLastNTest {
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
+
+        store.flush();
 
         AccumuloTestUtils.dumpTable(connector, "temporalLastN");
 
@@ -86,7 +89,7 @@ public class AccumuloTemporalLastNTest {
     }
 
     @Test
-    public void testTimeLimit_downToMillis() throws TableNotFoundException {
+    public void testTimeLimit_downToMillis() throws Exception {
 
         long curTime = currentTimeMillis();
         Event testEntry = EventBuilder.create("", randomUUID().toString(), curTime)
@@ -101,6 +104,8 @@ public class AccumuloTemporalLastNTest {
 
         store.put("group", testEntry);
         store.put("group", testEntry2);
+
+        store.flush();
 
         Iterable<Event> results = store.get(new Date(curTime - 4999), new Date(curTime + 50000),
             singleton("group"), 2, Auths.EMPTY);
@@ -120,7 +125,7 @@ public class AccumuloTemporalLastNTest {
     }
 
     @Test
-    public void testMultipleEntries_differentGroups() throws TableNotFoundException {
+    public void testMultipleEntries_differentGroups() throws Exception {
 
         Event testEntry = EventBuilder.create("", randomUUID().toString(), currentTimeMillis())
                 .attr("key1", "val1")
@@ -134,6 +139,8 @@ public class AccumuloTemporalLastNTest {
 
         store.put("group", testEntry);
         store.put("group1", testEntry2);
+
+        store.flush();
 
         AccumuloTestUtils.dumpTable(connector, "temporalLastN");
 

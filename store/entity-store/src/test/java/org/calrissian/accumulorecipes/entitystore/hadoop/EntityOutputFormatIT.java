@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Calrissian Authors
+ * Copyright (C) 2013 The Calrissian Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.calrissian.accumulorecipes.eventstore.hadoop;
+package org.calrissian.accumulorecipes.entitystore.hadoop;
 
 import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
@@ -31,17 +30,18 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.domain.StoreConfig;
-import org.calrissian.accumulorecipes.commons.hadoop.EventWritable;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
-import org.calrissian.accumulorecipes.eventstore.EventStore;
-import org.calrissian.accumulorecipes.eventstore.impl.AccumuloEventStore;
+import org.calrissian.accumulorecipes.entitystore.EntityStore;
+import org.calrissian.accumulorecipes.entitystore.impl.AccumuloEntityStore;
+import org.calrissian.accumulorecipes.entitystore.model.EntityWritable;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
+import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.event.Event;
-import org.calrissian.mango.domain.event.EventBuilder;
-import org.calrissian.mango.types.LexiTypeEncoders;
-import org.calrissian.mango.types.TypeRegistry;
+import org.calrissian.mango.domain.entity.Entity;
+import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -51,44 +51,42 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 
-public class EventOutputFormatTest {
+public class EntityOutputFormatIT {
 
-    public static final String A = "A";
-    private static Map<String, String> META = new MetadataBuilder().setVisibility(A).build();
-    private static Auths DEFAULT_AUTHS = new Auths(A);
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     public static final String INST_NAME = "instName";
     public static final String PRINCIPAL = "root";
-    public static final String PASSWORD = "";
     public static final String VAL_1 = "VaL1";
     public static final String KEY_1 = "key1";
     public static final String TYPE = "type";
-    MockInstance mockInstance;
+
+    private static Map<String, String> meta = new MetadataBuilder().setVisibility("A").build();
+    private static Auths DEFAULT_AUTHS = new Auths("A");
+
+    Instance instance;
     Connector connector;
-
-    public static final TypeRegistry<String> TYPE_REGISTRY = new TypeRegistry<>(LexiTypeEncoders.stringEncoder());
-
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Before
-    public void before() throws AccumuloSecurityException, AccumuloException {
-        mockInstance =new MockInstance(INST_NAME);
-        connector = mockInstance.getConnector(PRINCIPAL, new PasswordToken(PASSWORD));
-        connector.securityOperations().changeUserAuthorizations("root", new Authorizations(A));
+    public void before() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
+        instance = accumuloMiniClusterDriver.getInstance();
+        connector = accumuloMiniClusterDriver.getConnector();
+        accumuloMiniClusterDriver.setRootAuths(new Authorizations("A"));
     }
 
     @Test
     public void mapReduceFromTextFile() throws IOException, AccumuloSecurityException, ClassNotFoundException, InterruptedException, TableExistsException, AccumuloException, TableNotFoundException {
-        EventStore eventStore = new AccumuloEventStore(connector);
+        EntityStore eventStore = new AccumuloEntityStore(connector);
         Job job = Job.getInstance(new Configuration());
         runJob(job,eventStore);
     }
@@ -98,28 +96,27 @@ public class EventOutputFormatTest {
         StoreConfig storeConfig = new StoreConfig(1,30L,30L,1);
         String tableIdx = "tableIdx";
         String shardTable = "table";
-        EventStore eventStore = new AccumuloEventStore.Builder(connector)
+        EntityStore eventStore = new AccumuloEntityStore.Builder(connector)
                 .setIndexTable(tableIdx)
                 .setShardTable(shardTable)
                 .setStoreConfig(storeConfig)
-                .setTypeRegistry(TYPE_REGISTRY)
                 .build();
         Job job = Job.getInstance(new Configuration());
-        EventOutputFormat.setTables(job, tableIdx, shardTable);
-        EventOutputFormat.setStoreConfig(job,storeConfig);
-        EventOutputFormat.setTypeRegistry(job,TYPE_REGISTRY);
+        EntityOutputFomat.setTables(job, tableIdx, shardTable);
+        EntityOutputFomat.setStoreConfig(job,storeConfig);
         runJob(job,eventStore);
     }
 
-    public void runJob(Job job, EventStore eventStore) throws IOException, AccumuloSecurityException, ClassNotFoundException, InterruptedException, TableExistsException, AccumuloException, TableNotFoundException {
+
+    public void runJob(Job job, EntityStore entityStore) throws IOException, AccumuloSecurityException, ClassNotFoundException, InterruptedException, TableExistsException, AccumuloException, TableNotFoundException {
         File dir = temporaryFolder.newFolder("input");
 
         FileOutputStream fileOutputStream = new FileOutputStream(new File(dir,"uuids.txt"));
         PrintWriter printWriter = new PrintWriter(fileOutputStream);
-        int countTotalResults = 100;
+        int countTotalResults = 1000;
         try {
             for (int i = 0; i < countTotalResults; i++) {
-                printWriter.println(""+i);
+                printWriter.println(i+"");
             }
         } finally {
             printWriter.flush();
@@ -133,29 +130,32 @@ public class EventOutputFormatTest {
         Path inputPath = fs.makeQualified(new Path(dir.getAbsolutePath()));  // local path
 
 
-        EventOutputFormat.setMockInstance(job, INST_NAME);
-        EventOutputFormat.setConnectorInfo(job, PRINCIPAL, new PasswordToken(PASSWORD));
+        EntityOutputFomat.setZooKeeperInstance(job, accumuloMiniClusterDriver.getClientConfiguration());
+        EntityOutputFomat.setConnectorInfo(job, PRINCIPAL, new PasswordToken(accumuloMiniClusterDriver.getRootPassword()));
+
         job.setJarByClass(getClass());
         job.setMapperClass(TestMapper.class);
 
         job.setInputFormatClass(TextInputFormat.class);
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(EventWritable.class);
-        job.setOutputFormatClass(EventOutputFormat.class);
+        job.setMapOutputValueClass(EntityWritable.class);
+        job.setOutputFormatClass(EntityOutputFomat.class);
 
         FileInputFormat.setInputPaths(job, inputPath);
 
         job.submit();
         job.waitForCompletion(true);
 
-        Iterable<Event> itr = eventStore.query(new Date(currentTimeMillis() - 25000),
-                new Date(), Collections.singleton(TYPE), QueryBuilder.create().and().eq(KEY_1, VAL_1).end().build(), null, DEFAULT_AUTHS);
+        Node query = QueryBuilder.create().and().eq(KEY_1, VAL_1).end().build();
 
-        List<Event> queryResults = Lists.newArrayList(itr);
+        Iterable<Entity> itr = entityStore.query(Collections.singleton(TYPE), query, null, new Auths("A"));
+
+        List<Entity> queryResults = Lists.newArrayList(itr);
         assertEquals(countTotalResults,queryResults.size());
     }
 
-    public static class TestMapper extends Mapper<LongWritable, Text, Text, EventWritable> {
+
+    public static class TestMapper extends Mapper<LongWritable, Text, Text, EntityWritable> {
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -164,14 +164,12 @@ public class EventOutputFormatTest {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            Event event = EventBuilder.create(TYPE, key.toString(), System.currentTimeMillis())
-                    .attr(new Attribute(KEY_1, VAL_1, META))
-                    .attr(new Attribute("key2", "value2",META)).build();
+            Entity entity = EntityBuilder.create(TYPE, value.toString())
+                    .attr(new Attribute(KEY_1, VAL_1, meta))
+                    .attr(new Attribute("key2", "val2", meta))
+                    .build();
 
-            context.write(value,new EventWritable(event));
+            context.write(value,new EntityWritable(entity));
         }
     }
-
-
-
 }

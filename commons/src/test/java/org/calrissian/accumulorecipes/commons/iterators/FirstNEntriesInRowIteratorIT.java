@@ -24,33 +24,36 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import static org.calrissian.accumulorecipes.commons.util.RowEncoderUtil.decodeRow;
 import static org.junit.Assert.assertEquals;
 
-public class FirstNEntriesInRowIteratorTest {
+public class FirstNEntriesInRowIteratorIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
     Connector connector;
 
     @Before
-    public void setUp() throws AccumuloSecurityException, AccumuloException, TableExistsException {
-        Instance instance = new MockInstance();
-        connector = instance.getConnector("user", "".getBytes());
+    public void setUp() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+        accumuloMiniClusterDriver.deleteAllTables();
+        connector = accumuloMiniClusterDriver.getConnector();
         connector.tableOperations().create("test");
     }
 

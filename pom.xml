@@ -31,6 +31,7 @@ limitations under the License.
   <description>The Accumulo Recipes project aims to provide reusable services for architectures utilizing Apache
         Accumulo.</description>
   <modules>
+    <module>minicluster-test-driver</module>
     <module>commons</module>
     <module>examples</module>
     <module>store</module>
@@ -38,7 +39,9 @@ limitations under the License.
     <module>thirdparty</module>
   </modules>
   <properties>
-    <accumulo.version>1.6.1</accumulo.version>
+    <accumulo.minicluster.instance.name>test-instance</accumulo.minicluster.instance.name>
+    <accumulo.minicluster.root.password>secret</accumulo.minicluster.root.password>
+    <accumulo.version>1.8.0</accumulo.version>
     <commons.jexl.version>2.0.1</commons.jexl.version>
     <commons.kryo.version>2.24.0</commons.kryo.version>
     <commons.math.version>3.2</commons.math.version>
@@ -133,6 +136,11 @@ limitations under the License.
         <artifactId>nscala-time_2.10</artifactId>
         <version>${nscala.time.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.apache.accumulo</groupId>
+        <artifactId>accumulo-minicluster</artifactId>
+        <version>${accumulo.version}</version>
+      </dependency>
 
 
       <!-- Accumulo -->
@@ -161,12 +169,6 @@ limitations under the License.
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.apache.accumulo</groupId>
-        <artifactId>accumulo-minicluster</artifactId>
-        <version>${accumulo.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>com.tinkerpop.blueprints</groupId>
         <artifactId>blueprints-test</artifactId>
         <version>${tinkerpop.version}</version>
@@ -186,6 +188,16 @@ limitations under the License.
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>1.12</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>properties-maven-plugin</artifactId>
+          <version>1.0.0</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
             <source>1.7</source>
@@ -193,6 +205,11 @@ limitations under the License.
             <encoding>UTF-8</encoding>
             <optimize>true</optimize>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.accumulo</groupId>
+          <artifactId>accumulo-maven-plugin</artifactId>
+          <version>${accumulo.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -273,6 +290,25 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*IT.java</include>
+              </includes>
+              <skipTests>${skipTests}</skipTests>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <url>http://www.calrissian.org</url>
@@ -316,6 +352,116 @@ limitations under the License.
   </distributionManagement>
 
   <profiles>
+    <profile>
+      <id>with-mini-cluster</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.accumulo</groupId>
+          <artifactId>accumulo-minicluster</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>reserve-zookeper-port</id>
+                <goals>
+                  <goal>reserve-network-port</goal>
+                </goals>
+                <phase>process-resources</phase>
+                <configuration>
+                  <portNames>
+                    <portName>accumulo.minicluster.zookeeper.port</portName>
+                  </portNames>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>properties-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>set-system-properties</goal>
+                </goals>
+                <phase>process-resources</phase>
+                <configuration>
+                  <properties>
+                    <property>
+                      <name>accumulo.minicluster.instance.name</name>
+                      <value>${accumulo.minicluster.instance.name}</value>
+                    </property>
+                    <property>
+                      <name>accumulo.minicluster.root.password</name>
+                      <value>${accumulo.minicluster.root.password}</value>
+                    </property>
+                    <property>
+                      <name>accumulo.minicluster.zookeeper.port</name>
+                      <value>${accumulo.minicluster.zookeeper.port}</value>
+                    </property>
+                  </properties>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.accumulo</groupId>
+            <artifactId>accumulo-maven-plugin</artifactId>
+            <version>${accumulo.version}</version>
+            <configuration>
+              <instanceName>${accumulo.minicluster.instance.name}</instanceName>
+              <rootPassword>${accumulo.minicluster.root.password}</rootPassword>
+              <zooKeeperPort>${accumulo.minicluster.zookeeper.port}</zooKeeperPort>
+            </configuration>
+            <executions>
+              <execution>
+                <id>start-plugin</id>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+                <phase>pre-integration-test</phase>
+              </execution>
+              <execution>
+                <id>stop-plugin</id>
+                <goals>
+                  <goal>stop</goal>
+                </goals>
+                <phase>post-integration-test</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <systemPropertyVariables>
+                    <accumulo.minicluster.instance.name>${accumulo.minicluster.instance.name}</accumulo.minicluster.instance.name>
+                    <accumulo.minicluster.root.password>${$accumulo.minicluster.root.password}</accumulo.minicluster.root.password>
+                    <accumulo.minicluster.zookeeper.port>${accumulo.minicluster.zookeeper.port}</accumulo.minicluster.zookeeper.port>
+                  </systemPropertyVariables>
+                  <includes>
+                    <include>**/*IT.java</include>
+                  </includes>
+                  <skipTests>${skipTests}</skipTests>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>full</id>
       <build>

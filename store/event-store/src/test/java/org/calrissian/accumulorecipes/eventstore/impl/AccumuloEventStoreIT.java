@@ -30,7 +30,6 @@ import java.util.*;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -39,22 +38,21 @@ import org.apache.hadoop.io.Text;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
 import org.calrissian.accumulorecipes.eventstore.EventStore;
+import org.calrissian.accumulorecipes.test.AccumuloMiniClusterDriver;
 import org.calrissian.accumulorecipes.test.AccumuloTestUtils;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.calrissian.mango.criteria.builder.QueryBuilder;
 import org.calrissian.mango.criteria.domain.Node;
 import org.calrissian.mango.domain.Attribute;
-import org.calrissian.mango.domain.entity.Entity;
-import org.calrissian.mango.domain.entity.EntityBuilder;
-import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.calrissian.mango.domain.event.Event;
 import org.calrissian.mango.domain.event.EventBuilder;
 import org.calrissian.mango.domain.event.EventIdentifier;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
-public class AccumuloEventStoreTest {
+public class AccumuloEventStoreIT {
+
+    @ClassRule
+    public static AccumuloMiniClusterDriver accumuloMiniClusterDriver = new AccumuloMiniClusterDriver();
 
 
     private Connector connector;
@@ -64,15 +62,17 @@ public class AccumuloEventStoreTest {
     private Map<String, String> meta_b = new MetadataBuilder().setVisibility("B").build();
     private Auths DEFAULT_AUTHS = new Auths("A");
 
-    public static Connector getConnector() throws AccumuloSecurityException, AccumuloException {
-        return new MockInstance().getConnector("root", "".getBytes());
-    }
-
     @Before
     public void setup() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
-        connector = getConnector();
-        connector.securityOperations().changeUserAuthorizations("root", new Authorizations("A"));
+        accumuloMiniClusterDriver.deleteAllTables();
+        connector = accumuloMiniClusterDriver.getConnector();
+        connector.securityOperations().changeUserAuthorizations("root", new Authorizations("A","B"));
         store = new AccumuloEventStore(connector);
+    }
+
+    @After
+    public void close() throws Exception {
+        store.shutdown();
     }
 
     @Test
@@ -90,6 +90,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", new Authorizations("A"));
 
@@ -111,7 +112,7 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
-    public void testGet_withVisibilities() {
+    public void testGet_withVisibilities() throws Exception {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
@@ -126,6 +127,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         List<EventIdentifier> indexes = asList(new EventIdentifier[] {
             new EventIdentifier("", event.getId(), event.getTimestamp()),
@@ -140,7 +142,7 @@ public class AccumuloEventStoreTest {
     }
 
   @Test
-  public void testVisibilityForAndQuery_noResults() {
+  public void testVisibilityForAndQuery_noResults() throws Exception {
 
     Map<String, String> shouldntSee = new MetadataBuilder().setVisibility("A&B").build();
 
@@ -155,6 +157,7 @@ public class AccumuloEventStoreTest {
         .build();
 
     store.save(asList(event, event2));
+    store.flush();
 
     Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
@@ -166,7 +169,7 @@ public class AccumuloEventStoreTest {
   }
 
   @Test
-  public void testVisibilityForQuery_resultsReturned() {
+  public void testVisibilityForQuery_resultsReturned() throws Exception {
 
     Map<String, String> canSee = new MetadataBuilder().setVisibility("A&B").build();
     Map<String, String> cantSee = new MetadataBuilder().setVisibility("A&B&C").build();
@@ -184,6 +187,7 @@ public class AccumuloEventStoreTest {
         .build();
 
     store.save(asList(event, event2));
+    store.flush();
 
     Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
@@ -223,7 +227,7 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
-    public void testExpirationOfAttributes_query() {
+    public void testExpirationOfAttributes_query() throws Exception {
 
         Map<String, String> shouldntSee = new MetadataBuilder().setExpiration(1).build();
 
@@ -233,6 +237,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event));
+        store.flush();
 
         Node node = QueryBuilder.create().eq("key1", "val1").build();
 
@@ -244,7 +249,7 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
-    public void testQueryKeyNotInIndex() {
+    public void testQueryKeyNotInIndex() throws Exception {
 
         Event event = EventBuilder.create("", UUID.randomUUID().toString(), currentTimeMillis())
             .attr(new Attribute("key1", "val1", meta))
@@ -257,6 +262,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().eq("key4", "val5").end().build();
 
@@ -268,7 +274,7 @@ public class AccumuloEventStoreTest {
 
 
     @Test
-    public void testQueryRangeNotInIndex() {
+    public void testQueryRangeNotInIndex() throws Exception {
 
         Event event = EventBuilder.create("", UUID.randomUUID().toString(), currentTimeMillis())
             .attr(new Attribute("key1", "val1", meta))
@@ -281,6 +287,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().range("key4", 0, 5).end().build();
 
@@ -341,6 +348,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         Node node = QueryBuilder.create().eq("key1", "val1").build();
 
@@ -365,6 +373,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard", DEFAULT_AUTHS.getAuths());
         CloseableIterable<Event> actualEvent = store.get(singletonList(new EventIdentifier("", event.getId(), event.getTimestamp())),
@@ -390,6 +399,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().eq("key1", "val1").eq("key2", "val2").end().build();
 
@@ -419,6 +429,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         Node query = QueryBuilder.create().and().eq("`key`.`1`", "val1").eq("key2", "val2").end().build();
 
@@ -455,6 +466,7 @@ public class AccumuloEventStoreTest {
             .build();
 
         store.save(asList(event, event2));
+        store.flush();
 
         AccumuloTestUtils.dumpTable(connector, "eventStore_index");
         AccumuloTestUtils.dumpTable(connector, "eventStore_shard");
@@ -612,13 +624,14 @@ public class AccumuloEventStoreTest {
     }
 
     @Test
-    public void testQuery_has() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_has() throws Exception {
 
         Event event = EventBuilder.create("", "id", currentTimeMillis())
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(event));
+        store.flush();
 
         Node node = QueryBuilder.create().has("key1").build();
 
@@ -629,13 +642,14 @@ public class AccumuloEventStoreTest {
 
 
     @Test
-    public void testQuery_typeHasSpecialChars() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testQuery_typeHasSpecialChars() throws Exception {
 
         Event event = EventBuilder.create("type:has%special-chars", "id", currentTimeMillis())
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(event));
+        store.flush();
 
         Node node = QueryBuilder.create().eq("key1", "val1").build();
 
@@ -647,13 +661,14 @@ public class AccumuloEventStoreTest {
 
 
     @Test
-    public void testNoIndices() throws AccumuloSecurityException, AccumuloException, TableExistsException, TableNotFoundException {
+    public void testNoIndices() throws Exception {
 
         Event event = EventBuilder.create("", "id", currentTimeMillis())
             .attr(new Attribute("key1", "val1", meta))
             .build();
 
         store.save(asList(event), false);
+        store.flush();
 
         Node node = QueryBuilder.create().has("key1").build();
 
