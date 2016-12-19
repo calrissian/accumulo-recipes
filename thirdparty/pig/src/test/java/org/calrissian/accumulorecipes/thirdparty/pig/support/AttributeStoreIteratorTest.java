@@ -69,11 +69,11 @@ public class AttributeStoreIteratorTest {
             } else if (count == 2) {
                 assertEquals(entity2.getType(), entityAttributeStoreIterator.getTopStore().getType());
                 assertEquals(entity2.getId(), entityAttributeStoreIterator.getTopStore().getId());
-                assertEquals(e2T1, curAttribute);
+                assertEquals(e2T2, curAttribute);
             } else if (count == 3) {
                 assertEquals(entity2.getType(), entityAttributeStoreIterator.getTopStore().getType());
                 assertEquals(entity2.getId(), entityAttributeStoreIterator.getTopStore().getId());
-                assertEquals(e2T2, curAttribute);
+                assertEquals(e2T1, curAttribute);
             } else {
                 fail();
             }

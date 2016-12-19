@@ -19,9 +19,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
 import org.calrissian.accumulorecipes.commons.domain.Auths;
 import org.calrissian.accumulorecipes.commons.support.attribute.MetadataBuilder;
@@ -36,6 +37,7 @@ import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
 import org.junit.Assert;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -89,6 +91,12 @@ public class BlueprintsGraphStoreIT {
         entityGraphStore.save(asList(vertex1, vertex2, edge));
         entityGraphStore.flush();
 
+    }
+
+    @After
+    public void after() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        entityGraphStore.shutdown();
+        accumuloMiniClusterDriver.deleteAllTables();
     }
 
     @Test

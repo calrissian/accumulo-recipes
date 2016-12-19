@@ -34,10 +34,7 @@ import org.calrissian.mango.domain.Attribute;
 import org.calrissian.mango.domain.entity.Entity;
 import org.calrissian.mango.domain.entity.EntityBuilder;
 import org.calrissian.mango.domain.entity.EntityIdentifier;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -102,6 +99,13 @@ public class EntityGraphQueryIT {
         entityGraphStore.save(Arrays.asList(vertex1, vertex2, edge, edge2));
         entityGraphStore.flush();
     }
+
+    @After
+    public void after() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+        entityGraphStore.shutdown();
+        accumuloMiniClusterDriver.deleteAllTables();
+    }
+
 
     @Test
     public void testVertices_HasFullProperties_resultsReturned() {
